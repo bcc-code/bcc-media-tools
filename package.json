@@ -1,0 +1,27 @@
+{
+    "name": "nuxt-app",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "build": "nuxt build",
+        "dev": "nuxt dev",
+        "generate": "nuxt generate",
+        "preview": "nuxt preview",
+        "postinstall": "nuxt prepare"
+    },
+    "devDependencies": {
+        "@auth0/auth0-vue": "^2.3.3",
+        "autoprefixer": "^10.4.17",
+        "nuxt-icon": "^0.6.8",
+        "postcss": "^8.4.33",
+        "prettier": "^3.2.4",
+        "prettier-plugin-tailwindcss": "^0.5.11",
+        "tailwindcss": "^3.4.1"
+    },
+    "dependencies": {
+        "nuxt": "^3.10.1",
+        "vue": "^3.4.15",
+        "vue-router": "^4.2.5",
+        "@bcc-code/design-library-vue": "^2.2.1"
+    }
+}
