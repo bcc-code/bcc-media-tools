@@ -1,11 +1,13 @@
 <script lang="ts" setup>
 const props = defineProps<{
     segment: Segment;
+    deleted: boolean;
 }>();
 
 const emit = defineEmits<{
     update: [Segment];
     wordFocus: [Word];
+    toggleDelete: [];
 }>();
 
 const words = ref(props.segment.words.map((w) => ({ ...w })));
@@ -34,22 +36,45 @@ const secondsToTimestamp = (seconds: number) => {
 </script>
 
 <template>
-    <div class="flex flex-col">
+    <div class="flex flex-col px-4">
         <div class="flex gap-2 text-sm opacity-50">
             <p>{{ secondsToTimestamp(segment.start) }}</p>
             --
             <p>{{ secondsToTimestamp(segment.end) }}</p>
         </div>
         <div class="flex">
-            <span
-                contenteditable
-                v-for="(w, index) in segment.words"
-                @input="handleTextUpdate(index, $event)"
-                class="rounded-lg p-1 transition duration-75 focus:bg-slate-800 focus:outline-none"
-                @focus="$emit('wordFocus', w)"
+            <div
+                class="flex flex-wrap"
+                :class="{
+                    'opacity-50': deleted,
+                }"
             >
-                {{ w.text }}
-            </span>
+                <span
+                    contenteditable
+                    v-for="(w, index) in segment.words"
+                    @input="handleTextUpdate(index, $event)"
+                    class="rounded-lg p-1 transition duration-75 focus:bg-slate-800 focus:outline-none"
+                    @focus="$emit('wordFocus', w)"
+                >
+                    {{ w.text }}
+                </span>
+            </div>
+            <div class="ml-auto">
+                <button
+                    class="rounded-lg border border-red-800 px-2 py-1 transition hover:bg-red-700"
+                    @click="$emit('toggleDelete')"
+                    v-if="!deleted"
+                >
+                    <Icon name="heroicons:trash" />
+                </button>
+                <button
+                    class="rounded-lg border border-green-800 px-2 py-1 transition hover:bg-green-700"
+                    @click="$emit('toggleDelete')"
+                    v-else
+                >
+                    <Icon name="heroicons:arrow-path" />
+                </button>
+            </div>
         </div>
     </div>
 </template>

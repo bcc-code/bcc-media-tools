@@ -30,28 +30,13 @@ export default defineNuxtConfig({
                 from: "@auth0/auth0-vue",
                 imports: ["useAuth0"],
             },
-            {
-                from: "@bcc-code/design-library-vue",
-                imports: ["BccAlert", "BccInput"],
-            },
         ],
     },
     nitro: {
-        preset: "firebase",
-        firebase: {
-            gen: 2,
-            httpsOptions: {
-                region: "europe-west4",
-                maxInstances: 10,
-            },
-            nodeVersion: "20",
-        },
+        preset: "node-server",
     },
     runtimeConfig: {
         api: {
-            auth: {
-                cert: process.env.AUTH_CERTIFICATE,
-            },
             vidispine: {
                 baseUrl: process.env.VIDISPINE_BASE_URL!,
                 username: process.env.VIDISPINE_USERNAME!,

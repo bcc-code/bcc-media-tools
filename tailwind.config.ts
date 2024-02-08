@@ -12,9 +12,6 @@ export default {
         "./nuxt.config.{js,ts}",
         "./node_modules/@bcc-code/design-library-vue/dist/design-library-vue.js",
     ],
-    theme: {
-        extend: {},
-    },
     plugins: [themes.tailwindPlugin],
     presets: [themes.bccForbundetTheme],
 };

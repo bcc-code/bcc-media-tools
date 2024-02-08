@@ -3,17 +3,15 @@ export default defineEventHandler(async (event) => {
 
     const config = useRuntimeConfig().api.cantemo;
 
-    const url = `${config.baseUrl}/API/v2/items/${id}/`;
-
-    const result = await fetch(url, {
-        method: "GET",
-        headers: {
-            "AUTH-TOKEN": config.authToken,
-            Accept: "application/json",
-        },
-    });
-
-    const data = await result.json();
+    const metadata = await (
+        await fetch(`${config.baseUrl}/API/v2/items/${id}/`, {
+            method: "GET",
+            headers: {
+                "AUTH-TOKEN": config.authToken,
+                Accept: "application/json",
+            },
+        })
+    ).json();
 
     const formats = await (
         await fetch(`${config.baseUrl}/API/v2/items/${id}/formats/`, {
@@ -45,7 +43,7 @@ export default defineEventHandler(async (event) => {
 
     let video: any = null;
 
-    for (const shape of data.previews.shapes) {
+    for (const shape of metadata.previews.shapes) {
         if (shape.displayname === "lowres") {
             video = "https://mediabanken.brunstad.tv" + shape.uri;
             break;
@@ -55,5 +53,6 @@ export default defineEventHandler(async (event) => {
     return {
         transcription,
         video,
+        filename: metadata.metadata_summary.filename,
     };
 });
