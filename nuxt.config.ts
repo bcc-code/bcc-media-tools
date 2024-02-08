@@ -52,6 +52,15 @@ export default defineNuxtConfig({
             auth: {
                 cert: process.env.AUTH_CERTIFICATE,
             },
+            vidispine: {
+                baseUrl: process.env.VIDISPINE_BASE_URL!,
+                username: process.env.VIDISPINE_USERNAME!,
+                password: process.env.VIDISPINE_PASSWORD!,
+            },
+            cantemo: {
+                authToken: process.env.CANTEMO_AUTH_TOKEN!,
+                baseUrl: process.env.CANTEMO_BASE_URL!,
+            },
         },
         public: {
             auth: {

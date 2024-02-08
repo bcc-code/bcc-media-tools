@@ -24,3 +24,17 @@ export type TranscriptionResult = {
     text: string;
     segments: Segment[];
 };
+
+export function downloadTranscription(segments: Segment[], filename: string) {
+    const data = JSON.stringify({
+        text: segments.map((s) => s.text).join(" "),
+        segments: segments,
+    });
+    const blob = new Blob([data], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename + "-edited.json";
+    a.click();
+    URL.revokeObjectURL(url);
+}

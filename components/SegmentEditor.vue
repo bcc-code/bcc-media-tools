@@ -5,6 +5,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     update: [Segment];
+    wordFocus: [Word];
 }>();
 
 const words = ref(props.segment.words.map((w) => ({ ...w })));
@@ -45,8 +46,10 @@ const secondsToTimestamp = (seconds: number) => {
                 v-for="(w, index) in segment.words"
                 @input="handleTextUpdate(index, $event)"
                 class="rounded-lg p-1 transition duration-75 focus:bg-slate-800 focus:outline-none"
-                >{{ w.text }}</span
+                @focus="$emit('wordFocus', w)"
             >
+                {{ w.text }}
+            </span>
         </div>
     </div>
 </template>
