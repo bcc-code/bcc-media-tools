@@ -2,6 +2,7 @@
 import { BccButton } from "@bcc-code/design-library-vue";
 
 const route = useRoute("transcription-id");
+const key = "ts-" + route.params.id;
 
 const loading = ref(true);
 
@@ -11,7 +12,7 @@ const reload = async () => {
 
     setTranscription(result);
 
-    localStorage["ts-" + route.params.id] = JSON.stringify(result);
+    localStorage[key] = JSON.stringify(result);
 
     return result;
 };
@@ -25,11 +26,12 @@ const setTranscription = (result: any) => {
 };
 
 onMounted(async () => {
-    const key = "ts-" + route.params.id;
     const saved = localStorage[key];
 
     if (saved) {
         setTranscription(JSON.parse(saved));
+    } else {
+        await reload();
     }
 });
 
@@ -52,7 +54,7 @@ const handleWordFocus = (word: Word) => {
 };
 
 watch(segments, () => {
-    localStorage["ts-" + route.params.id] = JSON.stringify({
+    localStorage[key] = JSON.stringify({
         transcription: {
             text: segments.value.map((s) => s.text).join(" "),
             segments: segments.value,
