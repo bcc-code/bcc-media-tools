@@ -64,9 +64,9 @@ watch(segments, () => {
 </script>
 
 <template>
-    <div class="flex h-screen">
+    <div class="flex h-screen divide-x-2 divide-slate-500">
         <div class="flex w-1/2 flex-col">
-            <div class="flex gap-4 p-4">
+            <div class="flex gap-4 bg-slate-900 p-4">
                 <BccButton
                     @click="() => downloadTranscription(segments, fileName)"
                     >Download</BccButton
