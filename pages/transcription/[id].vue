@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { BccButton } from "@bcc-code/design-library-vue";
+import { BccButton, BccToggle } from "@bcc-code/design-library-vue";
 
 const route = useRoute("transcription-id");
 const key = "ts-" + route.params.id;
@@ -50,7 +50,8 @@ const handleWordFocus = (word: Word) => {
     if (!el) {
         return;
     }
-    el.fastSeek(word.start);
+    const seek = (localStorage.seekOnFocus ?? "true") === "true";
+    if (seek) el.fastSeek(word.start);
 };
 
 watch(segments, () => {
@@ -63,19 +64,22 @@ watch(segments, () => {
         filename: fileName.value,
     });
 });
+
+const seekOnFocus = computed({
+    get() {
+        return (localStorage.seekOnFocus ?? "true") === "true";
+    },
+    set(v) {
+        console.log(v);
+        localStorage.seekOnFocus = v ? "true" : "false";
+        console.log(localStorage.seekOnFocus);
+    },
+});
 </script>
 
 <template>
     <div class="flex h-screen divide-x-2 divide-slate-500">
         <div class="flex w-1/2 flex-col">
-            <div class="flex gap-4 bg-slate-900 p-4">
-                <BccButton
-                    @click="() => downloadTranscription(segments, fileName)"
-                    >Download</BccButton
-                >
-                <BccButton @click="reload">Reload</BccButton>
-                <p class="my-auto">Edits are saved locally</p>
-            </div>
             <div v-if="loading" class="mx-auto animate-ping">Loading...</div>
             <TranscriptionEditor
                 class="overflow-auto"
@@ -84,7 +88,28 @@ watch(segments, () => {
                 :file-name="fileName!"
                 v-model="segments"
                 @word-focus="handleWordFocus"
-            />
+            >
+                <template #actions>
+                    <div class="flex flex-grow gap-4">
+                        <BccButton
+                            @click="
+                                () => downloadTranscription(segments, fileName)
+                            "
+                            >Download</BccButton
+                        >
+                        <BccButton @click="reload">Reload</BccButton>
+                        <p class="my-auto">Edits are saved locally</p>
+                        <div class="my-auto ml-auto">
+                            <BccToggle
+                                id="seekonfocus"
+                                v-model="seekOnFocus"
+                                was-toggled
+                                label="Seek on focus"
+                            />
+                        </div>
+                    </div>
+                </template>
+            </TranscriptionEditor>
         </div>
         <div class="flex w-1/2">
             <div class="m-auto">

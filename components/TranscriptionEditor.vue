@@ -37,8 +37,9 @@ const deleteMode = ref(false);
 </script>
 
 <template>
-    <div class="flex flex-col gap-4 overflow-auto bg-black p-4 text-xl">
-        <div class="flex gap-4">
+    <div class="flex flex-col overflow-auto bg-black text-xl">
+        <div class="flex gap-4 bg-slate-800 p-4">
+            <slot name="actions"></slot>
             <BccButton
                 class="ml-auto"
                 @click="deleteMode = !deleteMode"

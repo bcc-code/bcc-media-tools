@@ -40,30 +40,31 @@ const download = () => {
 <template>
     <div class="flex h-screen">
         <div class="flex flex-grow flex-col">
-            <div class="flex gap-4 p-4">
-                <div>
-                    <label for="file-input" class="cursor-pointer">
-                        <BccButton class="pointer-events-none">{{
-                            fileName ?? "Select file"
-                        }}</BccButton>
-                    </label>
-                    <input
-                        id="file-input"
-                        hidden
-                        type="file"
-                        placeholder="File here"
-                        accept="application/json"
-                        @input="handleFile"
-                    />
-                </div>
-                <BccButton @click="download">Download</BccButton>
-            </div>
             <TranscriptionEditor
                 v-if="transcription"
                 :transcription="transcription"
                 :file-name="fileName!"
                 v-model="segments"
-            />
+            >
+                <template #actions>
+                    <div>
+                        <label for="file-input" class="cursor-pointer">
+                            <BccButton class="pointer-events-none">{{
+                                fileName ?? "Select file"
+                            }}</BccButton>
+                        </label>
+                        <input
+                            id="file-input"
+                            hidden
+                            type="file"
+                            placeholder="File here"
+                            accept="application/json"
+                            @input="handleFile"
+                        />
+                    </div>
+                    <BccButton @click="download">Download</BccButton>
+                </template>
+            </TranscriptionEditor>
         </div>
     </div>
 </template>
