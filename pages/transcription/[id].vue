@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { BccButton, BccToggle } from "@bcc-code/design-library-vue";
+import type { ComponentPublicInstance } from "vue";
 
 const route = useRoute("transcription-id");
 const key = "ts-" + route.params.id;
@@ -49,6 +50,41 @@ const video = ref<string>();
 
 const videoelement = ref<HTMLVideoElement>();
 
+const segmentelements = ref<{
+    [key: number]: Element | ComponentPublicInstance;
+}>({});
+
+watch(videoelement, (el) => {
+    if (el) {
+        el.onseeked = () => {
+            const current = el.currentTime;
+            let index: number | null = null;
+
+            let prev = 0;
+            for (let i = 0; i < segments.value.length; i++) {
+                const s = segments.value[i];
+                if ((s.start < current || prev < current) && s.end > current) {
+                    index = i;
+                    break;
+                }
+                prev = s.end;
+            }
+
+            if (!index) return;
+
+            const segmentElement = (
+                segmentelements.value[index] as ComponentPublicInstance
+            ).$el as HTMLDivElement;
+
+            segmentElement.scrollIntoView({
+                behavior: "smooth",
+                block: "nearest",
+                inline: "nearest",
+            });
+        };
+    }
+});
+
 const handleWordFocus = (word: Word) => {
     const el = videoelement.value as HTMLVideoElement;
     if (!el) {
@@ -91,6 +127,7 @@ const seekOnFocus = computed({
                 :transcription="transcription"
                 :file-name="fileName!"
                 v-model="segments"
+                v-model:segmentelements="segmentelements"
                 @word-focus="handleWordFocus"
             >
                 <template #actions>

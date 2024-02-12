@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { BccButton } from "@bcc-code/design-library-vue";
+import type { ComponentPublicInstance } from "vue";
 
 const props = defineProps<{
     fileName: string;
@@ -35,6 +36,10 @@ const handleSegmentUpdate = (index: number, segment: Segment) => {
 };
 
 const { deleteMode } = useDeleteMode();
+
+const segmentelements = defineModel<{
+    [key: number]: Element | ComponentPublicInstance;
+}>("segmentelements");
 </script>
 
 <template>
@@ -50,16 +55,23 @@ const { deleteMode } = useDeleteMode();
             </BccButton>
         </div>
         <div class="flex flex-col overflow-auto" v-if="transcription">
-            <template v-for="(s, index) in transcription.segments" :key="s.id">
-                <SegmentEditor
-                    class="py-2"
-                    :segment="s"
-                    :deleted="deletedIndexes.includes(index.toString())"
-                    @word-focus="$emit('wordFocus', $event)"
-                    @update="handleSegmentUpdate(index, $event)"
-                    @toggle-delete="handleSegmentToggleDelete(index)"
-                />
-            </template>
+            <SegmentEditor
+                v-for="(s, index) in transcription.segments"
+                :key="s.id"
+                :ref="
+                    (el) => {
+                        if (el && segmentelements) {
+                            segmentelements[index] = el;
+                        }
+                    }
+                "
+                class="py-2"
+                :segment="s"
+                :deleted="deletedIndexes.includes(index.toString())"
+                @word-focus="$emit('wordFocus', $event)"
+                @update="handleSegmentUpdate(index, $event)"
+                @toggle-delete="handleSegmentToggleDelete(index)"
+            />
         </div>
     </div>
 </template>

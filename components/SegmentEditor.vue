@@ -68,20 +68,8 @@ const { deleteMode } = useDeleteMode();
                 </span>
             </div>
             <div class="ml-auto">
-                <button
-                    class="rounded-lg border border-red-800 px-2 py-1 transition hover:bg-red-700"
-                    @click="$emit('toggleDelete')"
-                    v-if="!deleted"
-                >
-                    <Icon name="heroicons:trash" />
-                </button>
-                <button
-                    class="rounded-lg border border-green-800 px-2 py-1 transition hover:bg-green-700"
-                    @click="$emit('toggleDelete')"
-                    v-else
-                >
-                    <Icon name="heroicons:arrow-path" />
-                </button>
+                <TrashIcon @click="$emit('toggleDelete')" v-if="!deleted" />
+                <RestoreIcon @click="$emit('toggleDelete')" v-else />
             </div>
         </div>
     </div>
