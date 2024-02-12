@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { BccButton } from "@bcc-code/design-library-vue";
+import { BccButton, BccInput } from "@bcc-code/design-library-vue";
 
 const transcription = ref<TranscriptionResult>();
 
@@ -35,6 +35,8 @@ const segments = ref<Segment[]>([]);
 const download = () => {
     downloadTranscription(segments.value, fileName.value!);
 };
+
+const vxId = ref("");
 </script>
 
 <template>
@@ -62,6 +64,19 @@ const download = () => {
                         />
                     </div>
                     <BccButton @click="download">Download</BccButton>
+                    <div class="flex">
+                        <input
+                            v-model="vxId"
+                            class="h-full rounded-l-lg bg-black px-2 text-base"
+                            placeholder="Vidispine-ID"
+                        />
+                        <button
+                            class="rounded-r-lg bg-blue-500 px-2"
+                            @click="navigateTo(`/transcription/${vxId}`)"
+                        >
+                            Go
+                        </button>
+                    </div>
                 </template>
             </TranscriptionEditor>
         </div>

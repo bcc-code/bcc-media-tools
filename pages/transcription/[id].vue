@@ -8,7 +8,9 @@ const loading = ref(true);
 
 const reload = async () => {
     loading.value = true;
-    const result = (await $fetch(`/api/vx/${route.params.id}/preview`)) as any;
+    const result = (await $fetch(
+        `/api/vx/${route.params.id}/transcription`,
+    )) as any;
 
     setTranscription(result);
 
@@ -20,13 +22,15 @@ const reload = async () => {
 const setTranscription = (result: any) => {
     transcription.value = result.transcription;
     segments.value = transcription.value?.segments!;
-    video.value = result.video;
-    fileName.value = result.filename;
     loading.value = false;
 };
 
 onMounted(async () => {
     const saved = localStorage[key];
+
+    const result = (await $fetch(`/api/vx/${route.params.id}/preview`)) as any;
+    video.value = result.video;
+    fileName.value = result.filename;
 
     if (saved) {
         setTranscription(JSON.parse(saved));
