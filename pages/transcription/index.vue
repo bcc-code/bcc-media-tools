@@ -41,7 +41,6 @@ const download = () => {
     <div class="flex h-screen">
         <div class="flex flex-grow flex-col">
             <TranscriptionEditor
-                v-if="transcription"
                 :transcription="transcription"
                 :file-name="fileName!"
                 v-model="segments"

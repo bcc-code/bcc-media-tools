@@ -33,16 +33,24 @@ const secondsToTimestamp = (seconds: number) => {
     const second = Math.floor(seconds % 60);
     return `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}:${second.toString().padStart(2, "0")}`;
 };
+
+const { deleteMode } = useDeleteMode();
 </script>
 
 <template>
-    <div class="flex flex-col px-4">
+    <div
+        class="flex flex-col px-4"
+        :class="{
+            'cursor-pointer transition hover:bg-slate-800': deleteMode,
+        }"
+        @click="deleteMode ? $emit('toggleDelete') : undefined"
+    >
         <div class="flex gap-2 text-sm opacity-50">
             <p>{{ secondsToTimestamp(segment.start) }}</p>
             --
             <p>{{ secondsToTimestamp(segment.end) }}</p>
         </div>
-        <div class="flex">
+        <div class="flex" :class="{ 'pointer-events-none': deleteMode }">
             <div
                 class="flex flex-wrap"
                 :class="{
