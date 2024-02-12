@@ -34,6 +34,7 @@ export function downloadTranscription(segments: Segment[], filename: string) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
+    filename = filename.split(".").slice(0, -1).join(".");
     a.download = filename + "-edited.json";
     a.click();
     URL.revokeObjectURL(url);
