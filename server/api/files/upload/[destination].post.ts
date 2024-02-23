@@ -1,8 +1,19 @@
 import { IncomingForm } from "formidable";
 
 export default defineEventHandler((event) => {
+    const destination = getRouterParam(event, "destination");
+    if (!destination) {
+        return;
+    }
+    if (destination !== "bmm") {
+        return;
+    }
+
+    const tempDrive = useRuntimeConfig().api.tempDrivePath;
+    const uploadDir = tempDrive + "/tools/uploads/" + destination;
+
     const form = new IncomingForm({
-        uploadDir: "uploads",
+        uploadDir,
         filename(name, _ext, part, _form) {
             return part.originalFilename ?? name;
         },
@@ -15,9 +26,6 @@ export default defineEventHandler((event) => {
                 reject(err);
                 return;
             }
-
-            // Process the uploaded files as needed. For example, you could return the file path.
-            // This is a simplistic example; adjust according to your needs.
             resolve({ fields, files });
         });
     });

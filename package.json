@@ -11,6 +11,7 @@
     },
     "devDependencies": {
         "@auth0/auth0-vue": "^2.3.3",
+        "@nuxtjs/i18n": "^8.1.1",
         "@types/formidable": "^3.4.5",
         "autoprefixer": "^10.4.17",
         "formidable": "^3.5.1",
