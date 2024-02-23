@@ -2,7 +2,7 @@
     <div
         class="mx-auto flex h-screen max-w-screen-md flex-col gap-4 rounded-lg bg-stone-300 p-4 text-black"
     >
-        <BmmSingleMetadata v-model="form" @submit="metadataIsSet = true" />
+        <BmmSingleMetadata v-model="form" @set="metadataIsSet = true" />
         <div
             class="flex flex-col gap-4 p-4 transition"
             :class="[
