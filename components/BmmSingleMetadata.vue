@@ -23,6 +23,6 @@ defineEmits<{
             required
         />
         <LanguageSelector v-model="language" :languages="bmmLanguages" />
-        <BccButton type="submit">Next</BccButton>
+        <BccButton type="submit">{{ $t("next") }}</BccButton>
     </form>
 </template>
