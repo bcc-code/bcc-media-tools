@@ -11,7 +11,9 @@
     },
     "devDependencies": {
         "@auth0/auth0-vue": "^2.3.3",
+        "@types/formidable": "^3.4.5",
         "autoprefixer": "^10.4.17",
+        "formidable": "^3.5.1",
         "nuxt-icon": "^0.6.8",
         "postcss": "^8.4.33",
         "prettier": "^3.2.4",
@@ -19,9 +21,9 @@
         "tailwindcss": "^3.4.1"
     },
     "dependencies": {
+        "@bcc-code/design-library-vue": "^2.2.1",
         "nuxt": "^3.10.1",
         "vue": "^3.4.15",
-        "vue-router": "^4.2.5",
-        "@bcc-code/design-library-vue": "^2.2.1"
+        "vue-router": "^4.2.5"
     }
 }
