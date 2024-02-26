@@ -42,6 +42,9 @@ export default defineNuxtConfig({
                 baseUrl: "",
             },
             tempDrivePath: "",
+            bmm: {
+                token: "",
+            },
         },
         public: {
             auth: {
