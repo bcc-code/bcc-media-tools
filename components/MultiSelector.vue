@@ -2,7 +2,7 @@
 import { BccCheckbox } from "@bcc-code/design-library-vue";
 
 defineProps<{
-    available: string[];
+    available: readonly string[];
 }>();
 
 const value = defineModel<string[]>({ required: true });
@@ -16,7 +16,7 @@ const toggleCheckbox = (v: string) => {
 };
 </script>
 <template>
-    <div class="flex flex-col gap-1">
+    <div class="grid grid-cols-2 gap-2 gap-x-4">
         <div v-for="v in available">
             <BccCheckbox
                 :label="v"

@@ -37,7 +37,7 @@ const admin = computed({
     },
 });
 
-const albums = computed({
+const bmmAlbums = computed({
     get() {
         return perms.value.bmm.albums;
     },
@@ -52,7 +52,7 @@ const albums = computed({
     },
 });
 
-const languages = computed({
+const bmmAvailableLanguages = computed({
     get() {
         return perms.value.bmm.languages;
     },
@@ -75,23 +75,33 @@ const languages = computed({
             <BccButton @click="$emit('remove')" size="sm">Remove</BccButton>
         </div>
         <div class="flex gap-4">
-            <div>
-                <BccFormLabel>Admin</BccFormLabel>
-                <BccToggle v-model="admin" />
+            <div class="flex flex-col rounded border px-4 py-2">
+                <h3>General</h3>
+                <div class="flex gap-4">
+                    <div>
+                        <BccFormLabel>Admin</BccFormLabel>
+                        <BccToggle v-model="admin" />
+                    </div>
+                </div>
             </div>
-            <div>
-                <BccFormLabel>Albums</BccFormLabel>
-                <MultiSelector
-                    :available="['fra-kaare', 'romans']"
-                    v-model="albums"
-                />
-            </div>
-            <div>
-                <BccFormLabel>Languages</BccFormLabel>
-                <MultiSelector
-                    :available="['no', 'en', 'fr']"
-                    v-model="languages"
-                />
+            <div class="flex flex-col rounded border px-4 py-2">
+                <h3>BMM</h3>
+                <div class="flex gap-4">
+                    <div>
+                        <BccFormLabel>Albums</BccFormLabel>
+                        <MultiSelector
+                            :available="['fra-kaare', 'romans']"
+                            v-model="bmmAlbums"
+                        />
+                    </div>
+                    <div>
+                        <BccFormLabel>Languages</BccFormLabel>
+                        <MultiSelector
+                            :available="bmmLanguages"
+                            v-model="bmmAvailableLanguages"
+                        />
+                    </div>
+                </div>
             </div>
         </div>
     </div>

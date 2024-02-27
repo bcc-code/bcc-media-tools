@@ -1,1 +1,1 @@
-export const bmmLanguages = ["en", "no"] as const;
+export const bmmLanguages = ["en", "no", "fr", "de", "nl", "da"] as const;
