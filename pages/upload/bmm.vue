@@ -7,16 +7,7 @@ const metadataIsSet = ref(false);
 
 const selectedFile = ref<File | null>(null);
 
-const me = ref<{
-    languages: string[];
-    albums: string[];
-}>();
-
-onMounted(async () => {
-    me.value = await $fetch("/api/bmm/me", {
-        method: "GET",
-    });
-});
+const { me } = useMe();
 </script>
 
 <template>
@@ -27,8 +18,8 @@ onMounted(async () => {
         <BmmSingleMetadata
             v-model="form"
             @set="metadataIsSet = true"
-            :languages="me.languages"
-            :albums="me.albums"
+            :languages="me.bmm.languages"
+            :albums="me.bmm.albums"
         />
         <div
             class="flex flex-col gap-4 p-4 transition"

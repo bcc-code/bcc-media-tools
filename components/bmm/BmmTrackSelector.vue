@@ -48,8 +48,15 @@ const TrackView = (props: { track: Track }) => {
                 v-if="display"
                 :track="display"
             />
+            <p
+                v-else
+                class="flex cursor-pointer gap-2 rounded bg-slate-50"
+                @click="clicked = true"
+            >
+                <span class="rounded bg-slate-200 px-2">Not selected</span>
+            </p>
         </div>
-        <div v-else class="flex flex-col gap-2">
+        <div v-else class="flex h-48 flex-col gap-2 overflow-y-auto">
             <div v-for="t in tracks" class="flex">
                 <TrackView
                     :track="t"

@@ -5,5 +5,11 @@ export default defineEventHandler(async (event) => {
         return;
     }
 
-    return await getPermissions(email);
+    const perms = await getPermissions(email);
+    if (!perms?.admin) {
+        setResponseStatus(event, 403);
+        return;
+    }
+
+    return await listPermissions();
 });
