@@ -45,6 +45,7 @@ export default defineNuxtConfig({
             bmm: {
                 token: "",
             },
+            configDir: "./config",
         },
         public: {
             auth: {

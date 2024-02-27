@@ -6,7 +6,9 @@ let allPermissions: {
 
 const getAllPermissions = async () => {
     return (allPermissions ??= JSON.parse(
-        await readFile("./config/permissions.json", { encoding: "utf-8" }),
+        await readFile(useRuntimeConfig().api.configDir + "/permissions.json", {
+            encoding: "utf-8",
+        }),
     ));
 };
 
@@ -37,7 +39,7 @@ export async function setPermissions(
     }
 
     await writeFile(
-        "./config/permissions.json",
+        useRuntimeConfig().api.configDir + "/permissions.json",
         JSON.stringify(perms, null, 4),
     );
 }
