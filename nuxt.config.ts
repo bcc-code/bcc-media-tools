@@ -46,6 +46,7 @@ export default defineNuxtConfig({
                 token: "",
             },
             configDir: "./config",
+            temporalTriggerUrl: "https://temporal-trigger.lan.bcc.media",
         },
         public: {
             auth: {
