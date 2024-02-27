@@ -20,7 +20,5 @@ export default defineEventHandler(async (event) => {
         permissions: Permissions;
     }>(event);
 
-    console.log(request);
-
     await setPermissions(request.email, request.permissions);
 });

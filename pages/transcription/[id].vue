@@ -91,7 +91,13 @@ const handleWordFocus = (word: Word) => {
         return;
     }
     const seek = (localStorage.seekOnFocus ?? "true") === "true";
-    if (seek) el.fastSeek(word.start);
+    if (seek) {
+        if (el.fastSeek) {
+            el.fastSeek(word.start);
+        } else {
+            el.currentTime = word.start;
+        }
+    }
 };
 
 watch(segments, () => {
@@ -110,9 +116,7 @@ const seekOnFocus = computed({
         return (localStorage.seekOnFocus ?? "true") === "true";
     },
     set(v) {
-        console.log(v);
         localStorage.seekOnFocus = v ? "true" : "false";
-        console.log(localStorage.seekOnFocus);
     },
 });
 </script>
