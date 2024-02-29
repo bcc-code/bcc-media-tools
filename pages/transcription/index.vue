@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { BccButton, BccInput } from "@bcc-code/design-library-vue";
+import { BccButton, BccInput, BccSelect } from "@bcc-code/design-library-vue";
 
 const transcription = ref<TranscriptionResult>();
 
@@ -32,8 +32,20 @@ const handleFile = (event: Event) => {
 
 const segments = ref<Segment[]>([]);
 
+const format = ref<"json" | "srt" | "srt-words">("json");
+
 const download = () => {
-    downloadTranscription(segments.value, fileName.value!);
+    switch (format.value) {
+        case "json":
+            downloadTranscriptionJSON(segments.value, fileName.value!);
+            break;
+        case "srt-words":
+            downloadTranscriptionSRT(segments.value, fileName.value!, true);
+            break;
+        case "srt":
+            downloadTranscriptionSRT(segments.value, fileName.value!, false);
+            break;
+    }
 };
 
 const vxId = ref("");
@@ -63,7 +75,10 @@ const vxId = ref("");
                             @input="handleFile"
                         />
                     </div>
-                    <BccButton @click="download">Download</BccButton>
+                    <TranscriptionDownloader
+                        :segments="segments"
+                        :filename="fileName!"
+                    />
                     <div class="flex">
                         <input
                             v-model="vxId"

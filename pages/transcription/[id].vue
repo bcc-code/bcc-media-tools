@@ -136,12 +136,10 @@ const seekOnFocus = computed({
             >
                 <template #actions>
                     <div class="flex flex-grow gap-4">
-                        <BccButton
-                            @click="
-                                () => downloadTranscription(segments, fileName)
-                            "
-                            >Download</BccButton
-                        >
+                        <TranscriptionDownloader
+                            :segments="segments"
+                            :filename="fileName"
+                        />
                         <BccButton @click="reload">Reload</BccButton>
                         <p class="my-auto">Edits are saved locally</p>
                         <div class="my-auto ml-auto">
