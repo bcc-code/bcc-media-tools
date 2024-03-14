@@ -5,11 +5,15 @@ const transcription = ref<TranscriptionResult>();
 
 const fileName = ref<string>();
 
+const tKey = ref<string>();
+
 const handleFile = (event: Event) => {
     const target = event.target as HTMLInputElement;
     const file = target.files?.[0];
     if (file) {
         fileName.value = file.name;
+        transcription.value = undefined;
+        segments.value = [];
         const reader = new FileReader();
         reader.onload = (e) => {
             const result = e.target?.result;
@@ -24,6 +28,8 @@ const handleFile = (event: Event) => {
                 });
 
                 segments.value = transcription.value!.segments ?? [];
+
+                tKey.value = useId();
             }
         };
         reader.readAsText(file);
@@ -55,7 +61,7 @@ const vxId = ref("");
     <div class="flex h-screen">
         <div class="flex flex-grow flex-col">
             <TranscriptionEditor
-                :key="fileName"
+                :key="tKey"
                 :transcription="transcription"
                 :file-name="fileName!"
                 v-model="segments"
