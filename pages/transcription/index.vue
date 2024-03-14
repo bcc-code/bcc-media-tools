@@ -15,7 +15,7 @@ const handleFile = (event: Event) => {
             const result = e.target?.result;
             if (result) {
                 transcription.value = JSON.parse(result.toString());
-                transcription.value?.segments.forEach((s) => {
+                transcription.value!.segments.forEach((s) => {
                     s.text = s.text.trim();
                     s.words = s.words.map((w) => ({
                         ...w,
@@ -23,7 +23,7 @@ const handleFile = (event: Event) => {
                     }));
                 });
 
-                segments.value = transcription.value?.segments ?? [];
+                segments.value = transcription.value!.segments ?? [];
             }
         };
         reader.readAsText(file);
@@ -55,6 +55,7 @@ const vxId = ref("");
     <div class="flex h-screen">
         <div class="flex flex-grow flex-col">
             <TranscriptionEditor
+                :key="fileName"
                 :transcription="transcription"
                 :file-name="fileName!"
                 v-model="segments"

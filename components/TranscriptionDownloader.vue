@@ -9,7 +9,6 @@ const props = defineProps<{
 const format = ref<"json" | "srt" | "srt-words">("json");
 
 const download = () => {
-    console.log(format.value);
     switch (format.value) {
         case "json":
             downloadTranscriptionJSON(props.segments, props.filename);
