@@ -42,18 +42,21 @@ export default defineNuxtConfig({
                 baseUrl: "",
             },
             tempDrivePath: "",
+            auth0: {
+                domain: "login.bcc.no",
+                clientId: "",
+                clientSecret: "",
+            },
             bmm: {
-                token: "",
+                audience: "",
             },
             configDir: "./config",
             temporalTriggerUrl: "https://temporal-trigger.lan.bcc.media",
         },
         public: {
             auth: {
-                domain: process.env.AUTH_DOMAIN ?? "login.bcc.no",
-                clientId:
-                    process.env.AUTH_CLIENT_ID ??
-                    "iaDsfutxWw4eoRHHVryW65JHd49kXaP0",
+                domain: "login.bcc.no",
+                clientId: "iaDsfutxWw4eoRHHVryW65JHd49kXaP0",
             },
         },
     },
