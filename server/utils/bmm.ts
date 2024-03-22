@@ -11,7 +11,6 @@ const auth = new Auth(
 
 export const getFraKaareTracks = async () => {
     const token = await auth.getToken();
-    console.log(token);
     const tracks = await $fetch(
         "https://bmm-api.brunstad.org/track?tags=fra-kaare&size=100",
         {
