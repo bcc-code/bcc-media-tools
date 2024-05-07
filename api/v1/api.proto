@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package api.v1;
+
+option go_package = "bcc-media-tools/gen/api/v1;apiv1";
+
+import "api/v1/common.proto";
+
+message BMMPermission {
+	repeated string languages = 1;
+	repeated string albums = 2;
+}
+
+message Permissions {
+	bool admin = 1;
+	BMMPermission bmm = 2;
+}
+
+message GetPermissionsRequest {}
+
+message SetPermissionsRequest {
+	string email = 1;
+	Permissions permissions = 2;
+}
+
+message DeletePermissionsRequest {
+	string email = 1;
+}
+
+message PermissionsList {
+	map<string, Permissions> permissions = 1;
+}
+
+message BMMYear {
+	uint32 year = 1;
+	uint32 count = 2;
+}
+
+message GetYearsResponse {
+	map<uint32, BMMYear> data = 1;
+}
+
+message GetAlbumsRequest {
+	uint32 year = 1;
+}
+
+message Album {
+	string id = 1;
+	string title = 2;
+	string cover = 4;
+	repeated string languages = 5;
+}
+
+message AlbumsList {
+	repeated Album albums = 1;
+}
+
+service APIService {
+	// Permissions
+	rpc GetPermissions (Void) returns (Permissions) {}
+	rpc UpdatePermissions (SetPermissionsRequest) returns (Void) {}
+	rpc DeletePermissions (DeletePermissionsRequest) returns (Void) {}
+	rpc ListPermissions (Void) returns (PermissionsList) {}
+
+	// BMM
+	rpc GetYears(Void) returns (GetYearsResponse) {}
+	rpc GetAlbums(GetAlbumsRequest) returns (AlbumsList) {}
+}
+
+

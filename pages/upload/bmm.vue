@@ -1,4 +1,8 @@
 <script lang="ts" setup>
+import {BccSelect} from "@bcc-code/design-library-vue";
+import { GetYearsResponse } from "~/src/gen/api/v1/api_pb";
+
+
 const form = ref<BMMSingleForm>({
     title: "",
 });
@@ -8,6 +12,7 @@ const metadataIsSet = ref(false);
 const selectedFile = ref<File | null>(null);
 
 const { me } = useMe();
+const api = useAPI();
 
 const metadata = computed(() => {
     return {
@@ -18,6 +23,8 @@ const metadata = computed(() => {
 });
 
 const uploaded = ref(false);
+
+
 </script>
 
 <template>
@@ -25,12 +32,13 @@ const uploaded = ref(false);
         class="mx-auto flex min-h-screen max-w-screen-md flex-col gap-4 rounded-lg bg-stone-300 p-4 text-black"
         v-if="me"
     >
+
         <template v-if="!uploaded">
             <BmmSingleMetadata
                 v-model="form"
                 @set="metadataIsSet = true"
-                :languages="me.bmm.languages"
-                :albums="me.bmm.albums"
+                :languages="me.bmm?.languages ?? []"
+                :albums="me.bmm?.albums ?? []"
             />
             <div
                 class="flex flex-col gap-4 p-4 transition"

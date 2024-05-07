@@ -1,5 +1,6 @@
 <script lang="ts" setup>
-import type { Permissions } from "#imports";
+import { useAPI} from "#imports";
+import { Permissions } from "~/src/gen/api/v1/api_pb";
 import {
     BccButton,
     BccFormLabel,
@@ -15,57 +16,16 @@ defineEmits<{
     remove: [];
 }>();
 
-const perms = ref<Permissions>(props.permissions);
+const perms = reactive(props.permissions);
+const api = useAPI();
 
 watch(perms, () => {
-    $fetch("/api/permissions/set", {
-        method: "PUT",
-        body: {
-            email: props.email,
-            permissions: perms.value,
-        },
-    });
+  api.updatePermissions({
+    email: props.email,
+    permissions: perms
+  });
 });
 
-const admin = computed({
-    get: () => perms.value.admin === true,
-    set: (value: boolean) => {
-        perms.value = {
-            ...perms.value,
-            admin: value,
-        };
-    },
-});
-
-const bmmAlbums = computed({
-    get() {
-        return perms.value.bmm.albums;
-    },
-    set(v) {
-        perms.value = {
-            ...perms.value,
-            bmm: {
-                ...perms.value.bmm,
-                albums: v,
-            },
-        };
-    },
-});
-
-const bmmAvailableLanguages = computed({
-    get() {
-        return perms.value.bmm.languages;
-    },
-    set(v) {
-        perms.value = {
-            ...perms.value,
-            bmm: {
-                ...perms.value.bmm,
-                languages: v,
-            },
-        };
-    },
-});
 </script>
 
 <template>
@@ -80,7 +40,7 @@ const bmmAvailableLanguages = computed({
                 <div class="flex gap-4">
                     <div>
                         <BccFormLabel>Admin</BccFormLabel>
-                        <BccToggle v-model="admin" />
+                        <BccToggle v-model="perms.admin" />
                     </div>
                 </div>
             </div>
@@ -91,14 +51,14 @@ const bmmAvailableLanguages = computed({
                         <BccFormLabel>Albums</BccFormLabel>
                         <MultiSelector
                             :available="['fra-kaare', 'romans']"
-                            v-model="bmmAlbums"
+                            v-model="perms.bmm!.albums"
                         />
                     </div>
                     <div>
                         <BccFormLabel>Languages</BccFormLabel>
                         <MultiSelector
                             :available="bmmLanguages"
-                            v-model="bmmAvailableLanguages"
+                            v-model="perms.bmm!.languages"
                         />
                     </div>
                 </div>

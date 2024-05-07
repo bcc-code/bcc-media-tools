@@ -27,3 +27,4 @@ uploads
 tmp
 
 config
+permissions.json

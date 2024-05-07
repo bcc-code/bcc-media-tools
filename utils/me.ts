@@ -1,3 +1,6 @@
+import {useAPI} from "~/utils/api";
+import {BMMPermission, Permissions} from "~/src/gen/api/v1/api_pb";
+
 export type Me = {
     admin: boolean;
     bmm: {
@@ -6,8 +9,9 @@ export type Me = {
     };
 };
 
+
 export function useMe() {
-    const me = useState<Me | null>("me", () => null);
+    const me = useState<Permissions | null>("me", () => null);
 
     const loading = useState("me-loading", () => false);
 
@@ -15,13 +19,15 @@ export function useMe() {
 
     const load = async () => {
         loading.value = true;
-        me.value = (await $fetch("/api/bmm/me", { method: "GET" })) ?? {
-            admin: false,
-            bmm: {
-                languages: [],
-                albums: [],
-            },
-        };
+        const api = useAPI()
+        const p = await api.getPermissions({})
+        if (p) {
+            me.value = p;
+        } else {
+            me.value = new Permissions()
+            me.value!.bmm = new BMMPermission()
+        }
+
         loading.value = false;
         loaded.value = true;
     };

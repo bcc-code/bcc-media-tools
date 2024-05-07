@@ -1,48 +1,42 @@
 <script lang="tsx" setup>
-import type { Permissions } from "#imports";
 import { BccButton, BccInput } from "@bcc-code/design-library-vue";
+import { Permissions } from "~/src/gen/api/v1/api_pb";
 
 const { me } = useMe();
+const api = useAPI();
 
 const permissions = ref<{
     [key: string]: Permissions;
 }>();
 
 onMounted(async () => {
-    permissions.value = await $fetch("/api/permissions/list");
+  let p = (await api.listPermissions({})).permissions
+  permissions.value = p
 });
 
 const newEmail = ref<string>();
 
 const addEmail = async () => {
     if (newEmail.value) {
-        await $fetch("/api/permissions/set", {
-            method: "PUT",
-            body: {
-                email: newEmail.value,
-                permissions: {
-                    admin: false,
-                    bmm: {
-                        albums: [],
-                        languages: [],
-                    },
-                },
-            },
-        });
-        permissions.value = await $fetch("/api/permissions/list");
-        newEmail.value = "";
+      await api.updatePermissions({
+        email: newEmail.value,
+        permissions: {
+          admin: false,
+          bmm: {
+            albums: [],
+            languages: [],
+          },
+        },
+      });
+
+      permissions.value =  (await api.listPermissions({})).permissions;
+      newEmail.value = "";
     }
 };
 
 const removeEmail = async (email: string) => {
-    await $fetch("/api/permissions/set", {
-        method: "PUT",
-        body: {
-            email,
-            permissions: null,
-        },
-    });
-    permissions.value = await $fetch("/api/permissions/list");
+  await api.deletePermissions({ email });
+  permissions.value =  (await api.listPermissions({})).permissions;
 };
 </script>
 
@@ -57,6 +51,7 @@ const removeEmail = async (email: string) => {
                     v-for="[email, perms] in Object.entries(permissions)"
                     :email="email"
                     :permissions="perms"
+                    :key="email"
                     @remove="removeEmail(email)"
                 />
                 <div class="flex">
@@ -66,4 +61,7 @@ const removeEmail = async (email: string) => {
             </div>
         </div>
     </div>
+  <div v-else>
+    <h1>You are not an admin</h1>
+  </div>
 </template>

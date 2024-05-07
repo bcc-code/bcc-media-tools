@@ -23,7 +23,7 @@ defineEmits<{
         <AlbumSelector
             v-model="albumId"
             :label="$t('album')"
-            :albums="albums"
+            :users-albums="albums"
         />
         <BmmTrackSelector
             v-if="albumId"
