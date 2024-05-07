@@ -5,3 +5,4 @@
 - [ ] Add permissions check/login check
 - [ ] Update build and deploy 
 - [ ] Serve the static parts from the golang server
+- [ ] Configure the server url/domain during build
