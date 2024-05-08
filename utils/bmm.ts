@@ -10,6 +10,6 @@ export type TrackSubType = "audiobook";
 export type BMMSingleForm = {
     title: string;
     albumId?: string;
-    trackId?: number;
+    trackId?: string;
     language?: (typeof bmmLanguages)[number];
 };

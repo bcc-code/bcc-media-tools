@@ -65,6 +65,7 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.Handle(path, handler)
+	mux.Handle("/upload", uploadHandler{})
 	_ = http.ListenAndServe(":8080",
 		h2c.NewHandler(mux, &http2.Server{}),
 	)

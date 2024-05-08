@@ -49,6 +49,12 @@ const (
 	APIServiceGetYearsProcedure = "/api.v1.APIService/GetYears"
 	// APIServiceGetAlbumsProcedure is the fully-qualified name of the APIService's GetAlbums RPC.
 	APIServiceGetAlbumsProcedure = "/api.v1.APIService/GetAlbums"
+	// APIServiceGetAlbumTracksProcedure is the fully-qualified name of the APIService's GetAlbumTracks
+	// RPC.
+	APIServiceGetAlbumTracksProcedure = "/api.v1.APIService/GetAlbumTracks"
+	// APIServiceGetPodcastTracksProcedure is the fully-qualified name of the APIService's
+	// GetPodcastTracks RPC.
+	APIServiceGetPodcastTracksProcedure = "/api.v1.APIService/GetPodcastTracks"
 )
 
 // These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
@@ -60,6 +66,8 @@ var (
 	aPIServiceListPermissionsMethodDescriptor   = aPIServiceServiceDescriptor.Methods().ByName("ListPermissions")
 	aPIServiceGetYearsMethodDescriptor          = aPIServiceServiceDescriptor.Methods().ByName("GetYears")
 	aPIServiceGetAlbumsMethodDescriptor         = aPIServiceServiceDescriptor.Methods().ByName("GetAlbums")
+	aPIServiceGetAlbumTracksMethodDescriptor    = aPIServiceServiceDescriptor.Methods().ByName("GetAlbumTracks")
+	aPIServiceGetPodcastTracksMethodDescriptor  = aPIServiceServiceDescriptor.Methods().ByName("GetPodcastTracks")
 )
 
 // APIServiceClient is a client for the api.v1.APIService service.
@@ -72,6 +80,8 @@ type APIServiceClient interface {
 	// BMM
 	GetYears(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.GetYearsResponse], error)
 	GetAlbums(context.Context, *connect.Request[v1.GetAlbumsRequest]) (*connect.Response[v1.AlbumsList], error)
+	GetAlbumTracks(context.Context, *connect.Request[v1.GetAlbumTracksRequest]) (*connect.Response[v1.TracksList], error)
+	GetPodcastTracks(context.Context, *connect.Request[v1.GetPodcastTracksRequest]) (*connect.Response[v1.TracksList], error)
 }
 
 // NewAPIServiceClient constructs a client for the api.v1.APIService service. By default, it uses
@@ -120,6 +130,18 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(aPIServiceGetAlbumsMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
+		getAlbumTracks: connect.NewClient[v1.GetAlbumTracksRequest, v1.TracksList](
+			httpClient,
+			baseURL+APIServiceGetAlbumTracksProcedure,
+			connect.WithSchema(aPIServiceGetAlbumTracksMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
+		getPodcastTracks: connect.NewClient[v1.GetPodcastTracksRequest, v1.TracksList](
+			httpClient,
+			baseURL+APIServiceGetPodcastTracksProcedure,
+			connect.WithSchema(aPIServiceGetPodcastTracksMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -131,6 +153,8 @@ type aPIServiceClient struct {
 	listPermissions   *connect.Client[v1.Void, v1.PermissionsList]
 	getYears          *connect.Client[v1.Void, v1.GetYearsResponse]
 	getAlbums         *connect.Client[v1.GetAlbumsRequest, v1.AlbumsList]
+	getAlbumTracks    *connect.Client[v1.GetAlbumTracksRequest, v1.TracksList]
+	getPodcastTracks  *connect.Client[v1.GetPodcastTracksRequest, v1.TracksList]
 }
 
 // GetPermissions calls api.v1.APIService.GetPermissions.
@@ -163,6 +187,16 @@ func (c *aPIServiceClient) GetAlbums(ctx context.Context, req *connect.Request[v
 	return c.getAlbums.CallUnary(ctx, req)
 }
 
+// GetAlbumTracks calls api.v1.APIService.GetAlbumTracks.
+func (c *aPIServiceClient) GetAlbumTracks(ctx context.Context, req *connect.Request[v1.GetAlbumTracksRequest]) (*connect.Response[v1.TracksList], error) {
+	return c.getAlbumTracks.CallUnary(ctx, req)
+}
+
+// GetPodcastTracks calls api.v1.APIService.GetPodcastTracks.
+func (c *aPIServiceClient) GetPodcastTracks(ctx context.Context, req *connect.Request[v1.GetPodcastTracksRequest]) (*connect.Response[v1.TracksList], error) {
+	return c.getPodcastTracks.CallUnary(ctx, req)
+}
+
 // APIServiceHandler is an implementation of the api.v1.APIService service.
 type APIServiceHandler interface {
 	// Permissions
@@ -173,6 +207,8 @@ type APIServiceHandler interface {
 	// BMM
 	GetYears(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.GetYearsResponse], error)
 	GetAlbums(context.Context, *connect.Request[v1.GetAlbumsRequest]) (*connect.Response[v1.AlbumsList], error)
+	GetAlbumTracks(context.Context, *connect.Request[v1.GetAlbumTracksRequest]) (*connect.Response[v1.TracksList], error)
+	GetPodcastTracks(context.Context, *connect.Request[v1.GetPodcastTracksRequest]) (*connect.Response[v1.TracksList], error)
 }
 
 // NewAPIServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -217,6 +253,18 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(aPIServiceGetAlbumsMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
+	aPIServiceGetAlbumTracksHandler := connect.NewUnaryHandler(
+		APIServiceGetAlbumTracksProcedure,
+		svc.GetAlbumTracks,
+		connect.WithSchema(aPIServiceGetAlbumTracksMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
+	aPIServiceGetPodcastTracksHandler := connect.NewUnaryHandler(
+		APIServiceGetPodcastTracksProcedure,
+		svc.GetPodcastTracks,
+		connect.WithSchema(aPIServiceGetPodcastTracksMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/api.v1.APIService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case APIServiceGetPermissionsProcedure:
@@ -231,6 +279,10 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceGetYearsHandler.ServeHTTP(w, r)
 		case APIServiceGetAlbumsProcedure:
 			aPIServiceGetAlbumsHandler.ServeHTTP(w, r)
+		case APIServiceGetAlbumTracksProcedure:
+			aPIServiceGetAlbumTracksHandler.ServeHTTP(w, r)
+		case APIServiceGetPodcastTracksProcedure:
+			aPIServiceGetPodcastTracksHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -262,4 +314,12 @@ func (UnimplementedAPIServiceHandler) GetYears(context.Context, *connect.Request
 
 func (UnimplementedAPIServiceHandler) GetAlbums(context.Context, *connect.Request[v1.GetAlbumsRequest]) (*connect.Response[v1.AlbumsList], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetAlbums is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) GetAlbumTracks(context.Context, *connect.Request[v1.GetAlbumTracksRequest]) (*connect.Response[v1.TracksList], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetAlbumTracks is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) GetPodcastTracks(context.Context, *connect.Request[v1.GetPodcastTracksRequest]) (*connect.Response[v1.TracksList], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetPodcastTracks is not implemented"))
 }

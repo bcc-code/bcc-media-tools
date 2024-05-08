@@ -449,3 +449,163 @@ export class AlbumsList extends Message<AlbumsList> {
   }
 }
 
+/**
+ * @generated from message api.v1.GetAlbumTracksRequest
+ */
+export class GetAlbumTracksRequest extends Message<GetAlbumTracksRequest> {
+  /**
+   * @generated from field: string album_id = 1;
+   */
+  albumId = "";
+
+  constructor(data?: PartialMessage<GetAlbumTracksRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.GetAlbumTracksRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "album_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetAlbumTracksRequest {
+    return new GetAlbumTracksRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetAlbumTracksRequest {
+    return new GetAlbumTracksRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetAlbumTracksRequest {
+    return new GetAlbumTracksRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetAlbumTracksRequest | PlainMessage<GetAlbumTracksRequest> | undefined, b: GetAlbumTracksRequest | PlainMessage<GetAlbumTracksRequest> | undefined): boolean {
+    return proto3.util.equals(GetAlbumTracksRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message api.v1.GetPodcastTracksRequest
+ */
+export class GetPodcastTracksRequest extends Message<GetPodcastTracksRequest> {
+  /**
+   * @generated from field: string podcast_tag = 1;
+   */
+  podcastTag = "";
+
+  /**
+   * @generated from field: uint32 limit = 2;
+   */
+  limit = 0;
+
+  constructor(data?: PartialMessage<GetPodcastTracksRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.GetPodcastTracksRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "podcast_tag", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "limit", kind: "scalar", T: 13 /* ScalarType.UINT32 */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetPodcastTracksRequest {
+    return new GetPodcastTracksRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetPodcastTracksRequest {
+    return new GetPodcastTracksRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetPodcastTracksRequest {
+    return new GetPodcastTracksRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetPodcastTracksRequest | PlainMessage<GetPodcastTracksRequest> | undefined, b: GetPodcastTracksRequest | PlainMessage<GetPodcastTracksRequest> | undefined): boolean {
+    return proto3.util.equals(GetPodcastTracksRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message api.v1.BMMTrack
+ */
+export class BMMTrack extends Message<BMMTrack> {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  /**
+   * @generated from field: string title = 2;
+   */
+  title = "";
+
+  constructor(data?: PartialMessage<BMMTrack>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.BMMTrack";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "title", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): BMMTrack {
+    return new BMMTrack().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): BMMTrack {
+    return new BMMTrack().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): BMMTrack {
+    return new BMMTrack().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: BMMTrack | PlainMessage<BMMTrack> | undefined, b: BMMTrack | PlainMessage<BMMTrack> | undefined): boolean {
+    return proto3.util.equals(BMMTrack, a, b);
+  }
+}
+
+/**
+ * @generated from message api.v1.TracksList
+ */
+export class TracksList extends Message<TracksList> {
+  /**
+   * @generated from field: repeated api.v1.BMMTrack tracks = 1;
+   */
+  tracks: BMMTrack[] = [];
+
+  constructor(data?: PartialMessage<TracksList>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.TracksList";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "tracks", kind: "message", T: BMMTrack, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): TracksList {
+    return new TracksList().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): TracksList {
+    return new TracksList().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): TracksList {
+    return new TracksList().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: TracksList | PlainMessage<TracksList> | undefined, b: TracksList | PlainMessage<TracksList> | undefined): boolean {
+    return proto3.util.equals(TracksList, a, b);
+  }
+}
+

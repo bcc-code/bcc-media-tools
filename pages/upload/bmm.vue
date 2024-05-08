@@ -1,8 +1,4 @@
 <script lang="ts" setup>
-import {BccSelect} from "@bcc-code/design-library-vue";
-import { GetYearsResponse } from "~/src/gen/api/v1/api_pb";
-
-
 const form = ref<BMMSingleForm>({
     title: "",
 });
@@ -52,7 +48,7 @@ const uploaded = ref(false);
                 <SelectFile v-model="selectedFile" />
                 <FileUploader
                     v-model="selectedFile"
-                    endpoint="/api/files/upload/bmm"
+                    endpoint="/upload/bmm"
                     :metadata="metadata"
                     @uploaded="uploaded = true"
                 />

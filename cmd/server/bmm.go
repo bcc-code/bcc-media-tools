@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-resty/resty/v2"
+	"net/url"
 	"strconv"
 	"time"
 )
@@ -88,6 +89,7 @@ func debugResponse(resp *resty.Response) {
 	// Explore trace info
 	fmt.Println("Request Trace Info:")
 	ti := resp.Request.TraceInfo()
+	fmt.Println("  URL           :", resp.Request.URL)
 	fmt.Println("  DNSLookup     :", ti.DNSLookup)
 	fmt.Println("  ConnTime      :", ti.ConnTime)
 	fmt.Println("  TCPConnTime   :", ti.TCPConnTime)
@@ -159,7 +161,14 @@ func (a BMMApi) GetYears(_ context.Context, req *connect.Request[apiv1.Void]) (*
 	return connect.NewResponse(out), nil
 }
 
-type BMMAlbum struct {
+type Meta struct {
+	ContainedTypes []string  `json:"contained_types"`
+	IsVisible      bool      `json:"is_visible"`
+	ModifiedAt     time.Time `json:"modified_at"`
+	ModifiedBy     string    `json:"modified_by"`
+}
+
+type BMMItem struct {
 	Meta      Meta        `json:"_meta"`
 	BmmID     interface{} `json:"bmm_id"`
 	Cover     string      `json:"cover"`
@@ -171,26 +180,20 @@ type BMMAlbum struct {
 	Language    string    `json:"language"`
 	Title       string    `json:"title"`
 	Type        string    `json:"type"`
-}
-
-type Meta struct {
-	ContainedTypes []string  `json:"contained_types"`
-	IsVisible      bool      `json:"is_visible"`
-	ModifiedAt     time.Time `json:"modified_at"`
-	ModifiedBy     string    `json:"modified_by"`
+	Tracks      []BMMItem `json:"children"`
 }
 
 func (a BMMApi) GetAlbums(_ context.Context, req *connect.Request[apiv1.GetAlbumsRequest]) (*connect.Response[apiv1.AlbumsList], error) {
 	albumsReq := a.client.R().
 		SetAuthToken(a.token.GetAccessToken()).
-		SetResult(&[]BMMAlbum{})
+		SetResult(&[]BMMItem{})
 
 	albumsResponse, err := albumsReq.Get(fmt.Sprintf("/album/published/%d/", req.Msg.Year))
 	if err != nil {
 		return nil, err
 	}
 
-	albums := albumsResponse.Result().(*[]BMMAlbum)
+	albums := albumsResponse.Result().(*[]BMMItem)
 	out := &apiv1.AlbumsList{
 		Albums: make([]*apiv1.Album, len(*albums)),
 	}
@@ -205,4 +208,49 @@ func (a BMMApi) GetAlbums(_ context.Context, req *connect.Request[apiv1.GetAlbum
 	}
 
 	return connect.NewResponse(out), nil
+}
+
+func (a BMMApi) GetAlbumTracks(_ context.Context, req *connect.Request[apiv1.GetAlbumTracksRequest]) (*connect.Response[apiv1.TracksList], error) {
+	tracksReq := a.client.R().
+		SetAuthToken(a.token.GetAccessToken()).
+		SetResult(&BMMItem{})
+
+	res, err := tracksReq.Get(fmt.Sprintf("/album/%s", req.Msg.AlbumId))
+	print(string(res.Body()))
+	if err != nil {
+		return nil, err
+	}
+
+	album := res.Result().(*BMMItem)
+
+	tracks := &apiv1.TracksList{}
+	for _, track := range album.Tracks {
+		tracks.Tracks = append(tracks.Tracks, &apiv1.BMMTrack{
+			Id:    strconv.Itoa(track.ID),
+			Title: track.Title,
+		})
+	}
+
+	return connect.NewResponse(tracks), nil
+}
+
+func (a BMMApi) GetPodcastTracks(_ context.Context, req *connect.Request[apiv1.GetPodcastTracksRequest]) (*connect.Response[apiv1.TracksList], error) {
+	tracksReq := a.client.R().
+		SetAuthToken(a.token.GetAccessToken()).SetResult(&[]BMMItem{})
+
+	res, err := tracksReq.Get(fmt.Sprintf("/track?tags=%s&size=%d", url.QueryEscape(req.Msg.PodcastTag), req.Msg.Limit))
+	if err != nil {
+		return nil, err
+	}
+
+	tracks := *(res.Result().(*[]BMMItem))
+	tracksOut := &apiv1.TracksList{}
+	for _, track := range tracks {
+		tracksOut.Tracks = append(tracksOut.Tracks, &apiv1.BMMTrack{
+			Id:    strconv.Itoa(track.ID),
+			Title: track.Title,
+		})
+	}
+
+	return connect.NewResponse(tracksOut), nil
 }

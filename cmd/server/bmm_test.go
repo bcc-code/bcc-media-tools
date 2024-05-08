@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
@@ -19,4 +20,17 @@ func Test_getToken(t *testing.T) {
 	res, err := getToken(tokenBaseURL, clientID, clientSecret, audience)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, res)
+}
+
+func Test_UnmarshallAlbumWithTracks(t *testing.T) {
+	data, err := os.ReadFile("testdata/album_with_tracks.json")
+	assert.NoError(t, err)
+
+	album := &BMMItem{}
+	err = json.Unmarshal(data, album)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, album)
+
+	assert.Equal(t, "album", album.Type)
+	assert.Equal(t, 6, len(album.Tracks))
 }

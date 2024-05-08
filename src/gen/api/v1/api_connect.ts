@@ -4,7 +4,7 @@
 // @ts-nocheck
 
 import { Void } from "./common_pb.js";
-import { AlbumsList, DeletePermissionsRequest, GetAlbumsRequest, GetYearsResponse, Permissions, PermissionsList, SetPermissionsRequest } from "./api_pb.js";
+import { AlbumsList, DeletePermissionsRequest, GetAlbumsRequest, GetAlbumTracksRequest, GetPodcastTracksRequest, GetYearsResponse, Permissions, PermissionsList, SetPermissionsRequest, TracksList } from "./api_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -69,6 +69,24 @@ export const APIService = {
       name: "GetAlbums",
       I: GetAlbumsRequest,
       O: AlbumsList,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc api.v1.APIService.GetAlbumTracks
+     */
+    getAlbumTracks: {
+      name: "GetAlbumTracks",
+      I: GetAlbumTracksRequest,
+      O: TracksList,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc api.v1.APIService.GetPodcastTracks
+     */
+    getPodcastTracks: {
+      name: "GetPodcastTracks",
+      I: GetPodcastTracksRequest,
+      O: TracksList,
       kind: MethodKind.Unary,
     },
   }
