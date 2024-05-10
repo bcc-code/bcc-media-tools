@@ -2,5 +2,7 @@ node_modules
 .git
 .gitignore
 *.md
-.output
-.nuxt
+./frontend/.output
+./frontend/.nuxt
+./frontend/node_modules
+

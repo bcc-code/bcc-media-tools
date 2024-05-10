@@ -86,6 +86,13 @@ func main() {
 		BMMApi:         *bmmApi,
 	}
 
+	staticFilePath := "/static/"
+	if os.Getenv("STATIC_FILE_PATH") != "" {
+		staticFilePath = os.Getenv("STATIC_FILE_PATH")
+	}
+
+	fs := http.FileServer(http.Dir(staticFilePath))
+
 	path, handler := apiv1connect.NewAPIServiceHandler(api)
 
 	handler = withCORS(handler)
@@ -95,6 +102,8 @@ func main() {
 	mux.Handle("/upload", uploadHandler{
 		TemporalClient: temporalClient,
 	})
+	mux.Handle("/", fs)
+
 	_ = http.ListenAndServe(":8080",
 		h2c.NewHandler(mux, &http2.Server{}),
 	)
