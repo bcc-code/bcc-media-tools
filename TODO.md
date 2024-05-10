@@ -5,6 +5,6 @@
     - [ ] Remove Mediabanken serverr parts
 - [x] Move JS and go into separate folders
 - [x] Add permissions check/login check
-- [ ] Update build and deploy 
+- [x] Update build and deploy
 - [x] Build frontend as static files
 - [x] Configure the server url/domain during build
