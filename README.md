@@ -99,3 +99,13 @@ Regenerate api code:
 buf generate
 ```
 
+#### Working with the API
+
+The api is defined in `api/api.proto`. 
+The definitions are written in protobuf, and the code is generated using `buf` and `protoc-gen-connect-go`.
+
+More information can be found at:
+
+* [ConnectRPC](https://connectrpc.com/)
+* [Protobuf 3](https://protobuf.dev/programming-guides/proto3/)
+* [gRPC](https://grpc.io/docs/languages/go/basics/)
