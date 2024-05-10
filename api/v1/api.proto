@@ -9,6 +9,8 @@ import "api/v1/common.proto";
 message BMMPermission {
 	repeated string languages = 1;
 	repeated string albums = 2;
+	repeated string podcasts = 3;
+	bool admin = 4;
 }
 
 message Permissions {

@@ -48,6 +48,10 @@ watch(perms, () => {
                 <h3>BMM</h3>
                 <div class="flex gap-4">
                     <div>
+                      <BccFormLabel>BMM Admin</BccFormLabel>
+                      <BccToggle v-model="perms!.bmm!.admin" />
+                    </div>
+                    <div>
                         <BccFormLabel>Albums</BccFormLabel>
                         <MultiSelector
                             :available="['fra-kaare', 'romans']"

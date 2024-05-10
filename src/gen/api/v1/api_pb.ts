@@ -20,6 +20,16 @@ export class BMMPermission extends Message<BMMPermission> {
    */
   albums: string[] = [];
 
+  /**
+   * @generated from field: repeated string podcasts = 3;
+   */
+  podcasts: string[] = [];
+
+  /**
+   * @generated from field: bool admin = 4;
+   */
+  admin = false;
+
   constructor(data?: PartialMessage<BMMPermission>) {
     super();
     proto3.util.initPartial(data, this);
@@ -30,6 +40,8 @@ export class BMMPermission extends Message<BMMPermission> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "languages", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 2, name: "albums", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 3, name: "podcasts", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 4, name: "admin", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): BMMPermission {

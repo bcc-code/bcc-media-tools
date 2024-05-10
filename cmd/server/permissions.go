@@ -18,11 +18,7 @@ func (_ PermissionsAPI) GetPermissions(_ context.Context, req *connect.Request[a
 		return nil, connect.NewError(400, fmt.Errorf("missing email header"))
 	}
 
-	permissions, err := PermissionsForEmail(email)
-	if err != nil {
-		return nil, connect.NewError(500, err)
-	}
-
+	permissions := PermissionsForEmail(email)
 	res := connect.NewResponse(permissions)
 	return res, nil
 }
@@ -35,11 +31,6 @@ func (_ PermissionsAPI) UpdatePermissions(_ context.Context, req *connect.Reques
 	permissions, err := readPermissionsFile()
 	if err != nil {
 		return nil, connect.NewError(500, err)
-	}
-
-	req.Msg.Permissions.Bmm = &apiv1.BMMPermission{
-		Albums:    make([]string, 0),
-		Languages: make([]string, 0),
 	}
 
 	permissions[req.Msg.Email] = req.Msg.Permissions
@@ -119,14 +110,12 @@ func writePermissionsFile(permissions map[string]*apiv1.Permissions) error {
 	return nil
 }
 
-func PermissionsForEmail(email string) (*apiv1.Permissions, error) {
-	permissions, err := readPermissionsFile()
-	if err != nil {
-		return nil, err
-	}
-
-	if perms, ok := permissions[email]; ok {
-		return perms, nil
+func PermissionsForEmail(email string) *apiv1.Permissions {
+	permissions, _ := readPermissionsFile()
+	if permissions != nil {
+		if perms, ok := permissions[email]; ok {
+			return perms
+		}
 	}
 
 	return &apiv1.Permissions{
@@ -134,20 +123,12 @@ func PermissionsForEmail(email string) (*apiv1.Permissions, error) {
 		Bmm: &apiv1.BMMPermission{
 			Albums:    make([]string, 0),
 			Languages: make([]string, 0),
+			Admin:     false,
 		},
-	}, nil
+	}
 }
 
 func IsAdmin[T any](req *connect.Request[T]) bool {
 	email := getEmail(req)
-	if email == "" {
-		return false
-	}
-
-	permissions, err := PermissionsForEmail(email)
-	if err != nil {
-		return false
-	}
-
-	return permissions.Admin
+	return PermissionsForEmail(email).Admin
 }

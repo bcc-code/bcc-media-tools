@@ -25,6 +25,7 @@ const addEmail = async () => {
           bmm: {
             albums: [],
             languages: [],
+            admin: false,
           },
         },
       });

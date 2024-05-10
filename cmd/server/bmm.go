@@ -11,123 +11,11 @@ import (
 	"time"
 )
 
-type BMMApi struct {
-	client *resty.Client
-	token  *BMMToken
-}
-
-func getToken(tokenBaseURL, clientID, clientSecret, audience string) (*BMMToken, error) {
-	r := resty.New()
-	r.BaseURL = tokenBaseURL
-	res, err := r.R().SetBody(map[string]string{
-		"client_id":     clientID,
-		"client_secret": clientSecret,
-		"audience":      audience,
-		"grant_type":    "client_credentials",
-	}).SetResult(&BMMToken{}).Post("/oauth/token")
-
-	if err != nil {
-		return nil, err
-	}
-
-	token := res.Result().(*BMMToken)
-	token.CreatedAt = time.Now()
-
-	return token, nil
-}
-
-func NewBMMToken(tokenBaseURL, clientID, clientSecret, audience string) (*BMMToken, error) {
-	t, err := getToken(tokenBaseURL, clientID, clientSecret, audience)
-	if err != nil {
-		return nil, err
-	}
-
-	t.tokenBaseURL = tokenBaseURL
-	t.clientID = clientID
-	t.clientSecret = clientSecret
-	t.audience = audience
-
-	return t, nil
-}
-
-type BMMToken struct {
-	AccessToken string `json:"access_token"`
-	Scope       string `json:"scope"`
-	ExpiresIn   int    `json:"expires_in"`
-	TokenType   string `json:"token_type"`
-	CreatedAt   time.Time
-
-	tokenBaseURL string
-	clientID     string
-	clientSecret string
-	audience     string
-}
-
-func (t *BMMToken) GetAccessToken() string {
-	if t.Expired() {
-		err := t.Refresh()
-		if err != nil {
-			// TODO: Maybe not panic?
-			panic(err)
-		}
-	}
-
-	return t.AccessToken
-}
-
-func debugResponse(resp *resty.Response) {
-	// Explore response object
-	fmt.Println("Response Info:")
-	fmt.Println("  Status Code:", resp.StatusCode())
-	fmt.Println("  Status     :", resp.Status())
-	fmt.Println("  Proto      :", resp.Proto())
-	fmt.Println("  Time       :", resp.Time())
-	fmt.Println("  Received At:", resp.ReceivedAt())
-	fmt.Println("  Body       :\n", resp)
-	fmt.Println()
-
-	// Explore trace info
-	fmt.Println("Request Trace Info:")
-	ti := resp.Request.TraceInfo()
-	fmt.Println("  URL           :", resp.Request.URL)
-	fmt.Println("  DNSLookup     :", ti.DNSLookup)
-	fmt.Println("  ConnTime      :", ti.ConnTime)
-	fmt.Println("  TCPConnTime   :", ti.TCPConnTime)
-	fmt.Println("  TLSHandshake  :", ti.TLSHandshake)
-	fmt.Println("  ServerTime    :", ti.ServerTime)
-	fmt.Println("  ResponseTime  :", ti.ResponseTime)
-	fmt.Println("  TotalTime     :", ti.TotalTime)
-	fmt.Println("  IsConnReused  :", ti.IsConnReused)
-	fmt.Println("  IsConnWasIdle :", ti.IsConnWasIdle)
-	fmt.Println("  ConnIdleTime  :", ti.ConnIdleTime)
-	fmt.Println("  RequestAttempt:", ti.RequestAttempt)
-	fmt.Println("  RemoteAddr    :", ti.RemoteAddr.String())
-}
-
-func (t *BMMToken) Expired() bool {
-	return time.Since(t.CreatedAt)+10*time.Second > time.Duration(t.ExpiresIn)
-}
-
-func (t *BMMToken) Refresh() error {
-	newToken, err := getToken(t.tokenBaseURL, t.clientID, t.clientSecret, t.audience)
-	if err != nil {
-		return err
-	}
-
-	t.AccessToken = newToken.AccessToken
-	t.Scope = newToken.Scope
-	t.ExpiresIn = newToken.ExpiresIn
-	t.TokenType = newToken.TokenType
-	t.CreatedAt = time.Now()
-
-	return nil
-}
-
 func NewBMMApi(baseURL string, token *BMMToken) *BMMApi {
 	b := &BMMApi{}
 	b.client = resty.New()
 	b.client.BaseURL = baseURL
-	b.client.SetHeader("Accept-Language", "en")
+	b.client.SetHeader("Accept-Language", "nb")
 	b.token = token
 
 	return b
@@ -139,6 +27,9 @@ type bmmYear struct {
 }
 
 func (a BMMApi) GetYears(_ context.Context, req *connect.Request[apiv1.Void]) (*connect.Response[apiv1.GetYearsResponse], error) {
+	if !PermissionsForEmail(getEmail(req)).CanUpload() {
+		return nil, connect.NewError(403, fmt.Errorf("not authorized"))
+	}
 	yearReq := a.client.R().
 		SetAuthToken(a.token.GetAccessToken()).
 		SetResult(&[]bmmYear{})
@@ -184,6 +75,10 @@ type BMMItem struct {
 }
 
 func (a BMMApi) GetAlbums(_ context.Context, req *connect.Request[apiv1.GetAlbumsRequest]) (*connect.Response[apiv1.AlbumsList], error) {
+	if !PermissionsForEmail(getEmail(req)).CanUpload() {
+		return nil, connect.NewError(403, fmt.Errorf("not authorized"))
+	}
+
 	albumsReq := a.client.R().
 		SetAuthToken(a.token.GetAccessToken()).
 		SetResult(&[]BMMItem{})
@@ -211,6 +106,10 @@ func (a BMMApi) GetAlbums(_ context.Context, req *connect.Request[apiv1.GetAlbum
 }
 
 func (a BMMApi) GetAlbumTracks(_ context.Context, req *connect.Request[apiv1.GetAlbumTracksRequest]) (*connect.Response[apiv1.TracksList], error) {
+	if !PermissionsForEmail(getEmail(req)).CanUpload() {
+		return nil, connect.NewError(403, fmt.Errorf("not authorized"))
+	}
+
 	tracksReq := a.client.R().
 		SetAuthToken(a.token.GetAccessToken()).
 		SetResult(&BMMItem{})
@@ -235,6 +134,10 @@ func (a BMMApi) GetAlbumTracks(_ context.Context, req *connect.Request[apiv1.Get
 }
 
 func (a BMMApi) GetPodcastTracks(_ context.Context, req *connect.Request[apiv1.GetPodcastTracksRequest]) (*connect.Response[apiv1.TracksList], error) {
+	if !PermissionsForEmail(getEmail(req)).CanUpload() {
+		return nil, connect.NewError(403, fmt.Errorf("not authorized"))
+	}
+
 	tracksReq := a.client.R().
 		SetAuthToken(a.token.GetAccessToken()).SetResult(&[]BMMItem{})
 

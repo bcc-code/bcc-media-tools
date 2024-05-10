@@ -2,6 +2,8 @@ package main
 
 import (
 	"bcc-media-tools/gen/api/v1/apiv1connect"
+	"fmt"
+	"go.temporal.io/sdk/client"
 	"net/http"
 	"os"
 
@@ -13,6 +15,10 @@ import (
 	"golang.org/x/net/http2/h2c"
 )
 
+// EmailHeader is added by the Proxy server
+//
+// The server handles all authentication, so we can trust that the email is authenticated,
+// and we can use it to look up permissions.
 const EmailHeader = "x-token-user-email"
 
 func getEmail[T any](req *connect.Request[T]) string {
@@ -39,6 +45,13 @@ func withCORS(connectHandler http.Handler) http.Handler {
 	return c.Handler(connectHandler)
 }
 
+func NewTemporalClient(host, namespace string) (client.Client, error) {
+	return client.Dial(client.Options{
+		HostPort:  host,
+		Namespace: namespace,
+	})
+}
+
 func main() {
 	bmmToken, err := NewBMMToken(
 		os.Getenv("BMM_AUTH0_BASE_URL"),
@@ -46,6 +59,17 @@ func main() {
 		os.Getenv("BMM_CLIENT_SECRET"),
 		os.Getenv("BMM_AUDIENCE"),
 	)
+
+	temporalClient, err := NewTemporalClient(
+		os.Getenv("TEMPORAL_HOST_PORT"),
+		os.Getenv("TEMPORAL_NAMESPACE"),
+	)
+
+	tempPath := os.Getenv("TEMP_PATH")
+	if tempPath == "" {
+		tempPath = os.TempDir()
+		fmt.Printf("TEMP_PATH not set, using %s\n", tempPath)
+	}
 
 	if err != nil {
 		panic(err)
@@ -65,7 +89,9 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.Handle(path, handler)
-	mux.Handle("/upload", uploadHandler{})
+	mux.Handle("/upload", uploadHandler{
+		TemporalClient: temporalClient,
+	})
 	_ = http.ListenAndServe(":8080",
 		h2c.NewHandler(mux, &http2.Server{}),
 	)

@@ -14,7 +14,7 @@ const podcastTags = ref<string[]>(['fra-kaare']);
 
 const selectedYear = ref<string>('2024');
 const selectedType = ref<string>('podcasts');
-const value = defineModel<string>('fra-kaare')
+const value = defineModel<string>()
 
 watch(selectedYear, async (newYear) => {
   albums.value = {}

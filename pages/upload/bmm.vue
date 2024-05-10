@@ -48,7 +48,7 @@ const uploaded = ref(false);
                 <SelectFile v-model="selectedFile" />
                 <FileUploader
                     v-model="selectedFile"
-                    endpoint="/upload/bmm"
+                    endpoint="http://localhost:8080/upload"
                     :metadata="metadata"
                     @uploaded="uploaded = true"
                 />
