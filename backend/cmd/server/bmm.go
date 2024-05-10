@@ -115,7 +115,6 @@ func (a BMMApi) GetAlbumTracks(_ context.Context, req *connect.Request[apiv1.Get
 		SetResult(&BMMItem{})
 
 	res, err := tracksReq.Get(fmt.Sprintf("/album/%s", req.Msg.AlbumId))
-	print(string(res.Body()))
 	if err != nil {
 		return nil, err
 	}

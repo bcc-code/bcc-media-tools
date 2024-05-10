@@ -5,7 +5,7 @@ export default defineNuxtConfig({
         shim: false,
     },
     devtools: { enabled: false },
-    ssr: false,
+    ssr: true,
     css: ["~/assets/css/main.css"],
     app: {
         head: {
@@ -24,14 +24,6 @@ export default defineNuxtConfig({
             autoprefixer: {},
         },
     },
-    imports: {
-        presets: [
-            {
-                from: "@auth0/auth0-vue",
-                imports: ["useAuth0"],
-            },
-        ],
-    },
     nitro: {
         preset: "node-server",
     },
@@ -40,23 +32,6 @@ export default defineNuxtConfig({
             cantemo: {
                 authToken: "",
                 baseUrl: "",
-            },
-            tempDrivePath: "",
-            auth0: {
-                domain: "login.bcc.no",
-                clientId: "",
-                clientSecret: "",
-            },
-            bmm: {
-                audience: "",
-            },
-            configDir: "./config",
-            temporalTriggerUrl: "https://temporal-trigger.lan.bcc.media",
-        },
-        public: {
-            auth: {
-                domain: "login.bcc.no",
-                clientId: "iaDsfutxWw4eoRHHVryW65JHd49kXaP0",
             },
         },
     },
