@@ -1,8 +1,9 @@
 package main
 
 import (
-	"bcc-media-tools/gen/api/v1/apiv1connect"
+	"bcc-media-tools/api/v1/apiv1connect"
 	"fmt"
+	"github.com/joho/godotenv"
 	"go.temporal.io/sdk/client"
 	"net/http"
 	"os"
@@ -53,6 +54,8 @@ func NewTemporalClient(host, namespace string) (client.Client, error) {
 }
 
 func main() {
+	_ = godotenv.Load()
+
 	bmmToken, err := NewBMMToken(
 		os.Getenv("BMM_AUTH0_BASE_URL"),
 		os.Getenv("BMM_CLIENT_ID"),

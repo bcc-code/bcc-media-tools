@@ -1,6 +1,6 @@
 <script lang="tsx" setup>
 import { BccFormLabel } from "@bcc-code/design-library-vue";
-import { BMMTrack } from "~/src/gen/api/v1/api_pb";
+import { BMMTrack } from "../../src/gen/api/v1/api_pb";
 
 
 const tracks = ref<BMMTrack[]>();

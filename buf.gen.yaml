@@ -1,16 +1,16 @@
 version: v1
 plugins:
   - plugin: go
-    out: gen
+    out: backend
     opt: paths=source_relative
   - plugin: connect-go
-    out: gen
+    out: backend
     opt: paths=source_relative
   - plugin: es
-    out: src/gen
+    out: frontend/src/gen
     opt:
       - target=ts
   - plugin: connect-es
-    out: src/gen
+    out: frontend/src/gen
     opt:
       - target=ts

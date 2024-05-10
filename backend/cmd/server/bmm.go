@@ -1,7 +1,7 @@
 package main
 
 import (
-	apiv1 "bcc-media-tools/gen/api/v1"
+	apiv1 "bcc-media-tools/api/v1"
 	"connectrpc.com/connect"
 	"context"
 	"fmt"

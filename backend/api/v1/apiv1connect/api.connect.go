@@ -5,7 +5,7 @@
 package apiv1connect
 
 import (
-	v1 "bcc-media-tools/gen/api/v1"
+	v1 "bcc-media-tools/api/v1"
 	connect "connectrpc.com/connect"
 	context "context"
 	errors "errors"

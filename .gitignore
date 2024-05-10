@@ -27,4 +27,4 @@ uploads
 tmp
 
 config
-permissions.json
+backend/permissions.json

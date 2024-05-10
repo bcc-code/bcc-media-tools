@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { BccSelect } from "@bcc-code/design-library-vue";
-import {BMMYear} from "~/src/gen/api/v1/api_pb";
+import {BMMYear} from "../src/gen/api/v1/api_pb";
 
 const props = defineProps<{
     usersAlbums: readonly string[];

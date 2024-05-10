@@ -1,6 +1,6 @@
 <script lang="tsx" setup>
 import { BccButton, BccInput } from "@bcc-code/design-library-vue";
-import { Permissions } from "~/src/gen/api/v1/api_pb";
+import { Permissions } from "../src/gen/api/v1/api_pb";
 
 const { me } = useMe();
 const api = useAPI();

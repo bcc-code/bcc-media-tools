@@ -1,6 +1,5 @@
 <script lang="ts" setup>
-import { useAPI} from "#imports";
-import { Permissions } from "~/src/gen/api/v1/api_pb";
+import { Permissions } from "../src/gen/api/v1/api_pb";
 import {
     BccButton,
     BccFormLabel,
