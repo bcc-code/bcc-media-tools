@@ -3,7 +3,7 @@
         <NuxtLink to="/upload/bmm" class="rounded bg-slate-700 p-2"
             >BMM Upload</NuxtLink
         >
-        <NuxtLink to="/transcription" class="rounded bg-slate-700 p-2"
+        <NuxtLink v-if="false" to="/transcription" class="rounded bg-slate-700 p-2"
             >Transcription</NuxtLink
         >
     </div>
