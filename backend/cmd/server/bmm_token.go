@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"github.com/go-resty/resty/v2"
+	"os"
 	"time"
 )
 
@@ -11,6 +13,15 @@ type BMMApi struct {
 }
 
 func getToken(tokenBaseURL, clientID, clientSecret, audience string) (*BMMToken, error) {
+	if os.Getenv("BMM_DEBUG_TOKEN") != "" {
+		fmt.Printf("WARNING: Using DEBUG token. Expired token will not be automatically refreshed\n")
+		return &BMMToken{
+			AccessToken: os.Getenv("BMM_DEBUG_TOKEN"),
+			ExpiresIn:   24 * 60 * 60,
+			CreatedAt:   time.Now(),
+		}, nil
+	}
+
 	r := resty.New()
 	r.BaseURL = tokenBaseURL
 	res, err := r.R().SetBody(map[string]string{
