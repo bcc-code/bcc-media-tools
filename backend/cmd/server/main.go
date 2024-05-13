@@ -33,6 +33,7 @@ func getEmail[T any](req *connect.Request[T]) string {
 type ApiServer struct {
 	PermissionsAPI
 	BMMApi
+	TranscriptionAPI
 }
 
 func withCORS(connectHandler http.Handler) http.Handler {
@@ -80,10 +81,12 @@ func main() {
 
 	permissionsApi := PermissionsAPI{}
 	bmmApi := NewBMMApi(os.Getenv("BMM_BASE_URL"), bmmToken)
+	transcriptionAPI := NewTranscriptionAPI(os.Getenv("CANTEMO_URL"), os.Getenv("CANTEMO_TOKEN"))
 
 	api := &ApiServer{
-		PermissionsAPI: permissionsApi,
-		BMMApi:         *bmmApi,
+		PermissionsAPI:   permissionsApi,
+		BMMApi:           *bmmApi,
+		TranscriptionAPI: *transcriptionAPI,
 	}
 
 	staticFilePath := "/static/"

@@ -5,10 +5,12 @@ go 1.22
 require (
 	connectrpc.com/connect v1.16.1
 	connectrpc.com/cors v0.1.0
-	github.com/bcc-code/bcc-media-flows v0.0.0-20240503094224-23eb96ff41e7
+	github.com/bcc-code/bcc-media-flows v0.0.0-20240513202124-54eb92819dc0
 	github.com/go-resty/resty/v2 v2.12.0
 	github.com/google/uuid v1.6.0
+	github.com/joho/godotenv v1.5.1
 	github.com/rs/cors v1.11.0
+	github.com/samber/lo v1.39.0
 	github.com/stretchr/testify v1.9.0
 	go.temporal.io/sdk v1.26.1
 	golang.org/x/net v0.24.0
@@ -79,7 +81,6 @@ require (
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/jlaffaye/ftp v0.2.0 // indirect
-	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.5 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
@@ -96,7 +97,6 @@ require (
 	github.com/redis/go-redis/v9 v9.2.1 // indirect
 	github.com/robfig/cron v1.2.0 // indirect
 	github.com/rs/zerolog v1.31.0 // indirect
-	github.com/samber/lo v1.38.1 // indirect
 	github.com/sendgrid/rest v2.6.9+incompatible // indirect
 	github.com/sendgrid/sendgrid-go v3.14.0+incompatible // indirect
 	github.com/sony/gobreaker v0.5.0 // indirect

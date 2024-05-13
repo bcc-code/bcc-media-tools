@@ -45,6 +45,11 @@ const (
 	// APIServiceListPermissionsProcedure is the fully-qualified name of the APIService's
 	// ListPermissions RPC.
 	APIServiceListPermissionsProcedure = "/api.v1.APIService/ListPermissions"
+	// APIServiceGetTranscriptionProcedure is the fully-qualified name of the APIService's
+	// GetTranscription RPC.
+	APIServiceGetTranscriptionProcedure = "/api.v1.APIService/GetTranscription"
+	// APIServiceGetPreviewProcedure is the fully-qualified name of the APIService's GetPreview RPC.
+	APIServiceGetPreviewProcedure = "/api.v1.APIService/GetPreview"
 	// APIServiceGetYearsProcedure is the fully-qualified name of the APIService's GetYears RPC.
 	APIServiceGetYearsProcedure = "/api.v1.APIService/GetYears"
 	// APIServiceGetAlbumsProcedure is the fully-qualified name of the APIService's GetAlbums RPC.
@@ -64,6 +69,8 @@ var (
 	aPIServiceUpdatePermissionsMethodDescriptor = aPIServiceServiceDescriptor.Methods().ByName("UpdatePermissions")
 	aPIServiceDeletePermissionsMethodDescriptor = aPIServiceServiceDescriptor.Methods().ByName("DeletePermissions")
 	aPIServiceListPermissionsMethodDescriptor   = aPIServiceServiceDescriptor.Methods().ByName("ListPermissions")
+	aPIServiceGetTranscriptionMethodDescriptor  = aPIServiceServiceDescriptor.Methods().ByName("GetTranscription")
+	aPIServiceGetPreviewMethodDescriptor        = aPIServiceServiceDescriptor.Methods().ByName("GetPreview")
 	aPIServiceGetYearsMethodDescriptor          = aPIServiceServiceDescriptor.Methods().ByName("GetYears")
 	aPIServiceGetAlbumsMethodDescriptor         = aPIServiceServiceDescriptor.Methods().ByName("GetAlbums")
 	aPIServiceGetAlbumTracksMethodDescriptor    = aPIServiceServiceDescriptor.Methods().ByName("GetAlbumTracks")
@@ -77,6 +84,9 @@ type APIServiceClient interface {
 	UpdatePermissions(context.Context, *connect.Request[v1.SetPermissionsRequest]) (*connect.Response[v1.Void], error)
 	DeletePermissions(context.Context, *connect.Request[v1.DeletePermissionsRequest]) (*connect.Response[v1.Void], error)
 	ListPermissions(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.PermissionsList], error)
+	// Transcriptions
+	GetTranscription(context.Context, *connect.Request[v1.GetTranscriptionReqest]) (*connect.Response[v1.Transcription], error)
+	GetPreview(context.Context, *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error)
 	// BMM
 	GetYears(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.GetYearsResponse], error)
 	GetAlbums(context.Context, *connect.Request[v1.GetAlbumsRequest]) (*connect.Response[v1.AlbumsList], error)
@@ -118,6 +128,18 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(aPIServiceListPermissionsMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
+		getTranscription: connect.NewClient[v1.GetTranscriptionReqest, v1.Transcription](
+			httpClient,
+			baseURL+APIServiceGetTranscriptionProcedure,
+			connect.WithSchema(aPIServiceGetTranscriptionMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
+		getPreview: connect.NewClient[v1.GetPreviewRequest, v1.Preview](
+			httpClient,
+			baseURL+APIServiceGetPreviewProcedure,
+			connect.WithSchema(aPIServiceGetPreviewMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
 		getYears: connect.NewClient[v1.Void, v1.GetYearsResponse](
 			httpClient,
 			baseURL+APIServiceGetYearsProcedure,
@@ -151,6 +173,8 @@ type aPIServiceClient struct {
 	updatePermissions *connect.Client[v1.SetPermissionsRequest, v1.Void]
 	deletePermissions *connect.Client[v1.DeletePermissionsRequest, v1.Void]
 	listPermissions   *connect.Client[v1.Void, v1.PermissionsList]
+	getTranscription  *connect.Client[v1.GetTranscriptionReqest, v1.Transcription]
+	getPreview        *connect.Client[v1.GetPreviewRequest, v1.Preview]
 	getYears          *connect.Client[v1.Void, v1.GetYearsResponse]
 	getAlbums         *connect.Client[v1.GetAlbumsRequest, v1.AlbumsList]
 	getAlbumTracks    *connect.Client[v1.GetAlbumTracksRequest, v1.TracksList]
@@ -175,6 +199,16 @@ func (c *aPIServiceClient) DeletePermissions(ctx context.Context, req *connect.R
 // ListPermissions calls api.v1.APIService.ListPermissions.
 func (c *aPIServiceClient) ListPermissions(ctx context.Context, req *connect.Request[v1.Void]) (*connect.Response[v1.PermissionsList], error) {
 	return c.listPermissions.CallUnary(ctx, req)
+}
+
+// GetTranscription calls api.v1.APIService.GetTranscription.
+func (c *aPIServiceClient) GetTranscription(ctx context.Context, req *connect.Request[v1.GetTranscriptionReqest]) (*connect.Response[v1.Transcription], error) {
+	return c.getTranscription.CallUnary(ctx, req)
+}
+
+// GetPreview calls api.v1.APIService.GetPreview.
+func (c *aPIServiceClient) GetPreview(ctx context.Context, req *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error) {
+	return c.getPreview.CallUnary(ctx, req)
 }
 
 // GetYears calls api.v1.APIService.GetYears.
@@ -204,6 +238,9 @@ type APIServiceHandler interface {
 	UpdatePermissions(context.Context, *connect.Request[v1.SetPermissionsRequest]) (*connect.Response[v1.Void], error)
 	DeletePermissions(context.Context, *connect.Request[v1.DeletePermissionsRequest]) (*connect.Response[v1.Void], error)
 	ListPermissions(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.PermissionsList], error)
+	// Transcriptions
+	GetTranscription(context.Context, *connect.Request[v1.GetTranscriptionReqest]) (*connect.Response[v1.Transcription], error)
+	GetPreview(context.Context, *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error)
 	// BMM
 	GetYears(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.GetYearsResponse], error)
 	GetAlbums(context.Context, *connect.Request[v1.GetAlbumsRequest]) (*connect.Response[v1.AlbumsList], error)
@@ -241,6 +278,18 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(aPIServiceListPermissionsMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
+	aPIServiceGetTranscriptionHandler := connect.NewUnaryHandler(
+		APIServiceGetTranscriptionProcedure,
+		svc.GetTranscription,
+		connect.WithSchema(aPIServiceGetTranscriptionMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
+	aPIServiceGetPreviewHandler := connect.NewUnaryHandler(
+		APIServiceGetPreviewProcedure,
+		svc.GetPreview,
+		connect.WithSchema(aPIServiceGetPreviewMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
 	aPIServiceGetYearsHandler := connect.NewUnaryHandler(
 		APIServiceGetYearsProcedure,
 		svc.GetYears,
@@ -275,6 +324,10 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceDeletePermissionsHandler.ServeHTTP(w, r)
 		case APIServiceListPermissionsProcedure:
 			aPIServiceListPermissionsHandler.ServeHTTP(w, r)
+		case APIServiceGetTranscriptionProcedure:
+			aPIServiceGetTranscriptionHandler.ServeHTTP(w, r)
+		case APIServiceGetPreviewProcedure:
+			aPIServiceGetPreviewHandler.ServeHTTP(w, r)
 		case APIServiceGetYearsProcedure:
 			aPIServiceGetYearsHandler.ServeHTTP(w, r)
 		case APIServiceGetAlbumsProcedure:
@@ -306,6 +359,14 @@ func (UnimplementedAPIServiceHandler) DeletePermissions(context.Context, *connec
 
 func (UnimplementedAPIServiceHandler) ListPermissions(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.PermissionsList], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.ListPermissions is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) GetTranscription(context.Context, *connect.Request[v1.GetTranscriptionReqest]) (*connect.Response[v1.Transcription], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetTranscription is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) GetPreview(context.Context, *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetPreview is not implemented"))
 }
 
 func (UnimplementedAPIServiceHandler) GetYears(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.GetYearsResponse], error) {

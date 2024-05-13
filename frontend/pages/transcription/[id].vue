@@ -1,44 +1,12 @@
 <script lang="ts" setup>
 import { BccButton, BccToggle } from "@bcc-code/design-library-vue";
 import type { ComponentPublicInstance } from "vue";
+const api = useAPI();
 
 const route = useRoute("transcription-id");
 const key = "ts-" + route.params.id;
 
 const loading = ref(true);
-
-const reload = async () => {
-    loading.value = true;
-    const result = (await $fetch(
-        `/api/vx/${route.params.id}/transcription`,
-    )) as any;
-
-    setTranscription(result);
-
-    localStorage[key] = JSON.stringify(result);
-
-    return result;
-};
-
-const setTranscription = (result: any) => {
-    transcription.value = result.transcription;
-    segments.value = transcription.value?.segments!;
-    loading.value = false;
-};
-
-onMounted(async () => {
-    const saved = localStorage[key];
-
-    const result = (await $fetch(`/api/vx/${route.params.id}/preview`)) as any;
-    video.value = result.video;
-    fileName.value = result.filename;
-
-    if (saved) {
-        setTranscription(JSON.parse(saved));
-    } else {
-        await reload();
-    }
-});
 
 const transcription = ref<TranscriptionResult>();
 
@@ -53,6 +21,36 @@ const videoelement = ref<HTMLVideoElement>();
 const segmentelements = ref<{
     [key: number]: Element | ComponentPublicInstance;
 }>({});
+
+const reload = async () => {
+    loading.value = true;
+    let result = await  api.getTranscription({ "VXID": route.params.id });
+    setTranscription(result);
+    localStorage[key] = JSON.stringify(result);
+    return result;
+};
+
+const setTranscription = (result: any) => {
+    transcription.value = result;
+    console.log(transcription.value)
+    console.log(segments.value)
+    segments.value = transcription.value?.segments!;
+    loading.value = false;
+};
+
+onMounted(async () => {
+    const saved = localStorage[key];
+
+    video.value = (await api.getPreview({ "VXID": route.params.id })).url;
+    fileName.value = key
+
+    if (saved) {
+        setTranscription(JSON.parse(saved));
+    } else {
+        await reload();
+    }
+});
+
 
 watch(videoelement, (el) => {
     if (el) {
@@ -102,10 +100,8 @@ const handleWordFocus = (word: Word) => {
 
 watch(segments, () => {
     localStorage[key] = JSON.stringify({
-        transcription: {
-            text: segments.value.map((s) => s.text).join(" "),
-            segments: segments.value,
-        },
+        text: segments.value.map((s) => s.text).join(" "),
+        segments: segments.value,
         video: video.value,
         filename: fileName.value,
     });

@@ -621,3 +621,315 @@ export class TracksList extends Message<TracksList> {
   }
 }
 
+/**
+ * @generated from message api.v1.GetTranscriptionReqest
+ */
+export class GetTranscriptionReqest extends Message<GetTranscriptionReqest> {
+  /**
+   * @generated from field: string VXID = 1;
+   */
+  VXID = "";
+
+  constructor(data?: PartialMessage<GetTranscriptionReqest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.GetTranscriptionReqest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "VXID", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetTranscriptionReqest {
+    return new GetTranscriptionReqest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetTranscriptionReqest {
+    return new GetTranscriptionReqest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetTranscriptionReqest {
+    return new GetTranscriptionReqest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetTranscriptionReqest | PlainMessage<GetTranscriptionReqest> | undefined, b: GetTranscriptionReqest | PlainMessage<GetTranscriptionReqest> | undefined): boolean {
+    return proto3.util.equals(GetTranscriptionReqest, a, b);
+  }
+}
+
+/**
+ * @generated from message api.v1.Transcription
+ */
+export class Transcription extends Message<Transcription> {
+  /**
+   * @generated from field: string text = 1;
+   */
+  text = "";
+
+  /**
+   * @generated from field: repeated api.v1.Segments segments = 2;
+   */
+  segments: Segments[] = [];
+
+  constructor(data?: PartialMessage<Transcription>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.Transcription";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "text", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "segments", kind: "message", T: Segments, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Transcription {
+    return new Transcription().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Transcription {
+    return new Transcription().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Transcription {
+    return new Transcription().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: Transcription | PlainMessage<Transcription> | undefined, b: Transcription | PlainMessage<Transcription> | undefined): boolean {
+    return proto3.util.equals(Transcription, a, b);
+  }
+}
+
+/**
+ * @generated from message api.v1.Segments
+ */
+export class Segments extends Message<Segments> {
+  /**
+   * @generated from field: int32 id = 1;
+   */
+  id = 0;
+
+  /**
+   * @generated from field: int32 seek = 2;
+   */
+  seek = 0;
+
+  /**
+   * @generated from field: double start = 3;
+   */
+  start = 0;
+
+  /**
+   * @generated from field: double end = 4;
+   */
+  end = 0;
+
+  /**
+   * @generated from field: string text = 5;
+   */
+  text = "";
+
+  /**
+   * @generated from field: repeated int32 tokens = 6;
+   */
+  tokens: number[] = [];
+
+  /**
+   * @generated from field: double temperature = 7;
+   */
+  temperature = 0;
+
+  /**
+   * @generated from field: double avg_logprob = 8;
+   */
+  avgLogprob = 0;
+
+  /**
+   * @generated from field: double compression_ratio = 9;
+   */
+  compressionRatio = 0;
+
+  /**
+   * @generated from field: double no_speech_prob = 10;
+   */
+  noSpeechProb = 0;
+
+  /**
+   * @generated from field: double confidence = 11;
+   */
+  confidence = 0;
+
+  /**
+   * @generated from field: repeated api.v1.Words words = 12;
+   */
+  words: Words[] = [];
+
+  constructor(data?: PartialMessage<Segments>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.Segments";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 2, name: "seek", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 3, name: "start", kind: "scalar", T: 1 /* ScalarType.DOUBLE */ },
+    { no: 4, name: "end", kind: "scalar", T: 1 /* ScalarType.DOUBLE */ },
+    { no: 5, name: "text", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 6, name: "tokens", kind: "scalar", T: 5 /* ScalarType.INT32 */, repeated: true },
+    { no: 7, name: "temperature", kind: "scalar", T: 1 /* ScalarType.DOUBLE */ },
+    { no: 8, name: "avg_logprob", kind: "scalar", T: 1 /* ScalarType.DOUBLE */ },
+    { no: 9, name: "compression_ratio", kind: "scalar", T: 1 /* ScalarType.DOUBLE */ },
+    { no: 10, name: "no_speech_prob", kind: "scalar", T: 1 /* ScalarType.DOUBLE */ },
+    { no: 11, name: "confidence", kind: "scalar", T: 1 /* ScalarType.DOUBLE */ },
+    { no: 12, name: "words", kind: "message", T: Words, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Segments {
+    return new Segments().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Segments {
+    return new Segments().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Segments {
+    return new Segments().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: Segments | PlainMessage<Segments> | undefined, b: Segments | PlainMessage<Segments> | undefined): boolean {
+    return proto3.util.equals(Segments, a, b);
+  }
+}
+
+/**
+ * @generated from message api.v1.Words
+ */
+export class Words extends Message<Words> {
+  /**
+   * @generated from field: string text = 1;
+   */
+  text = "";
+
+  /**
+   * @generated from field: double start = 2;
+   */
+  start = 0;
+
+  /**
+   * @generated from field: double end = 3;
+   */
+  end = 0;
+
+  /**
+   * @generated from field: double confidence = 4;
+   */
+  confidence = 0;
+
+  constructor(data?: PartialMessage<Words>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.Words";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "text", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "start", kind: "scalar", T: 1 /* ScalarType.DOUBLE */ },
+    { no: 3, name: "end", kind: "scalar", T: 1 /* ScalarType.DOUBLE */ },
+    { no: 4, name: "confidence", kind: "scalar", T: 1 /* ScalarType.DOUBLE */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Words {
+    return new Words().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Words {
+    return new Words().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Words {
+    return new Words().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: Words | PlainMessage<Words> | undefined, b: Words | PlainMessage<Words> | undefined): boolean {
+    return proto3.util.equals(Words, a, b);
+  }
+}
+
+/**
+ * @generated from message api.v1.GetPreviewRequest
+ */
+export class GetPreviewRequest extends Message<GetPreviewRequest> {
+  /**
+   * @generated from field: string VXID = 1;
+   */
+  VXID = "";
+
+  constructor(data?: PartialMessage<GetPreviewRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.GetPreviewRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "VXID", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetPreviewRequest {
+    return new GetPreviewRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetPreviewRequest {
+    return new GetPreviewRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetPreviewRequest {
+    return new GetPreviewRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetPreviewRequest | PlainMessage<GetPreviewRequest> | undefined, b: GetPreviewRequest | PlainMessage<GetPreviewRequest> | undefined): boolean {
+    return proto3.util.equals(GetPreviewRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message api.v1.Preview
+ */
+export class Preview extends Message<Preview> {
+  /**
+   * @generated from field: string url = 1;
+   */
+  url = "";
+
+  constructor(data?: PartialMessage<Preview>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.Preview";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Preview {
+    return new Preview().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Preview {
+    return new Preview().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Preview {
+    return new Preview().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: Preview | PlainMessage<Preview> | undefined, b: Preview | PlainMessage<Preview> | undefined): boolean {
+    return proto3.util.equals(Preview, a, b);
+  }
+}
+

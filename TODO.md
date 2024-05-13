@@ -2,7 +2,7 @@
 
 - [ ] Remove the rest of the server
     - [x] Remove BMM server parts
-    - [ ] Remove Mediabanken serverr parts
+    - [ ] Remove Mediabanken server parts
 - [x] Move JS and go into separate folders
 - [x] Add permissions check/login check
 - [x] Update build and deploy
