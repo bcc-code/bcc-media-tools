@@ -10,8 +10,9 @@ export function useAPI() {
     }
 
     const runtimeConfig = useRuntimeConfig();
+    console.log("runtimeConfig", runtimeConfig.public.grpcUrl);
     const transport = createConnectTransport({
-        baseUrl:  runtimeConfig.public.grpcURL,
+        baseUrl:  runtimeConfig.public.grpcUrl,
     });
 
    client = createPromiseClient(APIService, transport);

@@ -29,7 +29,7 @@ export default defineNuxtConfig({
     },
     runtimeConfig: {
         public: {
-            grpcURL: "http://localhost:8080",
+            grpcUrl: "http://localhost:8080",
         }
     },
     devServer: {

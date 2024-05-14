@@ -10,6 +10,8 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 FROM base AS build
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+ARG NUXT_PUBLIC_GRPC_URL
+ENV NUXT_PUBLIC_GRPC_URL=$NUXT_PUBLIC_GRPC_URL
 RUN pnpm generate
 
 FROM golang AS gobuild
