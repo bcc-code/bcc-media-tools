@@ -1,0 +1,19 @@
+{
+  "user@example.com": {
+    "admin": true,
+    "bmm": {
+      "languages": [
+        "de",
+        "no",
+        "nl",
+        "en",
+        "nb",
+        "fr"
+      ],
+      "albums": [
+        "fra-kaare"
+      ],
+      "admin": true
+    }
+  }
+}

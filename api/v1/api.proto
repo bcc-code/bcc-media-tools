@@ -1,0 +1,135 @@
+syntax = "proto3";
+
+package api.v1;
+
+option go_package = "bcc-media-tools/api/v1;apiv1";
+
+import "api/v1/common.proto";
+
+message BMMPermission {
+	repeated string languages = 1;
+	repeated string albums = 2;
+	repeated string podcasts = 3;
+	bool admin = 4;
+}
+
+message Permissions {
+	bool admin = 1;
+	BMMPermission bmm = 2;
+}
+
+message GetPermissionsRequest {}
+
+message SetPermissionsRequest {
+	string email = 1;
+	Permissions permissions = 2;
+}
+
+message DeletePermissionsRequest {
+	string email = 1;
+}
+
+message PermissionsList {
+	map<string, Permissions> permissions = 1;
+}
+
+message BMMYear {
+	uint32 year = 1;
+	uint32 count = 2;
+}
+
+message GetYearsResponse {
+	map<uint32, BMMYear> data = 1;
+}
+
+message GetAlbumsRequest {
+	uint32 year = 1;
+}
+
+message Album {
+	string id = 1;
+	string title = 2;
+	string cover = 4;
+	repeated string languages = 5;
+}
+
+message AlbumsList {
+	repeated Album albums = 1;
+}
+
+message GetAlbumTracksRequest {
+	string album_id = 1;
+}
+
+message GetPodcastTracksRequest {
+	string podcast_tag = 1;
+	uint32 limit = 2;
+}
+
+message BMMTrack {
+	string id = 1;
+	string title = 2;
+}
+
+message TracksList {
+	repeated BMMTrack tracks = 1;
+}
+
+message GetTranscriptionReqest {
+  string VXID = 1;
+}
+
+message Transcription {
+  string text = 1;
+  repeated Segments segments = 2;
+}
+
+message Segments {
+  int32 id = 1;
+  int32 seek = 2;
+  double start = 3;
+  double end = 4;
+  string text = 5;
+  repeated int32 tokens = 6;
+  double temperature = 7;
+  double avg_logprob = 8;
+  double compression_ratio = 9;
+  double no_speech_prob = 10;
+  double confidence = 11;
+  repeated Words words = 12;
+}
+
+message Words {
+  string text = 1;
+  double start = 2;
+  double end = 3;
+  double confidence = 4;
+}
+
+message GetPreviewRequest {
+  string VXID = 1;
+}
+
+message Preview{
+  string url = 1;
+}
+
+service APIService {
+	// Permissions
+	rpc GetPermissions (Void) returns (Permissions) {}
+	rpc UpdatePermissions (SetPermissionsRequest) returns (Void) {}
+	rpc DeletePermissions (DeletePermissionsRequest) returns (Void) {}
+	rpc ListPermissions (Void) returns (PermissionsList) {}
+
+  // Transcriptions
+  rpc GetTranscription(GetTranscriptionReqest) returns (Transcription) {}
+  rpc GetPreview(GetPreviewRequest) returns (Preview) {}
+
+	// BMM
+	rpc GetYears(Void) returns (GetYearsResponse) {}
+	rpc GetAlbums(GetAlbumsRequest) returns (AlbumsList) {}
+	rpc GetAlbumTracks(GetAlbumTracksRequest) returns (TracksList) {}
+	rpc GetPodcastTracks(GetPodcastTracksRequest) returns (TracksList) {}
+}
+
+

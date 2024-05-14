@@ -1,0 +1,299 @@
+{
+  "_meta": {
+    "contained_types": [
+      "singsong",
+      "speech",
+      "song"
+    ],
+    "is_visible": true,
+    "modified_at": "2024-03-28T23:09:35.3844506+00:00",
+    "modified_by": "USER"
+  },
+  "bmm_id": null,
+  "cover": "https://bmm-api.brunstad.org/file/protected/album/91831/album_91831_cover.jpeg?last-changed=1711667375",
+  "id": 91831,
+  "languages": [
+    "bg",
+    "de",
+    "en",
+    "es",
+    "fi",
+    "fr",
+    "hr",
+    "hu",
+    "it",
+    "nb",
+    "nl",
+    "pl",
+    "pt",
+    "ro",
+    "ru",
+    "tr",
+    "sl",
+    "ta"
+  ],
+  "parent_id": null,
+  "published_at": "2024-03-29T18:00:44.609+00:00",
+  "tags": [
+    "Easter Conference"
+  ],
+  "language": "en",
+  "title": "Easter Conference 2024",
+  "type": "album",
+  "children": [
+    {
+      "_meta": {
+        "contained_types": [
+          "speech",
+          "singsong"
+        ],
+        "is_visible": true,
+        "modified_at": "2024-04-03T20:13:11.9313886+00:00",
+        "modified_by": "USER"
+      },
+      "bmm_id": "VX-484166",
+      "cover": "https://bmm-api.brunstad.org/file/protected/album/91837/album_91837_cover.jpeg?last-changed=1712175191",
+      "id": 91837,
+      "languages": [
+        "bg",
+        "de",
+        "en",
+        "es",
+        "fi",
+        "fr",
+        "hr",
+        "hu",
+        "it",
+        "nb",
+        "nl",
+        "pl",
+        "pt",
+        "ro",
+        "ru",
+        "tr",
+        "sl",
+        "ta"
+      ],
+      "parent_id": 91831,
+      "published_at": "2024-04-01T09:00:44.609+00:00",
+      "tags": [
+        "Closing meeting"
+      ],
+      "language": "en",
+      "title": "Closing meeting",
+      "type": "album"
+    },
+    {
+      "_meta": {
+        "contained_types": [
+          "speech",
+          "song",
+          "singsong"
+        ],
+        "is_visible": true,
+        "modified_at": "2024-03-31T17:55:09.4230961+00:00",
+        "modified_by": "USER"
+      },
+      "bmm_id": "VX-484108",
+      "cover": "https://bmm-api.brunstad.org/file/protected/album/91836/album_91836_cover.jpeg?last-changed=1711907709",
+      "id": 91836,
+      "languages": [
+        "bg",
+        "de",
+        "en",
+        "es",
+        "fi",
+        "fr",
+        "hr",
+        "hu",
+        "it",
+        "nb",
+        "nl",
+        "pl",
+        "pt",
+        "ro",
+        "ru",
+        "tr",
+        "sl",
+        "ta"
+      ],
+      "parent_id": 91831,
+      "published_at": "2024-03-31T18:00:44.609+00:00",
+      "tags": [
+        "Youth meeting"
+      ],
+      "language": "en",
+      "title": "Youth meeting",
+      "type": "album"
+    },
+    {
+      "_meta": {
+        "contained_types": [
+          "song",
+          "singsong",
+          "speech"
+        ],
+        "is_visible": true,
+        "modified_at": "2024-03-31T09:16:43.2041173+00:00",
+        "modified_by": "USER"
+      },
+      "bmm_id": "VX-484050",
+      "cover": "https://bmm-api.brunstad.org/file/protected/album/91835/album_91835_cover.jpeg?last-changed=1711876603",
+      "id": 91835,
+      "languages": [
+        "bg",
+        "de",
+        "en",
+        "es",
+        "fi",
+        "fr",
+        "hr",
+        "hu",
+        "it",
+        "nb",
+        "nl",
+        "pl",
+        "pt",
+        "ro",
+        "ru",
+        "tr",
+        "sl",
+        "ta"
+      ],
+      "parent_id": 91831,
+      "published_at": "2024-03-31T09:00:44.609+00:00",
+      "tags": [
+        "Easter morning"
+      ],
+      "language": "en",
+      "title": "Easter morning",
+      "type": "album"
+    },
+    {
+      "_meta": {
+        "contained_types": [
+          "speech",
+          "singsong"
+        ],
+        "is_visible": true,
+        "modified_at": "2024-03-30T17:54:10.808605+00:00",
+        "modified_by": "USER"
+      },
+      "bmm_id": "VX-484013",
+      "cover": "https://bmm-api.brunstad.org/file/protected/album/91834/album_91834_cover.jpeg?last-changed=1711821250",
+      "id": 91834,
+      "languages": [
+        "bg",
+        "de",
+        "en",
+        "es",
+        "fi",
+        "fr",
+        "hr",
+        "hu",
+        "it",
+        "nb",
+        "nl",
+        "pl",
+        "pt",
+        "ro",
+        "ru",
+        "tr",
+        "sl",
+        "ta"
+      ],
+      "parent_id": 91831,
+      "published_at": "2024-03-30T18:00:44.609+00:00",
+      "tags": [
+        "Evening meeting"
+      ],
+      "language": "en",
+      "title": "Evening meeting",
+      "type": "album"
+    },
+    {
+      "_meta": {
+        "contained_types": [
+          "speech",
+          "song"
+        ],
+        "is_visible": true,
+        "modified_at": "2024-03-31T11:45:21.8901676+00:00",
+        "modified_by": "USER"
+      },
+      "bmm_id": "VX-483981",
+      "cover": "https://bmm-api.brunstad.org/file/protected/album/91833/album_91833_cover.jpeg?last-changed=1711885521",
+      "id": 91833,
+      "languages": [
+        "bg",
+        "de",
+        "en",
+        "es",
+        "fi",
+        "fr",
+        "hr",
+        "hu",
+        "it",
+        "nb",
+        "nl",
+        "pl",
+        "pt",
+        "ro",
+        "ru",
+        "tr",
+        "sl",
+        "ta"
+      ],
+      "parent_id": 91831,
+      "published_at": "2024-03-30T11:00:44.609+00:00",
+      "tags": [
+        "Children's meeting"
+      ],
+      "language": "en",
+      "title": "Children's meeting",
+      "type": "album"
+    },
+    {
+      "_meta": {
+        "contained_types": [
+          "singsong",
+          "speech"
+        ],
+        "is_visible": true,
+        "modified_at": "2024-03-29T18:10:42.6509931+00:00",
+        "modified_by": "USER"
+      },
+      "bmm_id": "VX-483947",
+      "cover": "https://bmm-api.brunstad.org/file/protected/album/91832/album_91832_cover.jpeg?last-changed=1711735842",
+      "id": 91832,
+      "languages": [
+        "bg",
+        "de",
+        "en",
+        "es",
+        "fi",
+        "fr",
+        "hr",
+        "hu",
+        "it",
+        "nb",
+        "nl",
+        "pl",
+        "pt",
+        "ro",
+        "ru",
+        "tr",
+        "sl",
+        "ta"
+      ],
+      "parent_id": 91831,
+      "published_at": "2024-03-29T18:00:44.609+00:00",
+      "tags": [
+        "Opening meeting"
+      ],
+      "language": "en",
+      "title": "Opening meeting",
+      "type": "album"
+    }
+  ]
+}
