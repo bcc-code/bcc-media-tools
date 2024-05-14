@@ -8,7 +8,7 @@ const metadataIsSet = ref(false);
 const selectedFile = ref<File | null>(null);
 
 const { me } = useMe();
-const api = useAPI();
+const config = useRuntimeConfig();
 
 const metadata = computed(() => {
     return {
@@ -48,7 +48,7 @@ const uploaded = ref(false);
                 <SelectFile v-model="selectedFile" />
                 <FileUploader
                     v-model="selectedFile"
-                    endpoint="http://localhost:8080/upload"
+                    :endpoint="config.public.grpcURL + '/upload'"
                     :metadata="metadata"
                     @uploaded="uploaded = true"
                 />

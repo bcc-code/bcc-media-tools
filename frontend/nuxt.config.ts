@@ -5,7 +5,7 @@ export default defineNuxtConfig({
         shim: false,
     },
     devtools: { enabled: false },
-    ssr: true,
+    ssr: false,
     css: ["~/assets/css/main.css"],
     app: {
         head: {
@@ -28,12 +28,6 @@ export default defineNuxtConfig({
         preset: "node-server",
     },
     runtimeConfig: {
-        api: {
-            cantemo: {
-                authToken: "",
-                baseUrl: "",
-            },
-        },
         public: {
             grpcURL: "http://localhost:8080",
         }
