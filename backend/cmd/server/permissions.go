@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path"
 )
 
 type PermissionsAPI struct{}
@@ -79,7 +80,7 @@ func (_ PermissionsAPI) ListPermissions(_ context.Context, req *connect.Request[
 	return res, nil
 }
 
-var PermissionsFile = os.Getenv("CONFIG_ROOT") + "permissions.json"
+var PermissionsFile = path.Join(os.Getenv("CONFIG_ROOT"), "permissions.json")
 
 func readPermissionsFile() (map[string]*apiv1.Permissions, error) {
 	permissionsBytes, err := os.ReadFile(PermissionsFile)
