@@ -11,6 +11,7 @@
     },
     "devDependencies": {
         "@auth0/auth0-vue": "^2.3.3",
+        "@bg-dev/nuxt-naiveui": "^1.13.3",
         "@bufbuild/buf": "^1.31.0",
         "@bufbuild/protoc-gen-es": "^1.9.0",
         "@connectrpc/protoc-gen-connect-es": "^1.4.0",
@@ -19,6 +20,7 @@
         "@types/uuid": "^9.0.8",
         "autoprefixer": "^10.4.17",
         "formidable": "^3.5.1",
+        "naive-ui": "^2.38.2",
         "nuxt-icon": "^0.6.8",
         "postcss": "^8.4.33",
         "prettier": "^3.2.4",
@@ -31,8 +33,13 @@
         "@bufbuild/protobuf": "^1.9.0",
         "@connectrpc/connect": "^1.4.0",
         "@connectrpc/connect-web": "^1.4.0",
+        "@lljj/vue-json-schema-form": "^1.19.0",
+        "@lljj/vue3-form-naive": "^1.19.1",
+        "ajv-i18n": "^4.2.0",
         "nuxt": "^3.10.1",
+        "nuxtjs-naive-ui": "^1.0.2",
         "vue": "^3.4.15",
         "vue-router": "^4.2.5"
-    }
+    },
+    "packageManager": "pnpm@8.15.7+sha256.50783dd0fa303852de2dd1557cd4b9f07cb5b018154a6e76d0f40635d6cee019"
 }
