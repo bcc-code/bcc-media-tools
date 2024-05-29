@@ -2,19 +2,19 @@
 // theme
 import VueForm from "@lljj/vue3-form-naive";
 import type { SelectBaseOption } from "naive-ui/es/select/src/interface";
-import { darkTheme } from "naive-ui";
+import { lightTheme } from "naive-ui";
 import localizeEn from "ajv-i18n/localize/en";
 import { i18n } from "@lljj/vue3-form-naive";
-// locale & dateLocale
 //import { enUS, dateEnUS } from "naive-ui";
+
+const runtimeConfig = useRuntimeConfig();
 
 type Workflow = {
     name: string;
     schema: any;
 };
-// fetch http://localhost:8080/schemas to get jsonschema with useFetch
 const { data, error, status } = useFetch<Workflow[]>(
-    "http://localhost:8080/schemas",
+    `${runtimeConfig.public.temporalTriggerUrl}/schemas`,
 );
 
 const workflows = computed(() => {
@@ -28,8 +28,7 @@ const schema = computed(() => {
         const workflow = workflows.value?.find(
             (workflow) => workflow.name === selectedWorkflow.value,
         );
-        const o = workflow?.schema.$defs;
-        return Object.values(o)[0];
+        return workflow?.schema;
     }
     return null;
 });
@@ -45,38 +44,67 @@ const options = computed(() => {
     });
 });
 
+const onSubmit = async (data: any) => {
+    console.log(data);
+
+    const response = await fetch(
+        `http://${runtimeConfig.public.temporalTriggerUrl}/trigger-dynamic?workflow=${selectedWorkflow.value}`,
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data.value),
+        },
+    );
+
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+};
+
 i18n.useLocal(localizeEn);
 </script>
 
 <template>
-    <n-config-provider :theme="darkTheme">
-        <n-space vertical>
-            <!-- loading spinner if lading-->
-            <n-spin v-if="status.value === 'pending'" />
-            <!-- error message if error-->
-            <n-alert type="error" v-if="error">{{ error }}</n-alert>
-        </n-space>
-        <n-space vertical v-if="data">
-            <!-- select workflow -->
-            <n-select
-                v-model:value="selectedWorkflow"
-                clearable
-                :options="options"
-            />
-            {{ selectedWorkflow }}
-            <VueForm
-                v-if="schema"
-                v-model="formData"
-                :schema="schema"
-                :uiSchema="schema"
-                :formFooter="{
-                    okBtn: 'Save',
-                    cancelBtn: 'Cancel',
-                }"
-            />
-            <pre>{{ schema }}</pre>
-        </n-space>
-    </n-config-provider>
+    <div class="h-dvh w-full bg-emerald-400 p-4">
+        <n-config-provider :theme="lightTheme">
+            <n-space vertical>
+                <!-- loading spinner if lading-->
+                <n-spin v-if="status.value === 'pending'" />
+                <!-- error message if error-->
+                <n-alert type="error" v-if="error">{{ error }}</n-alert>
+            </n-space>
+            <n-space vertical v-if="data">
+                <!-- select workflow -->
+                <n-select
+                    v-model:value="selectedWorkflow"
+                    clearable
+                    :options="options"
+                    filterable
+                />
+                {{ selectedWorkflow }}
+                <VueForm
+                    v-if="schema"
+                    v-model="formData"
+                    :schema="schema"
+                    :uiSchema="schema"
+                    :formFooter="{
+                        okBtn: 'Save',
+                        cancelBtn: 'Cancel',
+                    }"
+                    @submit="onSubmit"
+                />
+                <n-collapse>
+                    <n-collapse-item title="Schema">
+                        <pre>{{ schema }}</pre>
+                    </n-collapse-item>
+                </n-collapse>
+            </n-space>
+        </n-config-provider>
+    </div>
 </template>
 
 <style>

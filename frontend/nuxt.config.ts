@@ -30,6 +30,7 @@ export default defineNuxtConfig({
     runtimeConfig: {
         public: {
             grpcUrl: "http://localhost:8080",
+            temporalTriggerUrl: "`http://localhost:8080/",
         }
     },
     devServer: {
