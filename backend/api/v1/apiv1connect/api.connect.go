@@ -88,7 +88,7 @@ type APIServiceClient interface {
 	GetTranscription(context.Context, *connect.Request[v1.GetTranscriptionReqest]) (*connect.Response[v1.Transcription], error)
 	GetPreview(context.Context, *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error)
 	// BMM
-	GetYears(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.GetYearsResponse], error)
+	GetYears(context.Context, *connect.Request[v1.GetYearsRequest]) (*connect.Response[v1.GetYearsResponse], error)
 	GetAlbums(context.Context, *connect.Request[v1.GetAlbumsRequest]) (*connect.Response[v1.AlbumsList], error)
 	GetAlbumTracks(context.Context, *connect.Request[v1.GetAlbumTracksRequest]) (*connect.Response[v1.TracksList], error)
 	GetPodcastTracks(context.Context, *connect.Request[v1.GetPodcastTracksRequest]) (*connect.Response[v1.TracksList], error)
@@ -140,7 +140,7 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(aPIServiceGetPreviewMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
-		getYears: connect.NewClient[v1.Void, v1.GetYearsResponse](
+		getYears: connect.NewClient[v1.GetYearsRequest, v1.GetYearsResponse](
 			httpClient,
 			baseURL+APIServiceGetYearsProcedure,
 			connect.WithSchema(aPIServiceGetYearsMethodDescriptor),
@@ -175,7 +175,7 @@ type aPIServiceClient struct {
 	listPermissions   *connect.Client[v1.Void, v1.PermissionsList]
 	getTranscription  *connect.Client[v1.GetTranscriptionReqest, v1.Transcription]
 	getPreview        *connect.Client[v1.GetPreviewRequest, v1.Preview]
-	getYears          *connect.Client[v1.Void, v1.GetYearsResponse]
+	getYears          *connect.Client[v1.GetYearsRequest, v1.GetYearsResponse]
 	getAlbums         *connect.Client[v1.GetAlbumsRequest, v1.AlbumsList]
 	getAlbumTracks    *connect.Client[v1.GetAlbumTracksRequest, v1.TracksList]
 	getPodcastTracks  *connect.Client[v1.GetPodcastTracksRequest, v1.TracksList]
@@ -212,7 +212,7 @@ func (c *aPIServiceClient) GetPreview(ctx context.Context, req *connect.Request[
 }
 
 // GetYears calls api.v1.APIService.GetYears.
-func (c *aPIServiceClient) GetYears(ctx context.Context, req *connect.Request[v1.Void]) (*connect.Response[v1.GetYearsResponse], error) {
+func (c *aPIServiceClient) GetYears(ctx context.Context, req *connect.Request[v1.GetYearsRequest]) (*connect.Response[v1.GetYearsResponse], error) {
 	return c.getYears.CallUnary(ctx, req)
 }
 
@@ -242,7 +242,7 @@ type APIServiceHandler interface {
 	GetTranscription(context.Context, *connect.Request[v1.GetTranscriptionReqest]) (*connect.Response[v1.Transcription], error)
 	GetPreview(context.Context, *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error)
 	// BMM
-	GetYears(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.GetYearsResponse], error)
+	GetYears(context.Context, *connect.Request[v1.GetYearsRequest]) (*connect.Response[v1.GetYearsResponse], error)
 	GetAlbums(context.Context, *connect.Request[v1.GetAlbumsRequest]) (*connect.Response[v1.AlbumsList], error)
 	GetAlbumTracks(context.Context, *connect.Request[v1.GetAlbumTracksRequest]) (*connect.Response[v1.TracksList], error)
 	GetPodcastTracks(context.Context, *connect.Request[v1.GetPodcastTracksRequest]) (*connect.Response[v1.TracksList], error)
@@ -369,7 +369,7 @@ func (UnimplementedAPIServiceHandler) GetPreview(context.Context, *connect.Reque
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetPreview is not implemented"))
 }
 
-func (UnimplementedAPIServiceHandler) GetYears(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.GetYearsResponse], error) {
+func (UnimplementedAPIServiceHandler) GetYears(context.Context, *connect.Request[v1.GetYearsRequest]) (*connect.Response[v1.GetYearsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetYears is not implemented"))
 }
 

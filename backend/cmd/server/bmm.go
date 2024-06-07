@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-resty/resty/v2"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"net/url"
 	"strconv"
 	"time"
@@ -26,7 +27,7 @@ type bmmYear struct {
 	Count uint32 `json:"count"`
 }
 
-func (a BMMApi) GetYears(_ context.Context, req *connect.Request[apiv1.Void]) (*connect.Response[apiv1.GetYearsResponse], error) {
+func (a BMMApi) GetYears(_ context.Context, req *connect.Request[apiv1.GetYearsRequest]) (*connect.Response[apiv1.GetYearsResponse], error) {
 	if !PermissionsForEmail(getEmail(req)).CanUpload() {
 		return nil, connect.NewError(403, fmt.Errorf("not authorized"))
 	}
@@ -124,8 +125,9 @@ func (a BMMApi) GetAlbumTracks(_ context.Context, req *connect.Request[apiv1.Get
 	tracks := &apiv1.TracksList{}
 	for _, track := range album.Tracks {
 		tracks.Tracks = append(tracks.Tracks, &apiv1.BMMTrack{
-			Id:    strconv.Itoa(track.ID),
-			Title: track.Title,
+			Id:          strconv.Itoa(track.ID),
+			Title:       track.Title,
+			PublishedAt: timestamppb.New(track.PublishedAt),
 		})
 	}
 
@@ -149,8 +151,9 @@ func (a BMMApi) GetPodcastTracks(_ context.Context, req *connect.Request[apiv1.G
 	tracksOut := &apiv1.TracksList{}
 	for _, track := range tracks {
 		tracksOut.Tracks = append(tracksOut.Tracks, &apiv1.BMMTrack{
-			Id:    strconv.Itoa(track.ID),
-			Title: track.Title,
+			Id:          strconv.Itoa(track.ID),
+			Title:       track.Title,
+			PublishedAt: timestamppb.New(track.PublishedAt),
 		})
 	}
 

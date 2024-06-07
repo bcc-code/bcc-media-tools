@@ -35,7 +35,9 @@ const TrackView = (props: { track: BMMTrack }) => {
     const track = props.track;
     return (
         <p class="flex cursor-pointer gap-2 rounded bg-slate-50 pl-2">
-            <span class="rounded-r bg-slate-200 px-2">{track.title}</span>
+            <span class="rounded-r bg-slate-200 px-2">{track.title}
+              <span v-if="track.publishedAt"> ({track.publishedAt ? dateString(track.publishedAt?.toDate()) : ''})</span>
+            </span>
         </p>
     );
 };
@@ -52,7 +54,6 @@ const TrackView = (props: { track: BMMTrack }) => {
                 v-if="selectedTrack"
                 :track="selectedTrack"
             />
-           
         </div>
         <div v-else-if="tracks && tracks.length > 0" class="flex h-48 flex-col gap-2 overflow-y-auto">
             <div v-for="t in tracks" class="flex">
