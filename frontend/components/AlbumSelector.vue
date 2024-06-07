@@ -22,7 +22,7 @@ watch(selectedYear, async (newYear) => {
   for (let a in albumsRes) {
     albums.value[albumsRes[a].id] = albumsRes[a].title;
   }
-});
+}, {immediate: true});
 
 onMounted(async () => {
   years.value = (await api.getYears({})).data

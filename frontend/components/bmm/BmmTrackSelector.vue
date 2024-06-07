@@ -22,12 +22,9 @@ onMounted(async () => {
   }
 });
 
-const value = defineModel<string>();
-
-const clicked = ref(false);
-
-const display = computed(() => {
-    return tracks.value?.find((i) => i.id === value.value);
+const selectedTrackId = defineModel<string>();
+const selectedTrack = computed(() => {
+    return tracks.value?.find((i) => i.id === selectedTrackId.value);
 });
 
 const dateString = (date: Date) => {
@@ -49,30 +46,28 @@ const TrackView = (props: { track: BMMTrack }) => {
         <BccFormLabel>
             {{ label }}
         </BccFormLabel>
-        <div v-if="!clicked" class="flex">
+        <div v-if="selectedTrack" class="flex">
             <TrackView
-                @click="clicked = true"
-                v-if="display"
-                :track="display"
+                @click="selectedTrackId = ''"
+                v-if="selectedTrack"
+                :track="selectedTrack"
             />
-            <p
-                v-else
-                class="flex cursor-pointer gap-2 rounded bg-slate-50"
-                @click="clicked = true"
-            >
-                <span class="rounded bg-slate-200 px-2">Not selected</span>
-            </p>
+           
         </div>
-        <div v-else class="flex h-48 flex-col gap-2 overflow-y-auto">
+        <div v-else-if="tracks && tracks.length > 0" class="flex h-48 flex-col gap-2 overflow-y-auto">
             <div v-for="t in tracks" class="flex">
                 <TrackView
                     :track="t"
-                    @click="
-                        value = t.id;
-                        clicked = false;
-                    "
+                    @click="selectedTrackId = t.id;"
                 />
             </div>
         </div>
+
+        <div v-else>
+            <p class="flex cursor-pointer gap-2 rounded bg-slate-50">
+                <span class="rounded bg-slate-200 px-2">Not selected</span>
+            </p>
+        </div>
+
     </div>
 </template>
