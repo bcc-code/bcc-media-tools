@@ -1,9 +1,10 @@
 <script lang="ts" setup>
 import { BccSelect } from "@bcc-code/design-library-vue";
-import {BMMYear} from "../src/gen/api/v1/api_pb";
+import {BmmEnvironment, BMMYear} from "~/src/gen/api/v1/api_pb";
 
 const props = defineProps<{
     usersAlbums: readonly string[];
+    env: BmmEnvironment
 }>();
 
 const api = useAPI();
@@ -16,17 +17,19 @@ const selectedYear = ref<string>('2024');
 const selectedType = ref<string>('podcasts');
 const value = defineModel<string>()
 
-watch(selectedYear, async (newYear) => {
+watch(() => props.env, async(env)=> {
+  years.value = (await api.getYears({environment: env})).data
+}, {immediate: true});
+
+watch([selectedYear, () => props.env], async ([newYear, env]) => {
+  value.value = "";
   albums.value = {}
-  let albumsRes = (await api.getAlbums({year: +newYear})).albums
+  let albumsRes = (await api.getAlbums({year: parseInt(newYear), environment: env})).albums
   for (let a in albumsRes) {
     albums.value[albumsRes[a].id] = albumsRes[a].title;
   }
 }, {immediate: true});
 
-onMounted(async () => {
-  years.value = (await api.getYears({})).data
-});
 
 </script>
 

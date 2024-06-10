@@ -8,6 +8,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"net/url"
+	"os"
 	"strconv"
 	"time"
 )
@@ -31,6 +32,13 @@ func (a BMMApi) GetYears(_ context.Context, req *connect.Request[apiv1.GetYearsR
 	if !PermissionsForEmail(getEmail(req)).CanUpload() {
 		return nil, connect.NewError(403, fmt.Errorf("not authorized"))
 	}
+
+	if req.Msg.Environment == apiv1.BmmEnvironment_Integration {
+		a.client.BaseURL = os.Getenv("BMM_INT_BASE_URL")
+	} else {
+		a.client.BaseURL = os.Getenv("BMM_BASE_URL")
+	}
+
 	yearReq := a.client.R().
 		SetAuthToken(a.token.GetAccessToken()).
 		SetResult(&[]bmmYear{})
@@ -80,6 +88,12 @@ func (a BMMApi) GetAlbums(_ context.Context, req *connect.Request[apiv1.GetAlbum
 		return nil, connect.NewError(403, fmt.Errorf("not authorized"))
 	}
 
+	if req.Msg.Environment == apiv1.BmmEnvironment_Integration {
+		a.client.BaseURL = os.Getenv("BMM_INT_BASE_URL")
+	} else {
+		a.client.BaseURL = os.Getenv("BMM_BASE_URL")
+	}
+
 	albumsReq := a.client.R().
 		SetAuthToken(a.token.GetAccessToken()).
 		SetResult(&[]BMMItem{})
@@ -111,6 +125,12 @@ func (a BMMApi) GetAlbumTracks(_ context.Context, req *connect.Request[apiv1.Get
 		return nil, connect.NewError(403, fmt.Errorf("not authorized"))
 	}
 
+	if req.Msg.Environment == apiv1.BmmEnvironment_Integration {
+		a.client.BaseURL = os.Getenv("BMM_INT_BASE_URL")
+	} else {
+		a.client.BaseURL = os.Getenv("BMM_BASE_URL")
+	}
+
 	tracksReq := a.client.R().
 		SetAuthToken(a.token.GetAccessToken()).
 		SetResult(&BMMItem{})
@@ -137,6 +157,12 @@ func (a BMMApi) GetAlbumTracks(_ context.Context, req *connect.Request[apiv1.Get
 func (a BMMApi) GetPodcastTracks(_ context.Context, req *connect.Request[apiv1.GetPodcastTracksRequest]) (*connect.Response[apiv1.TracksList], error) {
 	if !PermissionsForEmail(getEmail(req)).CanUpload() {
 		return nil, connect.NewError(403, fmt.Errorf("not authorized"))
+	}
+
+	if req.Msg.Environment == apiv1.BmmEnvironment_Integration {
+		a.client.BaseURL = os.Getenv("BMM_INT_BASE_URL")
+	} else {
+		a.client.BaseURL = os.Getenv("BMM_BASE_URL")
 	}
 
 	tracksReq := a.client.R().
