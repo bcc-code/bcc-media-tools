@@ -79,6 +79,10 @@ message GetPodcastTracksRequest {
 	BmmEnvironment environment = 3;
 }
 
+message GetAvailableLanguagesRequest {
+  BmmEnvironment environment = 1;
+}
+
 message BMMTrack {
 	string id = 1;
 	string title = 2;
@@ -87,6 +91,10 @@ message BMMTrack {
 
 message TracksList {
 	repeated BMMTrack tracks = 1;
+}
+
+message LanguageList {
+  repeated string Languages = 1;
 }
 
 message GetTranscriptionReqest {
@@ -144,6 +152,7 @@ service APIService {
 	rpc GetAlbums(GetAlbumsRequest) returns (AlbumsList) {}
 	rpc GetAlbumTracks(GetAlbumTracksRequest) returns (TracksList) {}
 	rpc GetPodcastTracks(GetPodcastTracksRequest) returns (TracksList) {}
+  rpc GetLanguages(GetAvailableLanguagesRequest) returns (LanguageList) {}
 }
 
 

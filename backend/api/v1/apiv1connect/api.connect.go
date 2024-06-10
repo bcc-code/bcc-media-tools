@@ -60,6 +60,8 @@ const (
 	// APIServiceGetPodcastTracksProcedure is the fully-qualified name of the APIService's
 	// GetPodcastTracks RPC.
 	APIServiceGetPodcastTracksProcedure = "/api.v1.APIService/GetPodcastTracks"
+	// APIServiceGetLanguagesProcedure is the fully-qualified name of the APIService's GetLanguages RPC.
+	APIServiceGetLanguagesProcedure = "/api.v1.APIService/GetLanguages"
 )
 
 // These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
@@ -75,6 +77,7 @@ var (
 	aPIServiceGetAlbumsMethodDescriptor         = aPIServiceServiceDescriptor.Methods().ByName("GetAlbums")
 	aPIServiceGetAlbumTracksMethodDescriptor    = aPIServiceServiceDescriptor.Methods().ByName("GetAlbumTracks")
 	aPIServiceGetPodcastTracksMethodDescriptor  = aPIServiceServiceDescriptor.Methods().ByName("GetPodcastTracks")
+	aPIServiceGetLanguagesMethodDescriptor      = aPIServiceServiceDescriptor.Methods().ByName("GetLanguages")
 )
 
 // APIServiceClient is a client for the api.v1.APIService service.
@@ -92,6 +95,7 @@ type APIServiceClient interface {
 	GetAlbums(context.Context, *connect.Request[v1.GetAlbumsRequest]) (*connect.Response[v1.AlbumsList], error)
 	GetAlbumTracks(context.Context, *connect.Request[v1.GetAlbumTracksRequest]) (*connect.Response[v1.TracksList], error)
 	GetPodcastTracks(context.Context, *connect.Request[v1.GetPodcastTracksRequest]) (*connect.Response[v1.TracksList], error)
+	GetLanguages(context.Context, *connect.Request[v1.GetAvailableLanguagesRequest]) (*connect.Response[v1.LanguageList], error)
 }
 
 // NewAPIServiceClient constructs a client for the api.v1.APIService service. By default, it uses
@@ -164,6 +168,12 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(aPIServiceGetPodcastTracksMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
+		getLanguages: connect.NewClient[v1.GetAvailableLanguagesRequest, v1.LanguageList](
+			httpClient,
+			baseURL+APIServiceGetLanguagesProcedure,
+			connect.WithSchema(aPIServiceGetLanguagesMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -179,6 +189,7 @@ type aPIServiceClient struct {
 	getAlbums         *connect.Client[v1.GetAlbumsRequest, v1.AlbumsList]
 	getAlbumTracks    *connect.Client[v1.GetAlbumTracksRequest, v1.TracksList]
 	getPodcastTracks  *connect.Client[v1.GetPodcastTracksRequest, v1.TracksList]
+	getLanguages      *connect.Client[v1.GetAvailableLanguagesRequest, v1.LanguageList]
 }
 
 // GetPermissions calls api.v1.APIService.GetPermissions.
@@ -231,6 +242,11 @@ func (c *aPIServiceClient) GetPodcastTracks(ctx context.Context, req *connect.Re
 	return c.getPodcastTracks.CallUnary(ctx, req)
 }
 
+// GetLanguages calls api.v1.APIService.GetLanguages.
+func (c *aPIServiceClient) GetLanguages(ctx context.Context, req *connect.Request[v1.GetAvailableLanguagesRequest]) (*connect.Response[v1.LanguageList], error) {
+	return c.getLanguages.CallUnary(ctx, req)
+}
+
 // APIServiceHandler is an implementation of the api.v1.APIService service.
 type APIServiceHandler interface {
 	// Permissions
@@ -246,6 +262,7 @@ type APIServiceHandler interface {
 	GetAlbums(context.Context, *connect.Request[v1.GetAlbumsRequest]) (*connect.Response[v1.AlbumsList], error)
 	GetAlbumTracks(context.Context, *connect.Request[v1.GetAlbumTracksRequest]) (*connect.Response[v1.TracksList], error)
 	GetPodcastTracks(context.Context, *connect.Request[v1.GetPodcastTracksRequest]) (*connect.Response[v1.TracksList], error)
+	GetLanguages(context.Context, *connect.Request[v1.GetAvailableLanguagesRequest]) (*connect.Response[v1.LanguageList], error)
 }
 
 // NewAPIServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -314,6 +331,12 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(aPIServiceGetPodcastTracksMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
+	aPIServiceGetLanguagesHandler := connect.NewUnaryHandler(
+		APIServiceGetLanguagesProcedure,
+		svc.GetLanguages,
+		connect.WithSchema(aPIServiceGetLanguagesMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/api.v1.APIService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case APIServiceGetPermissionsProcedure:
@@ -336,6 +359,8 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceGetAlbumTracksHandler.ServeHTTP(w, r)
 		case APIServiceGetPodcastTracksProcedure:
 			aPIServiceGetPodcastTracksHandler.ServeHTTP(w, r)
+		case APIServiceGetLanguagesProcedure:
+			aPIServiceGetLanguagesHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -383,4 +408,8 @@ func (UnimplementedAPIServiceHandler) GetAlbumTracks(context.Context, *connect.R
 
 func (UnimplementedAPIServiceHandler) GetPodcastTracks(context.Context, *connect.Request[v1.GetPodcastTracksRequest]) (*connect.Response[v1.TracksList], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetPodcastTracks is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) GetLanguages(context.Context, *connect.Request[v1.GetAvailableLanguagesRequest]) (*connect.Response[v1.LanguageList], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetLanguages is not implemented"))
 }

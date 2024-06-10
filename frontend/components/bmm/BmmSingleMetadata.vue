@@ -42,7 +42,7 @@ defineEmits<{
             :env="env"
         />
         <BccInput v-model="title" :label="$t('title')" required />
-        <LanguageSelector v-model="language" :languages="languages" />
+        <LanguageSelector v-model="language" :languages="languages" :env="env" />
         <BccButton type="submit">{{ $t("next") }}</BccButton>
     </form>
 </template>

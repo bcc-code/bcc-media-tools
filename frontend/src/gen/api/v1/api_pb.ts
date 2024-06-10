@@ -617,6 +617,43 @@ export class GetPodcastTracksRequest extends Message<GetPodcastTracksRequest> {
 }
 
 /**
+ * @generated from message api.v1.GetAvailableLanguagesRequest
+ */
+export class GetAvailableLanguagesRequest extends Message<GetAvailableLanguagesRequest> {
+  /**
+   * @generated from field: api.v1.BmmEnvironment environment = 1;
+   */
+  environment = BmmEnvironment.Production;
+
+  constructor(data?: PartialMessage<GetAvailableLanguagesRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.GetAvailableLanguagesRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "environment", kind: "enum", T: proto3.getEnumType(BmmEnvironment) },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetAvailableLanguagesRequest {
+    return new GetAvailableLanguagesRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetAvailableLanguagesRequest {
+    return new GetAvailableLanguagesRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetAvailableLanguagesRequest {
+    return new GetAvailableLanguagesRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetAvailableLanguagesRequest | PlainMessage<GetAvailableLanguagesRequest> | undefined, b: GetAvailableLanguagesRequest | PlainMessage<GetAvailableLanguagesRequest> | undefined): boolean {
+    return proto3.util.equals(GetAvailableLanguagesRequest, a, b);
+  }
+}
+
+/**
  * @generated from message api.v1.BMMTrack
  */
 export class BMMTrack extends Message<BMMTrack> {
@@ -699,6 +736,43 @@ export class TracksList extends Message<TracksList> {
 
   static equals(a: TracksList | PlainMessage<TracksList> | undefined, b: TracksList | PlainMessage<TracksList> | undefined): boolean {
     return proto3.util.equals(TracksList, a, b);
+  }
+}
+
+/**
+ * @generated from message api.v1.LanguageList
+ */
+export class LanguageList extends Message<LanguageList> {
+  /**
+   * @generated from field: repeated string Languages = 1;
+   */
+  Languages: string[] = [];
+
+  constructor(data?: PartialMessage<LanguageList>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.LanguageList";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "Languages", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): LanguageList {
+    return new LanguageList().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): LanguageList {
+    return new LanguageList().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): LanguageList {
+    return new LanguageList().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: LanguageList | PlainMessage<LanguageList> | undefined, b: LanguageList | PlainMessage<LanguageList> | undefined): boolean {
+    return proto3.util.equals(LanguageList, a, b);
   }
 }
 

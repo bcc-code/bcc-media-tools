@@ -83,6 +83,11 @@ type BMMItem struct {
 	Tracks      []BMMItem `json:"children"`
 }
 
+type BMMApiOverview struct {
+	Name      string   `json:"name"`
+	Languages []string `json:"languages"`
+}
+
 func (a BMMApi) GetAlbums(_ context.Context, req *connect.Request[apiv1.GetAlbumsRequest]) (*connect.Response[apiv1.AlbumsList], error) {
 	if !PermissionsForEmail(getEmail(req)).CanUpload() {
 		return nil, connect.NewError(403, fmt.Errorf("not authorized"))
@@ -184,4 +189,26 @@ func (a BMMApi) GetPodcastTracks(_ context.Context, req *connect.Request[apiv1.G
 	}
 
 	return connect.NewResponse(tracksOut), nil
+}
+
+func (a BMMApi) GetLanguages(_ context.Context, req *connect.Request[apiv1.GetAvailableLanguagesRequest]) (*connect.Response[apiv1.LanguageList], error) {
+	if req.Msg.Environment == apiv1.BmmEnvironment_Integration {
+		a.client.BaseURL = os.Getenv("BMM_INT_BASE_URL")
+	} else {
+		a.client.BaseURL = os.Getenv("BMM_BASE_URL")
+	}
+
+	overviewRequest := a.client.R().SetAuthToken(a.token.GetAccessToken()).SetResult(&BMMApiOverview{})
+	res, err := overviewRequest.Get("/")
+	if err != nil {
+		return nil, err
+	}
+
+	overview := res.Result().(*BMMApiOverview)
+	languagesOut := &apiv1.LanguageList{}
+	for _, l := range overview.Languages {
+		languagesOut.Languages = append(languagesOut.Languages, l)
+	}
+
+	return connect.NewResponse(languagesOut), nil
 }
