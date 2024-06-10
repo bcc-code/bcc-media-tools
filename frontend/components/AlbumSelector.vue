@@ -13,9 +13,10 @@ const years = ref<{[key: string]: BMMYear}>();
 const albums = ref<{[key: string]: string}>({});
 const podcastTags = ref<string[]>(['fra-kaare']);
 
-const selectedYear = ref<string>('2024');
+const currentYear = (new Date()).getFullYear();
 const selectedType = ref<string>('podcasts');
-const value = defineModel<string>()
+const selectedYear = ref<string>(currentYear.toString());
+const value = defineModel<string>();
 
 watch(() => props.env, async(env)=> {
   years.value = (await api.getYears({environment: env})).data
@@ -28,6 +29,13 @@ watch([selectedYear, () => props.env], async ([newYear, env]) => {
   for (let a in albumsRes) {
     albums.value[albumsRes[a].id] = albumsRes[a].title;
   }
+}, {immediate: true});
+
+watch(selectedType, (newType)=> {
+  if (newType === "podcasts")
+    value.value = "fra-kaare";
+  else
+    value.value = "";
 }, {immediate: true});
 
 
