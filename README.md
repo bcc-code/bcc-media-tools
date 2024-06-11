@@ -83,6 +83,12 @@ vim permissions.json
 
 ### Development
 
+Start temporal:
+
+```bash
+temporal server start-dev
+```
+
 Start the frontend:
 
 ```bash

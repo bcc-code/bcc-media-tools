@@ -88,16 +88,20 @@ type BMMApiOverview struct {
 	Languages []string `json:"languages"`
 }
 
+func setBmmEnvironment(client *resty.Client, environment apiv1.BmmEnvironment) {
+	if environment == apiv1.BmmEnvironment_Integration {
+		client.BaseURL = os.Getenv("BMM_INT_BASE_URL")
+	} else {
+		client.BaseURL = os.Getenv("BMM_BASE_URL")
+	}
+}
+
 func (a BMMApi) GetAlbums(_ context.Context, req *connect.Request[apiv1.GetAlbumsRequest]) (*connect.Response[apiv1.AlbumsList], error) {
 	if !PermissionsForEmail(getEmail(req)).CanUpload() {
 		return nil, connect.NewError(403, fmt.Errorf("not authorized"))
 	}
 
-	if req.Msg.Environment == apiv1.BmmEnvironment_Integration {
-		a.client.BaseURL = os.Getenv("BMM_INT_BASE_URL")
-	} else {
-		a.client.BaseURL = os.Getenv("BMM_BASE_URL")
-	}
+	setBmmEnvironment(a.client, req.Msg.Environment)
 
 	albumsReq := a.client.R().
 		SetAuthToken(a.token.GetAccessToken()).
@@ -130,11 +134,7 @@ func (a BMMApi) GetAlbumTracks(_ context.Context, req *connect.Request[apiv1.Get
 		return nil, connect.NewError(403, fmt.Errorf("not authorized"))
 	}
 
-	if req.Msg.Environment == apiv1.BmmEnvironment_Integration {
-		a.client.BaseURL = os.Getenv("BMM_INT_BASE_URL")
-	} else {
-		a.client.BaseURL = os.Getenv("BMM_BASE_URL")
-	}
+	setBmmEnvironment(a.client, req.Msg.Environment)
 
 	tracksReq := a.client.R().
 		SetAuthToken(a.token.GetAccessToken()).
@@ -164,11 +164,7 @@ func (a BMMApi) GetPodcastTracks(_ context.Context, req *connect.Request[apiv1.G
 		return nil, connect.NewError(403, fmt.Errorf("not authorized"))
 	}
 
-	if req.Msg.Environment == apiv1.BmmEnvironment_Integration {
-		a.client.BaseURL = os.Getenv("BMM_INT_BASE_URL")
-	} else {
-		a.client.BaseURL = os.Getenv("BMM_BASE_URL")
-	}
+	setBmmEnvironment(a.client, req.Msg.Environment)
 
 	tracksReq := a.client.R().
 		SetAuthToken(a.token.GetAccessToken()).SetResult(&[]BMMItem{})
@@ -192,11 +188,7 @@ func (a BMMApi) GetPodcastTracks(_ context.Context, req *connect.Request[apiv1.G
 }
 
 func (a BMMApi) GetLanguages(_ context.Context, req *connect.Request[apiv1.GetAvailableLanguagesRequest]) (*connect.Response[apiv1.LanguageList], error) {
-	if req.Msg.Environment == apiv1.BmmEnvironment_Integration {
-		a.client.BaseURL = os.Getenv("BMM_INT_BASE_URL")
-	} else {
-		a.client.BaseURL = os.Getenv("BMM_BASE_URL")
-	}
+	setBmmEnvironment(a.client, req.Msg.Environment)
 
 	overviewRequest := a.client.R().SetAuthToken(a.token.GetAccessToken()).SetResult(&BMMApiOverview{})
 	res, err := overviewRequest.Get("/")
