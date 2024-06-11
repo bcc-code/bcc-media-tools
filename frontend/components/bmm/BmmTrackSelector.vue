@@ -35,20 +35,19 @@ const dateString = (date: Date) => {
 const TrackView = (props: { track: BMMTrack }) => {
     const track = props.track;
     return (
-        <p class="flex cursor-pointer gap-2 rounded bg-slate-50 pl-2">
-            <span class="rounded-r bg-slate-200 px-2">{track.title}
-              <span v-if="track.publishedAt"> ({track.publishedAt ? dateString(track.publishedAt?.toDate()) : ''})</span>
-            </span>
+        <p class="flex cursor-pointer gap-2 rounded bg-slate-200 pl-2">
+          <span v-if="track.publishedAt"> {track.publishedAt ? dateString(track.publishedAt?.toDate()) : ''}</span>
+          <span class="rounded-r bg-slate-50 px-2">{track.title}</span>
         </p>
     );
 };
 </script>
 
 <template>
-    <div>
-        <BccFormLabel>
-            {{ label }}
-        </BccFormLabel>
+  <div>
+    <BccFormLabel>
+      {{ label }}
+    </BccFormLabel>
         <div v-if="selectedTrack" class="flex">
             <TrackView
                 @click="selectedTrackId = ''"
