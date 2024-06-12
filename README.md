@@ -4,10 +4,11 @@ Contains several tools used for various internal/backoffice tasks.
 
 Current tools:
 
-* Transcription editor
-* BMM Uploader
+- Transcription editor
+- BMM Uploader
 
 ## Tools
+
 ### Transcription Editor
 
 Allows editing word level timestamped trascriptions in json format.
@@ -28,12 +29,12 @@ The main functionality is the ability to select a track from BMM and upload a fi
 
 ### Requirements
 
-* Node.js
-* pnpm
-* Golang
-* Temporal dev server ([Instructions](https://learn.temporal.io/getting_started/go/dev_environment/#set-up-a-local-temporal-service-for-development-with-temporal-cli))
-* Docker (if you want to build images)
-* ConnectRPC tools (see below)
+- Node.js
+- pnpm
+- Golang
+- Temporal dev server ([Instructions](https://learn.temporal.io/getting_started/go/dev_environment/#set-up-a-local-temporal-service-for-development-with-temporal-cli))
+- Docker (if you want to build images)
+- ConnectRPC tools (see below)
 
 ### Setup
 
@@ -55,7 +56,7 @@ Install dependencies:
 
 ```bash
 cd frontend
-npm install
+pnpm install
 
 cd ../backend
 go mod download
@@ -82,6 +83,12 @@ vim permissions.json
 
 ### Development
 
+Start temporal:
+
+```bash
+temporal server start-dev
+```
+
 Start the frontend:
 
 ```bash
@@ -95,17 +102,18 @@ cd backend && go run cmd/server/main.go
 ```
 
 Regenerate api code:
+
 ```bash
 buf generate
 ```
 
 #### Working with the API
 
-The api is defined in `api/api.proto`. 
+The api is defined in `api/api.proto`.
 The definitions are written in protobuf, and the code is generated using `buf` and `protoc-gen-connect-go`.
 
 More information can be found at:
 
-* [ConnectRPC](https://connectrpc.com/)
-* [Protobuf 3](https://protobuf.dev/programming-guides/proto3/)
-* [gRPC](https://grpc.io/docs/languages/go/basics/)
+- [ConnectRPC](https://connectrpc.com/)
+- [Protobuf 3](https://protobuf.dev/programming-guides/proto3/)
+- [gRPC](https://grpc.io/docs/languages/go/basics/)

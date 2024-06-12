@@ -4,6 +4,7 @@ package api.v1;
 
 option go_package = "bcc-media-tools/api/v1;apiv1";
 
+import "google/protobuf/timestamp.proto";
 import "api/v1/common.proto";
 
 message BMMPermission {
@@ -42,8 +43,18 @@ message GetYearsResponse {
 	map<uint32, BMMYear> data = 1;
 }
 
+enum BmmEnvironment {
+	Production = 0;
+	Integration = 1;
+}
+
+message GetYearsRequest {
+	BmmEnvironment environment = 1;
+}
+
 message GetAlbumsRequest {
 	uint32 year = 1;
+	BmmEnvironment environment = 2;
 }
 
 message Album {
@@ -59,20 +70,31 @@ message AlbumsList {
 
 message GetAlbumTracksRequest {
 	string album_id = 1;
+	BmmEnvironment environment = 2;
 }
 
 message GetPodcastTracksRequest {
 	string podcast_tag = 1;
 	uint32 limit = 2;
+	BmmEnvironment environment = 3;
+}
+
+message GetAvailableLanguagesRequest {
+  BmmEnvironment environment = 1;
 }
 
 message BMMTrack {
 	string id = 1;
 	string title = 2;
+  google.protobuf.Timestamp publishedAt = 3;
 }
 
 message TracksList {
 	repeated BMMTrack tracks = 1;
+}
+
+message LanguageList {
+  repeated string Languages = 1;
 }
 
 message GetTranscriptionReqest {
@@ -126,10 +148,11 @@ service APIService {
   rpc GetPreview(GetPreviewRequest) returns (Preview) {}
 
 	// BMM
-	rpc GetYears(Void) returns (GetYearsResponse) {}
+	rpc GetYears(GetYearsRequest) returns (GetYearsResponse) {}
 	rpc GetAlbums(GetAlbumsRequest) returns (AlbumsList) {}
 	rpc GetAlbumTracks(GetAlbumTracksRequest) returns (TracksList) {}
 	rpc GetPodcastTracks(GetPodcastTracksRequest) returns (TracksList) {}
+  rpc GetLanguages(GetAvailableLanguagesRequest) returns (LanguageList) {}
 }
 
 
