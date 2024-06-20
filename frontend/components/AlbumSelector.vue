@@ -1,9 +1,10 @@
 <script lang="ts" setup>
 import { BccSelect } from "@bcc-code/design-library-vue";
-import {BmmEnvironment, BMMYear} from "~/src/gen/api/v1/api_pb";
+import {BmmEnvironment, BMMPermission, BMMYear} from "~/src/gen/api/v1/api_pb";
 
 const props = defineProps<{
-    usersPodcasts: string[];
+    permissions: BMMPermission,
+    usersPodcasts: string[],
     env: BmmEnvironment
 }>();
 
@@ -11,7 +12,6 @@ const api = useAPI();
 
 const years = ref<{[key: string]: BMMYear}>();
 const albums = ref<{[key: string]: string}>({});
-const podcastTags = ref<string[]>(props.usersPodcasts);
 
 const currentYear = (new Date()).getFullYear();
 const selectedType = ref<string>('podcasts');
@@ -33,7 +33,7 @@ watch([selectedYear, () => props.env], async ([newYear, env]) => {
 
 watch([() => props.env, selectedType], ([newEnv, newType])=> {
   if (newType === "podcasts")
-    value.value = props.usersPodcasts[0];
+    value.value = props.permissions.podcasts[0];
   else
     value.value = "";
 }, {immediate: true});
@@ -42,14 +42,14 @@ watch([() => props.env, selectedType], ([newEnv, newType])=> {
 </script>
 
 <template>
-  <BccSelect v-model="selectedType" :label="$t('Type')">
+  <BccSelect v-if="permissions.admin" v-model="selectedType" :label="$t('Type')">
     <option value="podcasts">{{ $t("podcasts") }}</option>
     <option value="albums">{{ $t("albums") }}</option>
   </BccSelect>
 
   <template v-if="selectedType == 'podcasts'">
-    <BccSelect v-model="value" :label="$t('Podcast')">
-      <option v-for="p in podcastTags" :value="p">
+    <BccSelect v-if="permissions.podcasts.length > 1" v-model="value" :label="$t('Podcast')">
+      <option v-for="p in permissions.podcasts" :value="p">
         {{ p }}
       </option>
     </BccSelect>
