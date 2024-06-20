@@ -34,7 +34,7 @@ const uploaded = ref(false);
                 v-model="form"
                 @set="metadataIsSet = true"
                 :languages="me.bmm?.languages ?? []"
-                :albums="me.bmm?.albums ?? []"
+                :podcasts="me.bmm?.albums ?? []"
             />
             <div
                 class="flex flex-col gap-4 p-4 transition"

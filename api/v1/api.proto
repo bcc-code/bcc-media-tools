@@ -12,6 +12,7 @@ message BMMPermission {
 	repeated string albums = 2;
 	repeated string podcasts = 3;
 	bool admin = 4;
+  bool integration = 5;
 }
 
 message Permissions {

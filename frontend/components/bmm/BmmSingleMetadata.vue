@@ -4,7 +4,7 @@ import {BmmEnvironment} from "~/src/gen/api/v1/api_pb";
 
 defineProps<{
     languages: string[];
-    albums: string[];
+    podcasts: string[];
 }>();
 
 const form = defineModel<BMMSingleForm>({ required: true });
@@ -31,7 +31,7 @@ defineEmits<{
 
         <AlbumSelector
             v-model="albumId"
-            :users-albums="albums"
+            :users-podcasts="podcasts"
             :env="env"
         />
         <BmmTrackSelector

@@ -3,7 +3,7 @@ import { BccSelect } from "@bcc-code/design-library-vue";
 import {BmmEnvironment, BMMYear} from "~/src/gen/api/v1/api_pb";
 
 const props = defineProps<{
-    usersAlbums: readonly string[];
+    usersPodcasts: string[];
     env: BmmEnvironment
 }>();
 
@@ -11,7 +11,7 @@ const api = useAPI();
 
 const years = ref<{[key: string]: BMMYear}>();
 const albums = ref<{[key: string]: string}>({});
-const podcastTags = ref<string[]>(['fra-kaare']);
+const podcastTags = ref<string[]>(props.usersPodcasts);
 
 const currentYear = (new Date()).getFullYear();
 const selectedType = ref<string>('podcasts');
@@ -33,7 +33,7 @@ watch([selectedYear, () => props.env], async ([newYear, env]) => {
 
 watch([() => props.env, selectedType], ([newEnv, newType])=> {
   if (newType === "podcasts")
-    value.value = "fra-kaare";
+    value.value = props.usersPodcasts[0];
   else
     value.value = "";
 }, {immediate: true});
