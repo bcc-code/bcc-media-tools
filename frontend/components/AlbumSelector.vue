@@ -31,7 +31,7 @@ watch([selectedYear, () => props.env], async ([newYear, env]) => {
   }
 }, {immediate: true});
 
-watch(selectedType, (newType)=> {
+watch([() => props.env, selectedType], ([newEnv, newType])=> {
   if (newType === "podcasts")
     value.value = "fra-kaare";
   else

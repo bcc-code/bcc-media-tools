@@ -37,6 +37,7 @@ defineEmits<{
         <BmmTrackSelector
             v-if="albumId"
             :key="albumId"
+            label="Track"
             v-model="trackId"
             :album="albumId"
             :env="env"
