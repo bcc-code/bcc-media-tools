@@ -4,7 +4,6 @@ import {BmmEnvironment, BMMPermission, BMMYear} from "~/src/gen/api/v1/api_pb";
 
 const props = defineProps<{
     permissions: BMMPermission,
-    usersPodcasts: string[],
     env: BmmEnvironment
 }>();
 

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { Permissions } from "../src/gen/api/v1/api_pb";
+import {BmmEnvironment, Permissions} from "../src/gen/api/v1/api_pb";
 import {
     BccButton,
     BccFormLabel,
@@ -17,6 +17,9 @@ defineEmits<{
 
 const perms = reactive(props.permissions);
 const api = useAPI();
+
+const availableLanguages = ref<string[]>([]);
+availableLanguages.value = (await api.getLanguages({environment: BmmEnvironment.Production})).Languages;
 
 watch(perms, () => {
   api.updatePermissions({
@@ -66,7 +69,7 @@ watch(perms, () => {
                     <div>
                         <BccFormLabel>Languages</BccFormLabel>
                         <MultiSelector
-                            :available="bmmLanguages"
+                            :available="availableLanguages"
                             v-model="perms.bmm!.languages"
                         />
                     </div>

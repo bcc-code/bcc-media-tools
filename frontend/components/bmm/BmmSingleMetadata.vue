@@ -31,7 +31,6 @@ defineEmits<{
         <AlbumSelector
             v-model="albumId"
             :permissions="permissions"
-            :users-podcasts="permissions.podcasts"
             :env="env"
         />
         <BmmTrackSelector
