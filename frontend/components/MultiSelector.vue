@@ -16,7 +16,7 @@ const toggleCheckbox = (v: string) => {
 };
 </script>
 <template>
-    <div class="grid grid-cols-2 gap-2 gap-x-4">
+    <div class="flex gap-2 gap-x-4 flex-wrap">
         <div v-for="v in available">
             <BccCheckbox
                 :label="v"

@@ -36,7 +36,7 @@ watch(perms, () => {
             <h3 class="text-lg">{{ email }}</h3>
             <BccButton @click="$emit('remove')" size="sm">Remove</BccButton>
         </div>
-        <div class="flex gap-4">
+        <div class="flex gap-4 max-w-full overflow-hidden">
             <div class="flex flex-col rounded border px-4 py-2">
                 <h3>General</h3>
                 <div class="flex gap-4">
@@ -66,13 +66,16 @@ watch(perms, () => {
                             v-model="perms.bmm!.podcasts"
                         />
                     </div>
-                    <div>
-                        <BccFormLabel>Languages</BccFormLabel>
-                        <MultiSelector
-                            :available="availableLanguages"
-                            v-model="perms.bmm!.languages"
-                        />
-                    </div>
+                </div>
+                <div>
+
+                  <div>
+                    <BccFormLabel>Languages</BccFormLabel>
+                    <MultiSelector
+                        :available="availableLanguages"
+                        v-model="perms.bmm!.languages"
+                    />
+                  </div>
                 </div>
             </div>
         </div>
