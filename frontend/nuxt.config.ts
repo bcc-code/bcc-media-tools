@@ -33,7 +33,7 @@ export default defineNuxtConfig({
         }
     },
     devServer: {
-        port: 80,
-        host: "0.0.0.0",
+        port: 8001,
+        host: "localhost",
     },
 });

@@ -50,6 +50,11 @@ export class BMMPermission extends Message<BMMPermission> {
    */
   admin = false;
 
+  /**
+   * @generated from field: bool integration = 5;
+   */
+  integration = false;
+
   constructor(data?: PartialMessage<BMMPermission>) {
     super();
     proto3.util.initPartial(data, this);
@@ -62,6 +67,7 @@ export class BMMPermission extends Message<BMMPermission> {
     { no: 2, name: "albums", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 3, name: "podcasts", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 4, name: "admin", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 5, name: "integration", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): BMMPermission {

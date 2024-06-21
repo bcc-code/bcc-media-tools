@@ -3,17 +3,22 @@ import { BccSelect } from "@bcc-code/design-library-vue";
 import type {BmmEnvironment} from "~/src/gen/api/v1/api_pb";
 
 const props = defineProps<{
-    languages: readonly string[];
+    languages: string[];
     env: BmmEnvironment;
 }>();
 
-const value = defineModel<string>();
+const model = defineModel<string>();
 const bmmLanguages = ref<string[]>([]);
 
 const api = useAPI();
 
-watch(() => props.env, async(env)=> {
-  bmmLanguages.value = (await api.getLanguages({environment: env})).Languages;
+watch([() => props.env, () => props.languages], async([newEnv, newLanguages])=> {
+  if (newLanguages.length > 0){
+    bmmLanguages.value = newLanguages;
+  } else {
+    bmmLanguages.value = (await api.getLanguages({environment: newEnv})).Languages;
+  }
+  console.log("selected language should be: ", bmmLanguages.value[0]);
 }, {immediate: true});
 
 
@@ -26,7 +31,7 @@ const languageDisplay = (l: string) => {
 </script>
 
 <template>
-    <BccSelect v-model="value" :label="$t('language')">
+    <BccSelect v-model="model" :label="$t('language')">
         <option disabled value="">{{ $t("selectAnOption") }}</option>
         <option v-for="l in bmmLanguages" :value="l">
             {{ languageDisplay(l) }}

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { Permissions } from "../src/gen/api/v1/api_pb";
+import {BmmEnvironment, Permissions} from "~/src/gen/api/v1/api_pb";
 import {
     BccButton,
     BccFormLabel,
@@ -17,6 +17,9 @@ defineEmits<{
 
 const perms = reactive(props.permissions);
 const api = useAPI();
+
+const availableLanguages = ref<string[]>([]);
+(api.getLanguages({environment: BmmEnvironment.Production}).then(result => availableLanguages.value = result.Languages));
 
 watch(perms, () => {
   api.updatePermissions({
@@ -47,20 +50,26 @@ watch(perms, () => {
                 <h3>BMM</h3>
                 <div class="flex gap-4">
                     <div>
-                      <BccFormLabel>BMM Admin</BccFormLabel>
-                      <BccToggle v-model="perms!.bmm!.admin" />
+                        <div>
+                            <BccFormLabel>BMM Admin</BccFormLabel>
+                            <BccToggle v-model="perms!.bmm!.admin" />
+                        </div>
+                        <div>
+                            <BccFormLabel>Integration environment</BccFormLabel>
+                            <BccToggle v-model="perms!.bmm!.integration" />
+                        </div>
                     </div>
                     <div>
-                        <BccFormLabel>Albums</BccFormLabel>
+                        <BccFormLabel>Podcasts</BccFormLabel>
                         <MultiSelector
-                            :available="['fra-kaare', 'romans']"
-                            v-model="perms.bmm!.albums"
+                            :available="['fra-kaare', 'romans-podcast']"
+                            v-model="perms.bmm!.podcasts"
                         />
                     </div>
                     <div>
                         <BccFormLabel>Languages</BccFormLabel>
                         <MultiSelector
-                            :available="bmmLanguages"
+                            :available="availableLanguages"
                             v-model="perms.bmm!.languages"
                         />
                     </div>
