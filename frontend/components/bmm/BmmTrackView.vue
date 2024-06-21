@@ -12,7 +12,7 @@ const dateString = (date: Date) => {
 
 <template>
   <p class="flex cursor-pointer gap-2 rounded bg-slate-200 pl-2">
-    <span v-if="track && track.publishedAt"> {{track.publishedAt ? dateString(track.publishedAt?.toDate()) : ''}}</span>
+    <span v-if="track && track.publishedAt"> {{dateString(track.publishedAt.toDate())}}</span>
     <span class="rounded-r bg-slate-50 px-2">{{track.title}}</span>
   </p>
 </template>

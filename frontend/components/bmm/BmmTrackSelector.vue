@@ -12,14 +12,14 @@ const props = defineProps<{
 
 const api = useAPI();
 
-watch(() => props.env, async (env) => {
+watch([() => props.env, () => props.album], async ([env, album]) => {
   tracks.value = [];
-  if (/^\d+$/.test(props.album)) {
+  if (/^\d+$/.test(album)) {
     // Actual album
-    tracks.value = (await api.getAlbumTracks({ albumId: props.album, environment: env })).tracks;
+    tracks.value = (await api.getAlbumTracks({ albumId: album, environment: env })).tracks;
   } else {
     // Podcast tag
-    tracks.value = (await api.getPodcastTracks({ podcastTag: props.album, environment: env, limit: 30 })).tracks;
+    tracks.value = (await api.getPodcastTracks({ podcastTag: album, environment: env, limit: 30 })).tracks;
   }
 }, {immediate: true})
 
