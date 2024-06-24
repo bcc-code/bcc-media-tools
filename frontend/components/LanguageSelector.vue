@@ -18,7 +18,6 @@ watch([() => props.env, () => props.languages], async([newEnv, newLanguages])=> 
   } else {
     bmmLanguages.value = (await api.getLanguages({environment: newEnv})).Languages;
   }
-  console.log("selected language should be: ", bmmLanguages.value[0]);
 }, {immediate: true});
 
 

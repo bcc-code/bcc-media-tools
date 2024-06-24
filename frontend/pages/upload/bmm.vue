@@ -20,7 +20,6 @@ const metadata = computed(() => {
 
 const uploaded = ref(false);
 
-
 </script>
 
 <template>
@@ -35,7 +34,7 @@ const uploaded = ref(false);
                   @set="metadataIsSet = true"
                   :permissions="me.bmm"
               />
-              <div
+            <div
                   class="flex flex-col gap-4 p-4 transition"
                   :class="[
                       {
@@ -47,7 +46,7 @@ const uploaded = ref(false);
                   <SelectFile v-model="selectedFile" />
                   <FileUploader
                       v-model="selectedFile"
-                      :endpoint="config.public.grpcURL + '/upload'"
+                      :endpoint="config.public.grpcUrl + '/upload'"
                       :metadata="metadata"
                       @uploaded="uploaded = true"
                   />

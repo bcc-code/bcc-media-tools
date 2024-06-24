@@ -41,7 +41,7 @@ func (u uploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check permissions
-	// Note that this permission check is differernt as it does not use GRPC
+	// Note that this permission check is different as it does not use GRPC
 	p := PermissionsForEmail(r.Header.Get("x-token-user-email"))
 
 	if !p.CanUpload() {
