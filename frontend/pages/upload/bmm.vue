@@ -1,5 +1,7 @@
 <script lang="ts" setup>
 import { BmmEnvironment } from "~/src/gen/api/v1/api_pb";
+import { BccSelect } from "@bcc-code/design-library-vue";
+import type { FileAndLanguage } from "~/utils/bmm";
 
 const form = ref<BMMSingleForm>({
     title: "",
@@ -8,8 +10,7 @@ const form = ref<BMMSingleForm>({
 
 const metadataIsSet = ref(false);
 
-const selectedFile = ref<File | null>(null);
-const selectedFiles = ref<File[]>([]);
+const selectedFiles = ref<FileAndLanguage[]>([]);
 
 const api = useAPI();
 const { me } = useMe();
@@ -31,6 +32,7 @@ const metadata = computed(() => {
         language: [form.value.language],
         trackId: [form.value.trackId?.toString() ?? ""],
         environment: [form.value.environment ?? "prod"],
+        firstFile: [selectedFiles.value[0]?.file?.name ?? ""], // just for debugging
     } as { [key: string]: readonly string[] };
 });
 
@@ -78,8 +80,13 @@ const uploaded = ref(false);
                 >
                     <h3 class="text-lg font-bold">Upload File</h3>
 
-                    <div v-for="file in selectedFiles" :key="file.name">
-                        {{ file.name }}
+                    <div v-for="file in selectedFiles" :key="file.file.name">
+                        <BccSelect v-model="file.language">
+                            <option v-for="l in availableLanguages" :value="l">
+                                {{ l }}
+                            </option>
+                        </BccSelect>
+                        {{ file.file.name }}
                     </div>
                     <SelectFile v-model="selectedFiles" />
                     <FileUploader

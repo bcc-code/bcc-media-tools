@@ -14,3 +14,8 @@ export type BMMSingleForm = {
     language?: string;
     environment?: string;
 };
+
+export type FileAndLanguage = {
+    file: File;
+    language: string;
+};

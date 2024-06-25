@@ -1,7 +1,8 @@
 <script lang="ts" setup>
 import { BccButton } from "@bcc-code/design-library-vue";
+import type { FileAndLanguage } from "~/utils/bmm";
 
-const selectedFiles = defineModel<File[]>({ required: true });
+const selectedFiles = defineModel<FileAndLanguage[]>({ required: true });
 
 const isDragOver = ref(false);
 const dragEnter = () => {
@@ -16,13 +17,13 @@ const handleDrop = (event: DragEvent) => {
     isDragOver.value = false;
     const files = event.dataTransfer?.files;
     const file = files?.[0];
-    if (file) selectedFiles.value.push(file);
+    if (file) selectedFiles.value.push({ file, language: "nb" });
 };
 
 const fileInput = ref<HTMLInputElement>(null!);
 
 const selectFile = (event: any) => {
-    selectedFiles.value.push(event.target?.files[0]);
+    selectedFiles.value.push({ file: event.target?.files[0], language: "nb" });
 };
 </script>
 
