@@ -11,6 +11,6 @@ export type BMMSingleForm = {
     title: string;
     albumId?: string;
     trackId?: string;
-    language?: (typeof bmmLanguages)[number];
+    language?: string;
     environment?: string;
 };
