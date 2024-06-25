@@ -1,6 +1,6 @@
 module bcc-media-tools
 
-go 1.22
+go 1.22.0
 
 require (
 	connectrpc.com/connect v1.16.1
