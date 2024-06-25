@@ -16,8 +16,7 @@ const handleDrop = (event: DragEvent) => {
     isDragOver.value = false;
     const files = event.dataTransfer?.files;
     const file = files?.[0];
-    if (file)
-      selectedFiles.value.push(file);
+    if (file) selectedFiles.value.push(file);
 };
 
 const fileInput = ref<HTMLInputElement>(null!);
