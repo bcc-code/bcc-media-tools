@@ -1,14 +1,15 @@
 package main
 
 import (
-	"github.com/bcc-code/bcc-media-flows/workflows/webhooks"
-	"github.com/google/uuid"
-	"go.temporal.io/sdk/client"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
+
+	"github.com/bcc-code/bcc-media-flows/workflows/webhooks"
+	"github.com/google/uuid"
+	"go.temporal.io/sdk/client"
 )
 
 func enableCors(w *http.ResponseWriter) {
@@ -41,8 +42,8 @@ func (u uploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check permissions
-	// Note that this permission check is differernt as it does not use GRPC
-	p := PermissionsForEmail(r.Header.Get("x-token-user-email"))
+	// Note that this permission check is different as it does not use GRPC
+	p := PermissionsForEmail(getEmailFromHttp(r))
 
 	if !p.CanUpload() {
 		http.Error(w, "permission denied", http.StatusForbidden)
@@ -104,10 +105,13 @@ func (u uploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		TaskQueue: queue,
 	}
 
-	trackID, err := strconv.Atoi(formData["trackId"])
-	if err != nil {
-		http.Error(w, "invalid track id", http.StatusBadRequest)
-		return
+	var trackID int
+	if formData["trackId"] != "" {
+		trackID, err = strconv.Atoi(formData["trackId"])
+		if err != nil {
+			http.Error(w, "invalid track id", http.StatusBadRequest)
+			return
+		}
 	}
 
 	_, err = u.TemporalClient.ExecuteWorkflow(r.Context(), workflowOptions, webhooks.BmmSimpleUpload, webhooks.BmmSimpleUploadParams{

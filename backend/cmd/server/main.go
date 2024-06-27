@@ -3,10 +3,11 @@ package main
 import (
 	"bcc-media-tools/api/v1/apiv1connect"
 	"fmt"
-	"github.com/joho/godotenv"
-	"go.temporal.io/sdk/client"
 	"net/http"
 	"os"
+
+	"github.com/joho/godotenv"
+	"go.temporal.io/sdk/client"
 
 	connectcors "connectrpc.com/cors"
 
@@ -21,6 +22,14 @@ import (
 // The server handles all authentication, so we can trust that the email is authenticated,
 // and we can use it to look up permissions.
 const EmailHeader = "x-token-user-email"
+
+func getEmailFromHttp(r *http.Request) string {
+	if e := os.Getenv("DEBUG_AUTH_EMAIL"); e != "" {
+		return e
+	}
+
+	return r.Header.Get(EmailHeader)
+}
 
 func getEmail[T any](req *connect.Request[T]) string {
 	if e := os.Getenv("DEBUG_AUTH_EMAIL"); e != "" {

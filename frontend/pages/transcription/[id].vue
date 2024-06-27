@@ -24,7 +24,7 @@ const segmentelements = ref<{
 
 const reload = async () => {
     loading.value = true;
-    let result = await  api.getTranscription({ "VXID": route.params.id });
+    let result = await api.getTranscription({ VXID: route.params.id });
     setTranscription(result);
     localStorage[key] = JSON.stringify(result);
     return result;
@@ -32,8 +32,8 @@ const reload = async () => {
 
 const setTranscription = (result: any) => {
     transcription.value = result;
-    console.log(transcription.value)
-    console.log(segments.value)
+    console.log(transcription.value);
+    console.log(segments.value);
     segments.value = transcription.value?.segments!;
     loading.value = false;
 };
@@ -41,8 +41,8 @@ const setTranscription = (result: any) => {
 onMounted(async () => {
     const saved = localStorage[key];
 
-    video.value = (await api.getPreview({ "VXID": route.params.id })).url;
-    fileName.value = key
+    video.value = (await api.getPreview({ VXID: route.params.id })).url;
+    fileName.value = key;
 
     if (saved) {
         setTranscription(JSON.parse(saved));
@@ -50,7 +50,6 @@ onMounted(async () => {
         await reload();
     }
 });
-
 
 watch(videoelement, (el) => {
     if (el) {

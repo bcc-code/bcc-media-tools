@@ -1,5 +1,5 @@
-import {useAPI} from "~/utils/api";
-import {BMMPermission, Permissions} from "~/src/gen/api/v1/api_pb";
+import { useAPI } from "~/utils/api";
+import { BMMPermission, Permissions } from "~/src/gen/api/v1/api_pb";
 
 export type Me = {
     admin: boolean;
@@ -8,7 +8,6 @@ export type Me = {
         albums: string[];
     };
 };
-
 
 export function useMe() {
     const me = useState<Permissions | null>("me", () => null);
@@ -19,13 +18,13 @@ export function useMe() {
 
     const load = async () => {
         loading.value = true;
-        const api = useAPI()
-        const p = await api.getPermissions({})
+        const api = useAPI();
+        const p = await api.getPermissions({});
         if (p) {
             me.value = p;
         } else {
-            me.value = new Permissions()
-            me.value!.bmm = new BMMPermission()
+            me.value = new Permissions();
+            me.value!.bmm = new BMMPermission();
         }
 
         loading.value = false;

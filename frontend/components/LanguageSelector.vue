@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { BccSelect } from "@bcc-code/design-library-vue";
-import type {BmmEnvironment} from "~/src/gen/api/v1/api_pb";
+import type { BmmEnvironment } from "~/src/gen/api/v1/api_pb";
 
 const props = defineProps<{
     languages: string[];
@@ -12,15 +12,19 @@ const bmmLanguages = ref<string[]>([]);
 
 const api = useAPI();
 
-watch([() => props.env, () => props.languages], async([newEnv, newLanguages])=> {
-  if (newLanguages.length > 0){
-    bmmLanguages.value = newLanguages;
-  } else {
-    bmmLanguages.value = (await api.getLanguages({environment: newEnv})).Languages;
-  }
-  console.log("selected language should be: ", bmmLanguages.value[0]);
-}, {immediate: true});
-
+watch(
+    [() => props.env, () => props.languages],
+    async ([newEnv, newLanguages]) => {
+        if (newLanguages.length > 0) {
+            bmmLanguages.value = newLanguages;
+        } else {
+            bmmLanguages.value = (
+                await api.getLanguages({ environment: newEnv })
+            ).Languages;
+        }
+    },
+    { immediate: true },
+);
 
 const languageDisplay = (l: string) => {
     if (typeof Intl.DisplayNames !== "undefined") {

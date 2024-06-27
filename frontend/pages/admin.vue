@@ -10,33 +10,33 @@ const permissions = ref<{
 }>();
 
 onMounted(async () => {
-  permissions.value = (await api.listPermissions({})).permissions;
+    permissions.value = (await api.listPermissions({})).permissions;
 });
 
 const newEmail = ref<string>();
 
 const addEmail = async () => {
     if (newEmail.value) {
-      await api.updatePermissions({
-        email: newEmail.value,
-        permissions: {
-          admin: false,
-          bmm: {
-            albums: [],
-            languages: [],
-            admin: false,
-          },
-        },
-      });
+        await api.updatePermissions({
+            email: newEmail.value,
+            permissions: {
+                admin: false,
+                bmm: {
+                    albums: [],
+                    languages: [],
+                    admin: false,
+                },
+            },
+        });
 
-      permissions.value =  (await api.listPermissions({})).permissions;
-      newEmail.value = "";
+        permissions.value = (await api.listPermissions({})).permissions;
+        newEmail.value = "";
     }
 };
 
 const removeEmail = async (email: string) => {
-  await api.deletePermissions({ email });
-  permissions.value =  (await api.listPermissions({})).permissions;
+    await api.deletePermissions({ email });
+    permissions.value = (await api.listPermissions({})).permissions;
 };
 </script>
 
@@ -61,7 +61,7 @@ const removeEmail = async (email: string) => {
             </div>
         </div>
     </div>
-  <div v-else>
-    <h1>You are not an admin</h1>
-  </div>
+    <div v-else>
+        <h1>You are not an admin</h1>
+    </div>
 </template>

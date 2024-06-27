@@ -1,7 +1,7 @@
 <script lang="ts" setup>
-import { BccButton } from "@bcc-code/design-library-vue";
+import type { FileAndLanguage } from "~/utils/bmm";
 
-const selectedFile = defineModel<File | null>({ required: true });
+const selectedFiles = defineModel<FileAndLanguage[]>({ required: true });
 
 const isDragOver = ref(false);
 const dragEnter = () => {
@@ -15,13 +15,19 @@ const dragLeave = () => {
 const handleDrop = (event: DragEvent) => {
     isDragOver.value = false;
     const files = event.dataTransfer?.files;
-    selectedFile.value = files?.[0] ?? null;
+    const file = files?.[0];
+    if (file) selectedFiles.value.push({ file, language: "nb" });
 };
 
 const fileInput = ref<HTMLInputElement>(null!);
 
-const selectFile = (event: any) => {
-    selectedFile.value = event.target?.files[0];
+const selectFile = (
+    event: Event & { target: EventTarget & HTMLInputElement },
+) => {
+    selectedFiles.value.push({
+        file: event.target?.files?.[0],
+        language: "nb",
+    });
 };
 </script>
 
@@ -35,15 +41,7 @@ const selectFile = (event: any) => {
         @dragleave.prevent="dragLeave"
         @drop.prevent="handleDrop"
     >
-        <div v-if="selectedFile" class="m-auto text-center text-lg">
-            <p>{{ selectedFile.name }}</p>
-            <BccButton @click.stop="selectedFile = null" variant="secondary">
-                Clear
-            </BccButton>
-        </div>
-        <template v-else>
-            <p class="m-auto text-lg">{{ $t("dragAndDropFileHere") }}</p>
-        </template>
+        <p class="m-auto text-lg">{{ $t("dragAndDropFileHere") }}</p>
         <input
             ref="fileInput"
             type="file"
