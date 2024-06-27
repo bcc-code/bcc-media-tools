@@ -16,14 +16,10 @@ const api = useAPI();
 const { me } = useMe();
 const config = useRuntimeConfig();
 
-const selectedEnvironment = ref(BmmEnvironment.Production);
-watch(form, (newForm) => {
-    const newEnvironment =
-        newForm.environment === "int"
-            ? BmmEnvironment.Integration
-            : BmmEnvironment.Production;
-    if (selectedEnvironment.value !== newEnvironment)
-        selectedEnvironment.value = newEnvironment;
+const selectedEnvironment = computed(() => {
+    return form.value.environment === "int"
+        ? BmmEnvironment.Integration
+        : BmmEnvironment.Production;
 });
 
 const metadata = computed(() => {
@@ -90,13 +86,14 @@ const uploaded = ref(false);
                     </div>
                     <SelectFile v-model="selectedFiles" />
                     <FileUploader
-                        v-for="(file, i) in selectedFiles"
+                        v-for="(_, i) in selectedFiles"
                         v-model="selectedFiles[i]"
                         :endpoint="config.public.grpcUrl + '/upload'"
                         :metadata="metadata"
                         @uploaded="uploaded = true"
                     />
                     <div>
+                        {{ selectedEnvironment }}
                         {{ metadata }}
                     </div>
                 </div>
