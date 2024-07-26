@@ -117,6 +117,7 @@ func main() {
 	mux.Handle(path, handler)
 	mux.Handle("/upload", uploadHandler{
 		TemporalClient: temporalClient,
+		TempPath:       tempPath,
 	})
 	mux.Handle("/", fs)
 
