@@ -1,13 +1,13 @@
 package main
 
 import (
+	"github.com/bcc-code/bcc-media-flows/workflows/ingest"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 
-	"github.com/bcc-code/bcc-media-flows/workflows/webhooks"
 	"github.com/google/uuid"
 	"go.temporal.io/sdk/client"
 )
@@ -83,7 +83,7 @@ func (u uploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Ext includes the dot
-		filePath = filepath.Join("/tmp/", uuid.New().String()+filepath.Ext(part.FileName()))
+		filePath = filepath.Join(u.TempPath, uuid.New().String()+filepath.Ext(part.FileName()))
 
 		dst, err := os.Create(filePath)
 		if err != nil {
@@ -114,12 +114,18 @@ func (u uploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	_, err = u.TemporalClient.ExecuteWorkflow(r.Context(), workflowOptions, webhooks.BmmSimpleUpload, webhooks.BmmSimpleUploadParams{
-		Title:      formData["title"],
-		Language:   formData["language"],
-		TrackID:    trackID,
-		UploadedBy: formData["email"],
-		FilePath:   filePath,
+	targetEnvironment := formData["environment"]
+	if targetEnvironment == "int" {
+		targetEnvironment = "bmm-int"
+	}
+
+	_, err = u.TemporalClient.ExecuteWorkflow(r.Context(), workflowOptions, ingestworkflows.BmmIngestUpload, ingestworkflows.BmmSimpleUploadParams{
+		Title:               formData["title"],
+		Language:            formData["file_language"],
+		TrackID:             trackID,
+		UploadedBy:          getEmailFromHttp(r),
+		FilePath:            filePath,
+		BmmTargetEnvionment: targetEnvironment,
 	})
 
 	if err != nil {

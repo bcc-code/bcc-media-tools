@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { BccButton } from "@bcc-code/design-library-vue";
+import type { FileAndLanguage } from "~/utils/bmm";
 
 const props = defineProps<{
     endpoint: string;
@@ -10,7 +11,7 @@ const emit = defineEmits<{
     uploaded: [];
 }>();
 
-const selectedFile = defineModel<File | null>({ required: true });
+const selectedFile = defineModel<FileAndLanguage | null>({ required: true });
 const uploadPercentage = ref(0);
 const uploading = ref(false);
 
@@ -22,11 +23,12 @@ watch(selectedFile, () => {
 const abort = ref<() => void>();
 
 const uploadFile = () => {
-    if (!selectedFile.value) return;
+    if (!selectedFile.value?.file) return;
     uploading.value = true;
 
     const formData = new FormData();
-    formData.append("file", selectedFile.value);
+    formData.append("file", selectedFile.value.file);
+    formData.append("file_language", selectedFile.value.language);
     if (props.metadata) {
         for (const [key, values] of Object.entries(props.metadata)) {
             for (const value of values) {
