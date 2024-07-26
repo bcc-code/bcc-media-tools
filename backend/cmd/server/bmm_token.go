@@ -23,19 +23,24 @@ func getToken(tokenBaseURL, clientID, clientSecret, audience string) (*BMMToken,
 	}
 
 	r := resty.New()
-	r.BaseURL = tokenBaseURL
+	r.SetBaseURL(tokenBaseURL)
 	res, err := r.R().SetBody(map[string]string{
 		"client_id":     clientID,
 		"client_secret": clientSecret,
 		"audience":      audience,
 		"grant_type":    "client_credentials",
-	}).SetResult(&BMMToken{}).Post("/oauth/token")
+	}).SetResult(&BMMToken{}).Post("oauth/token")
 
 	if err != nil {
 		return nil, err
 	}
 
 	token := res.Result().(*BMMToken)
+
+	if token.AccessToken == "" {
+		return nil, fmt.Errorf("faulure to get token: %s", res.String())
+	}
+
 	token.CreatedAt = time.Now()
 
 	return token, nil

@@ -73,19 +73,23 @@ func main() {
 		os.Getenv("BMM_AUDIENCE"),
 	)
 
+	if err != nil {
+		panic(err)
+	}
+
 	temporalClient, err := NewTemporalClient(
 		os.Getenv("TEMPORAL_HOST_PORT"),
 		os.Getenv("TEMPORAL_NAMESPACE"),
 	)
 
+	if err != nil {
+		panic(err)
+	}
+
 	tempPath := os.Getenv("TEMP_PATH")
 	if tempPath == "" {
 		tempPath = os.TempDir()
 		fmt.Printf("TEMP_PATH not set, using %s\n", tempPath)
-	}
-
-	if err != nil {
-		panic(err)
 	}
 
 	permissionsApi := PermissionsAPI{}
