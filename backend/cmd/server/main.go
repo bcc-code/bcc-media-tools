@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/joho/godotenv"
 	"go.temporal.io/sdk/client"
@@ -22,6 +23,8 @@ import (
 // The server handles all authentication, so we can trust that the email is authenticated,
 // and we can use it to look up permissions.
 const EmailHeader = "x-token-user-email"
+
+var staticFilePath = "/static/"
 
 func getEmailFromHttp(r *http.Request) string {
 	if e := os.Getenv("DEBUG_AUTH_EMAIL"); e != "" {
@@ -102,12 +105,9 @@ func main() {
 		TranscriptionAPI: *transcriptionAPI,
 	}
 
-	staticFilePath := "/static/"
 	if os.Getenv("STATIC_FILE_PATH") != "" {
 		staticFilePath = os.Getenv("STATIC_FILE_PATH")
 	}
-
-	fs := http.FileServer(http.Dir(staticFilePath))
 
 	path, handler := apiv1connect.NewAPIServiceHandler(api)
 
@@ -119,9 +119,20 @@ func main() {
 		TemporalClient: temporalClient,
 		TempPath:       tempPath,
 	})
-	mux.Handle("/", fs)
+
+	mux.Handle("/", http.HandlerFunc(serveFiles))
 
 	_ = http.ListenAndServe(":8080",
 		h2c.NewHandler(mux, &http2.Server{}),
 	)
+}
+
+func serveFiles(w http.ResponseWriter, r *http.Request) {
+	localPath := filepath.Join(staticFilePath, r.URL.Path)
+
+	if r.URL.Path[len(r.URL.Path)-1] == '/' {
+		localPath = filepath.Join(staticFilePath, "/index.html")
+	}
+
+	http.ServeFile(w, r, localPath)
 }
