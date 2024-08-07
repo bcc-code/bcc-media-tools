@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/bcc-code/bcc-media-flows/workflows/ingest"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
+
+	ingestworkflows "github.com/bcc-code/bcc-media-flows/workflows/ingest"
 
 	"github.com/google/uuid"
 	"go.temporal.io/sdk/client"
@@ -121,7 +122,7 @@ func (u uploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	_, err = u.TemporalClient.ExecuteWorkflow(r.Context(), workflowOptions, ingestworkflows.BmmIngestUpload, ingestworkflows.BmmSimpleUploadParams{
 		Title:               formData["title"],
-		Language:            formData["file_language"],
+		Language:            convertBMMLanguageCodeToMB(formData["file_language"]),
 		TrackID:             trackID,
 		UploadedBy:          getEmailFromHttp(r),
 		FilePath:            filePath,
@@ -134,4 +135,44 @@ func (u uploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusAccepted)
+}
+
+// The table is based on
+// https://github.com/bcc-code/bmm-api/blob/develop/BMM.Api.Core/BtvLanguageProvider.cs
+var bmmToMB = map[string]string{
+	"nb":  "nor",
+	"de":  "deu",
+	"nl":  "nld",
+	"fr":  "fra",
+	"ru":  "rus",
+	"ro":  "ron",
+	"pl":  "pol",
+	"bg":  "bul",
+	"hu":  "hun",
+	"sl":  "slv",
+	"hr":  "hrv",
+	"tr":  "tur",
+	"en":  "eng",
+	"es":  "spa",
+	"it":  "ita",
+	"pt":  "por",
+	"fi":  "fin",
+	"zh":  "cmn",
+	"da":  "dan",
+	"yue": "yue",
+	"ml":  "mal",
+	"ta":  "tam",
+	"et":  "est",
+	"kha": "kha",
+	"af":  "af",
+}
+
+func convertBMMLanguageCodeToMB(lang string) string {
+	if bmmLang, ok := bmmToMB[lang]; ok {
+		return bmmLang
+	}
+
+	// If it's not a bmm language, return it as is
+	// this is better than to fail at this point and it can be corrected manually later if needed
+	return lang
 }
