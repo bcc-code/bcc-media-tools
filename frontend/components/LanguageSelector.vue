@@ -35,7 +35,7 @@ const languageDisplay = (l: string) => {
 </script>
 
 <template>
-    <BccSelect v-model="model" :label="$t('language')">
+    <BccSelect  :required="true" v-model="model" :label="$t('language')">
         <option disabled value="">{{ $t("selectAnOption") }}</option>
         <option v-for="l in bmmLanguages" :value="l">
             {{ languageDisplay(l) }}

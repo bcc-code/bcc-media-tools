@@ -69,6 +69,10 @@ func NewTemporalClient(host, namespace string) (client.Client, error) {
 func main() {
 	_ = godotenv.Load()
 
+	if os.Getenv("DEBUG_AUTH_EMAIL") != "" {
+		fmt.Printf("DEBUG_AUTH_EMAIL: %s\n", os.Getenv("DEBUG_AUTH_EMAIL"))
+	}
+
 	bmmToken, err := NewBMMToken(
 		os.Getenv("BMM_AUTH0_BASE_URL"),
 		os.Getenv("BMM_CLIENT_ID"),
