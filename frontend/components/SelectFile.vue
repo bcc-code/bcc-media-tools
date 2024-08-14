@@ -15,20 +15,39 @@ const dragLeave = () => {
 const handleDrop = (event: DragEvent) => {
     isDragOver.value = false;
     const files = event.dataTransfer?.files;
-    const file = files?.[0];
-    if (file) selectedFiles.value.push({ file, language: "nb" });
+
+    if (!files) return;
+
+    for (const file of files) {
+        if (!file.type.startsWith("audio/")) {
+            continue;
+        }
+
+        selectedFiles.value.push({ file, language: props.defaultLanguage });
+
+        if (!props.acceptMultiple) {
+            break;
+        }
+    }
 };
 
 const fileInput = ref<HTMLInputElement>(null!);
 
-const selectFile = (
-    event: Event & { target: EventTarget & HTMLInputElement },
-) => {
-    selectedFiles.value.push({
-        file: event.target?.files?.[0],
-        language: "nb",
-    });
+const selectFile = ( event: Event ) => {
+    const target = event.target as HTMLInputElement;
+    for (const file of target.files??[]) {
+        selectedFiles.value.push({
+            file: file as File,
+            language: props.defaultLanguage,
+        });
+    }
 };
+
+const props = defineProps<{
+    defaultLanguage: string;
+    acceptMultiple: boolean;
+}>();
+
 </script>
 
 <template>
@@ -46,6 +65,8 @@ const selectFile = (
             ref="fileInput"
             type="file"
             class="hidden"
+            accept="audio/*"
+            :multiple="props.acceptMultiple ?? null"
             @change="selectFile"
         />
     </div>

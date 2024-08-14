@@ -4,18 +4,19 @@ import type { FileAndLanguage } from "~/utils/bmm";
 
 const props = defineProps<{
     endpoint: string;
-    metadata?: { [key: string]: readonly string[] };
+    files: FileAndLanguage[];
+    metadata: { [key: string]: readonly string[] };
 }>();
 
 const emit = defineEmits<{
     uploaded: [];
 }>();
 
-const selectedFile = defineModel<FileAndLanguage | null>({ required: true });
+const selectedFiles = defineModel<FileAndLanguage[]>({ required: true });
 const uploadPercentage = ref(0);
 const uploading = ref(false);
 
-watch(selectedFile, () => {
+watch(selectedFiles, () => {
     uploadPercentage.value = 0;
     uploading.value = false;
 });
@@ -23,37 +24,40 @@ watch(selectedFile, () => {
 const abort = ref<() => void>();
 
 const uploadFile = () => {
-    if (!selectedFile.value?.file) return;
-    uploading.value = true;
+    for (const selectedFile of selectedFiles.value || []) {
 
-    const formData = new FormData();
-    formData.append("file", selectedFile.value.file);
-    formData.append("file_language", selectedFile.value.language);
-    if (props.metadata) {
-        for (const [key, values] of Object.entries(props.metadata)) {
-            for (const value of values) {
-                formData.append(key, value);
+        if (!selectedFile.file) return;
+        uploading.value = true;
+
+        const formData = new FormData();
+        formData.append("file", selectedFile.file);
+        formData.append("file_language", selectedFile.language);
+        if (props.metadata) {
+            for (const [key, values] of Object.entries(props.metadata)) {
+                for (const value of values) {
+                    formData.append(key, value);
+                }
             }
         }
-    }
 
-    const xhr = new XMLHttpRequest();
-    xhr.open("post", props.endpoint, true);
-    xhr.upload.onprogress = function (ev) {
-        // Upload progress here
-        uploadPercentage.value = Math.floor((ev.loaded / ev.total) * 1000) / 10;
-    };
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState === 4) {
-            // Uploaded
-            emit("uploaded");
-        }
-    };
-    xhr.send(formData);
-    abort.value = () => {
-        xhr.abort();
-        uploading.value = false;
-    };
+        const xhr = new XMLHttpRequest();
+        xhr.open("post", props.endpoint, true);
+        xhr.upload.onprogress = function (ev) {
+            // Upload progress here
+            uploadPercentage.value = Math.floor((ev.loaded / ev.total) * 1000) / 10;
+        };
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4) {
+                // Uploaded
+                emit("uploaded");
+            }
+        };
+        xhr.send(formData);
+        abort.value = () => {
+            xhr.abort();
+            uploading.value = false;
+        };
+    }
 };
 </script>
 
@@ -62,7 +66,7 @@ const uploadFile = () => {
         <BccButton
             @click="uploadFile"
             v-if="!uploading"
-            :disabled="!selectedFile"
+            :disabled="selectedFiles.length < 1"
         >
             Upload
         </BccButton>
