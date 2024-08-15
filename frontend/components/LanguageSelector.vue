@@ -22,6 +22,10 @@ watch(
                 await api.getLanguages({ environment: newEnv })
             ).Languages;
         }
+
+        if (bmmLanguages.value.length == 1) {
+            model.value = bmmLanguages.value[0];
+        }
     },
     { immediate: true },
 );
@@ -36,7 +40,7 @@ const languageDisplay = (l: string) => {
 
 <template>
     <BccSelect required v-model="model" :label="$t('language')">
-        <option disabled value="">{{ $t("selectAnOption") }}</option>
+        <option v-if="bmmLanguages.length > 1" disabled value="">{{ $t("selectAnOption") }}</option>
         <option v-for="l in bmmLanguages" :value="l">
             {{ languageDisplay(l) }}
         </option>

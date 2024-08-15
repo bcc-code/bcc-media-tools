@@ -13,11 +13,17 @@ const emit = defineEmits<{
 }>();
 
 const selectedFiles = defineModel<FileAndLanguage[]>({ required: true });
-const uploadPercentage = ref(0);
+const uploadPercentageFiles = ref<{ [key: string]: number }>({});
 const uploading = ref(false);
+const uploadPercentage = ref(0);
+
+watch(uploadPercentageFiles, () => {
+    uploadPercentage.value = Object.values(uploadPercentageFiles.value).reduce((a, b) => a + b, 0) / Object.keys(uploadPercentageFiles.value).length;
+}, {deep: true});
 
 watch(selectedFiles, () => {
     uploadPercentage.value = 0;
+    uploadPercentageFiles.value = {};
     uploading.value = false;
 });
 
@@ -44,7 +50,7 @@ const uploadFile = () => {
         xhr.open("post", props.endpoint, true);
         xhr.upload.onprogress = function (ev) {
             // Upload progress here
-            uploadPercentage.value = Math.floor((ev.loaded / ev.total) * 1000) / 10;
+            uploadPercentageFiles.value[selectedFile.file.name] = Math.floor((ev.loaded / ev.total) * 1000) / 10;
         };
         xhr.onreadystatechange = function () {
             if (xhr.readyState === 4) {
