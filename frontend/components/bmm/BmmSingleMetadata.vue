@@ -61,7 +61,7 @@ function checkForm() {
                 :env="environment"
             />
             <BccInput v-model="title" :label="$t('title')" required />
-            <bcc-alert context="info" :icon="true">The title will be applied for the selected language only</bcc-alert>
+            <bcc-alert context="info" :icon="true">The title will only be updated for the selected language in BMM if there is no title already present</bcc-alert>
         </div>
         <BccButton type="submit" >{{ $t("next") }}</BccButton>
     </form>

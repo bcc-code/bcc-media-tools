@@ -2,6 +2,7 @@
 import { BmmEnvironment } from "~/src/gen/api/v1/api_pb";
 import { BccInput, BccSelect } from "@bcc-code/design-library-vue";
 import type { FileAndLanguage } from "~/utils/bmm";
+import { usePermissionsLoading } from "~/utils/me";
 
 const form = ref<BMMSingleForm>({
     title: "",
@@ -15,6 +16,8 @@ const selectedFiles = ref<FileAndLanguage[]>([]);
 const api = useAPI();
 const { me } = useMe();
 const config = useRuntimeConfig();
+
+const permissionsLoading = usePermissionsLoading();
 
 const selectedEnvironment = computed(() => {
     return form.value.environment === "int"
@@ -116,6 +119,7 @@ const reset = () => {
                 <button class="rounded bg-slate-400 p-2" @click="reset">Upload more</button>
             </template>
         </template>
+        <template v-else-if="permissionsLoading">Loading...</template>
         <template v-else> You don't have enough permissions </template>
     </div>
 </template>
