@@ -9,10 +9,14 @@ export type Me = {
     };
 };
 
+export function usePermissionsLoading() {
+    return useState("me-loading", () => false);
+}
+
 export function useMe() {
     const me = useState<Permissions | null>("me", () => null);
 
-    const loading = useState("me-loading", () => false);
+    const loading = usePermissionsLoading();
 
     const loaded = useState("me-loaded", () => false);
 
