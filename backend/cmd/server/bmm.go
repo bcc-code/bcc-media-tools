@@ -2,15 +2,16 @@ package main
 
 import (
 	apiv1 "bcc-media-tools/api/v1"
-	"connectrpc.com/connect"
 	"context"
 	"fmt"
-	"github.com/go-resty/resty/v2"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	"net/url"
 	"os"
 	"strconv"
 	"time"
+
+	"connectrpc.com/connect"
+	"github.com/go-resty/resty/v2"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func NewBMMApi(baseURL string, token *BMMToken) *BMMApi {
@@ -169,7 +170,7 @@ func (a BMMApi) GetPodcastTracks(_ context.Context, req *connect.Request[apiv1.G
 	tracksReq := a.client.R().
 		SetAuthToken(a.token.GetAccessToken()).SetResult(&[]BMMItem{})
 
-	res, err := tracksReq.Get(fmt.Sprintf("/track?tags=%s&size=%d", url.QueryEscape(req.Msg.PodcastTag), req.Msg.Limit))
+	res, err := tracksReq.Get(fmt.Sprintf("/track?tags=%s&size=%d&unpublished=show", url.QueryEscape(req.Msg.PodcastTag), req.Msg.Limit))
 	if err != nil {
 		return nil, err
 	}
