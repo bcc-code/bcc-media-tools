@@ -35,10 +35,7 @@ watch(
     { immediate: true },
 );
 
-const selectedTrackId = defineModel<string>();
-const selectedTrack = computed(() => {
-    return tracks.value?.find((i) => i.id === selectedTrackId.value);
-});
+const selectedTrack = defineModel<BMMTrack>();
 </script>
 
 <template>
@@ -58,7 +55,7 @@ const selectedTrack = computed(() => {
             class="flex h-48 flex-col gap-2 overflow-y-auto"
         >
             <div v-for="t in tracks" class="flex">
-                <BmmTrackView :track="t" @click="selectedTrackId = t.id" />
+                <BmmTrackView :track="t" @click="selectedTrack = t" />
             </div>
         </div>
 

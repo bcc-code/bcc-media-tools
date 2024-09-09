@@ -1,6 +1,8 @@
 package main
 
 import (
+	apiv1 "bcc-media-tools/api/v1"
+	"encoding/json"
 	"io"
 	"net/http"
 	"os"
@@ -106,9 +108,16 @@ func (u uploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		TaskQueue: queue,
 	}
 
+	trackData := &apiv1.BMMTrack{}
+	err = json.Unmarshal([]byte(formData["track"]), &trackData)
+	if err != nil {
+		http.Error(w, "invalid track data", http.StatusBadRequest)
+		return
+	}
+
 	var trackID int
-	if formData["trackId"] != "" {
-		trackID, err = strconv.Atoi(formData["trackId"])
+	if trackData.Id != "" {
+		trackID, err = strconv.Atoi(trackData.Id)
 		if err != nil {
 			http.Error(w, "invalid track id", http.StatusBadRequest)
 			return
@@ -173,6 +182,6 @@ func convertBMMLanguageCodeToMB(lang string) string {
 	}
 
 	// If it's not a bmm language, return it as is
-	// this is better than to fail at this point and it can be corrected manually later if needed
+	// this is better than to fail at this point, and it can be corrected manually later if needed
 	return lang
 }
