@@ -35,7 +35,7 @@ const languageDisplay = (l: string) => {
         const dn = new Intl.DisplayNames(["en"], { type: "language" });
 		let name = dn.of(l);
 
-		// Chorome doesn't support "hka"
+		// Chrome doesn't support "kha"
 		if (name == "kha") {
 			return "Khasi";
 		} else if (name == "zxx") {
