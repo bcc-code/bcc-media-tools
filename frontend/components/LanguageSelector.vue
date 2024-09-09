@@ -33,6 +33,15 @@ watch(
 const languageDisplay = (l: string) => {
     if (typeof Intl.DisplayNames !== "undefined") {
         const dn = new Intl.DisplayNames(["en"], { type: "language" });
+		let name = dn.of(l);
+
+		// Chrome doesn't support "kha"
+		if (name == "kha") {
+			return "Khasi";
+		} else if (name == "zxx") {
+			return "Instrumental";
+		}
+
         return dn.of(l);
     }
 };
