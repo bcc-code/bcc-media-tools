@@ -88,6 +88,7 @@ message BMMTrack {
 	string id = 1;
 	string title = 2;
   google.protobuf.Timestamp publishedAt = 3;
+  LanguageList languages = 4;
 }
 
 message TracksList {
@@ -155,5 +156,3 @@ service APIService {
 	rpc GetPodcastTracks(GetPodcastTracksRequest) returns (TracksList) {}
   rpc GetLanguages(GetAvailableLanguagesRequest) returns (LanguageList) {}
 }
-
-
