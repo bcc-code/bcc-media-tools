@@ -1,4 +1,4 @@
-<script lang="tsx" setup>
+<script lang="ts" setup>
 import { BccFormLabel } from "@bcc-code/design-library-vue";
 import { BmmEnvironment, BMMTrack } from "~/src/gen/api/v1/api_pb";
 

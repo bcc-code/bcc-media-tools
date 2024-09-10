@@ -1,8 +1,6 @@
 package main
 
 import (
-	apiv1 "bcc-media-tools/api/v1"
-	"encoding/json"
 	"io"
 	"net/http"
 	"os"
@@ -74,6 +72,10 @@ func (u uploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if err == io.EOF {
 			break
 		}
+		if err != nil {
+			http.Error(w, "error reading multipart", http.StatusInternalServerError)
+			return
+		}
 
 		if part.FileName() == "" { // this is not a file
 			data, err := io.ReadAll(part)
@@ -94,12 +96,13 @@ func (u uploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		defer dst.Close()
-
 		if _, err := io.Copy(dst, part); err != nil {
 			http.Error(w, "error writing file", http.StatusInternalServerError)
+			_ = dst.Close()
 			return
 		}
+
+		_ = dst.Close()
 	}
 
 	// Trigger flow
@@ -108,20 +111,10 @@ func (u uploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		TaskQueue: queue,
 	}
 
-	trackData := &apiv1.BMMTrack{}
-	err = json.Unmarshal([]byte(formData["track"]), &trackData)
+	trackID, err := strconv.Atoi(formData["trackId"])
 	if err != nil {
-		http.Error(w, "invalid track data", http.StatusBadRequest)
+		http.Error(w, "invalid track id", http.StatusBadRequest)
 		return
-	}
-
-	var trackID int
-	if trackData.Id != "" {
-		trackID, err = strconv.Atoi(trackData.Id)
-		if err != nil {
-			http.Error(w, "invalid track id", http.StatusBadRequest)
-			return
-		}
 	}
 
 	targetEnvironment := formData["environment"]

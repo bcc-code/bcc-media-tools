@@ -29,7 +29,7 @@ const metadata = computed(() => {
     return {
         title: [form.value.title],
         language: [form.value.language],
-        trackId: [form.value.trackId?.toString() ?? ""],
+        trackId: [form.value.track.id],
         environment: [form.value.environment ?? "prod"],
     } as { [key: string]: readonly string[] };
 });
@@ -61,6 +61,7 @@ const reset = () => {
     form.value = {
         title: "",
         environment: "prod",
+        track: undefined,
     }
 }
 </script>
