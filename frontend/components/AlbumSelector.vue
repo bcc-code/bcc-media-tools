@@ -66,7 +66,7 @@ watch(
 
     <template v-if="selectedType == 'podcasts'">
         <BccSelect
-            v-if="permissions.podcasts.length > 1"
+            :disabled="permissions.podcasts.length < 2"
             v-model="value"
             :label="$t('Podcast')"
         >
@@ -74,6 +74,7 @@ watch(
                 {{ p }}
             </option>
         </BccSelect>
+
     </template>
 
     <template v-else>
