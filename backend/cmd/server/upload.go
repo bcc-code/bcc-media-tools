@@ -72,6 +72,10 @@ func (u uploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if err == io.EOF {
 			break
 		}
+		if err != nil {
+			http.Error(w, "error reading multipart", http.StatusInternalServerError)
+			return
+		}
 
 		if part.FileName() == "" { // this is not a file
 			data, err := io.ReadAll(part)
@@ -92,12 +96,13 @@ func (u uploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		defer dst.Close()
-
 		if _, err := io.Copy(dst, part); err != nil {
 			http.Error(w, "error writing file", http.StatusInternalServerError)
+			_ = dst.Close()
 			return
 		}
+
+		_ = dst.Close()
 	}
 
 	// Trigger flow
@@ -106,13 +111,10 @@ func (u uploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		TaskQueue: queue,
 	}
 
-	var trackID int
-	if formData["trackId"] != "" {
-		trackID, err = strconv.Atoi(formData["trackId"])
-		if err != nil {
-			http.Error(w, "invalid track id", http.StatusBadRequest)
-			return
-		}
+	trackID, err := strconv.Atoi(formData["trackId"])
+	if err != nil {
+		http.Error(w, "invalid track id", http.StatusBadRequest)
+		return
 	}
 
 	targetEnvironment := formData["environment"]
@@ -173,6 +175,6 @@ func convertBMMLanguageCodeToMB(lang string) string {
 	}
 
 	// If it's not a bmm language, return it as is
-	// this is better than to fail at this point and it can be corrected manually later if needed
+	// this is better than to fail at this point, and it can be corrected manually later if needed
 	return lang
 }

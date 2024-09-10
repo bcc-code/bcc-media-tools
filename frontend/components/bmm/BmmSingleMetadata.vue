@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { BccAlert, BccButton, BccInput, BccSelect } from "@bcc-code/design-library-vue";
-import { BmmEnvironment, BMMPermission } from "~/src/gen/api/v1/api_pb";
+import { BmmEnvironment, BMMPermission, BMMTrack } from "~/src/gen/api/v1/api_pb";
 
 defineProps<{
     permissions: BMMPermission;
@@ -10,7 +10,7 @@ defineProps<{
 const form = defineModel<BMMSingleForm>({ required: true });
 
 const albumId = computedProperty(form, "albumId");
-const trackId = computedProperty(form, "trackId");
+const track = computedProperty<BMMTrack>(form, "track");
 const language = computedProperty(form, "language");
 const title = computedProperty(form, "title");
 const selectedEnvironment = computedProperty(form, "environment");
@@ -20,7 +20,7 @@ const emit = defineEmits<{
 }>();
 
 function checkForm() {
-    if (!trackId.value) {
+    if (!track.value) {
         alert("Please select a track");
         return
     }
@@ -50,7 +50,7 @@ function checkForm() {
             v-if="albumId"
             :key="albumId"
             label="Track"
-            v-model="trackId"
+            v-model="track"
             :album="albumId"
             :env="environment"
         />
@@ -60,8 +60,6 @@ function checkForm() {
                 :languages="permissions.languages"
                 :env="environment"
             />
-            <BccInput v-model="title" :label="$t('title')" />
-            <bcc-alert context="info" :icon="true">The title will only be updated for the selected language in BMM if there is no title already present</bcc-alert>
         </div>
         <BccButton type="submit" >{{ $t("next") }}</BccButton>
     </form>

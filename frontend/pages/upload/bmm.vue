@@ -29,7 +29,7 @@ const metadata = computed(() => {
     return {
         title: [form.value.title],
         language: [form.value.language],
-        trackId: [form.value.trackId?.toString() ?? ""],
+        trackId: [form.value.track.id],
         environment: [form.value.environment ?? "prod"],
     } as { [key: string]: readonly string[] };
 });
@@ -61,6 +61,7 @@ const reset = () => {
     form.value = {
         title: "",
         environment: "prod",
+        track: undefined,
     }
 }
 </script>
@@ -81,7 +82,7 @@ const reset = () => {
                 <div v-if="metadataIsSet"
                     class="flex flex-col gap-4 p-4 transition"
                 >
-                    <h1 class="text-xl font-bold">Upload files for "{{metadata.title[0]}}"</h1>
+                    <h1 class="text-xl font-bold">Upload files for "{{form.track.title}}"</h1>
                     <div v-for="file in selectedFiles" :key="file.file.name">
                         <BccSelect :class="[{
                             'hidden': !me.bmm.admin,
@@ -91,7 +92,7 @@ const reset = () => {
                             </option>
                         </BccSelect>
                         {{ file.file.name }} <button @click="selectedFiles.splice(selectedFiles.indexOf(file), 1)">
-                        <Icon :style="{color: 'red'}"name="heroicons:trash" />
+                        <Icon :style="{color: 'red'}" name="heroicons:trash" />
                     </button>
                     </div>
 

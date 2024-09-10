@@ -154,6 +154,7 @@ func (a BMMApi) GetAlbumTracks(_ context.Context, req *connect.Request[apiv1.Get
 			Id:          strconv.Itoa(track.ID),
 			Title:       track.Title,
 			PublishedAt: timestamppb.New(track.PublishedAt),
+			Languages:   &apiv1.LanguageList{Languages: track.Languages},
 		})
 	}
 
