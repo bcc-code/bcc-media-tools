@@ -11,10 +11,11 @@ const dateString = (date: Date) => {
 </script>
 
 <template>
-    <p class="flex cursor-pointer gap-2 rounded bg-slate-200 pl-2">
+    <div class="flex w-full cursor-pointer gap-2 rounded bg-slate-200 pl-2">
         <span v-if="track && track.publishedAt">
             {{ dateString(track.publishedAt.toDate()) }}</span
         >
-        <span class="rounded-r bg-slate-50 px-2">{{ track.title }}</span>
-    </p>
+        <span class="bg-slate-50 px-2 flex-grow">{{ track.title }}</span>
+        <span class="rounded-r text-lg pr-2"><template v-for="l in track.languages?.Languages">{{l.flagEmoji}}</template> </span>
+    </div>
 </template>

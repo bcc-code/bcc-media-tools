@@ -96,7 +96,12 @@ message TracksList {
 }
 
 message LanguageList {
-  repeated string Languages = 1;
+  repeated Language Languages = 1;
+}
+
+message Language {
+  string code = 1;
+  string flag_emoji = 2;
 }
 
 message GetTranscriptionReqest {
