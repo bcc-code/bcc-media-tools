@@ -83,6 +83,8 @@ const reset = () => {
                     class="flex flex-col gap-4 p-4 transition"
                 >
                     <h1 class="text-xl font-bold">Upload files for "{{form.track.title}}"</h1>
+                    <h2 class="text-lg font-bold">Existing languages: <span class="rounded-r text-lg pr-2"><span v-for="l in form.track.languages?.Languages" :title="l.code">{{l.flagEmoji}}</span></span>
+                    </h2>
                     <div v-for="file in selectedFiles" :key="file.file.name">
                         <BccSelect :class="[{
                             'hidden': !me.bmm.admin,

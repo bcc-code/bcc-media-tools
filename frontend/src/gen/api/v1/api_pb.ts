@@ -756,9 +756,9 @@ export class TracksList extends Message<TracksList> {
  */
 export class LanguageList extends Message<LanguageList> {
   /**
-   * @generated from field: repeated string Languages = 1;
+   * @generated from field: repeated api.v1.Language Languages = 1;
    */
-  Languages: string[] = [];
+  Languages: Language[] = [];
 
   constructor(data?: PartialMessage<LanguageList>) {
     super();
@@ -768,7 +768,7 @@ export class LanguageList extends Message<LanguageList> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "api.v1.LanguageList";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "Languages", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 1, name: "Languages", kind: "message", T: Language, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): LanguageList {
@@ -785,6 +785,49 @@ export class LanguageList extends Message<LanguageList> {
 
   static equals(a: LanguageList | PlainMessage<LanguageList> | undefined, b: LanguageList | PlainMessage<LanguageList> | undefined): boolean {
     return proto3.util.equals(LanguageList, a, b);
+  }
+}
+
+/**
+ * @generated from message api.v1.Language
+ */
+export class Language extends Message<Language> {
+  /**
+   * @generated from field: string code = 1;
+   */
+  code = "";
+
+  /**
+   * @generated from field: string flag_emoji = 2;
+   */
+  flagEmoji = "";
+
+  constructor(data?: PartialMessage<Language>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.Language";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "code", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "flag_emoji", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Language {
+    return new Language().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Language {
+    return new Language().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Language {
+    return new Language().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: Language | PlainMessage<Language> | undefined, b: Language | PlainMessage<Language> | undefined): boolean {
+    return proto3.util.equals(Language, a, b);
   }
 }
 

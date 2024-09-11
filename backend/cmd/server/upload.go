@@ -178,3 +178,38 @@ func convertBMMLanguageCodeToMB(lang string) string {
 	// this is better than to fail at this point, and it can be corrected manually later if needed
 	return lang
 }
+
+var langToFlagEmoji = map[string]string{
+	"nb":  "🇳🇴",
+	"de":  "🇩🇪",
+	"nl":  "🇳🇱",
+	"fr":  "🇫🇷",
+	"ru":  "🇷🇺",
+	"ro":  "🇷🇴",
+	"pl":  "🇵🇱",
+	"bg":  "🇧🇬",
+	"hu":  "🇭🇺",
+	"sl":  "🇸🇮",
+	"hr":  "🇭🇷",
+	"tr":  "🇹🇷",
+	"en":  "🇬🇧",
+	"es":  "🇪🇸",
+	"it":  "🇮🇹",
+	"pt":  "🇵🇹",
+	"fi":  "🇫🇮",
+	"zh":  "🇨🇳",
+	"da":  "🇩🇰",
+	"yue": "🇨🇳",
+	"ml":  "🇲🇴",
+	"ta":  "🇮🇳",
+	"et":  "🇪🇪",
+	"kha": "🇰🇭",
+	"af":  "🇦🇫",
+}
+
+func EmojiForLanguage(lang string) string {
+	if flagEmoji, ok := langToFlagEmoji[lang]; ok {
+		return flagEmoji
+	}
+	return "🏳️"
+}

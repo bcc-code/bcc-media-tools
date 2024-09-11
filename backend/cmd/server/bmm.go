@@ -4,8 +4,10 @@ import (
 	apiv1 "bcc-media-tools/api/v1"
 	"context"
 	"fmt"
+	"github.com/samber/lo"
 	"net/url"
 	"os"
+	"sort"
 	"strconv"
 	"time"
 
@@ -83,7 +85,6 @@ type BMMItem struct {
 	Type        string    `json:"type"`
 	Tracks      []BMMItem `json:"children"`
 }
-
 type BMMApiOverview struct {
 	Name      string   `json:"name"`
 	Languages []string `json:"languages"`
@@ -131,7 +132,8 @@ func (a BMMApi) GetAlbums(_ context.Context, req *connect.Request[apiv1.GetAlbum
 }
 
 func (a BMMApi) GetAlbumTracks(_ context.Context, req *connect.Request[apiv1.GetAlbumTracksRequest]) (*connect.Response[apiv1.TracksList], error) {
-	if !PermissionsForEmail(getEmail(req)).CanUpload() {
+	permissions := PermissionsForEmail(getEmail(req))
+	if !permissions.CanUpload() {
 		return nil, connect.NewError(403, fmt.Errorf("not authorized"))
 	}
 
@@ -150,11 +152,12 @@ func (a BMMApi) GetAlbumTracks(_ context.Context, req *connect.Request[apiv1.Get
 
 	tracks := &apiv1.TracksList{}
 	for _, track := range album.Tracks {
+		langs := lo.Intersect(track.Languages, permissions.Bmm.Languages)
 		tracks.Tracks = append(tracks.Tracks, &apiv1.BMMTrack{
 			Id:          strconv.Itoa(track.ID),
 			Title:       track.Title,
 			PublishedAt: timestamppb.New(track.PublishedAt),
-			Languages:   &apiv1.LanguageList{Languages: track.Languages},
+			Languages:   languageListToApi(langs),
 		})
 	}
 
@@ -162,7 +165,8 @@ func (a BMMApi) GetAlbumTracks(_ context.Context, req *connect.Request[apiv1.Get
 }
 
 func (a BMMApi) GetPodcastTracks(_ context.Context, req *connect.Request[apiv1.GetPodcastTracksRequest]) (*connect.Response[apiv1.TracksList], error) {
-	if !PermissionsForEmail(getEmail(req)).CanUpload() {
+	permissions := PermissionsForEmail(getEmail(req))
+	if !permissions.CanUpload() {
 		return nil, connect.NewError(403, fmt.Errorf("not authorized"))
 	}
 
@@ -179,14 +183,27 @@ func (a BMMApi) GetPodcastTracks(_ context.Context, req *connect.Request[apiv1.G
 	tracks := *(res.Result().(*[]BMMItem))
 	tracksOut := &apiv1.TracksList{}
 	for _, track := range tracks {
+		langs := lo.Intersect(track.Languages, permissions.Bmm.Languages)
 		tracksOut.Tracks = append(tracksOut.Tracks, &apiv1.BMMTrack{
 			Id:          strconv.Itoa(track.ID),
 			Title:       track.Title,
 			PublishedAt: timestamppb.New(track.PublishedAt),
+			Languages:   languageListToApi(langs),
 		})
 	}
 
 	return connect.NewResponse(tracksOut), nil
+}
+
+func languageListToApi(languages []string) *apiv1.LanguageList {
+	languagesOut := &apiv1.LanguageList{}
+
+	for _, l := range languages {
+		languagesOut.Languages = append(languagesOut.Languages, &apiv1.Language{Code: l, FlagEmoji: EmojiForLanguage(l)})
+	}
+
+	sort.Sort(languagesOut)
+	return languagesOut
 }
 
 func (a BMMApi) GetLanguages(_ context.Context, req *connect.Request[apiv1.GetAvailableLanguagesRequest]) (*connect.Response[apiv1.LanguageList], error) {
@@ -199,10 +216,5 @@ func (a BMMApi) GetLanguages(_ context.Context, req *connect.Request[apiv1.GetAv
 	}
 
 	overview := res.Result().(*BMMApiOverview)
-	languagesOut := &apiv1.LanguageList{}
-	for _, l := range overview.Languages {
-		languagesOut.Languages = append(languagesOut.Languages, l)
-	}
-
-	return connect.NewResponse(languagesOut), nil
+	return connect.NewResponse(languageListToApi(overview.Languages)), nil
 }
