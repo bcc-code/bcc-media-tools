@@ -198,12 +198,11 @@ func (a BMMApi) GetPodcastTracks(_ context.Context, req *connect.Request[apiv1.G
 func languageListToApi(languages []string) *apiv1.LanguageList {
 	languagesOut := &apiv1.LanguageList{}
 
-	sort.Strings(languages)
-
 	for _, l := range languages {
 		languagesOut.Languages = append(languagesOut.Languages, &apiv1.Language{Code: l, FlagEmoji: EmojiForLanguage(l)})
 	}
 
+	sort.Sort(languagesOut)
 	return languagesOut
 }
 
