@@ -16,6 +16,6 @@ const dateString = (date: Date) => {
             {{ dateString(track.publishedAt.toDate()) }}</span
         >
         <span class="bg-slate-50 px-2 flex-grow">{{ track.title }}</span>
-        <span class="rounded-r text-lg pr-2"><template v-for="l in track.languages?.Languages">{{l.flagEmoji}}</template> </span>
+        <span class="rounded-r text-lg pr-2"><template v-for="l in track.languages?.Languages"><span :title="l.code">{{l.flagEmoji}}</span></template> </span>
     </div>
 </template>
