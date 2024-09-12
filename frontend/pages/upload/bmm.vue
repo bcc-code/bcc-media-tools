@@ -83,7 +83,7 @@ const reset = () => {
                     class="flex flex-col gap-4 p-4 transition"
                 >
                     <h1 class="text-xl font-bold">Upload files for "{{form.track.title}}"</h1>
-                    <h2 class="text-lg font-bold">Existing languages: <span class="rounded-r text-lg pr-2"><span v-for="l in form.track.languages?.Languages" :title="l.code">{{l.flagEmoji}}</span></span>
+                    <h2 class="text-lg font-bold">Existing languages: <img v-for="l in form.track.languages?.Languages" :title="l.code" :src="'/images/flags/'+l.code+'.svg'" class="h-4 inline pl-1" :alt="l.code"/>
                     </h2>
                     <div v-for="file in selectedFiles" :key="file.file.name">
                         <BccSelect :class="[{
