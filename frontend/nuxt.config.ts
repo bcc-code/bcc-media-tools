@@ -10,7 +10,7 @@ export default defineNuxtConfig({
     app: {
         head: {
             bodyAttrs: {
-                class: "bg-slate-900 md:bg-slate-800 text-white",
+                class: "bg-neutral-100",
             },
         },
         pageTransition: { name: "page", mode: "out-in" },

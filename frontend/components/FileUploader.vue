@@ -4,7 +4,6 @@ import type { FileAndLanguage } from "~/utils/bmm";
 
 const props = defineProps<{
     endpoint: string;
-    files: FileAndLanguage[];
     metadata: { [key: string]: readonly string[] };
 }>();
 
@@ -17,9 +16,17 @@ const uploadPercentageFiles = ref<{ [key: string]: number }>({});
 const uploading = ref(false);
 const uploadPercentage = ref(0);
 
-watch(uploadPercentageFiles, () => {
-    uploadPercentage.value = Object.values(uploadPercentageFiles.value).reduce((a, b) => a + b, 0) / Object.keys(uploadPercentageFiles.value).length;
-}, {deep: true});
+watch(
+    uploadPercentageFiles,
+    () => {
+        uploadPercentage.value =
+            Object.values(uploadPercentageFiles.value).reduce(
+                (a, b) => a + b,
+                0,
+            ) / Object.keys(uploadPercentageFiles.value).length;
+    },
+    { deep: true },
+);
 
 watch(selectedFiles, () => {
     uploadPercentage.value = 0;
@@ -31,7 +38,6 @@ const abort = ref<() => void>();
 
 const uploadFile = () => {
     for (const selectedFile of selectedFiles.value || []) {
-
         if (!selectedFile.file) return;
         uploading.value = true;
 
@@ -50,7 +56,8 @@ const uploadFile = () => {
         xhr.open("post", props.endpoint, true);
         xhr.upload.onprogress = function (ev) {
             // Upload progress here
-            uploadPercentageFiles.value[selectedFile.file.name] = Math.floor((ev.loaded / ev.total) * 1000) / 10;
+            uploadPercentageFiles.value[selectedFile.file.name] =
+                Math.floor((ev.loaded / ev.total) * 1000) / 10;
         };
         xhr.onreadystatechange = function () {
             if (xhr.readyState === 4) {
@@ -95,7 +102,7 @@ const uploadFile = () => {
                 ></div>
             </div>
             <span
-                class="m-auto bg-slate-600 px-2 py-1 font-bold text-white"
+                class="m-auto bg-neutral-600 px-2 py-1 font-bold text-white"
                 :class="
                     uploadPercentage !== 100 ? 'rounded-lg' : 'rounded-r-lg'
                 "

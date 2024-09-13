@@ -1,7 +1,13 @@
 <script lang="ts" setup>
 import { BmmEnvironment } from "~/src/gen/api/v1/api_pb";
-import { BccInput, BccSelect } from "@bcc-code/design-library-vue";
-import type { FileAndLanguage } from "~/utils/bmm";
+import {
+    BccAlert,
+    BccBanner,
+    BccButton,
+    BccSelect,
+    BccTable,
+} from "@bcc-code/design-library-vue";
+import type { BMMSingleForm, FileAndLanguage } from "~/utils/bmm";
 import { usePermissionsLoading } from "~/utils/me";
 
 const form = ref<BMMSingleForm>({
@@ -25,13 +31,19 @@ const selectedEnvironment = computed(() => {
         : BmmEnvironment.Production;
 });
 
-const metadata = computed(() => {
-    return {
+const metadata = computed<Record<string, string[]>>(() => {
+    let f: Record<string, string[]> = {
         title: [form.value.title],
-        language: [form.value.language],
-        trackId: [form.value.track.id],
         environment: [form.value.environment ?? "prod"],
-    } as { [key: string]: readonly string[] };
+    };
+    if (form.value.track) f["trackId"] = [form.value.track.id];
+    if (form.value.language) f["language"] = [form.value.language];
+
+    return f;
+});
+
+watch(form, (f) => {
+    console.log(f);
 });
 
 const availableLanguages = ref<string[]>([]);
@@ -42,11 +54,12 @@ watch(
         if (newLanguages && newLanguages.length > 0) {
             availableLanguages.value = newLanguages;
         } else {
-            availableLanguages.value = (
-                await api.getLanguages({
-                    environment: selectedEnvironment.value,
-                })
-            ).Languages;
+            const languageList = await api.getLanguages({
+                environment: selectedEnvironment.value,
+            });
+            availableLanguages.value = languageList.Languages.map(
+                (l) => l.code,
+            );
         }
     },
     { immediate: true },
@@ -62,41 +75,104 @@ const reset = () => {
         title: "",
         environment: "prod",
         track: undefined,
-    }
-}
+    };
+};
 </script>
 
 <template>
     <div
-        class="mx-auto flex min-h-screen max-w-screen-md flex-col gap-4 rounded-lg bg-stone-300 p-4 text-black"
+        class="mx-auto my-8 flex h-full max-w-screen-md flex-col gap-4 rounded-2xl border border-on-secondary bg-white p-4 text-black"
     >
-        <template v-if="me && me.bmm && (me.bmm.podcasts.length > 0 || me.bmm.admin)">
+        <template
+            v-if="me && me.bmm && (me.bmm.podcasts.length > 0 || me.bmm.admin)"
+        >
             <template v-if="!uploaded">
                 <BmmSingleMetadata
-                    v-model="form"
+                    v-model="form as BMMSingleForm"
                     @set="metadataIsSet = true"
                     :permissions="me.bmm"
                     :environment="selectedEnvironment"
                     v-if="!metadataIsSet"
                 />
-                <div v-if="metadataIsSet"
+
+                <div
+                    v-if="metadataIsSet && form.track"
                     class="flex flex-col gap-4 p-4 transition"
                 >
-                    <h1 class="text-xl font-bold">Upload files for "{{form.track.title}}"</h1>
-                    <h2 class="text-lg font-bold">Existing languages: <img v-for="l in form.track.languages?.Languages" :title="l.code" :src="'/images/flags/'+l.code+'.svg'" class="h-4 inline pl-1" :alt="l.code"/>
-                    </h2>
-                    <div v-for="file in selectedFiles" :key="file.file.name">
-                        <BccSelect :class="[{
-                            'hidden': !me.bmm.admin,
-                        }]" :disabled="!me.bmm.admin" v-model="file.language" >
-                            <option v-for="l in availableLanguages" :value="l">
-                                {{ l }}
-                            </option>
-                        </BccSelect>
-                        {{ file.file.name }} <button @click="selectedFiles.splice(selectedFiles.indexOf(file), 1)">
-                        <Icon :style="{color: 'red'}" name="heroicons:trash" />
-                    </button>
-                    </div>
+                    <header>
+                        <h1 class="text-heading-xl">
+                            Upload files for "{{ form.track.title }}"
+                        </h1>
+                        <p class="text-heading-md">
+                            Existing languages:
+                            <img
+                                v-for="l in form.track.languages?.Languages"
+                                :title="l.code"
+                                :src="'/images/flags/' + l.code + '.svg'"
+                                class="ml-2 inline h-4 rounded-sm shadow-sm"
+                                :alt="l.code"
+                            />
+                        </p>
+                    </header>
+
+                    <BccTable
+                        :items="selectedFiles"
+                        :columns="[
+                            {
+                                key: 'language',
+                                text: 'Language',
+                                sortable: false,
+                            },
+                            { key: 'file.name', text: 'Name' },
+                            {
+                                key: 'actions',
+                                text: 'Actions',
+                                sortable: false,
+                            },
+                        ]"
+                    >
+                        <template #item.file.name="{ item }">
+                            <div
+                                class="max-w-[420px] truncate"
+                                :title="item.file.name"
+                            >
+                                {{ item.file.name }}
+                            </div>
+                        </template>
+                        <template #item.language="{ item }">
+                            <BccSelect
+                                :class="[
+                                    'text-inherit',
+                                    {
+                                        hidden: !me.bmm.admin,
+                                    },
+                                ]"
+                                :disabled="!me.bmm.admin"
+                                v-model="item.language"
+                            >
+                                <option
+                                    v-for="l in availableLanguages"
+                                    :value="l"
+                                >
+                                    {{ l }}
+                                </option>
+                            </BccSelect>
+                        </template>
+                        <template #item.actions="{ item }">
+                            <BccButton
+                                @click="
+                                    selectedFiles.splice(
+                                        selectedFiles.indexOf(item as any),
+                                        1,
+                                    )
+                                "
+                                context="danger"
+                                variant="tertiary"
+                            >
+                                <Icon name="heroicons:trash" />
+                            </BccButton>
+                        </template>
+                    </BccTable>
 
                     <SelectFile
                         v-if="selectedFiles.length < 1 || me.bmm.admin"
@@ -111,15 +187,23 @@ const reset = () => {
                         :metadata="metadata"
                         @uploaded="uploaded = true"
                     />
-                    <button class="rounded bg-slate-400 p-2" @click="metadataIsSet = false">Back</button>
+
+                    <BccButton
+                        variant="secondary"
+                        @click="metadataIsSet = false"
+                    >
+                        Back
+                    </BccButton>
                 </div>
             </template>
 
             <template v-else>
-                <div class="rounded-lg bg-green-500 p-4">
+                <BccAlert context="success">
                     {{ $t("uploaded") }}
-                </div>
-                <button class="rounded bg-slate-400 p-2" @click="reset">Upload more</button>
+                </BccAlert>
+                <BccButton variant="secondary" @click="reset">
+                    Upload more
+                </BccButton>
             </template>
         </template>
         <template v-else-if="permissionsLoading">Loading...</template>

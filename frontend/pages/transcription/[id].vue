@@ -117,7 +117,7 @@ const seekOnFocus = computed({
 </script>
 
 <template>
-    <div class="flex h-screen divide-x-2 divide-slate-500">
+    <div class="flex h-screen divide-x-2 divide-neutral-500">
         <div class="flex w-1/2 flex-col">
             <div v-if="loading" class="mx-auto animate-ping">Loading...</div>
             <TranscriptionEditor

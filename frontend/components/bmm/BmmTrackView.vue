@@ -11,11 +11,26 @@ const dateString = (date: Date) => {
 </script>
 
 <template>
-    <div class="flex w-full cursor-pointer gap-2 rounded bg-slate-200 pl-2">
-        <span v-if="track && track.publishedAt">
-            {{ dateString(track.publishedAt.toDate()) }}</span
+    <div
+        class="flex w-full cursor-pointer items-center overflow-clip rounded-md border border-on-primary bg-primary shadow-sm hover:border-neutral-300"
+    >
+        <span
+            v-if="track && track.publishedAt"
+            class="w-24 bg-secondary px-2 py-1 text-left text-secondary"
         >
-        <span class="bg-slate-50 px-2 flex-grow">{{ track.title }}</span>
-        <span class="rounded-r text-lg pr-2"><img v-for="l in track.languages?.Languages" :title="l.code" :src="'/images/flags/'+l.code+'.svg'" class="h-4 inline pl-1" :alt="l.code"/></span>
+            {{ dateString(track.publishedAt.toDate()) }}
+        </span>
+        <span class="grow px-2 py-1 text-primary">
+            {{ track.title }}
+        </span>
+        <span class="flex h-full gap-1 bg-secondary px-2 py-2">
+            <img
+                v-for="l in track.languages?.Languages"
+                :title="l.code"
+                :src="'/images/flags/' + l.code + '.svg'"
+                class="inline h-4 rounded-sm border border-white shadow-sm"
+                :alt="l.code"
+            />
+        </span>
     </div>
 </template>

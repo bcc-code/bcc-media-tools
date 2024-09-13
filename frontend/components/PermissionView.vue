@@ -20,7 +20,8 @@ const api = useAPI();
 
 const availableLanguages = ref<string[]>([]);
 api.getLanguages({ environment: BmmEnvironment.Production }).then(
-    (result) => (availableLanguages.value = result.Languages.map((f) => f.code)),
+    (result) =>
+        (availableLanguages.value = result.Languages.map((f) => f.code)),
 );
 
 watch(perms, () => {
