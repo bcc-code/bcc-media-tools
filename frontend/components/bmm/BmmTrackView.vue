@@ -27,7 +27,7 @@ const dateString = (date: Date) => {
             <img
                 v-for="l in track.languages?.Languages"
                 :title="l.code"
-                :src="'/images/flags/' + l.code + '.svg'"
+                :src="'/images/flags/' + l.iconFile"
                 class="inline h-4 rounded-sm border border-white shadow-sm"
                 :alt="l.code"
             />

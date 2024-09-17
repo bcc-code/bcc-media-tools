@@ -199,7 +199,7 @@ func languageListToApi(languages []string) *apiv1.LanguageList {
 	languagesOut := &apiv1.LanguageList{}
 
 	for _, l := range languages {
-		languagesOut.Languages = append(languagesOut.Languages, &apiv1.Language{Code: l, FlagEmoji: EmojiForLanguage(l)})
+		languagesOut.Languages = append(languagesOut.Languages, &apiv1.Language{Code: l, IconFile: IconForLang(l)})
 	}
 
 	sort.Sort(languagesOut)

@@ -109,7 +109,7 @@ const reset = () => {
                             <img
                                 v-for="l in form.track.languages?.Languages"
                                 :title="l.code"
-                                :src="'/images/flags/' + l.code + '.svg'"
+                                :src="'/images/flags/' + l.iconFile"
                                 class="ml-2 inline h-4 rounded-sm shadow-sm"
                                 :alt="l.code"
                             />

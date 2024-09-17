@@ -798,9 +798,9 @@ export class Language extends Message<Language> {
   code = "";
 
   /**
-   * @generated from field: string flag_emoji = 2;
+   * @generated from field: string icon_file = 3;
    */
-  flagEmoji = "";
+  iconFile = "";
 
   constructor(data?: PartialMessage<Language>) {
     super();
@@ -811,7 +811,7 @@ export class Language extends Message<Language> {
   static readonly typeName = "api.v1.Language";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "code", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "flag_emoji", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "icon_file", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Language {

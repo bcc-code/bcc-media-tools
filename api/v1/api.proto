@@ -101,7 +101,7 @@ message LanguageList {
 
 message Language {
   string code = 1;
-  string flag_emoji = 2;
+  string icon_file = 3;
 }
 
 message GetTranscriptionReqest {
