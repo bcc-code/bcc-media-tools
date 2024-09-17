@@ -1,5 +1,10 @@
 <script lang="ts" setup>
-import { BccFormLabel } from "@bcc-code/design-library-vue";
+import {
+    BccButton,
+    BccFormLabel,
+    BccTable,
+    BccSpinner,
+} from "@bcc-code/design-library-vue";
 import { BmmEnvironment, BMMTrack } from "~/src/gen/api/v1/api_pb";
 
 const tracks = ref<BMMTrack[]>();
@@ -36,33 +41,53 @@ watch(
 );
 
 const selectedTrack = defineModel<BMMTrack>();
+
+function onTrackClick(track: BMMTrack) {
+    if (selectedTrack.value && selectedTrack.value.id == track.id) {
+        selectedTrack.value = undefined;
+    } else {
+        selectedTrack.value = track;
+    }
+}
+
+const filteredTracks = computed(() => {
+    if (!tracks.value?.length) return [];
+
+    if (!selectedTrack.value) {
+        return tracks.value;
+    }
+
+    return tracks.value.filter((t) => t.id == selectedTrack.value!.id);
+});
 </script>
 
 <template>
-    <div>
+    <div class="h-96 overflow-y-auto">
         <BccFormLabel>
             {{ label }}
         </BccFormLabel>
-        <div v-if="selectedTrack" class="flex">
-            <BmmTrackView
-                @click="selectedTrackId = ''"
-                v-if="selectedTrack"
-                :track="selectedTrack"
-            />
-        </div>
         <div
-            v-else-if="tracks && tracks.length > 0"
-            class="flex h-48 flex-col gap-2 overflow-y-auto"
+            v-if="tracks && tracks.length > 0"
+            class="relative mt-2 gap-2 space-y-2"
         >
-            <div v-for="t in tracks" class="flex">
-                <BmmTrackView :track="t" @click="selectedTrack = t" />
-            </div>
+            <TransitionGroup
+                move-class="transition duration-600 ease-out"
+                enter-active-class="transition duration-600 ease-out"
+                enter-from-class="opacity-0 scale-95"
+                enter-to-class="opacity-100 scale-100"
+                leave-active-class="transition duration-600 ease-out absolute"
+                leave-from-class="opacity-100 scale-100"
+                leave-to-class="opacity-0 scale-95"
+            >
+                <BmmTrackView
+                    v-for="t in filteredTracks"
+                    :key="t.id"
+                    :track="t"
+                    @click="onTrackClick(t)"
+                />
+            </TransitionGroup>
         </div>
 
-        <div v-else>
-            <p class="flex cursor-pointer gap-2 rounded bg-slate-50">
-                <span class="rounded bg-slate-200 px-2">Loading</span>
-            </p>
-        </div>
+        <BccSpinner v-else size="sm" class="mx-auto" />
     </div>
 </template>

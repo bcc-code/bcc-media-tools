@@ -41,7 +41,7 @@ const { deleteMode } = useDeleteMode();
     <div
         class="flex flex-col px-4"
         :class="{
-            'cursor-pointer transition hover:bg-slate-800': deleteMode,
+            'cursor-pointer transition hover:bg-neutral-800': deleteMode,
         }"
         @click="deleteMode ? $emit('toggleDelete') : undefined"
     >
@@ -61,7 +61,7 @@ const { deleteMode } = useDeleteMode();
                     contenteditable
                     v-for="(w, index) in segment.words"
                     @input="handleTextUpdate(index, $event)"
-                    class="rounded-lg p-1 transition duration-75 focus:bg-slate-800 focus:outline-none"
+                    class="rounded-lg p-1 transition duration-75 focus:bg-neutral-800 focus:outline-none"
                     @focus="$emit('wordFocus', w)"
                 >
                     {{ w.text }}

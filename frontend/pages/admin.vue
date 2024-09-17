@@ -43,7 +43,7 @@ const removeEmail = async (email: string) => {
 <template>
     <div class="flex h-screen w-screen" v-if="me?.admin">
         <div
-            class="mx-auto w-full max-w-screen-md rounded-lg border-2 border-slate-950 bg-zinc-100 p-8 text-black"
+            class="mx-auto w-full max-w-screen-md rounded-lg border-2 border-neutral-950 bg-zinc-100 p-8 text-black"
         >
             <h3 class="text-lg">Admin</h3>
             <div class="flex flex-col gap-4" v-if="permissions">

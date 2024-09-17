@@ -20,7 +20,7 @@ watch(
         } else {
             bmmLanguages.value = (
                 await api.getLanguages({ environment: newEnv })
-            ).Languages;
+            ).Languages.map((l) => l.code);
         }
 
         if (bmmLanguages.value.length == 1) {
@@ -33,14 +33,14 @@ watch(
 const languageDisplay = (l: string) => {
     if (typeof Intl.DisplayNames !== "undefined") {
         const dn = new Intl.DisplayNames(["en"], { type: "language" });
-		let name = dn.of(l);
+        let name = dn.of(l);
 
-		// Chrome doesn't support "kha"
-		if (name == "kha") {
-			return "Khasi";
-		} else if (name == "zxx") {
-			return "Instrumental";
-		}
+        // Chrome doesn't support "kha"
+        if (name == "kha") {
+            return "Khasi";
+        } else if (name == "zxx") {
+            return "Instrumental";
+        }
 
         return dn.of(l);
     }
@@ -49,7 +49,9 @@ const languageDisplay = (l: string) => {
 
 <template>
     <BccSelect required v-model="model" :label="$t('language')">
-        <option v-if="bmmLanguages.length > 1" disabled value="">{{ $t("selectAnOption") }}</option>
+        <option v-if="bmmLanguages.length > 1" disabled value="">
+            {{ $t("selectAnOption") }}
+        </option>
         <option v-for="l in bmmLanguages" :value="l">
             {{ languageDisplay(l) }}
         </option>

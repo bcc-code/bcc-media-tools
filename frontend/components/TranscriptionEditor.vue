@@ -44,7 +44,7 @@ const segmentelements = defineModel<{
 
 <template>
     <div class="flex flex-col overflow-auto bg-black text-xl">
-        <div class="flex gap-4 bg-slate-800 p-4">
+        <div class="flex gap-4 bg-neutral-800 p-4">
             <slot name="actions"></slot>
             <BccButton
                 class="ml-auto"
