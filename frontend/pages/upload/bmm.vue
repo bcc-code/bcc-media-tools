@@ -87,8 +87,9 @@ const reset = () => {
             v-if="me && me.bmm && (me.bmm.podcasts.length > 0 || me.bmm.admin)"
         >
             <template v-if="!uploaded">
+                <!-- @vue-expect-error -->
                 <BmmSingleMetadata
-                    v-model="form as BMMSingleForm"
+                    v-model="form"
                     @set="metadataIsSet = true"
                     :permissions="me.bmm"
                     :environment="selectedEnvironment"
