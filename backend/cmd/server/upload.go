@@ -179,37 +179,37 @@ func convertBMMLanguageCodeToMB(lang string) string {
 	return lang
 }
 
-var langToFlagEmoji = map[string]string{
-	"nb":  "🇳🇴",
-	"de":  "🇩🇪",
-	"nl":  "🇳🇱",
-	"fr":  "🇫🇷",
-	"ru":  "🇷🇺",
-	"ro":  "🇷🇴",
-	"pl":  "🇵🇱",
-	"bg":  "🇧🇬",
-	"hu":  "🇭🇺",
-	"sl":  "🇸🇮",
-	"hr":  "🇭🇷",
-	"tr":  "🇹🇷",
-	"en":  "🇬🇧",
-	"es":  "🇪🇸",
-	"it":  "🇮🇹",
-	"pt":  "🇵🇹",
-	"fi":  "🇫🇮",
-	"zh":  "🇨🇳",
-	"da":  "🇩🇰",
-	"yue": "🇨🇳",
-	"ml":  "🇲🇴",
-	"ta":  "🇮🇳",
-	"et":  "🇪🇪",
-	"kha": "🇰🇭",
-	"af":  "🇦🇫",
+var langToFlagFile = map[string]string{
+	"nb":  "no.svg",
+	"de":  "de.svg",
+	"nl":  "nl.svg",
+	"fr":  "fr.svg",
+	"ru":  "ru.svg",
+	"ro":  "ro.svg",
+	"pl":  "pl.svg",
+	"bg":  "bg.svg",
+	"hu":  "hu.svg",
+	"sl":  "si.svg",
+	"hr":  "hr.svg",
+	"tr":  "tr.svg",
+	"en":  "gb.svg",
+	"es":  "es.svg",
+	"it":  "it.svg",
+	"pt":  "pt.svg",
+	"fi":  "fi.svg",
+	"zh":  "cn.svg",
+	"da":  "dk.svg",
+	"yue": "cn.svg",
+	"ml":  "in.svg",
+	"ta":  "in.svg",
+	"et":  "ee.svg",
+	"kha": "in.svg",
+	"af":  "za.svg",
 }
 
-func EmojiForLanguage(lang string) string {
-	if flagEmoji, ok := langToFlagEmoji[lang]; ok {
-		return flagEmoji
+func IconForLang(lang string) string {
+	if iconPath, ok := langToFlagFile[lang]; ok {
+		return iconPath
 	}
-	return "🏳️"
+	return "xx.svg"
 }
