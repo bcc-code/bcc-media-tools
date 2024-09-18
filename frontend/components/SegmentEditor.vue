@@ -1,4 +1,7 @@
 <script lang="ts" setup>
+import { BccButton } from "@bcc-code/design-library-vue";
+import TrashIcon from "./TrashIcon.vue";
+
 const props = defineProps<{
     segment: Segment;
     deleted: boolean;
@@ -39,38 +42,50 @@ const { deleteMode } = useDeleteMode();
 
 <template>
     <div
-        class="flex flex-col px-4"
+        class="flex items-center px-6 py-4 transition-all ease-out"
         :class="{
-            'cursor-pointer transition hover:bg-neutral-800': deleteMode,
+            'cursor-pointer  hover:bg-red-200 hover:text-red-700 ': deleteMode,
+            'bg-neutral-200 opacity-50': deleted,
         }"
         @click="deleteMode ? $emit('toggleDelete') : undefined"
     >
-        <div class="flex gap-2 text-sm opacity-50">
-            <p>{{ secondsToTimestamp(segment.start) }}</p>
-            --
-            <p>{{ secondsToTimestamp(segment.end) }}</p>
+        <div>
+            <div class="flex gap-2 text-sm opacity-50">
+                <p>{{ secondsToTimestamp(segment.start) }}</p>
+                -
+                <p>{{ secondsToTimestamp(segment.end) }}</p>
+            </div>
+            <div :class="{ 'pointer-events-none': deleteMode }">
+                <div class="flex flex-wrap">
+                    <span
+                        contenteditable
+                        v-for="(w, index) in segment.words"
+                        @input="handleTextUpdate(index, $event)"
+                        class="rounded-md border border-transparent px-1 focus:border-neutral-500 focus:bg-neutral-200 focus:outline-none"
+                        @focus="$emit('wordFocus', w)"
+                    >
+                        {{ w.text }}
+                    </span>
+                </div>
+            </div>
         </div>
-        <div class="flex" :class="{ 'pointer-events-none': deleteMode }">
-            <div
-                class="flex flex-wrap"
-                :class="{
-                    'opacity-50': deleted,
-                }"
+        <div class="ml-auto">
+            <BccButton
+                v-if="!deleted"
+                context="danger"
+                size="sm"
+                @click="$emit('toggleDelete')"
             >
-                <span
-                    contenteditable
-                    v-for="(w, index) in segment.words"
-                    @input="handleTextUpdate(index, $event)"
-                    class="rounded-lg p-1 transition duration-75 focus:bg-neutral-800 focus:outline-none"
-                    @focus="$emit('wordFocus', w)"
-                >
-                    {{ w.text }}
-                </span>
-            </div>
-            <div class="ml-auto">
-                <TrashIcon @click="$emit('toggleDelete')" v-if="!deleted" />
-                <RestoreIcon @click="$emit('toggleDelete')" v-else />
-            </div>
+                <Icon name="heroicons:trash" />
+            </BccButton>
+            <BccButton
+                v-else
+                variant="secondary"
+                size="sm"
+                @click="$emit('toggleDelete')"
+            >
+                <Icon name="heroicons:arrow-path" />
+            </BccButton>
         </div>
     </div>
 </template>

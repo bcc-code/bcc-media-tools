@@ -1,9 +1,9 @@
 <script lang="ts" setup>
-import { BccButton } from "@bcc-code/design-library-vue";
+import { BccButton, BccToggle } from "@bcc-code/design-library-vue";
 import type { ComponentPublicInstance } from "vue";
 
 const props = defineProps<{
-    fileName: string;
+    fileName?: string;
     transcription?: TranscriptionResult;
 }>();
 
@@ -43,18 +43,27 @@ const segmentelements = defineModel<{
 </script>
 
 <template>
-    <div class="flex flex-col overflow-auto bg-black text-xl">
-        <div class="flex gap-4 bg-neutral-800 p-4">
+    <div class="relative flex flex-col overflow-auto text-xl">
+        <div class="flex items-center gap-4 border-b bg-primary p-4 shadow-sm">
             <slot name="actions"></slot>
-            <BccButton
-                class="ml-auto"
-                @click="deleteMode = !deleteMode"
-                :variant="!deleteMode ? 'primary' : 'secondary'"
-            >
-                Delete mode
-            </BccButton>
+            <BccToggle
+                v-model="deleteMode"
+                label="Delete mode"
+                class="ml-auto mr-2"
+            />
         </div>
-        <div class="flex flex-col overflow-auto" v-if="transcription">
+        <TransitionGroup
+            v-if="transcription"
+            tag="div"
+            class="flex flex-col divide-y overflow-auto"
+            enter-active-class="transition duration-300 ease-out"
+            enter-from-class="opacity-0 scale-95"
+            enter-to-class="opacity-100 scale-100"
+            leave-active-class="transition duration-300 ease-out absolute"
+            leave-from-class="opacity-100 scale-100"
+            leave-to-class="opacity-0 scale-95"
+            move-class="transition duration-300 ease-out"
+        >
             <SegmentEditor
                 v-for="(s, index) in transcription.segments"
                 :key="s.id"
@@ -65,13 +74,12 @@ const segmentelements = defineModel<{
                         }
                     }
                 "
-                class="py-2"
                 :segment="s"
                 :deleted="deletedIndexes.includes(index.toString())"
                 @word-focus="$emit('wordFocus', $event)"
                 @update="handleSegmentUpdate(index, $event)"
                 @toggle-delete="handleSegmentToggleDelete(index)"
             />
-        </div>
+        </TransitionGroup>
     </div>
 </template>
