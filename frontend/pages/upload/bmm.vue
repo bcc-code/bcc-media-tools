@@ -141,23 +141,16 @@ const reset = () => {
                             </div>
                         </template>
                         <template #item.language="{ item }">
-                            <BccSelect
-                                :class="[
-                                    'text-inherit',
-                                    {
-                                        hidden: !me.bmm.admin,
-                                    },
-                                ]"
-                                :disabled="!me.bmm.admin"
+                            <LanguageSelector
                                 v-model="item.language"
-                            >
-                                <option
-                                    v-for="l in availableLanguages"
-                                    :value="l"
-                                >
-                                    {{ l }}
-                                </option>
-                            </BccSelect>
+                                :class="{
+                                    hidden: !me.bmm.admin,
+                                }"
+                                :disabled="!me.bmm.admin"
+                                :languages="me.bmm.languages"
+                                :env="selectedEnvironment"
+                                label=""
+                            />
                         </template>
                         <template #item.actions="{ item }">
                             <BccButton
