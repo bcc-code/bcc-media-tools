@@ -87,7 +87,7 @@ const reset = () => {
             v-if="me && me.bmm && (me.bmm.podcasts.length > 0 || me.bmm.admin)"
         >
             <template v-if="!uploaded">
-                <!-- @vue-expect-error -->
+                <!-- @vue-expect-error The component's `v-model` expects a form with the type `BMMSingleForm` -->
                 <BmmSingleMetadata
                     v-model="form"
                     @set="metadataIsSet = true"
