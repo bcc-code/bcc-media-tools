@@ -36,6 +36,8 @@ watch(selectedFiles, () => {
 
 const abort = ref<() => void>();
 
+const showProgress = ref(false);
+
 const uploadFile = () => {
     for (const selectedFile of selectedFiles.value || []) {
         if (!selectedFile.file) return;
@@ -53,21 +55,29 @@ const uploadFile = () => {
         }
 
         const xhr = new XMLHttpRequest();
+        let startedAt: number;
         xhr.open("post", props.endpoint, true);
+        xhr.onloadstart = function () {
+            startedAt = Date.now();
+        };
         xhr.upload.onprogress = function (ev) {
             // Upload progress here
             uploadPercentageFiles.value[selectedFile.file.name] =
                 Math.floor((ev.loaded / ev.total) * 1000) / 10;
-        };
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState === 4) {
-                // Uploaded
-                emit("uploaded");
+
+            // Only show progress indicator in UI after 200ms
+            if (Date.now() - startedAt >= 200) {
+                showProgress.value = true;
             }
+        };
+        xhr.onload = function () {
+            emit("uploaded");
+            showProgress.value = false;
         };
         xhr.send(formData);
         abort.value = () => {
             xhr.abort();
+            showProgress.value = false;
             uploading.value = false;
         };
     }
@@ -75,7 +85,7 @@ const uploadFile = () => {
 </script>
 
 <template>
-    <div class="flex w-full flex-col gap-4">
+    <div class="flex flex-col gap-2">
         <BccButton
             @click="uploadFile"
             v-if="!uploading"
@@ -91,28 +101,32 @@ const uploadFile = () => {
         >
             Cancel
         </BccButton>
-        <div class="flex justify-between">
-            <div class="grow">
-                <div
-                    class="flex h-8 bg-green-600"
-                    :class="
-                        uploadPercentage !== 100 ? 'rounded-lg' : 'rounded-l-lg'
-                    "
-                    :style="{ width: `${uploadPercentage}%` }"
-                ></div>
-            </div>
-            <span
-                class="m-auto bg-neutral-600 px-2 py-1 font-bold text-white"
-                :class="
-                    uploadPercentage !== 100 ? 'rounded-lg' : 'rounded-r-lg'
-                "
+        <Transition
+            enter-active-class="transition duration-300 ease-out"
+            enter-from-class="opacity-0 -translate-y-2 scale-95"
+            enter-to-class="opacity-100 translate-y-0 scale-100"
+            leave-active-class="transition duration-300 ease-out absolute"
+            leave-from-class="opacity-100 translate-y-0 scale-100"
+            leave-to-class="opacity-0 -translate-y-2 scale-95"
+        >
+            <div
+                v-if="showProgress"
+                class="relative overflow-clip rounded-lg border border-neutral-200 bg-neutral-100 p-1"
             >
-                {{
-                    uploadPercentage !== 100
-                        ? uploadPercentage.toFixed(1)
-                        : 100
-                }}%
-            </span>
-        </div>
+                <div
+                    class="flex h-6 rounded bg-green-600"
+                    :style="{ width: `${uploadPercentage}%` }"
+                />
+                <div
+                    class="absolute right-3 top-1/2 -translate-y-1/2 tabular-nums"
+                >
+                    {{
+                        uploadPercentage !== 100
+                            ? uploadPercentage.toFixed(1)
+                            : 100
+                    }}%
+                </div>
+            </div>
+        </Transition>
     </div>
 </template>
