@@ -24,12 +24,12 @@ const download = () => {
 </script>
 
 <template>
-    <div>
+    <div class="flex gap-1 rounded-xl bg-neutral-100 p-2">
         <BccSelect v-model="format">
             <option value="json">JSON</option>
             <option value="srt">SRT</option>
             <option value="srt-words">SRT (words)</option>
         </BccSelect>
-        <BccButton @click="download">Download</BccButton>
+        <BccButton @click="download" variant="tertiary">Download</BccButton>
     </div>
 </template>

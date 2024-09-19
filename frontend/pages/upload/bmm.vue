@@ -1,12 +1,6 @@
 <script lang="ts" setup>
+import { BccAlert, BccButton, BccTable } from "@bcc-code/design-library-vue";
 import { BmmEnvironment } from "~/src/gen/api/v1/api_pb";
-import {
-    BccAlert,
-    BccBanner,
-    BccButton,
-    BccSelect,
-    BccTable,
-} from "@bcc-code/design-library-vue";
 import type { BMMSingleForm, FileAndLanguage } from "~/utils/bmm";
 import { usePermissionsLoading } from "~/utils/me";
 
@@ -40,10 +34,6 @@ const metadata = computed<Record<string, string[]>>(() => {
     if (form.value.language) f["language"] = [form.value.language];
 
     return f;
-});
-
-watch(form, (f) => {
-    console.log(f);
 });
 
 const availableLanguages = ref<string[]>([]);
@@ -87,13 +77,13 @@ const reset = () => {
             v-if="me && me.bmm && (me.bmm.podcasts.length > 0 || me.bmm.admin)"
         >
             <template v-if="!uploaded">
-                <!-- @vue-expect-error -->
+                <!-- @vue-expect-error The component's `v-model` expects a form with the type `BMMSingleForm` -->
                 <BmmSingleMetadata
+                    v-if="!metadataIsSet"
                     v-model="form"
-                    @set="metadataIsSet = true"
                     :permissions="me.bmm"
                     :environment="selectedEnvironment"
-                    v-if="!metadataIsSet"
+                    @set="metadataIsSet = true"
                 />
 
                 <div
@@ -141,23 +131,16 @@ const reset = () => {
                             </div>
                         </template>
                         <template #item.language="{ item }">
-                            <BccSelect
-                                :class="[
-                                    'text-inherit',
-                                    {
-                                        hidden: !me.bmm.admin,
-                                    },
-                                ]"
-                                :disabled="!me.bmm.admin"
+                            <LanguageSelector
                                 v-model="item.language"
-                            >
-                                <option
-                                    v-for="l in availableLanguages"
-                                    :value="l"
-                                >
-                                    {{ l }}
-                                </option>
-                            </BccSelect>
+                                :class="{
+                                    hidden: !me.bmm.admin,
+                                }"
+                                :disabled="!me.bmm.admin"
+                                :languages="me.bmm.languages"
+                                :env="selectedEnvironment"
+                                label=""
+                            />
                         </template>
                         <template #item.actions="{ item }">
                             <BccButton

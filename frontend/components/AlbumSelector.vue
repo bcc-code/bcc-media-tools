@@ -17,9 +17,9 @@ const years = ref<{ [key: string]: BMMYear }>();
 const albums = ref<{ [key: string]: string }>({});
 
 const currentYear = new Date().getFullYear();
-const selectedType = ref<string>("podcasts");
-const selectedYear = ref<string>(currentYear.toString());
-const value = defineModel<string>();
+const selectedType = ref("podcasts");
+const selectedYear = ref(currentYear.toString());
+const albumId = defineModel<string>();
 
 watch(
     () => props.env,
@@ -32,7 +32,7 @@ watch(
 watch(
     [selectedYear, () => props.env],
     async ([newYear, env]) => {
-        value.value = "";
+        albumId.value = "";
         albums.value = {};
         let albumsRes = (
             await api.getAlbums({ year: parseInt(newYear), environment: env })
@@ -45,10 +45,10 @@ watch(
 );
 
 watch(
-    [() => props.env, selectedType],
-    ([newEnv, newType]) => {
-        if (newType === "podcasts") value.value = props.permissions.podcasts[0];
-        else value.value = "";
+    [selectedType, () => props.permissions.podcasts],
+    async ([newType, newPodcasts]) => {
+        await nextTick();
+        albumId.value = newType === "podcasts" ? newPodcasts[0] : "";
     },
     { immediate: true },
 );
@@ -64,18 +64,16 @@ watch(
         <option value="albums">{{ $t("albums") }}</option>
     </BccSelect>
 
-    <template v-if="selectedType == 'podcasts'">
-        <BccSelect
-            :disabled="permissions.podcasts.length < 2"
-            v-model="value"
-            :label="$t('Podcast')"
-        >
-            <option v-for="p in permissions.podcasts" :value="p">
-                {{ p }}
-            </option>
-        </BccSelect>
-
-    </template>
+    <BccSelect
+        v-if="selectedType == 'podcasts'"
+        :disabled="permissions.podcasts.length < 2"
+        v-model="albumId"
+        :label="$t('Podcast')"
+    >
+        <option v-for="p in permissions.podcasts" :value="p">
+            {{ p }}
+        </option>
+    </BccSelect>
 
     <template v-else>
         <BccSelect v-model="selectedYear" :label="$t('Year')">
@@ -83,7 +81,7 @@ watch(
                 {{ y.year }} ({{ y.count }})
             </option>
         </BccSelect>
-        <BccSelect v-model="value" :label="$t('album')">
+        <BccSelect v-model="albumId" :label="$t('album')">
             <option disabled value="">{{ $t("selectAnOption") }}</option>
             <option v-for="(title, key) in albums" :value="key">
                 {{ title }}

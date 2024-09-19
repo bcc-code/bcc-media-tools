@@ -5,6 +5,7 @@ import type { BmmEnvironment } from "~/src/gen/api/v1/api_pb";
 const props = defineProps<{
     languages: string[];
     env: BmmEnvironment;
+    label?: string;
 }>();
 
 const model = defineModel<string>();
@@ -48,7 +49,7 @@ const languageDisplay = (l: string) => {
 </script>
 
 <template>
-    <BccSelect required v-model="model" :label="$t('language')">
+    <BccSelect required v-model="model" :label="label ?? $t('language')">
         <option v-if="bmmLanguages.length > 1" disabled value="">
             {{ $t("selectAnOption") }}
         </option>

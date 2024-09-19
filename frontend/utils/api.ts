@@ -10,7 +10,6 @@ export function useAPI() {
     }
 
     const runtimeConfig = useRuntimeConfig();
-    console.log("runtimeConfig", runtimeConfig.public.grpcUrl);
     const transport = createConnectTransport({
         baseUrl: runtimeConfig.public.grpcUrl,
     });

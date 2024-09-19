@@ -29,7 +29,7 @@ const handleFile = (event: Event) => {
 
                 segments.value = transcription.value!.segments ?? [];
 
-                tKey.value = useId();
+                tKey.value = generateRandomId();
             }
         };
         reader.readAsText(file);
@@ -38,40 +38,42 @@ const handleFile = (event: Event) => {
 
 const segments = ref<Segment[]>([]);
 
-const format = ref<"json" | "srt" | "srt-words">("json");
-
-const download = () => {
-    switch (format.value) {
-        case "json":
-            downloadTranscriptionJSON(segments.value, fileName.value!);
-            break;
-        case "srt-words":
-            downloadTranscriptionSRT(segments.value, fileName.value!, true);
-            break;
-        case "srt":
-            downloadTranscriptionSRT(segments.value, fileName.value!, false);
-            break;
-    }
-};
-
 const vxId = ref("");
+
+const { deleteMode } = useDeleteMode();
+
+const truncatedFileName = computed(() => {
+    if (!fileName.value) return;
+    if (fileName.value.length < 30) return fileName.value;
+
+    const first = fileName.value.slice(0, 10);
+    const last = fileName.value.slice(-10);
+    return [first, last].join("...");
+});
 </script>
 
 <template>
-    <div class="flex h-screen">
+    <div
+        :class="[
+            'flex h-screen',
+            {
+                'border-8 border-red-700': deleteMode,
+            },
+        ]"
+    >
         <div class="flex flex-grow flex-col">
             <TranscriptionEditor
                 :key="tKey"
                 :transcription="transcription"
-                :file-name="fileName!"
+                :file-name="fileName"
                 v-model="segments"
             >
                 <template #actions>
-                    <div>
+                    <div class="max-w-80 p-2">
                         <label for="file-input" class="cursor-pointer">
-                            <BccButton class="pointer-events-none">{{
-                                fileName ?? "Select file"
-                            }}</BccButton>
+                            <BccButton class="pointer-events-none">
+                                Select file
+                            </BccButton>
                         </label>
                         <input
                             id="file-input"
@@ -81,24 +83,32 @@ const vxId = ref("");
                             accept="application/json"
                             @input="handleFile"
                         />
-                    </div>
-                    <TranscriptionDownloader
-                        :segments="segments"
-                        :filename="fileName!"
-                    />
-                    <div class="flex">
-                        <input
-                            v-model="vxId"
-                            class="h-full rounded-l-lg bg-black px-2 text-base"
-                            placeholder="Vidispine-ID"
-                        />
-                        <button
-                            class="rounded-r-lg bg-blue-500 px-2"
-                            @click="navigateTo(`/transcription/${vxId}`)"
+                        <p
+                            v-if="fileName && truncatedFileName"
+                            class="mt-2 text-sm text-secondary"
+                            :title="fileName"
                         >
-                            Go
-                        </button>
+                            {{ truncatedFileName }}
+                        </p>
                     </div>
+                    <template v-if="fileName" class="flex gap-4">
+                        <TranscriptionDownloader
+                            :segments="segments"
+                            :filename="fileName"
+                        />
+                        <div class="flex gap-1 rounded-xl bg-neutral-100 p-2">
+                            <BccInput
+                                v-model="vxId"
+                                placeholder="Vidispine-ID"
+                            />
+                            <BccButton
+                                @click="navigateTo(`/transcription/${vxId}`)"
+                                variant="tertiary"
+                            >
+                                Go
+                            </BccButton>
+                        </div>
+                    </template>
                 </template>
             </TranscriptionEditor>
         </div>
