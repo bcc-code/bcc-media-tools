@@ -23,9 +23,12 @@ const dateString = (date: Date) => {
         <span class="grow px-2 py-1 text-primary">
             {{ track.title }}
         </span>
-        <span class="flex h-full gap-1 bg-secondary px-2 py-2">
+        <span
+            v-if="track.languages?.Languages.length"
+            class="flex h-full gap-1 bg-secondary px-2 py-2"
+        >
             <img
-                v-for="l in track.languages?.Languages"
+                v-for="l in track.languages.Languages"
                 :title="l.code"
                 :src="'/images/flags/' + l.iconFile"
                 class="inline h-4 rounded-sm border border-white shadow-sm"
