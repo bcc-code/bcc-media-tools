@@ -28,7 +28,7 @@
         "uuid": "^9.0.1"
     },
     "dependencies": {
-        "@bcc-code/design-library-vue": "^2.5.2",
+        "@bcc-code/design-library-vue": "^2.8.0",
         "@bufbuild/protobuf": "^1.10.0",
         "@connectrpc/connect": "^1.4.0",
         "@connectrpc/connect-web": "^1.4.0",
