@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@bcc-code/design-library-vue':
-        specifier: ^2.5.2
-        version: 2.5.2(tailwindcss@3.4.4)(vue@3.4.30(typescript@5.5.2))
+        specifier: ^2.8.0
+        version: 2.8.0(tailwindcss@3.4.4)(vue@3.4.30(typescript@5.5.2))
       '@bufbuild/protobuf':
         specifier: ^1.10.0
         version: 1.10.0
@@ -274,8 +274,8 @@ packages:
     resolution: {integrity: sha512-XEFXSlxiG5td2EJRe8vOmRbaXVgfcBlszKujvVmWIK/UpywWljQCfzAv3RQCGujWQ1RD4YYWEAqDXfuJiy8f5Q==}
     engines: {node: '>=6.9.0'}
 
-  '@bcc-code/design-library-vue@2.5.2':
-    resolution: {integrity: sha512-lJzdV1SFq8jZkdN+d5h0DZrd40aZ+xllHW/2xlxO13uE4aizXxBavNhQIezRSqkxT0vv+ZNYCv6sbShWOqlaxQ==}
+  '@bcc-code/design-library-vue@2.8.0':
+    resolution: {integrity: sha512-lCTEg3o0cFiVRQ/8oIjDWj9yqWU2dPe1kz8ieW2c6UgaZMBYLkuTXaD2Skvd7ePBVMS6dH76RV9RdVZffRtGpA==}
     peerDependencies:
       tailwindcss: ^3.3.2
       vue: ^3.4.0
@@ -4331,7 +4331,7 @@ snapshots:
       '@babel/helper-validator-identifier': 7.24.7
       to-fast-properties: 2.0.0
 
-  '@bcc-code/design-library-vue@2.5.2(tailwindcss@3.4.4)(vue@3.4.30(typescript@5.5.2))':
+  '@bcc-code/design-library-vue@2.8.0(tailwindcss@3.4.4)(vue@3.4.30(typescript@5.5.2))':
     dependencies:
       tailwindcss: 3.4.4
       vue: 3.4.30(typescript@5.5.2)

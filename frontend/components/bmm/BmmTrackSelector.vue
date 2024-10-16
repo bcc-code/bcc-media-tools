@@ -1,11 +1,10 @@
 <script lang="ts" setup>
-import {
-    BccButton,
-    BccFormLabel,
-    BccTable,
-    BccSpinner,
-} from "@bcc-code/design-library-vue";
-import { BmmEnvironment, BMMTrack } from "~/src/gen/api/v1/api_pb";
+import { BccFormLabel, BccSpinner } from "@bcc-code/design-library-vue";
+import type {
+    BmmEnvironment,
+    BMMTrack,
+    LanguageList,
+} from "~/src/gen/api/v1/api_pb";
 
 const tracks = ref<BMMTrack[]>();
 
@@ -59,10 +58,21 @@ const filteredTracks = computed(() => {
 
     return tracks.value.filter((t) => t.id == selectedTrack.value!.id);
 });
+
+const languages = ref<LanguageList | undefined>();
+watch(
+    () => props.env,
+    async (env) => {
+        languages.value = await api.getLanguages({
+            environment: env,
+        });
+    },
+    { immediate: true },
+);
 </script>
 
 <template>
-    <div class="h-96 overflow-y-auto">
+    <div class="h-96 overflow-y-auto md:h-[600px]">
         <BccFormLabel>
             {{ label }}
         </BccFormLabel>
@@ -71,11 +81,11 @@ const filteredTracks = computed(() => {
             class="relative mt-2 gap-2 space-y-2"
         >
             <TransitionGroup
-                move-class="transition duration-600 ease-out"
-                enter-active-class="transition duration-600 ease-out"
+                move-class="transition duration-300 ease-out"
+                enter-active-class="transition duration-300 ease-out"
                 enter-from-class="opacity-0 scale-95"
                 enter-to-class="opacity-100 scale-100"
-                leave-active-class="transition duration-600 ease-out absolute"
+                leave-active-class="transition duration-300 ease-out absolute"
                 leave-from-class="opacity-100 scale-100"
                 leave-to-class="opacity-0 scale-95"
             >
@@ -83,6 +93,7 @@ const filteredTracks = computed(() => {
                     v-for="t in filteredTracks"
                     :key="t.id"
                     :track="t"
+                    :languages="languages"
                     @click="onTrackClick(t)"
                 />
             </TransitionGroup>
