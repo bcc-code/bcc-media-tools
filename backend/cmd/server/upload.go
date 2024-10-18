@@ -199,7 +199,7 @@ var langToFlagFile = map[string]string{
 	"fi":  "fi.svg",
 	"zh":  "cn.svg",
 	"da":  "dk.svg",
-	"yue": "cn.svg",
+	"yue": "hk.svg",
 	"ml":  "in.svg",
 	"ta":  "in.svg",
 	"et":  "ee.svg",
