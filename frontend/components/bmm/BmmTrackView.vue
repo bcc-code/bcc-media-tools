@@ -43,7 +43,8 @@ const availableLanguages = computed(() =>
         >
             <img
                 v-for="l in availableLanguages"
-                :title="l.code"
+                :key="l.code"
+                :title="languageCodeToName(l.code)"
                 :src="'/images/flags/' + l.iconFile"
                 class="inline h-4 rounded-sm border border-white shadow data-[disabled=true]:scale-90 data-[disabled=true]:opacity-25 data-[disabled=true]:grayscale"
                 :alt="l.code"

@@ -1,9 +1,15 @@
 <script lang="ts" setup>
 import { BccCheckbox } from "@bcc-code/design-library-vue";
 
-defineProps<{
-    available: readonly string[];
-}>();
+withDefaults(
+    defineProps<{
+        available: readonly string[];
+        labelTransformer?: (v: string) => string;
+    }>(),
+    {
+        labelTransformer: (v: string) => v,
+    },
+);
 
 const value = defineModel<string[]>({ required: true });
 
@@ -19,7 +25,7 @@ const toggleCheckbox = (v: string) => {
     <div class="flex flex-wrap gap-2 gap-x-4">
         <div v-for="v in available">
             <BccCheckbox
-                :label="v"
+                :label="labelTransformer(v)"
                 :model-value="value.includes(v) === true"
                 @update:model-value="toggleCheckbox(v)"
             />

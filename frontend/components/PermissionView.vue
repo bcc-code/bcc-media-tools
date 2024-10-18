@@ -75,6 +75,7 @@ watch(perms, () => {
                         <MultiSelector
                             :available="availableLanguages"
                             v-model="perms.bmm!.languages"
+                            :label-transformer="(v) => languageCodeToName(v)"
                         />
                     </div>
                 </div>
