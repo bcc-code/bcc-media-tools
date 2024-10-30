@@ -1,6 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-    modules: ["nuxt-icon", "@nuxtjs/i18n"],
+    modules: ["@nuxt/icon", "@nuxtjs/i18n"],
     typescript: {
         shim: false,
     },
@@ -36,4 +36,5 @@ export default defineNuxtConfig({
         port: 8001,
         host: "localhost",
     },
+    compatibilityDate: "2024-10-16",
 });
