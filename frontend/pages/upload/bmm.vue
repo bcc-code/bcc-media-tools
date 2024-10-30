@@ -50,7 +50,7 @@ const reset = () => {
 </script>
 
 <template>
-    <div class="p-4 md:p-8">
+    <div class="h-full p-4">
         <div
             class="mx-auto flex h-full max-w-screen-lg flex-col gap-4 rounded-2xl border border-on-secondary bg-white p-4 text-black"
         >

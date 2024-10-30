@@ -1,5 +1,9 @@
 <script lang="ts" setup>
-import { BccFormLabel, BccSpinner } from "@bcc-code/design-library-vue";
+import {
+    BccFormLabel,
+    BccSpinner,
+    BccButton,
+} from "@bcc-code/design-library-vue";
 import type {
     BmmEnvironment,
     BMMTrack,
@@ -49,11 +53,38 @@ function onTrackClick(track: BMMTrack) {
     }
 }
 
+const showOlderTracks = ref(false);
+const olderTracks = computed(() => {
+    if (!tracks.value?.length) return [];
+    return tracks.value.filter((t) =>
+        isBefore(t.publishedAt!.toDate(), new Date()),
+    );
+});
+const futureTracks = computed(() => {
+    if (!tracks.value?.length) return [];
+    return tracks.value.filter((t) =>
+        isAfter(t.publishedAt!.toDate(), new Date()),
+    );
+});
+
 const filteredTracks = computed(() => {
     if (!tracks.value?.length) return [];
 
     if (!selectedTrack.value) {
-        return tracks.value;
+        const tracksToSort = olderTracks.value
+            ? tracks.value.slice(
+                  0,
+                  showOlderTracks.value
+                      ? tracks.value.length
+                      : futureTracks.value.length + 1,
+              )
+            : tracks.value;
+        return tracksToSort.toSorted((a, b) => {
+            if (!a.publishedAt || !b.publishedAt) return 0;
+            return isBefore(a.publishedAt.toDate(), b.publishedAt.toDate())
+                ? -1
+                : 1;
+        });
     }
 
     return tracks.value.filter((t) => t.id == selectedTrack.value!.id);
@@ -72,7 +103,7 @@ watch(
 </script>
 
 <template>
-    <div class="h-96 overflow-y-auto md:h-[600px]">
+    <div class="h-full overflow-y-auto">
         <BccFormLabel>
             {{ label }}
         </BccFormLabel>
@@ -80,6 +111,17 @@ watch(
             v-if="tracks && tracks.length > 0"
             class="relative mt-2 gap-2 space-y-2"
         >
+            <BccButton
+                v-if="olderTracks.length"
+                @click="showOlderTracks = !showOlderTracks"
+                type="button"
+                variant="tertiary"
+                class="w-full"
+            >
+                {{
+                    showOlderTracks ? "Hide older tracks" : "Show older tracks"
+                }}
+            </BccButton>
             <TransitionGroup
                 move-class="transition duration-300 ease-out"
                 enter-active-class="transition duration-300 ease-out"
