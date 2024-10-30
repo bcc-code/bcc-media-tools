@@ -64,7 +64,7 @@ watch(perms, () => {
                     <div>
                         <BccFormLabel>Podcasts</BccFormLabel>
                         <MultiSelector
-                            :available="['fra-kaare', 'romans-podcast']"
+                            :available="['fra-kaare', 'gibraltar-podcast']"
                             v-model="perms.bmm!.podcasts"
                         />
                     </div>
