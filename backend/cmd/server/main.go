@@ -3,6 +3,8 @@ package main
 import (
 	"bcc-media-tools/api/v1/apiv1connect"
 	"fmt"
+	"github.com/bcc-code/mediabank-bridge/log"
+	"github.com/rs/zerolog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -69,6 +71,8 @@ func NewTemporalClient(host, namespace string) (client.Client, error) {
 func main() {
 	_ = godotenv.Load()
 
+	log.ConfigureGlobalLogger(zerolog.DebugLevel)
+
 	if os.Getenv("DEBUG_AUTH_EMAIL") != "" {
 		fmt.Printf("DEBUG_AUTH_EMAIL: %s\n", os.Getenv("DEBUG_AUTH_EMAIL"))
 	}
@@ -96,7 +100,7 @@ func main() {
 	tempPath := os.Getenv("TEMP_PATH")
 	if tempPath == "" {
 		tempPath = os.TempDir()
-		fmt.Printf("TEMP_PATH not set, using %s\n", tempPath)
+		log.L.Debug().Str("temp_path", tempPath).Msg("TEMP_PATH not set, using random path")
 	}
 
 	permissionsApi := PermissionsAPI{}
@@ -126,9 +130,13 @@ func main() {
 
 	mux.Handle("/", http.HandlerFunc(serveFiles))
 
-	_ = http.ListenAndServe(":8080",
+	err = http.ListenAndServe(":8080",
 		h2c.NewHandler(mux, &http2.Server{}),
 	)
+
+	if err != nil {
+		log.L.Error().Err(err).Msg("Error starting server")
+	}
 }
 
 func serveFiles(w http.ResponseWriter, r *http.Request) {

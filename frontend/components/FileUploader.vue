@@ -70,7 +70,23 @@ const uploadFile = () => {
                 showProgress.value = true;
             }
         };
-        xhr.onload = function () {
+
+        let errHandler = (e) => {
+            uploading.value = false;
+            console.log(e);
+            if (confirm("Upload failed, try again?")) {
+                uploadFile();
+            }
+        }
+
+        xhr.onerror = errHandler;
+        xhr.onabort = errHandler;
+
+        xhr.onload = function (e) {
+            if (e.target.status != 202) {
+                errHandler(e);
+                return
+            }
             emit("uploaded");
             showProgress.value = false;
         };
