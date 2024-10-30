@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/bcc-code/mediabank-bridge/log"
 	"io"
 	"net/http"
 	"os"
@@ -35,7 +36,6 @@ func getQueue() string {
 // The low level approach is used here inorder to handle the multipart form data
 // in a streaming fashion. This is useful for large files.
 func (u uploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
 	enableCors(&w)
 
 	if r.Method == http.MethodOptions {
@@ -59,6 +59,7 @@ func (u uploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	mr, err := r.MultipartReader()
 	if err != nil {
+		log.L.Error().Err(err).Msg("error reading multipart")
 		http.Error(w, "error reading multipart", http.StatusInternalServerError)
 		return
 	}
@@ -73,6 +74,7 @@ func (u uploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		if err != nil {
+			log.L.Error().Err(err).Msg("error reading multipart")
 			http.Error(w, "error reading multipart", http.StatusInternalServerError)
 			return
 		}
@@ -80,6 +82,7 @@ func (u uploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if part.FileName() == "" { // this is not a file
 			data, err := io.ReadAll(part)
 			if err != nil {
+				log.L.Error().Err(err).Msg("error reading data")
 				http.Error(w, "error reading data", http.StatusInternalServerError)
 				return
 			}
@@ -92,11 +95,13 @@ func (u uploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		dst, err := os.Create(filePath)
 		if err != nil {
+			log.L.Error().Err(err).Msg("error creating file")
 			http.Error(w, "error creating file", http.StatusInternalServerError)
 			return
 		}
 
 		if _, err := io.Copy(dst, part); err != nil {
+			log.L.Error().Err(err).Msg("error writing file")
 			http.Error(w, "error writing file", http.StatusInternalServerError)
 			_ = dst.Close()
 			return
@@ -113,6 +118,7 @@ func (u uploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	trackID, err := strconv.Atoi(formData["trackId"])
 	if err != nil {
+		log.L.Error().Err(err).Str("trackId", formData["trackId"]).Msg("invalid track id")
 		http.Error(w, "invalid track id", http.StatusBadRequest)
 		return
 	}
@@ -132,6 +138,7 @@ func (u uploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
+		log.L.Error().Err(err).Msg("error starting workflow")
 		http.Error(w, "error starting workflow", http.StatusInternalServerError)
 		return
 	}
