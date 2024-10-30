@@ -23,6 +23,25 @@ const availableLanguages = computed(() =>
         (l) => me.value?.bmm?.languages.includes(l.code) ?? false,
     ),
 );
+
+const today = new Date();
+const publishedAtToday = computed(() => {
+    return (
+        today.getDate() === props.track.publishedAt?.toDate().getDate() &&
+        today.getMonth() === props.track.publishedAt?.toDate().getMonth() &&
+        today.getFullYear() === props.track.publishedAt?.toDate().getFullYear()
+    );
+});
+
+const isInPast = computed(() => {
+    if (!props.track.publishedAt) return false;
+    return props.track.publishedAt.toDate() < today;
+});
+
+const isInFuture = computed(() => {
+    if (!props.track.publishedAt) return false;
+    return props.track.publishedAt.toDate() > today;
+});
 </script>
 
 <template>
@@ -31,14 +50,22 @@ const availableLanguages = computed(() =>
     >
         <span
             v-if="track && track.publishedAt"
-            class="row-span-2 border-r border-on-primary px-2 py-1 text-left tabular-nums text-tertiary"
+            :class="[
+                'row-span-2 border-r border-on-primary px-2 py-1 text-left tabular-nums',
+                {
+                    'bg-secondary text-tertiary': isInPast,
+                    'text-secondary': isInFuture,
+                },
+            ]"
         >
             {{ dateString(track.publishedAt.toDate()) }}
+            <small v-if="publishedAtToday" class="block">Today</small>
         </span>
         <p class="col-start-2 grow px-2 py-1 text-primary">
             {{ track.title }}
         </p>
         <div
+            v-if="availableLanguages?.length"
             class="col-start-2 row-start-2 flex h-full flex-wrap gap-1 border-t border-on-primary px-2 py-2"
         >
             <img

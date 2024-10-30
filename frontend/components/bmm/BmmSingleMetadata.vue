@@ -28,7 +28,7 @@ function checkForm() {
 }
 </script>
 <template>
-    <form class="flex flex-col gap-4 p-4" @submit.prevent="checkForm">
+    <form class="flex h-full flex-col gap-4 p-4" @submit.prevent="checkForm">
         <h3 class="text-heading-xl">BMM Upload</h3>
 
         <BccSelect
