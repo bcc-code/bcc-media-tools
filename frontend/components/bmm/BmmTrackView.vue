@@ -35,12 +35,12 @@ const publishedAtToday = computed(() => {
 
 const isInPast = computed(() => {
     if (!props.track.publishedAt) return false;
-    return props.track.publishedAt.toDate() < today;
+    return isBefore(props.track.publishedAt.toDate(), today);
 });
 
 const isInFuture = computed(() => {
     if (!props.track.publishedAt) return false;
-    return props.track.publishedAt.toDate() > today;
+    return isAfter(props.track.publishedAt.toDate(), today);
 });
 </script>
 
