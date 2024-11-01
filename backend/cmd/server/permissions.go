@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"sort"
 )
 
 type PermissionsAPI struct{}
@@ -115,6 +116,9 @@ func PermissionsForEmail(email string) *apiv1.Permissions {
 	permissions, _ := readPermissionsFile()
 	if permissions != nil {
 		if perms, ok := permissions[email]; ok {
+			sort.Slice(perms.Bmm.Podcasts, func(i, j int) bool {
+				return perms.Bmm.Podcasts[i] > perms.Bmm.Podcasts[j]
+			})
 			return perms
 		}
 	}
