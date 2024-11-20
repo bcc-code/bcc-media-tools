@@ -5,7 +5,7 @@ go 1.22.0
 require (
 	connectrpc.com/connect v1.16.1
 	connectrpc.com/cors v0.1.0
-	github.com/bcc-code/bcc-media-flows v0.0.0-20240726100300-d3bace6fe6c3
+	github.com/bcc-code/bcc-media-flows v0.0.0-20241120101338-556f197c57ad
 	github.com/go-resty/resty/v2 v2.12.0
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
@@ -36,7 +36,7 @@ require (
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.20.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.44.0 // indirect
 	github.com/XSAM/otelsql v0.26.0 // indirect
-	github.com/ansel1/merry/v2 v2.1.2 // indirect
+	github.com/ansel1/merry/v2 v2.2.1 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.21.2 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.4.14 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.43 // indirect

@@ -86,7 +86,7 @@ func (t *BMMToken) GetAccessToken() string {
 }
 
 func (t *BMMToken) Expired() bool {
-	return time.Since(t.CreatedAt)+10*time.Second > time.Duration(t.ExpiresIn)
+	return time.Since(t.CreatedAt)+10*time.Second > time.Duration(int64(t.ExpiresIn)*int64(time.Second))
 }
 
 func (t *BMMToken) Refresh() error {

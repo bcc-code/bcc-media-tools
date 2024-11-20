@@ -458,6 +458,8 @@ github.com/ansel1/merry v1.5.0/go.mod h1:wUy/yW0JX0ix9GYvUbciq+bi3jW/vlKPlbpI7qd
 github.com/ansel1/merry v1.5.1/go.mod h1:wUy/yW0JX0ix9GYvUbciq+bi3jW/vlKPlbpI7qdZpOw=
 github.com/ansel1/merry/v2 v2.1.2 h1:r/qaM2l3UMtMSS12PH8weJ7LpqyIo39ODs7a3YVIRfc=
 github.com/ansel1/merry/v2 v2.1.2/go.mod h1:4p/FFyQbCgqlDbseWOVQaL5USpgkE9sr5xh4V6Ry0JU=
+github.com/ansel1/merry/v2 v2.2.1 h1:PJpynLFvIpJkn8ZGgNHLq332zIyBc/wTqp3o42ZpWdU=
+github.com/ansel1/merry/v2 v2.2.1/go.mod h1:K9lCkM6tJ8s7LQVQ0ZmZ0WrB3BCyr+ZDzoqotzzoxpI=
 github.com/ansel1/vespucci/v4 v4.1.1/go.mod h1:zzdrO4IgBfgcGMbGTk/qNGL8JPslmW3nPpcBHKReFYY=
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=
 github.com/armon/circbuf v0.0.0-20150827004946-bbbad097214e/go.mod h1:3U/XgcO3hCbHZ8TKRvWD2dDTCfh9M9ya+I9JpbB7O8o=
@@ -491,6 +493,8 @@ github.com/aws/smithy-go v1.15.0 h1:PS/durmlzvAFpQHDs4wi4sNNP9ExsqZh6IlfdHXgKK8=
 github.com/aws/smithy-go v1.15.0/go.mod h1:Tg+OJXh4MB2R/uN61Ko2f6hTZwB/ZYGOtib8J3gBHzA=
 github.com/bcc-code/bcc-media-flows v0.0.0-20240726100300-d3bace6fe6c3 h1:BZD6EhJk2bI2b/DcT5QynaRVfsbhwcClkB5+59au7/4=
 github.com/bcc-code/bcc-media-flows v0.0.0-20240726100300-d3bace6fe6c3/go.mod h1:ecE15IOVGNEZ/VzOueGOqi84iVY38swTp3GRc2TOtbw=
+github.com/bcc-code/bcc-media-flows v0.0.0-20241120101338-556f197c57ad h1:7p/0d+lrPm6FFjt03w2ohCBx9rx8noLPsJ380MkfG8M=
+github.com/bcc-code/bcc-media-flows v0.0.0-20241120101338-556f197c57ad/go.mod h1:VeSV8DSi0s7lLzVyaAwdlcqNZFaNa+DFJkF+3ajEGhU=
 github.com/bcc-code/bcc-media-platform v0.0.0-20240610143247-2316a26ef460 h1:dJEFFD4sNPrqyWXstyefbf9r392puldS8YKEkkj94ZQ=
 github.com/bcc-code/bcc-media-platform v0.0.0-20240610143247-2316a26ef460/go.mod h1:lSb9dSYG3suI8i5ix2OFwoQMdFVEXAyBuWd15SgOxJI=
 github.com/bcc-code/mediabank-bridge v1.1.1 h1:9nnoicJvAnIY0IeNamQwKnj0/LRS2jLYF8ZOcHYvzDM=

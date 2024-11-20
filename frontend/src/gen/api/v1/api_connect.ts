@@ -4,7 +4,7 @@
 // @ts-nocheck
 
 import { Void } from "./common_pb.js";
-import { AlbumsList, DeletePermissionsRequest, GetAlbumsRequest, GetAlbumTracksRequest, GetAvailableLanguagesRequest, GetPodcastTracksRequest, GetPreviewRequest, GetTranscriptionReqest, GetYearsRequest, GetYearsResponse, LanguageList, Permissions, PermissionsList, Preview, SetPermissionsRequest, TracksList, Transcription } from "./api_pb.js";
+import { AlbumsList, DeletePermissionsRequest, GetAlbumsRequest, GetAlbumTracksRequest, GetAvailableLanguagesRequest, GetBMMTranscriptionRequest, GetPodcastTracksRequest, GetPreviewRequest, GetTranscriptionReqest, GetYearsRequest, GetYearsResponse, LanguageList, Permissions, PermissionsList, Preview, SetPermissionsRequest, TracksList, Transcription } from "./api_pb.js";
 import { MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -116,6 +116,15 @@ export const APIService = {
       name: "GetLanguages",
       I: GetAvailableLanguagesRequest,
       O: LanguageList,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc api.v1.APIService.GetBMMTranscription
+     */
+    getBMMTranscription: {
+      name: "GetBMMTranscription",
+      I: GetBMMTranscriptionRequest,
+      O: Transcription,
       kind: MethodKind.Unary,
     },
   }

@@ -62,22 +62,26 @@ const (
 	APIServiceGetPodcastTracksProcedure = "/api.v1.APIService/GetPodcastTracks"
 	// APIServiceGetLanguagesProcedure is the fully-qualified name of the APIService's GetLanguages RPC.
 	APIServiceGetLanguagesProcedure = "/api.v1.APIService/GetLanguages"
+	// APIServiceGetBMMTranscriptionProcedure is the fully-qualified name of the APIService's
+	// GetBMMTranscription RPC.
+	APIServiceGetBMMTranscriptionProcedure = "/api.v1.APIService/GetBMMTranscription"
 )
 
 // These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
 var (
-	aPIServiceServiceDescriptor                 = v1.File_api_v1_api_proto.Services().ByName("APIService")
-	aPIServiceGetPermissionsMethodDescriptor    = aPIServiceServiceDescriptor.Methods().ByName("GetPermissions")
-	aPIServiceUpdatePermissionsMethodDescriptor = aPIServiceServiceDescriptor.Methods().ByName("UpdatePermissions")
-	aPIServiceDeletePermissionsMethodDescriptor = aPIServiceServiceDescriptor.Methods().ByName("DeletePermissions")
-	aPIServiceListPermissionsMethodDescriptor   = aPIServiceServiceDescriptor.Methods().ByName("ListPermissions")
-	aPIServiceGetTranscriptionMethodDescriptor  = aPIServiceServiceDescriptor.Methods().ByName("GetTranscription")
-	aPIServiceGetPreviewMethodDescriptor        = aPIServiceServiceDescriptor.Methods().ByName("GetPreview")
-	aPIServiceGetYearsMethodDescriptor          = aPIServiceServiceDescriptor.Methods().ByName("GetYears")
-	aPIServiceGetAlbumsMethodDescriptor         = aPIServiceServiceDescriptor.Methods().ByName("GetAlbums")
-	aPIServiceGetAlbumTracksMethodDescriptor    = aPIServiceServiceDescriptor.Methods().ByName("GetAlbumTracks")
-	aPIServiceGetPodcastTracksMethodDescriptor  = aPIServiceServiceDescriptor.Methods().ByName("GetPodcastTracks")
-	aPIServiceGetLanguagesMethodDescriptor      = aPIServiceServiceDescriptor.Methods().ByName("GetLanguages")
+	aPIServiceServiceDescriptor                   = v1.File_api_v1_api_proto.Services().ByName("APIService")
+	aPIServiceGetPermissionsMethodDescriptor      = aPIServiceServiceDescriptor.Methods().ByName("GetPermissions")
+	aPIServiceUpdatePermissionsMethodDescriptor   = aPIServiceServiceDescriptor.Methods().ByName("UpdatePermissions")
+	aPIServiceDeletePermissionsMethodDescriptor   = aPIServiceServiceDescriptor.Methods().ByName("DeletePermissions")
+	aPIServiceListPermissionsMethodDescriptor     = aPIServiceServiceDescriptor.Methods().ByName("ListPermissions")
+	aPIServiceGetTranscriptionMethodDescriptor    = aPIServiceServiceDescriptor.Methods().ByName("GetTranscription")
+	aPIServiceGetPreviewMethodDescriptor          = aPIServiceServiceDescriptor.Methods().ByName("GetPreview")
+	aPIServiceGetYearsMethodDescriptor            = aPIServiceServiceDescriptor.Methods().ByName("GetYears")
+	aPIServiceGetAlbumsMethodDescriptor           = aPIServiceServiceDescriptor.Methods().ByName("GetAlbums")
+	aPIServiceGetAlbumTracksMethodDescriptor      = aPIServiceServiceDescriptor.Methods().ByName("GetAlbumTracks")
+	aPIServiceGetPodcastTracksMethodDescriptor    = aPIServiceServiceDescriptor.Methods().ByName("GetPodcastTracks")
+	aPIServiceGetLanguagesMethodDescriptor        = aPIServiceServiceDescriptor.Methods().ByName("GetLanguages")
+	aPIServiceGetBMMTranscriptionMethodDescriptor = aPIServiceServiceDescriptor.Methods().ByName("GetBMMTranscription")
 )
 
 // APIServiceClient is a client for the api.v1.APIService service.
@@ -96,6 +100,7 @@ type APIServiceClient interface {
 	GetAlbumTracks(context.Context, *connect.Request[v1.GetAlbumTracksRequest]) (*connect.Response[v1.TracksList], error)
 	GetPodcastTracks(context.Context, *connect.Request[v1.GetPodcastTracksRequest]) (*connect.Response[v1.TracksList], error)
 	GetLanguages(context.Context, *connect.Request[v1.GetAvailableLanguagesRequest]) (*connect.Response[v1.LanguageList], error)
+	GetBMMTranscription(context.Context, *connect.Request[v1.GetBMMTranscriptionRequest]) (*connect.Response[v1.Transcription], error)
 }
 
 // NewAPIServiceClient constructs a client for the api.v1.APIService service. By default, it uses
@@ -174,22 +179,29 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(aPIServiceGetLanguagesMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
+		getBMMTranscription: connect.NewClient[v1.GetBMMTranscriptionRequest, v1.Transcription](
+			httpClient,
+			baseURL+APIServiceGetBMMTranscriptionProcedure,
+			connect.WithSchema(aPIServiceGetBMMTranscriptionMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // aPIServiceClient implements APIServiceClient.
 type aPIServiceClient struct {
-	getPermissions    *connect.Client[v1.Void, v1.Permissions]
-	updatePermissions *connect.Client[v1.SetPermissionsRequest, v1.Void]
-	deletePermissions *connect.Client[v1.DeletePermissionsRequest, v1.Void]
-	listPermissions   *connect.Client[v1.Void, v1.PermissionsList]
-	getTranscription  *connect.Client[v1.GetTranscriptionReqest, v1.Transcription]
-	getPreview        *connect.Client[v1.GetPreviewRequest, v1.Preview]
-	getYears          *connect.Client[v1.GetYearsRequest, v1.GetYearsResponse]
-	getAlbums         *connect.Client[v1.GetAlbumsRequest, v1.AlbumsList]
-	getAlbumTracks    *connect.Client[v1.GetAlbumTracksRequest, v1.TracksList]
-	getPodcastTracks  *connect.Client[v1.GetPodcastTracksRequest, v1.TracksList]
-	getLanguages      *connect.Client[v1.GetAvailableLanguagesRequest, v1.LanguageList]
+	getPermissions      *connect.Client[v1.Void, v1.Permissions]
+	updatePermissions   *connect.Client[v1.SetPermissionsRequest, v1.Void]
+	deletePermissions   *connect.Client[v1.DeletePermissionsRequest, v1.Void]
+	listPermissions     *connect.Client[v1.Void, v1.PermissionsList]
+	getTranscription    *connect.Client[v1.GetTranscriptionReqest, v1.Transcription]
+	getPreview          *connect.Client[v1.GetPreviewRequest, v1.Preview]
+	getYears            *connect.Client[v1.GetYearsRequest, v1.GetYearsResponse]
+	getAlbums           *connect.Client[v1.GetAlbumsRequest, v1.AlbumsList]
+	getAlbumTracks      *connect.Client[v1.GetAlbumTracksRequest, v1.TracksList]
+	getPodcastTracks    *connect.Client[v1.GetPodcastTracksRequest, v1.TracksList]
+	getLanguages        *connect.Client[v1.GetAvailableLanguagesRequest, v1.LanguageList]
+	getBMMTranscription *connect.Client[v1.GetBMMTranscriptionRequest, v1.Transcription]
 }
 
 // GetPermissions calls api.v1.APIService.GetPermissions.
@@ -247,6 +259,11 @@ func (c *aPIServiceClient) GetLanguages(ctx context.Context, req *connect.Reques
 	return c.getLanguages.CallUnary(ctx, req)
 }
 
+// GetBMMTranscription calls api.v1.APIService.GetBMMTranscription.
+func (c *aPIServiceClient) GetBMMTranscription(ctx context.Context, req *connect.Request[v1.GetBMMTranscriptionRequest]) (*connect.Response[v1.Transcription], error) {
+	return c.getBMMTranscription.CallUnary(ctx, req)
+}
+
 // APIServiceHandler is an implementation of the api.v1.APIService service.
 type APIServiceHandler interface {
 	// Permissions
@@ -263,6 +280,7 @@ type APIServiceHandler interface {
 	GetAlbumTracks(context.Context, *connect.Request[v1.GetAlbumTracksRequest]) (*connect.Response[v1.TracksList], error)
 	GetPodcastTracks(context.Context, *connect.Request[v1.GetPodcastTracksRequest]) (*connect.Response[v1.TracksList], error)
 	GetLanguages(context.Context, *connect.Request[v1.GetAvailableLanguagesRequest]) (*connect.Response[v1.LanguageList], error)
+	GetBMMTranscription(context.Context, *connect.Request[v1.GetBMMTranscriptionRequest]) (*connect.Response[v1.Transcription], error)
 }
 
 // NewAPIServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -337,6 +355,12 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(aPIServiceGetLanguagesMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
+	aPIServiceGetBMMTranscriptionHandler := connect.NewUnaryHandler(
+		APIServiceGetBMMTranscriptionProcedure,
+		svc.GetBMMTranscription,
+		connect.WithSchema(aPIServiceGetBMMTranscriptionMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/api.v1.APIService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case APIServiceGetPermissionsProcedure:
@@ -361,6 +385,8 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceGetPodcastTracksHandler.ServeHTTP(w, r)
 		case APIServiceGetLanguagesProcedure:
 			aPIServiceGetLanguagesHandler.ServeHTTP(w, r)
+		case APIServiceGetBMMTranscriptionProcedure:
+			aPIServiceGetBMMTranscriptionHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -412,4 +438,8 @@ func (UnimplementedAPIServiceHandler) GetPodcastTracks(context.Context, *connect
 
 func (UnimplementedAPIServiceHandler) GetLanguages(context.Context, *connect.Request[v1.GetAvailableLanguagesRequest]) (*connect.Response[v1.LanguageList], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetLanguages is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) GetBMMTranscription(context.Context, *connect.Request[v1.GetBMMTranscriptionRequest]) (*connect.Response[v1.Transcription], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetBMMTranscription is not implemented"))
 }

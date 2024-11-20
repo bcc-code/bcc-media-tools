@@ -2,14 +2,17 @@ package main
 
 import (
 	apiv1 "bcc-media-tools/api/v1"
+	"bcc-media-tools/bmm"
 	"context"
 	"fmt"
-	"github.com/samber/lo"
 	"net/url"
 	"os"
 	"sort"
 	"strconv"
 	"time"
+
+	bccmflows "github.com/bcc-code/bcc-media-flows"
+	"github.com/samber/lo"
 
 	"connectrpc.com/connect"
 	"github.com/go-resty/resty/v2"
@@ -217,4 +220,28 @@ func (a BMMApi) GetLanguages(_ context.Context, req *connect.Request[apiv1.GetAv
 
 	overview := res.Result().(*BMMApiOverview)
 	return connect.NewResponse(languageListToApi(overview.Languages)), nil
+}
+
+func (a BMMApi) GetBMMTranscription(_ context.Context, req *connect.Request[apiv1.GetBMMTranscriptionRequest]) (*connect.Response[apiv1.Transcription], error) {
+	setBmmEnvironment(a.client, req.Msg.Environment)
+
+	id, err := bmm.Parse(req.Msg.BmmId)
+	if err != nil {
+		return nil, err
+	}
+
+	lang, err := bccmflows.ParseLanguageCode(req.Msg.Language)
+	if err != nil {
+		return nil, err
+	}
+
+	bmmReq := a.client.R().SetAuthToken(a.token.GetAccessToken()).SetResult(&apiv1.Transcription{})
+	res, err := bmmReq.Get(fmt.Sprintf("track/%s/transcription/%s?unpublished=show", id.String(), lang.ISO6392TwoLetter))
+	if err != nil {
+		return nil, err
+	}
+
+	print(string(res.Body()))
+
+	return connect.NewResponse(&apiv1.Transcription{}), nil
 }
