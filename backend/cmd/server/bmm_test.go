@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"connectrpc.com/connect"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 )
@@ -68,12 +67,11 @@ func Test_GetTranscriptions(t *testing.T) {
 
 	req := connect.NewRequest(&apiv1.GetBMMTranscriptionRequest{
 		Language:    "no",
-		BmmId:       "11234",
+		BmmId:       "115012",
 		Environment: apiv1.BmmEnvironment_Production,
 	})
 
 	res, err := api.GetBMMTranscription(nil, req)
 	assert.NoError(t, err)
 	assert.NotNil(t, res)
-	spew.Dump(res.Msg)
 }

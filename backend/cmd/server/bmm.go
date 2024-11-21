@@ -5,6 +5,7 @@ import (
 	"bcc-media-tools/bmm"
 	"context"
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"sort"
@@ -235,13 +236,22 @@ func (a BMMApi) GetBMMTranscription(_ context.Context, req *connect.Request[apiv
 		return nil, err
 	}
 
-	bmmReq := a.client.R().SetAuthToken(a.token.GetAccessToken()).SetResult(&apiv1.Transcription{})
-	res, err := bmmReq.Get(fmt.Sprintf("track/%s/transcription/%s?unpublished=show", id.String(), lang.ISO6392TwoLetter))
+	bmmReq := a.client.R().SetAuthToken(a.token.GetAccessToken()).SetResult([]*apiv1.Segments{})
+	res, err := bmmReq.Get(fmt.Sprintf("track/%s/transcription/%s?unpublished=show", id.String(), lang.BMMLangauageCode))
+
 	if err != nil {
 		return nil, err
 	}
 
-	print(string(res.Body()))
+	if res.StatusCode() != http.StatusOK {
+		return nil, err
+	}
 
-	return connect.NewResponse(&apiv1.Transcription{}), nil
+	// Resty makes a pointer out of the provided type. Normally that's ok as it is a struct but in this case it's a slice which is already a pointer,
+	// so we need to cast it to a pointer to a slice and then dereference back to a normal slice
+	segments := *bmmReq.Result.(*[]*apiv1.Segments)
+
+	return connect.NewResponse(&apiv1.Transcription{
+		Segments: segments,
+	}), nil
 }
