@@ -5,11 +5,13 @@ go 1.22.0
 require (
 	connectrpc.com/connect v1.16.1
 	connectrpc.com/cors v0.1.0
-	github.com/bcc-code/bcc-media-flows v0.0.0-20240726100300-d3bace6fe6c3
+	github.com/bcc-code/bcc-media-flows v0.0.0-20241121102355-c019023e1fda
+	github.com/bcc-code/mediabank-bridge v1.1.1
 	github.com/go-resty/resty/v2 v2.12.0
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/rs/cors v1.11.0
+	github.com/rs/zerolog v1.31.0
 	github.com/samber/lo v1.39.0
 	github.com/stretchr/testify v1.9.0
 	go.temporal.io/sdk v1.26.1
@@ -36,7 +38,7 @@ require (
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.20.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.44.0 // indirect
 	github.com/XSAM/otelsql v0.26.0 // indirect
-	github.com/ansel1/merry/v2 v2.1.2 // indirect
+	github.com/ansel1/merry/v2 v2.2.1 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.21.2 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.4.14 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.43 // indirect
@@ -50,7 +52,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.40.2 // indirect
 	github.com/aws/smithy-go v1.15.0 // indirect
 	github.com/bcc-code/bcc-media-platform v0.0.0-20240610143247-2316a26ef460 // indirect
-	github.com/bcc-code/mediabank-bridge v1.1.1 // indirect
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
@@ -101,7 +102,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/redis/go-redis/v9 v9.2.1 // indirect
 	github.com/robfig/cron v1.2.0 // indirect
-	github.com/rs/zerolog v1.31.0 // indirect
 	github.com/sendgrid/rest v2.6.9+incompatible // indirect
 	github.com/sendgrid/sendgrid-go v3.14.0+incompatible // indirect
 	github.com/sony/gobreaker v0.5.0 // indirect

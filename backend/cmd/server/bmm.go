@@ -2,14 +2,18 @@ package main
 
 import (
 	apiv1 "bcc-media-tools/api/v1"
+	"bcc-media-tools/bmm"
 	"context"
 	"fmt"
-	"github.com/samber/lo"
+	"net/http"
 	"net/url"
 	"os"
 	"sort"
 	"strconv"
 	"time"
+
+	bccmflows "github.com/bcc-code/bcc-media-flows"
+	"github.com/samber/lo"
 
 	"connectrpc.com/connect"
 	"github.com/go-resty/resty/v2"
@@ -217,4 +221,37 @@ func (a BMMApi) GetLanguages(_ context.Context, req *connect.Request[apiv1.GetAv
 
 	overview := res.Result().(*BMMApiOverview)
 	return connect.NewResponse(languageListToApi(overview.Languages)), nil
+}
+
+func (a BMMApi) GetBMMTranscription(_ context.Context, req *connect.Request[apiv1.GetBMMTranscriptionRequest]) (*connect.Response[apiv1.Transcription], error) {
+	setBmmEnvironment(a.client, req.Msg.Environment)
+
+	id, err := bmm.Parse(req.Msg.BmmId)
+	if err != nil {
+		return nil, err
+	}
+
+	lang, err := bccmflows.ParseLanguageCode(req.Msg.Language)
+	if err != nil {
+		return nil, err
+	}
+
+	bmmReq := a.client.R().SetAuthToken(a.token.GetAccessToken()).SetResult([]*apiv1.Segments{})
+	res, err := bmmReq.Get(fmt.Sprintf("track/%s/transcription/%s?unpublished=show", id.String(), lang.BMMLangauageCode))
+
+	if err != nil {
+		return nil, err
+	}
+
+	if res.StatusCode() != http.StatusOK {
+		return nil, err
+	}
+
+	// Resty makes a pointer out of the provided type. Normally that's ok as it is a struct but in this case it's a slice which is already a pointer,
+	// so we need to cast it to a pointer to a slice and then dereference back to a normal slice
+	segments := *bmmReq.Result.(*[]*apiv1.Segments)
+
+	return connect.NewResponse(&apiv1.Transcription{
+		Segments: segments,
+	}), nil
 }

@@ -143,6 +143,12 @@ message Preview{
   string url = 1;
 }
 
+message GetBMMTranscriptionRequest {
+  string bmm_id = 1;
+  string language = 2;
+  BmmEnvironment environment = 3;
+}
+
 service APIService {
 	// Permissions
 	rpc GetPermissions (Void) returns (Permissions) {}
@@ -160,4 +166,5 @@ service APIService {
 	rpc GetAlbumTracks(GetAlbumTracksRequest) returns (TracksList) {}
 	rpc GetPodcastTracks(GetPodcastTracksRequest) returns (TracksList) {}
   rpc GetLanguages(GetAvailableLanguagesRequest) returns (LanguageList) {}
+  rpc GetBMMTranscription(GetBMMTranscriptionRequest) returns (Transcription) {}
 }
