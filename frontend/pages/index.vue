@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import { BccItemTile, BccLinkItem } from "@bcc-code/design-library-vue";
+import { BccItemTile } from "@bcc-code/design-library-vue";
+
+useHead({
+    title: "Tools",
+});
 </script>
 
 <template>

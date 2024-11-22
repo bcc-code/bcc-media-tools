@@ -12,6 +12,7 @@ export default defineNuxtConfig({
             bodyAttrs: {
                 class: "bg-neutral-100",
             },
+            titleTemplate: "%s - BCC Media Tools"
         },
         pageTransition: { name: "page", mode: "out-in" },
     },

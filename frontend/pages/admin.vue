@@ -2,6 +2,10 @@
 import { BccButton, BccInput } from "@bcc-code/design-library-vue";
 import { Permissions } from "~/src/gen/api/v1/api_pb";
 
+useHead({
+    title: "Admin",
+});
+
 const { me } = useMe();
 const api = useAPI();
 

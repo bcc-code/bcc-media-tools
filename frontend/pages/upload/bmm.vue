@@ -4,6 +4,10 @@ import { BmmEnvironment } from "~/src/gen/api/v1/api_pb";
 import type { BMMSingleForm, FileAndLanguage } from "~/utils/bmm";
 import { usePermissionsLoading } from "~/utils/me";
 
+useHead({
+    title: "BMM Upload",
+});
+
 const form = ref<BMMSingleForm>({
     title: "",
     environment: "prod",

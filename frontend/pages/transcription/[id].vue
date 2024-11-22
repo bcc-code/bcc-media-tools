@@ -1,6 +1,11 @@
 <script lang="ts" setup>
 import { BccButton, BccToggle } from "@bcc-code/design-library-vue";
 import type { ComponentPublicInstance } from "vue";
+
+useHead({
+    title: "Transcription",
+});
+
 const api = useAPI();
 
 const route = useRoute("transcription-id");
