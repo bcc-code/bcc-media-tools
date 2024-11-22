@@ -19,6 +19,10 @@ const props = defineProps<{
     env: BmmEnvironment;
 }>();
 
+const emit = defineEmits<{
+    transcription: [id: string];
+}>();
+
 const api = useAPI();
 
 watch(
@@ -143,6 +147,7 @@ watch(
                     :track="t"
                     :languages="languages"
                     @click="onTrackClick(t)"
+                    @click-transcription="emit('transcription', t.id)"
                 />
             </TransitionGroup>
         </div>
