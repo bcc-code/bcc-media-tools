@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import type { BMMTrack, Language, LanguageList } from "~/src/gen/api/v1/api_pb";
+import dayjs from "dayjs";
 
 const props = defineProps<{
     track: BMMTrack;
@@ -26,21 +27,20 @@ const availableLanguages = computed(() =>
 
 const today = new Date();
 const publishedAtToday = computed(() => {
-    return (
-        today.getDate() === props.track.publishedAt?.toDate().getDate() &&
-        today.getMonth() === props.track.publishedAt?.toDate().getMonth() &&
-        today.getFullYear() === props.track.publishedAt?.toDate().getFullYear()
-    );
+    return dayjs().isSame(props.track.publishedAt?.toDate(), "day");
 });
 
 const isInPast = computed(() => {
     if (!props.track.publishedAt) return false;
-    return isBefore(props.track.publishedAt.toDate(), today);
+    return (
+        dayjs(props.track.publishedAt.toDate()).isBefore(today, "day") ||
+        publishedAtToday.value
+    );
 });
 
 const isInFuture = computed(() => {
     if (!props.track.publishedAt) return false;
-    return isAfter(props.track.publishedAt.toDate(), today);
+    return dayjs(props.track.publishedAt.toDate()).isAfter(today, "day");
 });
 </script>
 
