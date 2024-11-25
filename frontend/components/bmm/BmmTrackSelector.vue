@@ -110,6 +110,8 @@ watch(
     },
     { immediate: true },
 );
+
+const transcriptionTrack = ref<BMMTrack>();
 </script>
 
 <template>
@@ -147,11 +149,12 @@ watch(
                     :track="t"
                     :languages="languages"
                     @click="onTrackClick(t)"
-                    @click-transcription="emit('transcription', t.id)"
+                    @click-transcription="transcriptionTrack = t"
                 />
             </TransitionGroup>
         </div>
 
         <BccSpinner v-else size="sm" class="mx-auto" />
     </div>
+    <BmmTranscriptionDialog v-model:track="transcriptionTrack" :env="env" />
 </template>

@@ -71,12 +71,13 @@ const isInFuture = computed(() => {
         >
             <p>{{ track.title }}</p>
             <BccButton
+                v-if="track.hasTranscriptions"
                 size="xs"
                 variant="tertiary"
                 type="button"
                 @click.stop="emit('clickTranscription')"
             >
-                See transcription
+                Show transcript
             </BccButton>
         </div>
         <div
