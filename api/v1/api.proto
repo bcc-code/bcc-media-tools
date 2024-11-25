@@ -89,6 +89,8 @@ message BMMTrack {
 	string title = 2;
   google.protobuf.Timestamp publishedAt = 3;
   LanguageList languages = 4;
+  LanguageList transcriptions = 5;
+  bool hasTranscriptions = 6;
 }
 
 message TracksList {

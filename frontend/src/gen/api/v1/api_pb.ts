@@ -683,6 +683,16 @@ export class BMMTrack extends Message<BMMTrack> {
    */
   languages?: LanguageList;
 
+  /**
+   * @generated from field: api.v1.LanguageList transcriptions = 5;
+   */
+  transcriptions?: LanguageList;
+
+  /**
+   * @generated from field: bool hasTranscriptions = 6;
+   */
+  hasTranscriptions = false;
+
   constructor(data?: PartialMessage<BMMTrack>) {
     super();
     proto3.util.initPartial(data, this);
@@ -695,6 +705,8 @@ export class BMMTrack extends Message<BMMTrack> {
     { no: 2, name: "title", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "publishedAt", kind: "message", T: Timestamp },
     { no: 4, name: "languages", kind: "message", T: LanguageList },
+    { no: 5, name: "transcriptions", kind: "message", T: LanguageList },
+    { no: 6, name: "hasTranscriptions", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): BMMTrack {

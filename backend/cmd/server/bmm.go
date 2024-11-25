@@ -20,7 +20,12 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func NewBMMApi(baseURL string, token *BMMToken) *BMMApi {
+type BMMApi struct {
+	client *resty.Client
+	token  *bmm.BMMToken
+}
+
+func NewBMMApi(baseURL string, token *bmm.BMMToken) *BMMApi {
 	b := &BMMApi{}
 	b.client = resty.New()
 	b.client.BaseURL = baseURL
@@ -82,12 +87,14 @@ type BMMItem struct {
 	ID        int         `json:"id"`
 	Languages []string    `json:"languages"`
 	//ParentID    interface{} `json:"parent_id"`
-	PublishedAt time.Time `json:"published_at"`
-	Tags        []string  `json:"tags"`
-	Language    string    `json:"language"`
-	Title       string    `json:"title"`
-	Type        string    `json:"type"`
-	Tracks      []BMMItem `json:"children"`
+	PublishedAt            time.Time `json:"published_at"`
+	Tags                   []string  `json:"tags"`
+	Language               string    `json:"language"`
+	Title                  string    `json:"title"`
+	Type                   string    `json:"type"`
+	Tracks                 []BMMItem `json:"children"`
+	TranscriptionLanguages []string  `json:"transcription_languages"`
+	HasTranscription       bool      `json:"has_transcription"`
 }
 type BMMApiOverview struct {
 	Name      string   `json:"name"`
@@ -158,10 +165,12 @@ func (a BMMApi) GetAlbumTracks(_ context.Context, req *connect.Request[apiv1.Get
 	for _, track := range album.Tracks {
 		langs := lo.Intersect(track.Languages, permissions.Bmm.Languages)
 		tracks.Tracks = append(tracks.Tracks, &apiv1.BMMTrack{
-			Id:          strconv.Itoa(track.ID),
-			Title:       track.Title,
-			PublishedAt: timestamppb.New(track.PublishedAt),
-			Languages:   languageListToApi(langs),
+			Id:                strconv.Itoa(track.ID),
+			Title:             track.Title,
+			PublishedAt:       timestamppb.New(track.PublishedAt),
+			Languages:         languageListToApi(langs),
+			HasTranscriptions: track.HasTranscription,
+			Transcriptions:    languageListToApi(track.TranscriptionLanguages),
 		})
 	}
 
@@ -189,10 +198,12 @@ func (a BMMApi) GetPodcastTracks(_ context.Context, req *connect.Request[apiv1.G
 	for _, track := range tracks {
 		langs := lo.Intersect(track.Languages, permissions.Bmm.Languages)
 		tracksOut.Tracks = append(tracksOut.Tracks, &apiv1.BMMTrack{
-			Id:          strconv.Itoa(track.ID),
-			Title:       track.Title,
-			PublishedAt: timestamppb.New(track.PublishedAt),
-			Languages:   languageListToApi(langs),
+			Id:                strconv.Itoa(track.ID),
+			Title:             track.Title,
+			PublishedAt:       timestamppb.New(track.PublishedAt),
+			Languages:         languageListToApi(langs),
+			HasTranscriptions: track.HasTranscription,
+			Transcriptions:    languageListToApi(track.TranscriptionLanguages),
 		})
 	}
 
