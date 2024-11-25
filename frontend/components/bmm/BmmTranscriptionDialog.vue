@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { BccModal, BccSpinner } from "@bcc-code/design-library-vue";
+import { BccButton, BccModal, BccSpinner } from "@bcc-code/design-library-vue";
 import type {
     BmmEnvironment,
     BMMTrack,
@@ -60,6 +60,14 @@ function resetTranscription() {
     transcriptionLanguage.value = undefined;
     transcriptionLanguages.value = undefined;
 }
+
+const { $toast } = useNuxtApp();
+function copyToClipboard() {
+    if (!transcription.value) return;
+    const text = transcription.value.segments.map((s) => s.text).join(" ");
+    navigator.clipboard.writeText(text);
+    $toast.success("Copied to clipboard");
+}
 </script>
 
 <template>
@@ -70,13 +78,17 @@ function resetTranscription() {
         @close="resetTranscription"
     >
         <template #header>
-            <h2 class="text-heading-xl">Transcript</h2>
-            <LanguageSelector
-                v-if="transcriptionLanguages?.length"
-                v-model="transcriptionLanguage"
-                :env="env"
-                :languages="transcriptionLanguages"
-            />
+            <div class="flex justify-between gap-4">
+                <div>
+                    <h2 class="text-heading-xl">Transcript</h2>
+                    <LanguageSelector
+                        v-if="transcriptionLanguages?.length"
+                        v-model="transcriptionLanguage"
+                        :env="env"
+                        :languages="transcriptionLanguages"
+                    />
+                </div>
+            </div>
         </template>
 
         <template v-if="transcription && !loadingTranscription">
@@ -87,10 +99,19 @@ function resetTranscription() {
                 {{ segment.text }}
             </p>
         </template>
-
         <div v-else-if="loadingTranscription">
             <BccSpinner size="sm" class="absolute left-1/2 top-1/2" />
         </div>
+
+        <template #secondaryAction>
+            <BccButton
+                variant="secondary"
+                type="button"
+                @click="copyToClipboard"
+            >
+                Copy to clipboard
+            </BccButton>
+        </template>
     </BccModal>
 </template>
 
