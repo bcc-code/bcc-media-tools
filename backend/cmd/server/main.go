@@ -2,12 +2,14 @@ package main
 
 import (
 	"bcc-media-tools/api/v1/apiv1connect"
+	"bcc-media-tools/bmm"
 	"fmt"
-	"github.com/bcc-code/mediabank-bridge/log"
-	"github.com/rs/zerolog"
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/bcc-code/mediabank-bridge/log"
+	"github.com/rs/zerolog"
 
 	"github.com/joho/godotenv"
 	"go.temporal.io/sdk/client"
@@ -77,7 +79,7 @@ func main() {
 		fmt.Printf("DEBUG_AUTH_EMAIL: %s\n", os.Getenv("DEBUG_AUTH_EMAIL"))
 	}
 
-	bmmToken, err := NewBMMToken(
+	bmmToken, err := bmm.NewBMMToken(
 		os.Getenv("BMM_AUTH0_BASE_URL"),
 		os.Getenv("BMM_CLIENT_ID"),
 		os.Getenv("BMM_CLIENT_SECRET"),
@@ -129,6 +131,8 @@ func main() {
 	})
 
 	mux.Handle("/", http.HandlerFunc(serveFiles))
+
+	log.L.Debug().Msg("Starting server on http://localhost:8080/")
 
 	err = http.ListenAndServe(":8080",
 		h2c.NewHandler(mux, &http2.Server{}),

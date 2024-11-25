@@ -2,6 +2,7 @@ package main
 
 import (
 	apiv1 "bcc-media-tools/api/v1"
+	"bcc-media-tools/bmm"
 	"encoding/json"
 	"os"
 	"testing"
@@ -10,21 +11,6 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 )
-
-func Test_getToken(t *testing.T) {
-	if os.Getenv("BMM_AUTH0_BASE_URL") == "" {
-		t.Skip("Required ENV variables not set for getting token")
-	}
-
-	tokenBaseURL := os.Getenv("BMM_AUTH0_BASE_URL")
-	clientID := os.Getenv("BMM_CLIENT_ID")
-	clientSecret := os.Getenv("BMM_CLIENT_SECRET")
-	audience := os.Getenv("BMM_AUDIENCE")
-
-	res, err := getToken(tokenBaseURL, clientID, clientSecret, audience)
-	assert.NoError(t, err)
-	assert.NotEmpty(t, res)
-}
 
 func Test_UnmarshallAlbumWithTracks(t *testing.T) {
 	data, err := os.ReadFile("testdata/album_with_tracks.json")
@@ -58,7 +44,7 @@ func Test_GetTranscriptions(t *testing.T) {
 	clientSecret := os.Getenv("BMM_CLIENT_SECRET")
 	audience := os.Getenv("BMM_AUDIENCE")
 
-	token, err := getToken(tokenBaseURL, clientID, clientSecret, audience)
+	token, err := bmm.GetToken(tokenBaseURL, clientID, clientSecret, audience)
 	assert.NoError(t, err)
 
 	baseURL := os.Getenv("BMM_BASE_URL")

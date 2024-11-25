@@ -1,18 +1,14 @@
-package main
+package bmm
 
 import (
 	"fmt"
-	"github.com/go-resty/resty/v2"
 	"os"
 	"time"
+
+	"github.com/go-resty/resty/v2"
 )
 
-type BMMApi struct {
-	client *resty.Client
-	token  *BMMToken
-}
-
-func getToken(tokenBaseURL, clientID, clientSecret, audience string) (*BMMToken, error) {
+func GetToken(tokenBaseURL, clientID, clientSecret, audience string) (*BMMToken, error) {
 	if os.Getenv("BMM_DEBUG_TOKEN") != "" {
 		fmt.Printf("WARNING: Using DEBUG token. Expired token will not be automatically refreshed\n")
 		return &BMMToken{
@@ -47,7 +43,7 @@ func getToken(tokenBaseURL, clientID, clientSecret, audience string) (*BMMToken,
 }
 
 func NewBMMToken(tokenBaseURL, clientID, clientSecret, audience string) (*BMMToken, error) {
-	t, err := getToken(tokenBaseURL, clientID, clientSecret, audience)
+	t, err := GetToken(tokenBaseURL, clientID, clientSecret, audience)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +86,7 @@ func (t *BMMToken) Expired() bool {
 }
 
 func (t *BMMToken) Refresh() error {
-	newToken, err := getToken(t.tokenBaseURL, t.clientID, t.clientSecret, t.audience)
+	newToken, err := GetToken(t.tokenBaseURL, t.clientID, t.clientSecret, t.audience)
 	if err != nil {
 		return err
 	}
