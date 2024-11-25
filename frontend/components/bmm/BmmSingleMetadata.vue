@@ -1,15 +1,6 @@
 <script lang="ts" setup>
-import {
-    BccButton,
-    BccModal,
-    BccSelect,
-    BccSpinner,
-} from "@bcc-code/design-library-vue";
-import {
-    BmmEnvironment,
-    BMMPermission,
-    Transcription,
-} from "~/src/gen/api/v1/api_pb";
+import { BccButton, BccSelect } from "@bcc-code/design-library-vue";
+import { BmmEnvironment, BMMPermission } from "~/src/gen/api/v1/api_pb";
 
 defineProps<{
     permissions: BMMPermission;
