@@ -1,9 +1,15 @@
 <script lang="ts" setup>
 import type { BMMTrack, Language, LanguageList } from "~/src/gen/api/v1/api_pb";
+import dayjs from "dayjs";
+import { BccButton } from "@bcc-code/design-library-vue";
 
 const props = defineProps<{
     track: BMMTrack;
     languages?: LanguageList;
+}>();
+
+const emit = defineEmits<{
+    clickTranscription: [];
 }>();
 
 const formatter = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Oslo" });
@@ -26,21 +32,20 @@ const availableLanguages = computed(() =>
 
 const today = new Date();
 const publishedAtToday = computed(() => {
-    return (
-        today.getDate() === props.track.publishedAt?.toDate().getDate() &&
-        today.getMonth() === props.track.publishedAt?.toDate().getMonth() &&
-        today.getFullYear() === props.track.publishedAt?.toDate().getFullYear()
-    );
+    return dayjs().isSame(props.track.publishedAt?.toDate(), "day");
 });
 
 const isInPast = computed(() => {
     if (!props.track.publishedAt) return false;
-    return isBefore(props.track.publishedAt.toDate(), today);
+    return (
+        dayjs(props.track.publishedAt.toDate()).isBefore(today, "day") ||
+        publishedAtToday.value
+    );
 });
 
 const isInFuture = computed(() => {
     if (!props.track.publishedAt) return false;
-    return isAfter(props.track.publishedAt.toDate(), today);
+    return dayjs(props.track.publishedAt.toDate()).isAfter(today, "day");
 });
 </script>
 
@@ -61,9 +66,20 @@ const isInFuture = computed(() => {
             {{ dateString(track.publishedAt.toDate()) }}
             <small v-if="publishedAtToday" class="block">Today</small>
         </span>
-        <p class="col-start-2 grow px-2 py-1 text-primary">
-            {{ track.title }}
-        </p>
+        <div
+            class="col-start-2 flex grow justify-between gap-2 px-2 py-1 text-primary"
+        >
+            <p>{{ track.title }}</p>
+            <BccButton
+                v-if="track.hasTranscriptions"
+                size="xs"
+                variant="tertiary"
+                type="button"
+                @click.stop="emit('clickTranscription')"
+            >
+                Show transcript
+            </BccButton>
+        </div>
         <div
             v-if="availableLanguages?.length"
             class="col-start-2 row-start-2 flex h-full flex-wrap gap-1 border-t border-on-primary px-2 py-2"

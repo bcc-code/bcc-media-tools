@@ -1,5 +1,9 @@
 <script lang="ts" setup>
-import { BccButton, BccInput, BccSelect } from "@bcc-code/design-library-vue";
+import { BccButton, BccInput } from "@bcc-code/design-library-vue";
+
+useHead({
+    title: "Transcription",
+});
 
 const transcription = ref<TranscriptionResult>();
 

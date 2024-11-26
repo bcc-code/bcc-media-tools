@@ -1,6 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-    modules: ["@nuxt/icon", "@nuxtjs/i18n"],
+    modules: ["@nuxt/icon", "@nuxtjs/i18n", "vue-sonner/nuxt"],
     typescript: {
         shim: false,
     },
@@ -12,6 +12,7 @@ export default defineNuxtConfig({
             bodyAttrs: {
                 class: "bg-neutral-100",
             },
+            titleTemplate: "%s - BCC Media Tools"
         },
         pageTransition: { name: "page", mode: "out-in" },
     },

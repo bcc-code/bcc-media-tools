@@ -9,6 +9,7 @@ import type {
     BMMTrack,
     LanguageList,
 } from "~/src/gen/api/v1/api_pb";
+import dayjs from "dayjs";
 
 const tracks = ref<BMMTrack[]>();
 
@@ -16,6 +17,10 @@ const props = defineProps<{
     album: string;
     label: string;
     env: BmmEnvironment;
+}>();
+
+const emit = defineEmits<{
+    transcription: [id: string];
 }>();
 
 const api = useAPI();
@@ -57,13 +62,15 @@ const showOlderTracks = ref(false);
 const olderTracks = computed(() => {
     if (!tracks.value?.length) return [];
     return tracks.value.filter((t) =>
-        isBefore(t.publishedAt!.toDate(), new Date()),
+        dayjs(t.publishedAt!.toDate()).isBefore(dayjs(), "day"),
     );
 });
 const futureTracks = computed(() => {
     if (!tracks.value?.length) return [];
-    return tracks.value.filter((t) =>
-        isAfter(t.publishedAt!.toDate(), new Date()),
+    return tracks.value.filter(
+        (t) =>
+            dayjs(t.publishedAt!.toDate()).isAfter(dayjs(), "day") ||
+            dayjs(t.publishedAt!.toDate()).isSame(dayjs(), "day"),
     );
 });
 
@@ -76,12 +83,15 @@ const filteredTracks = computed(() => {
                   0,
                   showOlderTracks.value
                       ? tracks.value.length
-                      : futureTracks.value.length + 1,
+                      : futureTracks.value.length,
               )
             : tracks.value;
         return tracksToSort.toSorted((a, b) => {
             if (!a.publishedAt || !b.publishedAt) return 0;
-            return isBefore(a.publishedAt.toDate(), b.publishedAt.toDate())
+            return dayjs(a.publishedAt.toDate()).isBefore(
+                b.publishedAt.toDate(),
+                "day",
+            )
                 ? -1
                 : 1;
         });
@@ -100,6 +110,8 @@ watch(
     },
     { immediate: true },
 );
+
+const transcriptionTrack = ref<BMMTrack>();
 </script>
 
 <template>
@@ -137,10 +149,12 @@ watch(
                     :track="t"
                     :languages="languages"
                     @click="onTrackClick(t)"
+                    @click-transcription="transcriptionTrack = t"
                 />
             </TransitionGroup>
         </div>
 
         <BccSpinner v-else size="sm" class="mx-auto" />
     </div>
+    <BmmTranscriptionDialog v-model:track="transcriptionTrack" :env="env" />
 </template>
