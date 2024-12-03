@@ -1,8 +1,14 @@
 <script setup lang="ts">
 import { BccItemTile } from "@bcc-code/design-library-vue";
+import { analytics } from "~/utils/analytics";
 
 useHead({
     title: "Tools",
+});
+
+analytics.page({
+    id: "index",
+    title: "index",
 });
 </script>
 

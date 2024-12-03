@@ -101,6 +101,11 @@ export class Permissions extends Message<Permissions> {
    */
   bmm?: BMMPermission;
 
+  /**
+   * @generated from field: string email = 3;
+   */
+  email = "";
+
   constructor(data?: PartialMessage<Permissions>) {
     super();
     proto3.util.initPartial(data, this);
@@ -111,6 +116,7 @@ export class Permissions extends Message<Permissions> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "admin", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 2, name: "bmm", kind: "message", T: BMMPermission },
+    { no: 3, name: "email", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Permissions {

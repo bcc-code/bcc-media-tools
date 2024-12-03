@@ -31,7 +31,7 @@ export default defineNuxtConfig({
     runtimeConfig: {
         public: {
             grpcUrl: "http://localhost:8080",
-        }
+        },
     },
     devServer: {
         port: 8001,

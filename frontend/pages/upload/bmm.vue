@@ -3,6 +3,8 @@ import { BccAlert, BccButton, BccTable } from "@bcc-code/design-library-vue";
 import { BmmEnvironment } from "~/src/gen/api/v1/api_pb";
 import type { BMMSingleForm, FileAndLanguage } from "~/utils/bmm";
 import { usePermissionsLoading } from "~/utils/me";
+import { analytics } from "~/utils/analytics";
+
 
 useHead({
     title: "BMM Upload",
@@ -51,6 +53,12 @@ const reset = () => {
         track: undefined,
     };
 };
+
+analytics.page({
+    id: "upload_index",
+    title: "upload",
+});
+
 </script>
 
 <template>

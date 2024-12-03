@@ -1,6 +1,13 @@
 <script lang="ts" setup>
 import { BccButton, BccToggle } from "@bcc-code/design-library-vue";
 import type { ComponentPublicInstance } from "vue";
+import { analytics } from "~/utils/analytics";
+
+analytics.page({
+    id: "transcription",
+    title: "transcription",
+});
+
 
 useHead({
     title: "Transcription",

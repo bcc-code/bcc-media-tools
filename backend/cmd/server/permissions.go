@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"sort"
+	"strings"
 )
 
 type PermissionsAPI struct{}
@@ -35,7 +36,8 @@ func (_ PermissionsAPI) UpdatePermissions(_ context.Context, req *connect.Reques
 		return nil, connect.NewError(500, err)
 	}
 
-	permissions[req.Msg.Email] = req.Msg.Permissions
+	email := strings.ToLower(req.Msg.Email)
+	permissions[email] = req.Msg.Permissions
 
 	err = writePermissionsFile(permissions)
 	if err != nil {
@@ -113,24 +115,29 @@ func writePermissionsFile(permissions map[string]*apiv1.Permissions) error {
 }
 
 func PermissionsForEmail(email string) *apiv1.Permissions {
+	email = strings.ToLower(email)
 	permissions, _ := readPermissionsFile()
 	if permissions != nil {
 		if perms, ok := permissions[email]; ok {
 			sort.Slice(perms.Bmm.Podcasts, func(i, j int) bool {
 				return perms.Bmm.Podcasts[i] > perms.Bmm.Podcasts[j]
 			})
+			perms.Email = email
 			return perms
 		}
 	}
 
-	return &apiv1.Permissions{
+	out := &apiv1.Permissions{
 		Admin: false,
+		Email: email,
 		Bmm: &apiv1.BMMPermission{
 			Albums:    make([]string, 0),
 			Languages: make([]string, 0),
 			Admin:     false,
 		},
 	}
+
+	return out
 }
 
 func IsAdmin[T any](req *connect.Request[T]) bool {
