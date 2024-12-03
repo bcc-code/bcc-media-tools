@@ -5,12 +5,6 @@ import type {
     BMMTrack,
     Transcription,
 } from "~/src/gen/api/v1/api_pb";
-import { analytics } from "~/utils/analytics";
-
-analytics.page({
-    id: "bmm_transcription",
-    title: "bmm transcription",
-});
 
 const props = defineProps<{
     env: BmmEnvironment;
@@ -26,6 +20,16 @@ const transcriptionLanguages = ref<string[]>();
 const transcriptionLanguage = ref<string>();
 const loadingTranscription = ref(false);
 
+const analytics = useAnalytics();
+watch(showTranscription, (s) => {
+    if (!s) return;
+
+    analytics.page({
+        id: "bmm_transcription",
+        title: "bmm transcription",
+    });
+});
+
 watch(track, (t) => {
     if (!t) return;
 
@@ -38,8 +42,7 @@ watch(track, (t) => {
     analytics.track("transcription_loaded", {
         language: transcriptionLanguage.value,
         trackId: t.id,
-    })
-
+    });
 });
 watch(transcriptionLanguage, (t) => {
     if (!t) return;

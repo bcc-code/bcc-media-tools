@@ -1,11 +1,7 @@
-import { ready, load, track, identify, page as rpage } from "rudder-sdk-js";
-import { ref } from "vue";
+import { identify, page as rpage, track } from "rudder-sdk-js";
 import { useAPI } from "~/utils/api";
-import { append } from "domutils";
-import { SymbolKind } from "vscode-languageserver-types";
-import Array = SymbolKind.Array;
 
-class Analytics {
+export class Analytics {
     private initialized = false;
     private user: IdentifyData | null = null;
 
@@ -43,10 +39,9 @@ class Analytics {
 
     public track<T extends keyof Events>(event: T, data: Events[T]) {
         if (!this.initialized) {
-            this.trackQueue.push({event, data})
+            this.trackQueue.push({ event, data })
             return
         };
-        const user = this.getUser();
 
         track(
             event,
@@ -67,26 +62,12 @@ class Analytics {
 
         this.initialized = true;
 
-        this.pageQueue.forEach(this.page)
+        this.pageQueue.forEach(p => this.page(p))
         this.pageQueue = []
 
-        this.trackQueue.forEach(({event: e, data: d},_,__) => this.track(e,d))
+        this.trackQueue.forEach(({ event: e, data: d }, _, __) => this.track(e, d))
     }
 }
-
-export const analytics = new Analytics();
-
-const isLoading = ref(true);
-
-ready(() => {
-    isLoading.value = false;
-    analytics.initialize()
-});
-
-load(
-    "2pWLO3rNCjt0uuLJ1iuzhHfdcgt",
-    "https://rs.bcc.media/",
-);
 
 interface IdentifyData {
     Email: string;

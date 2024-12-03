@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import { BccButton } from "@bcc-code/design-library-vue";
 import type { FileAndLanguage } from "~/utils/bmm";
-import { analytics } from "~/utils/analytics";
 
 const props = defineProps<{
     endpoint: string;
@@ -11,6 +10,8 @@ const props = defineProps<{
 const emit = defineEmits<{
     uploaded: [];
 }>();
+
+const analytics = useAnalytics();
 
 const selectedFiles = defineModel<FileAndLanguage[]>({ required: true });
 const uploadPercentageFiles = ref<{ [key: string]: number }>({});
@@ -45,7 +46,7 @@ const uploadFile = () => {
 
         analytics.track("upload_started", {
             language: selectedFile.language,
-            trackId:props.metadata.trackId[0],
+            trackId: props.metadata.trackId[0],
         });
 
         if (!selectedFile.file) return;
@@ -79,7 +80,7 @@ const uploadFile = () => {
             }
         };
 
-        let errHandler = (e:ProgressEvent) => {
+        let errHandler = (e: ProgressEvent) => {
             uploading.value = false;
             console.log(e);
 
@@ -87,7 +88,7 @@ const uploadFile = () => {
 
             analytics.track("upload_finished", {
                 language: selectedFile.language,
-                trackId:props.metadata.trackId[0],
+                trackId: props.metadata.trackId[0],
                 success: false,
                 error: t.statusText,
                 duration: Date.now() - start,
@@ -96,22 +97,22 @@ const uploadFile = () => {
             if (confirm("Upload failed, try again?")) {
                 uploadFile();
             }
-        }
+        };
 
         xhr.onerror = errHandler;
         xhr.onabort = errHandler;
 
-        xhr.onload = function (e:ProgressEvent) {
+        xhr.onload = function (e: ProgressEvent) {
             const t = e.target as XMLHttpRequest;
 
             if (t.status != 202) {
                 errHandler(e);
-                return
+                return;
             }
 
             analytics.track("upload_finished", {
                 language: selectedFile.language,
-                trackId:props.metadata.trackId[0],
+                trackId: props.metadata.trackId[0],
                 success: true,
                 duration: Date.now() - start,
                 size: selectedFile.file.size,
