@@ -4,6 +4,14 @@ import { BccItemTile } from "@bcc-code/design-library-vue";
 useHead({
     title: "Tools",
 });
+
+const analytics = useAnalytics();
+onMounted(() => {
+    analytics.page({
+        id: "index",
+        title: "index",
+    });
+});
 </script>
 
 <template>

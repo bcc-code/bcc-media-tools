@@ -11,6 +11,8 @@ const emit = defineEmits<{
     uploaded: [];
 }>();
 
+const analytics = useAnalytics();
+
 const selectedFiles = defineModel<FileAndLanguage[]>({ required: true });
 const uploadPercentageFiles = ref<{ [key: string]: number }>({});
 const uploading = ref(false);
@@ -40,6 +42,13 @@ const showProgress = ref(false);
 
 const uploadFile = () => {
     for (const selectedFile of selectedFiles.value || []) {
+        const start = Date.now();
+
+        analytics.track("upload_started", {
+            language: selectedFile.language,
+            trackId: props.metadata.trackId[0],
+        });
+
         if (!selectedFile.file) return;
         uploading.value = true;
 
@@ -71,22 +80,44 @@ const uploadFile = () => {
             }
         };
 
-        let errHandler = (e) => {
+        let errHandler = (e: ProgressEvent) => {
             uploading.value = false;
             console.log(e);
+
+            const t = e.target as XMLHttpRequest;
+
+            analytics.track("upload_finished", {
+                language: selectedFile.language,
+                trackId: props.metadata.trackId[0],
+                success: false,
+                error: t.statusText,
+                duration: Date.now() - start,
+            });
+
             if (confirm("Upload failed, try again?")) {
                 uploadFile();
             }
-        }
+        };
 
         xhr.onerror = errHandler;
         xhr.onabort = errHandler;
 
-        xhr.onload = function (e) {
-            if (e.target.status != 202) {
+        xhr.onload = function (e: ProgressEvent) {
+            const t = e.target as XMLHttpRequest;
+
+            if (t.status != 202) {
                 errHandler(e);
-                return
+                return;
             }
+
+            analytics.track("upload_finished", {
+                language: selectedFile.language,
+                trackId: props.metadata.trackId[0],
+                success: true,
+                duration: Date.now() - start,
+                size: selectedFile.file.size,
+            });
+
             emit("uploaded");
             showProgress.value = false;
         };

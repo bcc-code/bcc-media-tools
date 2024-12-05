@@ -5,6 +5,14 @@ useHead({
     title: "Transcription",
 });
 
+const analytics = useAnalytics();
+onMounted(() => {
+    analytics.page({
+        id: "transcription",
+        title: "transcription",
+    });
+});
+
 const transcription = ref<TranscriptionResult>();
 
 const fileName = ref<string>();

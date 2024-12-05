@@ -3,6 +3,7 @@ import { BMMPermission, Permissions } from "~/src/gen/api/v1/api_pb";
 
 export type Me = {
     admin: boolean;
+    email: string;
     bmm: {
         languages: string[];
         albums: string[];

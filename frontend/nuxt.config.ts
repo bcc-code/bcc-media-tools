@@ -31,7 +31,11 @@ export default defineNuxtConfig({
     runtimeConfig: {
         public: {
             grpcUrl: "http://localhost:8080",
-        }
+            rudderstack: {
+                writeKey: "",
+                dataPlaneUrl: "",
+            }
+        },
     },
     devServer: {
         port: 8001,
