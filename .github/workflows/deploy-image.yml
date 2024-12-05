@@ -29,7 +29,7 @@ jobs:
           IMAGE_NAME_LATEST: ghcr.io/bcc-code/bcc-media/tools:latest
           IMAGE_NAME: ghcr.io/bcc-code/bcc-media/tools:${{ github.sha }}
         run: |
-          docker build . --file Dockerfile --tag $IMAGE_NAME --build-arg NUXT_PUBLIC_GRPC_URL={{ vars.NUXT_PUBLIC_GRPC_URL }} --build-arg NUXT_PUBLIC_RUDDERSTACK_WRITE_KEY={{ vars.NUXT_PUBLIC_RUDDERSTACK_WRITE_KEY }} --build-arg NUXT_PUBLIC_RUDDERSTACK_DATA_PLANE_URL={{ vars.NUXT_PUBLIC_RUDDERSTACK_DATA_PLANE_URL }}
+          docker build . --file Dockerfile --tag $IMAGE_NAME --build-arg NUXT_PUBLIC_GRPC_URL=${{ vars.NUXT_PUBLIC_GRPC_URL }} --build-arg NUXT_PUBLIC_RUDDERSTACK_WRITE_KEY=${{ vars.NUXT_PUBLIC_RUDDERSTACK_WRITE_KEY }} --build-arg NUXT_PUBLIC_RUDDERSTACK_DATA_PLANE_URL=${{ vars.NUXT_PUBLIC_RUDDERSTACK_DATA_PLANE_URL }}
           docker tag $IMAGE_NAME $IMAGE_NAME_LATEST
           docker push $IMAGE_NAME
           docker push $IMAGE_NAME_LATEST
