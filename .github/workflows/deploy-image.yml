@@ -1,35 +1,35 @@
 name: Deploy Tools image
 
 on:
-    workflow_dispatch:
-    push:
-        branches: ["main"]
-        paths:
-            - "**"
-            - "Dockerfile"
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths:
+      - "**"
+      - "Dockerfile"
 
 jobs:
-    deploy:
-        runs-on: ubuntu-latest
-        permissions:
-            packages: write
-            contents: read
-        steps:
-            - uses: actions/checkout@v3
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v3
 
-            - name: Login to GitHub Container Registry
-              uses: docker/login-action@v2
-              with:
-                  registry: ghcr.io
-                  username: ${{ github.actor }}
-                  password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-            - name: Build and push worker image
-              env:
-                  IMAGE_NAME_LATEST: ghcr.io/bcc-code/bcc-media/tools:latest
-                  IMAGE_NAME: ghcr.io/bcc-code/bcc-media/tools:${{ github.sha }}
-              run: |
-                  docker build . --file Dockerfile --tag $IMAGE_NAME --build-arg NUXT_PUBLIC_GRPC_URL=$NUXT_PUBLIC_GRPC_URL
-                  docker tag $IMAGE_NAME $IMAGE_NAME_LATEST
-                  docker push $IMAGE_NAME
-                  docker push $IMAGE_NAME_LATEST
+      - name: Build and push worker image
+        env:
+          IMAGE_NAME_LATEST: ghcr.io/bcc-code/bcc-media/tools:latest
+          IMAGE_NAME: ghcr.io/bcc-code/bcc-media/tools:${{ github.sha }}
+        run: |
+          docker build . --file Dockerfile --tag $IMAGE_NAME --build-arg NUXT_PUBLIC_GRPC_URL=$NUXT_PUBLIC_GRPC_URL --build-arg NUXT_PUBLIC_RUDDERSTACK_WRITE_KEY=$NUXT_PUBLIC_RUDDERSTACK_WRITE_KEY --build-arg NUXT_PUBLIC_RUDDERSTACK_DATA_PLANE_URL=$NUXT_PUBLIC_RUDDERSTACK_DATA_PLANE_URL
+          docker tag $IMAGE_NAME $IMAGE_NAME_LATEST
+          docker push $IMAGE_NAME
+          docker push $IMAGE_NAME_LATEST
