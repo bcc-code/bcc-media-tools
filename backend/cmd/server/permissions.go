@@ -2,7 +2,6 @@ package main
 
 import (
 	apiv1 "bcc-media-tools/api/v1"
-	"connectrpc.com/connect"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -11,6 +10,8 @@ import (
 	"path"
 	"sort"
 	"strings"
+
+	"connectrpc.com/connect"
 )
 
 type PermissionsAPI struct{}
@@ -127,7 +128,7 @@ func PermissionsForEmail(email string) *apiv1.Permissions {
 		}
 	}
 
-	out := &apiv1.Permissions{
+	return &apiv1.Permissions{
 		Admin: false,
 		Email: email,
 		Bmm: &apiv1.BMMPermission{
@@ -136,8 +137,6 @@ func PermissionsForEmail(email string) *apiv1.Permissions {
 			Admin:     false,
 		},
 	}
-
-	return out
 }
 
 func IsAdmin[T any](req *connect.Request[T]) bool {
