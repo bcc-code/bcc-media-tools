@@ -20,6 +20,16 @@ const transcriptionLanguages = ref<string[]>();
 const transcriptionLanguage = ref<string>();
 const loadingTranscription = ref(false);
 
+const analytics = useAnalytics();
+watch(showTranscription, (s) => {
+    if (!s) return;
+
+    analytics.page({
+        id: "bmm_transcription",
+        title: "bmm transcription",
+    });
+});
+
 watch(track, (t) => {
     if (!t) return;
 
@@ -28,6 +38,11 @@ watch(track, (t) => {
         (l) => l.code,
     );
     transcriptionLanguage.value = transcriptionLanguages.value?.at(0) || "nb";
+
+    analytics.track("transcription_loaded", {
+        language: transcriptionLanguage.value,
+        trackId: t.id,
+    });
 });
 watch(transcriptionLanguage, (t) => {
     if (!t) return;

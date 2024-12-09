@@ -8,6 +8,14 @@ useHead({
     title: "BMM Upload",
 });
 
+const analytics = useAnalytics();
+onMounted(() => {
+    analytics.page({
+        id: "upload_index",
+        title: "upload",
+    });
+});
+
 const form = ref<BMMSingleForm>({
     title: "",
     environment: "prod",
@@ -70,7 +78,7 @@ const reset = () => {
                         v-model="form"
                         :permissions="me.bmm"
                         :environment="selectedEnvironment"
-                        @set="metadataIsSet = true"
+                        @set="(metadataIsSet = true)"
                     />
                     <div
                         v-if="metadataIsSet && form.track"
@@ -152,11 +160,11 @@ const reset = () => {
                             v-model="selectedFiles"
                             :endpoint="config.public.grpcUrl + '/upload'"
                             :metadata="metadata"
-                            @uploaded="uploaded = true"
+                            @uploaded="(uploaded = true)"
                         />
                         <BccButton
                             variant="secondary"
-                            @click="metadataIsSet = false"
+                            @click="(metadataIsSet = false)"
                         >
                             Back
                         </BccButton>

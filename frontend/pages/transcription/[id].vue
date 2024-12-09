@@ -2,6 +2,14 @@
 import { BccButton, BccToggle } from "@bcc-code/design-library-vue";
 import type { ComponentPublicInstance } from "vue";
 
+const analytics = useAnalytics();
+onMounted(() => {
+    analytics.page({
+        id: "transcription_index",
+        title: "transcription",
+    });
+});
+
 useHead({
     title: "Transcription",
 });
