@@ -65,7 +65,7 @@ const uploadFile = () => {
 
         const xhr = new XMLHttpRequest();
         let startedAt: number;
-        xhr.open("POST", props.endpoint, true);
+        xhr.open("post", props.endpoint, true);
         xhr.onloadstart = function () {
             startedAt = Date.now();
         };

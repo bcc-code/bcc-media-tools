@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/bcc-code/mediabank-bridge/log"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
+
+	"github.com/bcc-code/mediabank-bridge/log"
 
 	ingestworkflows "github.com/bcc-code/bcc-media-flows/workflows/ingest"
 
@@ -53,7 +54,9 @@ func (u uploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// End permission check
 
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		// http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		log.L.Debug().Str("invalid method", r.Method)
+		http.Error(w, "", http.StatusOK)
 		return
 	}
 
