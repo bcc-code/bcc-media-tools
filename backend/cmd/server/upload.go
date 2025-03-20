@@ -131,13 +131,19 @@ func (u uploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		targetEnvironment = "bmm-int"
 	}
 
+	forceReplaceTranscription, err := strconv.ParseBool(formData["force_override"])
+	if err != nil {
+		forceReplaceTranscription = false
+	}
+
 	_, err = u.TemporalClient.ExecuteWorkflow(r.Context(), workflowOptions, ingestworkflows.BmmIngestUpload, ingestworkflows.BmmSimpleUploadParams{
-		Title:               formData["title"],
-		Language:            convertBMMLanguageCodeToMB(formData["file_language"]),
-		TrackID:             trackID,
-		UploadedBy:          getEmailFromHttp(r),
-		FilePath:            filePath,
-		BmmTargetEnvionment: targetEnvironment,
+		Title:                     formData["title"],
+		Language:                  convertBMMLanguageCodeToMB(formData["file_language"]),
+		TrackID:                   trackID,
+		UploadedBy:                getEmailFromHttp(r),
+		FilePath:                  filePath,
+		BmmTargetEnvionment:       targetEnvironment,
+		ForceReplaceTranscription: forceReplaceTranscription,
 	})
 
 	if err != nil {

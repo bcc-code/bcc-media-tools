@@ -22,6 +22,7 @@ const form = ref<BMMSingleForm>({
 });
 
 const metadataIsSet = ref(false);
+const forceOverride = ref(false);
 
 const selectedFiles = ref<FileAndLanguage[]>([]);
 
@@ -86,7 +87,7 @@ const reset = () => {
                     >
                         <header>
                             <h1 class="text-heading-xl">
-                                Upload files for "{{ form.track.title }}"
+                                Upload files for "{{ form.track.title }}" ({{ form.track.publishedAt.toDate().toDateString() }})
                             </h1>
                             <p class="text-heading-md">
                                 Existing languages:
@@ -99,6 +100,10 @@ const reset = () => {
                                 />
                             </p>
                         </header>
+                        <div>
+                            <input type="checkbox" id="forceOverride" v-model="forceOverride" />
+                            <label for="forceOverride">Replace transcription even if has been manually corrected</label>
+                        </div>
                         <BccTable
                             :items="selectedFiles"
                             :columns="[
@@ -160,6 +165,7 @@ const reset = () => {
                             v-model="selectedFiles"
                             :endpoint="config.public.grpcUrl + '/upload'"
                             :metadata="metadata"
+                            :forceOverride="forceOverride"
                             @uploaded="(uploaded = true)"
                         />
                         <BccButton
