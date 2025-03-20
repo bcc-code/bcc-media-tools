@@ -4,8 +4,6 @@ go 1.23.0
 
 toolchain go1.24.1
 
-replace github.com/bcc-code/bcc-media-flows => /Users/matjaz/prog/bcc.media/bccm-flows
-
 require (
 	connectrpc.com/connect v1.16.1
 	connectrpc.com/cors v0.1.0
