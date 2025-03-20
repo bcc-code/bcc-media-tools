@@ -19,6 +19,7 @@ export type Events = {
     upload_started: {
         trackId: string;
         language: string;
+        forceOverride: boolean;
     };
     upload_finished: {
         trackId: string;

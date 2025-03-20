@@ -1,12 +1,15 @@
 module bcc-media-tools
 
-go 1.22.0
+go 1.23.0
+
 toolchain go1.24.1
+
+replace github.com/bcc-code/bcc-media-flows => /Users/matjaz/prog/bcc.media/bccm-flows
 
 require (
 	connectrpc.com/connect v1.16.1
 	connectrpc.com/cors v0.1.0
-	github.com/bcc-code/bcc-media-flows v0.0.0-20241121102355-c019023e1fda
+	github.com/bcc-code/bcc-media-flows v0.0.0-20250320120744-1c174db85388
 	github.com/bcc-code/mediabank-bridge v1.1.1
 	github.com/go-resty/resty/v2 v2.12.0
 	github.com/google/uuid v1.6.0
@@ -14,8 +17,8 @@ require (
 	github.com/rs/cors v1.11.0
 	github.com/rs/zerolog v1.31.0
 	github.com/samber/lo v1.39.0
-	github.com/stretchr/testify v1.9.0
-	go.temporal.io/sdk v1.26.1
+	github.com/stretchr/testify v1.10.0
+	go.temporal.io/sdk v1.32.1
 	golang.org/x/net v0.36.0
 	google.golang.org/protobuf v1.34.2
 )
@@ -73,6 +76,7 @@ require (
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.20.0 // indirect
+	github.com/gocarina/gocsv v0.0.0-20240520201108-78e41c74b4b1 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
@@ -83,7 +87,7 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.3.2 // indirect
 	github.com/googleapis/gax-go/v2 v2.12.4 // indirect
 	github.com/graph-gophers/dataloader/v7 v7.1.0 // indirect
-	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect
+	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.22.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
@@ -96,6 +100,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
+	github.com/nexus-rpc/sdk-go v0.1.0 // indirect
 	github.com/orsinium-labs/enum v1.3.0 // indirect
 	github.com/pborman/uuid v1.2.1 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.1 // indirect

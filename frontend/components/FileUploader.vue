@@ -5,6 +5,7 @@ import type { FileAndLanguage } from "~/utils/bmm";
 const props = defineProps<{
     endpoint: string;
     metadata: { [key: string]: readonly string[] };
+    forceOverride: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -47,6 +48,7 @@ const uploadFile = () => {
         analytics.track("upload_started", {
             language: selectedFile.language,
             trackId: props.metadata.trackId[0],
+            forceOverride: props.forceOverride,
         });
 
         if (!selectedFile.file) return;
@@ -55,6 +57,7 @@ const uploadFile = () => {
         const formData = new FormData();
         formData.append("file", selectedFile.file);
         formData.append("file_language", selectedFile.language);
+        formData.append("force_override", String(props.forceOverride));
         if (props.metadata) {
             for (const [key, values] of Object.entries(props.metadata)) {
                 for (const value of values) {
