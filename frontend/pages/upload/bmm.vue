@@ -60,6 +60,12 @@ const reset = () => {
         track: undefined,
     };
 };
+
+
+const formatter = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Oslo" });
+const dateString = (date: Date) => {
+    return formatter.format(date);
+};
 </script>
 
 <template>
@@ -87,7 +93,7 @@ const reset = () => {
                     >
                         <header>
                             <h1 class="text-heading-xl">
-                                Upload files for "{{ form.track.title }}" ({{ form.track.publishedAt.toDate().getUTCDay() }}. {{ form.track.publishedAt.toDate().getUTCMonth() }}. {{ form.track.publishedAt.toDate().getUTCFullYear() }})
+                                Upload files for "{{ form.track.title }}" ({{ dateString(form.track.publishedAt.toDate()) }})
                             </h1>
                             <p class="text-heading-md">
                                 Existing languages:
