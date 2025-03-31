@@ -1,6 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-    modules: ["@nuxt/icon", "@nuxtjs/i18n", "vue-sonner/nuxt"],
+    modules: ["@nuxt/icon", "@nuxtjs/i18n", "vue-sonner/nuxt", "motion-v/nuxt"],
     typescript: {
         shim: false,
     },
