@@ -36,7 +36,7 @@ const isOpen = ref(false);
 </script>
 
 <template>
-    <div class="flex flex-col rounded-2xl border bg-white">
+    <div class="flex flex-col rounded-2xl border bg-white shadow">
         <LayoutGroup>
             <AnimatePresence multiple>
                 <motion.button
