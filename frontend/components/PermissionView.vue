@@ -104,7 +104,7 @@ const isOpen = ref(false);
                             <div>
                                 <BccFormLabel>Podcasts</BccFormLabel>
                                 <MultiSelector
-                                    :available="['fra-kaare', 'hvhe-podcast']"
+                            :available="['fra-kaare', 'tjgu-podcast']"
                                     v-model="perms.bmm!.podcasts"
                                 />
                             </div>
