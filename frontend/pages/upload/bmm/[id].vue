@@ -38,6 +38,12 @@ const form = ref<BMMSingleForm>({
             : routeParams.lang,
 });
 
+const selectedEnvironment = computed(() => {
+    return form.value.environment === "int"
+        ? BmmEnvironment.Integration
+        : BmmEnvironment.Production;
+});
+
 const forceOverride = ref(false);
 
 const selectedFiles = ref<FileAndLanguage[]>([]);
@@ -111,7 +117,13 @@ const uploaded = ref(false);
                                 </div>
                             </template>
                             <template #item.language="{ item }">
-                                {{ languageCodeToName(item.language) }}
+                                <LanguageSelector
+                                    v-model="item.language"
+                                    :disabled="!me.bmm.admin"
+                                    :languages="me.bmm.languages"
+                                    :env="selectedEnvironment"
+                                    label=""
+                                />
                             </template>
                             <template #item.actions="{ item }">
                                 <BccButton
@@ -153,9 +165,7 @@ const uploaded = ref(false);
                             {{ $t("uploaded") }}
                         </div>
                     </BccAlert>
-                    <BccButton variant="secondary" @click="$router.back()">
-                        Go back
-                    </BccButton>
+                    <p>You can now close this tab.</p>
                 </template>
             </template>
             <template v-else-if="permissionsLoading">Loading...</template>
