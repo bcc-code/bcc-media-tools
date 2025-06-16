@@ -21,8 +21,6 @@ type RouteParams = {
 const route = useRoute("upload-bmm-id");
 const routeParams: RouteParams = { id: route.params.id, ...route.query };
 
-onBeforeMount(() => {});
-
 const analytics = useAnalytics();
 onMounted(() => {
     analytics.page({
