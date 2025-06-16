@@ -1,5 +1,10 @@
 <script lang="ts" setup>
-import { BccAlert, BccButton, BccTable } from "@bcc-code/design-library-vue";
+import {
+    BccAlert,
+    BccButton,
+    BccTable,
+    BccCheckbox,
+} from "@bcc-code/design-library-vue";
 import { BmmEnvironment } from "~/src/gen/api/v1/api_pb";
 import type { BMMSingleForm, FileAndLanguage } from "~/utils/bmm";
 import { usePermissionsLoading } from "~/utils/me";
@@ -8,20 +13,33 @@ useHead({
     title: "BMM Upload",
 });
 
+type RouteParams = {
+    id?: string;
+    lang?: string | string[];
+    title?: string;
+};
+const route = useRoute("upload-bmm-id");
+const routeParams: RouteParams = { id: route.params.id, ...route.query };
+
+onBeforeMount(() => {});
+
 const analytics = useAnalytics();
 onMounted(() => {
     analytics.page({
-        id: "upload_index",
-        title: "upload",
+        id: "upload_redirect",
+        title: `upload trackId ${route.params.id}`,
     });
 });
 
 const form = ref<BMMSingleForm>({
     title: "",
     environment: "prod",
+    language:
+        routeParams.lang instanceof Array
+            ? routeParams.lang[0]
+            : routeParams.lang,
 });
 
-const metadataIsSet = ref(false);
 const forceOverride = ref(false);
 
 const selectedFiles = ref<FileAndLanguage[]>([]);
@@ -31,41 +49,22 @@ const config = useRuntimeConfig();
 
 const permissionsLoading = usePermissionsLoading();
 
-const selectedEnvironment = computed(() => {
-    return form.value.environment === "int"
-        ? BmmEnvironment.Integration
-        : BmmEnvironment.Production;
-});
-
 const metadata = computed<Record<string, string[]>>(() => {
     let f: Record<string, string[]> = {
         title: [form.value.title],
         environment: [form.value.environment ?? "prod"],
     };
-    if (form.value.track) f["trackId"] = [form.value.track.id];
-    if (form.value.language) f["language"] = [form.value.language];
+    if (routeParams.id) f["trackId"] = [routeParams.id];
+    if (routeParams.lang)
+        f["language"] =
+            routeParams.lang instanceof Array
+                ? routeParams.lang
+                : [routeParams.lang];
 
     return f;
 });
 
 const uploaded = ref(false);
-
-const reset = () => {
-    metadataIsSet.value = false;
-    uploaded.value = false;
-    selectedFiles.value = [];
-    form.value = {
-        title: "",
-        environment: "prod",
-        track: undefined,
-    };
-};
-
-
-const formatter = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Oslo" });
-const dateString = (date: Date) => {
-    return formatter.format(date);
-};
 </script>
 
 <template>
@@ -79,37 +78,16 @@ const dateString = (date: Date) => {
                 "
             >
                 <template v-if="!uploaded">
-                    <!-- @vue-expect-error The component's `v-model` expects a form with the type `BMMSingleForm` -->
-                    <BmmSingleMetadata
-                        v-if="!metadataIsSet"
-                        v-model="form"
-                        :permissions="me.bmm"
-                        :environment="selectedEnvironment"
-                        @set="(metadataIsSet = true)"
-                    />
-                    <div
-                        v-if="metadataIsSet && form.track"
-                        class="flex flex-col gap-4 p-4 transition"
-                    >
+                    <div class="flex flex-col gap-4 p-4 transition">
                         <header>
                             <h1 class="text-heading-xl">
-                                Upload files for "{{ form.track.title }}" ({{ dateString(form.track.publishedAt.toDate()) }})
+                                Upload files for "{{ routeParams.title }}"
                             </h1>
-                            <p class="text-heading-md">
-                                Existing languages:
-                                <img
-                                    v-for="l in form.track.languages?.Languages"
-                                    :title="l.code"
-                                    :src="'/images/flags/' + l.iconFile"
-                                    class="ml-2 inline h-4 rounded-sm shadow-sm"
-                                    :alt="l.code"
-                                />
-                            </p>
                         </header>
-                        <div>
-                            <input type="checkbox" id="forceOverride" v-model="forceOverride" />
-                            <label for="forceOverride">Replace transcription even if has been manually corrected</label>
-                        </div>
+                        <BccCheckbox
+                            v-model="forceOverride"
+                            label="Replace transcription even if has been manually corrected"
+                        />
                         <BccTable
                             :items="selectedFiles"
                             :columns="[
@@ -135,16 +113,7 @@ const dateString = (date: Date) => {
                                 </div>
                             </template>
                             <template #item.language="{ item }">
-                                <LanguageSelector
-                                    v-model="item.language"
-                                    :class="{
-                                        hidden: !me.bmm.admin,
-                                    }"
-                                    :disabled="!me.bmm.admin"
-                                    :languages="me.bmm.languages"
-                                    :env="selectedEnvironment"
-                                    label=""
-                                />
+                                {{ languageCodeToName(item.language) }}
                             </template>
                             <template #item.actions="{ item }">
                                 <BccButton
@@ -172,22 +141,22 @@ const dateString = (date: Date) => {
                             :endpoint="config.public.grpcUrl + '/upload'"
                             :metadata="metadata"
                             :forceOverride="forceOverride"
-                            @uploaded="(uploaded = true)"
+                            @uploaded="uploaded = true"
                         />
-                        <BccButton
-                            variant="secondary"
-                            @click="(metadataIsSet = false)"
-                        >
-                            Back
-                        </BccButton>
                     </div>
                 </template>
                 <template v-else>
                     <BccAlert context="success">
-                        {{ $t("uploaded") }}
+                        <div class="flex items-center gap-2">
+                            <Icon
+                                name="heroicons:check"
+                                class="text-lg opacity-50"
+                            />
+                            {{ $t("uploaded") }}
+                        </div>
                     </BccAlert>
-                    <BccButton variant="secondary" @click="reset">
-                        Upload more
+                    <BccButton variant="secondary" @click="$router.back()">
+                        Go back
                     </BccButton>
                 </template>
             </template>
