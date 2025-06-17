@@ -20,12 +20,15 @@ type RouteParams = {
 };
 const route = useRoute("upload-bmm-id");
 const routeParams: RouteParams = { id: route.params.id, ...route.query };
+const lang =
+    routeParams.lang instanceof Array ? routeParams.lang[0] : routeParams.lang;
 
 const analytics = useAnalytics();
 onMounted(() => {
     analytics.page({
         id: "upload_redirect",
-        title: `upload trackId ${route.params.id}`,
+        title: "bmm upload",
+        meta: { trackId: route.params.id, language: lang },
     });
 });
 
@@ -151,7 +154,7 @@ const uploaded = ref(false);
                             :endpoint="config.public.grpcUrl + '/upload'"
                             :metadata="metadata"
                             :forceOverride="forceOverride"
-                            @uploaded="uploaded = true"
+                            @uploaded="(uploaded = true)"
                         />
                     </div>
                 </template>
