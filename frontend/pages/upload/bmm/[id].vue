@@ -35,10 +35,7 @@ onMounted(() => {
 const form = ref<BMMSingleForm>({
     title: "",
     environment: "prod",
-    language:
-        routeParams.lang instanceof Array
-            ? routeParams.lang[0]
-            : routeParams.lang,
+    language: lang,
 });
 
 const selectedEnvironment = computed(() => {
