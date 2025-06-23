@@ -19,7 +19,7 @@ type RouteParams = {
     env?: string;
     title?: string;
 };
-const requiredRouteParams: (keyof RouteParams)[] = ["id", "lang", "env"];
+const requiredRouteParams: (keyof RouteParams)[] = ["id", "lang"];
 
 const route = useRoute("upload-bmm-id");
 const routeParams: RouteParams = { id: route.params.id, ...route.query };
