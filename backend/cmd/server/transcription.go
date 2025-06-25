@@ -78,7 +78,31 @@ func (t TranscriptionAPI) GetPreview(ctx context.Context, req *connect.Request[a
 
 	perms := PermissionsForEmail(email)
 	if perms.Transcription == nil || (!perms.Transcription.Admin && !perms.Transcription.Mediabanken) {
-		return nil, connect.NewError(403, fmt.Errorf("not enough permissions for preview"))
+		return nil, connect.NewError(403, fmt.Errorf("Not enough permissions for preview."))
+	}
+
+	// Check if any ACL entry is inherited from the requested VXID
+	accessAllowed := perms.Transcription.Admin
+
+	if perms.Transcription.Mediabanken {
+		m, err := t.cantemoClient.GetACL(req.Msg.VXID)
+		if err != nil {
+			return nil, err
+		}
+
+		if m != nil {
+			for _, acl := range m.ACLs {
+				if acl.InheritedFrom != nil && acl.InheritedFrom.ID == "VX-2677" {
+					// VX-2677 == "collection_name": "_AccessibleByTools"
+					accessAllowed = true
+					break
+				}
+			}
+		}
+	}
+
+	if !accessAllowed {
+		return nil, connect.NewError(403, fmt.Errorf("Not enough permissions for preview."))
 	}
 
 	preview, err := t.cantemoClient.GetPreviewUrl(req.Msg.VXID)
