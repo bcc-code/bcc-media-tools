@@ -136,6 +136,10 @@ func PermissionsForEmail(email string) *apiv1.Permissions {
 			Languages: make([]string, 0),
 			Admin:     false,
 		},
+		Transcription: &apiv1.TranscriptionPermission{
+			Admin:      false,
+			Mediabanken: false,
+		},
 	}
 }
 
