@@ -44,7 +44,7 @@ const { deleteMode } = useDeleteMode();
     <div
         class="flex items-center px-6 py-4 transition-all ease-out"
         :class="{
-            'cursor-pointer  hover:bg-red-200 hover:text-red-700 ': deleteMode,
+            'cursor-pointer hover:bg-red-200 hover:text-red-700': deleteMode,
             'bg-neutral-200 opacity-50': deleted,
         }"
         @click="deleteMode ? $emit('toggleDelete') : undefined"
@@ -69,11 +69,13 @@ const { deleteMode } = useDeleteMode();
                 </div>
             </div>
         </div>
-        <div class="ml-auto">
+        <div v-if="!deleteMode" class="ml-auto">
             <BccButton
                 v-if="!deleted"
                 context="danger"
+                variant="tertiary"
                 size="sm"
+                :title="$t('transcription.deleteSegment')"
                 @click="$emit('toggleDelete')"
             >
                 <Icon name="heroicons:trash" />
@@ -82,6 +84,7 @@ const { deleteMode } = useDeleteMode();
                 v-else
                 variant="secondary"
                 size="sm"
+                :title="$t('transcription.undeleteSegment')"
                 @click="$emit('toggleDelete')"
             >
                 <Icon name="heroicons:arrow-path" />

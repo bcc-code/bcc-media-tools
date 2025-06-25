@@ -6,5 +6,12 @@
     "album": "Album",
     "track": "Track",
     "next": "Next",
-    "uploaded": "Uploaded"
+    "uploaded": "Uploaded",
+    "transcription": {
+        "reset": "Reset",
+        "changesSavedLocally": "Changes are saved locally",
+        "sendToReview": "Send to review",
+        "deleteSegment": "Delete segment",
+        "undeleteSegment": "Undelete segment"
+    }
 }

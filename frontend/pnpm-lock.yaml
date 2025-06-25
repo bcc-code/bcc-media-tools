@@ -20,6 +20,12 @@ importers:
       '@connectrpc/connect-web':
         specifier: ^1.6.1
         version: 1.6.1(@bufbuild/protobuf@1.10.0)(@connectrpc/connect@1.6.1(@bufbuild/protobuf@1.10.0))
+      '@zag-js/splitter':
+        specifier: ^1.17.0
+        version: 1.17.0
+      '@zag-js/vue':
+        specifier: ^1.17.0
+        version: 1.17.0(vue@3.5.13(typescript@5.7.2))
       dayjs:
         specifier: ^1.11.13
         version: 1.11.13
@@ -1551,6 +1557,32 @@ packages:
 
   '@vueuse/shared@10.11.1':
     resolution: {integrity: sha512-LHpC8711VFZlDaYUXEBbFBCQ7GS3dVU9mjOhhMhXP6txTV4EhYQg/KGnQuvt/sPAtoUKq7VVUnL6mVtFoL42sA==}
+
+  '@zag-js/anatomy@1.17.0':
+    resolution: {integrity: sha512-ADw07oAUg/R88HmLNu6pkNXRA+AyJrozR+Eb8Z+ypUuBuBJ6AbT+C0CFYY+Cgg7nMy1W225Wugv7g+TMlMWgTw==}
+
+  '@zag-js/core@1.17.0':
+    resolution: {integrity: sha512-ry15clwuRDiXPGsxIMl+3XM9KrgkuaLslmpHcZHA6HjQd5wzjdGAuAteJgsbVK1kDMH45JqOVcFMUgxPTnkajw==}
+
+  '@zag-js/dom-query@1.17.0':
+    resolution: {integrity: sha512-lkmbwUAYnebxaygR0gZdNJ8NL8r+cNo5ZHOeFtp12WzAEqJMNtRzQZh3yL2c5kbEN4Aj1WgmYZ6SccoG0beA8g==}
+
+  '@zag-js/splitter@1.17.0':
+    resolution: {integrity: sha512-AzuTFZo9/ZAMvriphVJo1A+ahXv+Qwmwqe6GwXqbluHOHmyYP9P/9m6j4806+/QOks9Ljq5MTDcsUnx5w1KeSQ==}
+
+  '@zag-js/store@1.17.0':
+    resolution: {integrity: sha512-pX/dYJjZ9EKahOwMhCjp63J2LfSKxDxk+qCp0tu5mcVxqG3qpGZVapnPRkK/k/F0SgviChwGAWQuzI5R9fp3Tw==}
+
+  '@zag-js/types@1.17.0':
+    resolution: {integrity: sha512-KwbTmJbO8b+u6ZX5is90wUxx6TIxuYsTLya4ms/ntPD5SguY3XGQ0ufqnqpIX+cpkjwdce8ZkLkNABwPvfxNGg==}
+
+  '@zag-js/utils@1.17.0':
+    resolution: {integrity: sha512-WaJsSNHqrIQ0MECgVAE7Yes8FDRhoa4m4E+t/pu+6DoLb/VMC6Ge4VrqW7ZqWeleUfsWLYLqV44ldCFN70Vo9A==}
+
+  '@zag-js/vue@1.17.0':
+    resolution: {integrity: sha512-PXho2S6os9NkISC/ObFw78Z5uJelUgZEV6kuozmPcfM0P0VvpwdFv6Y/8X6KsvdDFXlVs599zO9JqrR+hoPydw==}
+    peerDependencies:
+      vue: '>=3.0.0'
 
   abbrev@1.1.1:
     resolution: {integrity: sha512-nne9/IiQ/hzIhY6pdDnbBtz7DjPTKrY00P/zvPSm5pOFkl6xuGrGnXn/VtTNNfNtAfZ9/1RtehkszU9qcTii0Q==}
@@ -3456,6 +3488,9 @@ packages:
 
   protocols@2.0.1:
     resolution: {integrity: sha512-/XJ368cyBJ7fzLMwLKv1e4vLxOju2MNAIokcr7meSaNcVbWz/CPcW22cP04mwxOErdA5mwjA8Q6w/cdAQxVn7Q==}
+
+  proxy-compare@3.0.1:
+    resolution: {integrity: sha512-V9plBAt3qjMlS1+nC8771KNf6oJ12gExvaxnNzN/9yVRLdTv/lc+oJlnSzrdYDAvBfTStPCoiaCOTmTs0adv7Q==}
 
   punycode@2.3.1:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
@@ -5994,6 +6029,43 @@ snapshots:
       - '@vue/composition-api'
       - vue
 
+  '@zag-js/anatomy@1.17.0': {}
+
+  '@zag-js/core@1.17.0':
+    dependencies:
+      '@zag-js/dom-query': 1.17.0
+      '@zag-js/utils': 1.17.0
+
+  '@zag-js/dom-query@1.17.0':
+    dependencies:
+      '@zag-js/types': 1.17.0
+
+  '@zag-js/splitter@1.17.0':
+    dependencies:
+      '@zag-js/anatomy': 1.17.0
+      '@zag-js/core': 1.17.0
+      '@zag-js/dom-query': 1.17.0
+      '@zag-js/types': 1.17.0
+      '@zag-js/utils': 1.17.0
+
+  '@zag-js/store@1.17.0':
+    dependencies:
+      proxy-compare: 3.0.1
+
+  '@zag-js/types@1.17.0':
+    dependencies:
+      csstype: 3.1.3
+
+  '@zag-js/utils@1.17.0': {}
+
+  '@zag-js/vue@1.17.0(vue@3.5.13(typescript@5.7.2))':
+    dependencies:
+      '@zag-js/core': 1.17.0
+      '@zag-js/store': 1.17.0
+      '@zag-js/types': 1.17.0
+      '@zag-js/utils': 1.17.0
+      vue: 3.5.13(typescript@5.7.2)
+
   abbrev@1.1.1: {}
 
   abort-controller@3.0.0:
@@ -8010,6 +8082,8 @@ snapshots:
       sisteransi: 1.0.5
 
   protocols@2.0.1: {}
+
+  proxy-compare@3.0.1: {}
 
   punycode@2.3.1:
     optional: true

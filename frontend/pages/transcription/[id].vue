@@ -1,5 +1,7 @@
 <script lang="ts" setup>
 import { BccButton, BccToggle } from "@bcc-code/design-library-vue";
+import { normalizeProps, useMachine } from "@zag-js/vue";
+import * as splitter from "@zag-js/splitter";
 import type { ComponentPublicInstance } from "vue";
 
 const analytics = useAnalytics();
@@ -35,7 +37,7 @@ const segmentelements = ref<{
     [key: number]: Element | ComponentPublicInstance;
 }>({});
 
-const reload = async () => {
+const reset = async () => {
     loading.value = true;
     let result = await api.getTranscription({ VXID: route.params.id });
     setTranscription(result);
@@ -60,7 +62,7 @@ onMounted(async () => {
     if (saved) {
         setTranscription(JSON.parse(saved));
     } else {
-        await reload();
+        await reset();
     }
 });
 
@@ -127,45 +129,101 @@ const seekOnFocus = computed({
         localStorage.seekOnFocus = v ? "true" : "false";
     },
 });
+
+const { deleteMode } = useDeleteMode();
+
+// Splitter
+const splitterService = useMachine(splitter.machine, {
+    id: useId(),
+    defaultSize: [50, 50],
+    panels: [
+        { id: "left", minSize: 25 },
+        { id: "right", minSize: 25 },
+    ],
+});
+
+const splitterApi = computed(() =>
+    splitter.connect(splitterService, normalizeProps),
+);
 </script>
 
 <template>
-    <div class="flex h-screen divide-x-2 divide-neutral-500">
-        <div class="flex w-1/2 flex-col">
-            <div v-if="loading" class="mx-auto animate-ping">Loading...</div>
-            <TranscriptionEditor
-                class="overflow-auto"
-                v-if="transcription && !loading"
-                :transcription="transcription"
-                :file-name="fileName!"
-                v-model="segments"
-                v-model:segmentelements="segmentelements"
-                @word-focus="handleWordFocus"
-            >
-                <template #actions>
-                    <div class="flex flex-grow gap-4">
-                        <TranscriptionDownloader
-                            :segments="segments"
-                            :filename="fileName"
-                        />
-                        <BccButton @click="reload">Reload</BccButton>
-                        <p class="my-auto">Edits are saved locally</p>
-                        <div class="my-auto ml-auto">
-                            <BccToggle
-                                id="seekonfocus"
-                                v-model="seekOnFocus"
-                                was-toggled
-                                label="Seek on focus"
-                            />
-                        </div>
-                    </div>
-                </template>
-            </TranscriptionEditor>
+    <div class="flex h-screen flex-col">
+        <div
+            class="flex items-center justify-between gap-4 border-b bg-primary px-6 py-3 shadow-sm"
+        >
+            <div class="flex gap-3">
+                <p>{{ $t("transcription.changesSavedLocally") }}</p>
+                <button class="-m-3 p-3 text-gray-500 underline" @click="reset">
+                    {{ $t("transcription.reset") }}
+                </button>
+            </div>
+            <div class="flex items-center gap-4">
+                <BccToggle
+                    id="seekonfocus"
+                    v-model="seekOnFocus"
+                    was-toggled
+                    label="Seek on focus"
+                />
+                <BccToggle v-model="deleteMode" label="Delete mode" />
+                <TranscriptionDownloader
+                    :segments="segments"
+                    :filename="fileName"
+                />
+                <BccButton>{{ $t("transcription.sendToReview") }}</BccButton>
+            </div>
         </div>
-        <div class="flex w-1/2">
-            <div class="m-auto">
-                <video ref="videoelement" v-if="video" :src="video" controls />
+        <div v-bind="splitterApi.getRootProps()" class="flex bg-white">
+            <div
+                v-bind="splitterApi.getPanelProps({ id: 'left' })"
+                class="flex flex-col"
+            >
+                <Icon
+                    v-if="loading"
+                    name="svg-spinners:bars-rotate-fade"
+                    class="m-auto text-2xl"
+                />
+                <TranscriptionEditor
+                    class="overflow-auto"
+                    v-if="transcription && !loading"
+                    :transcription="transcription"
+                    :file-name="fileName!"
+                    v-model="segments"
+                    v-model:segmentelements="segmentelements"
+                    @word-focus="handleWordFocus"
+                />
+            </div>
+            <div class="flex h-full items-center border-x px-1">
+                <div
+                    v-bind="
+                        splitterApi.getResizeTriggerProps({ id: 'left:right' })
+                    "
+                />
+            </div>
+            <div
+                v-bind="splitterApi.getPanelProps({ id: 'right' })"
+                class="flex bg-gray-100"
+            >
+                <div class="m-auto">
+                    <Icon
+                        v-if="loading && !video"
+                        name="svg-spinners:bars-rotate-fade"
+                        class="text-2xl"
+                    />
+                    <video
+                        v-if="video"
+                        ref="videoelement"
+                        :src="video"
+                        controls
+                    />
+                </div>
             </div>
         </div>
     </div>
 </template>
+
+<style>
+[data-scope="splitter"][data-part="resize-trigger"] {
+    @apply h-16 w-2 rounded-full bg-gray-300;
+}
+</style>

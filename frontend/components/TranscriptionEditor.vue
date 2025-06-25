@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { BccButton, BccToggle } from "@bcc-code/design-library-vue";
 import type { ComponentPublicInstance } from "vue";
 
 const props = defineProps<{
@@ -43,15 +42,12 @@ const segmentelements = defineModel<{
 </script>
 
 <template>
-    <div class="relative flex flex-col overflow-auto text-xl">
-        <div class="flex items-center gap-4 border-b bg-primary p-4 shadow-sm">
-            <slot name="actions"></slot>
-            <BccToggle
-                v-model="deleteMode"
-                label="Delete mode"
-                class="ml-auto mr-2"
-            />
-        </div>
+    <div
+        :class="[
+            'relative flex flex-col overflow-auto text-xl transition-all',
+            { 'ring-4 ring-inset ring-red-200': deleteMode },
+        ]"
+    >
         <TransitionGroup
             v-if="transcription"
             tag="div"
