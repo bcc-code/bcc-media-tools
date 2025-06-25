@@ -31,5 +31,6 @@ const download = () => {
             <option value="srt-words">SRT (words)</option>
         </BccSelect>
         <BccButton @click="download" variant="tertiary">Download</BccButton>
+
     </div>
 </template>

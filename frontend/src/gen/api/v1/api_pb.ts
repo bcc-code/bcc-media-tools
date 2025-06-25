@@ -1259,3 +1259,46 @@ export class GetBMMTranscriptionRequest extends Message<GetBMMTranscriptionReque
   }
 }
 
+/**
+ * @generated from message api.v1.SubmitTranscriptionRequest
+ */
+export class SubmitTranscriptionRequest extends Message<SubmitTranscriptionRequest> {
+  /**
+   * @generated from field: string VXID = 1;
+   */
+  VXID = "";
+
+  /**
+   * @generated from field: api.v1.Transcription transcription = 2;
+   */
+  transcription?: Transcription;
+
+  constructor(data?: PartialMessage<SubmitTranscriptionRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.SubmitTranscriptionRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "VXID", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "transcription", kind: "message", T: Transcription },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SubmitTranscriptionRequest {
+    return new SubmitTranscriptionRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SubmitTranscriptionRequest {
+    return new SubmitTranscriptionRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SubmitTranscriptionRequest {
+    return new SubmitTranscriptionRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: SubmitTranscriptionRequest | PlainMessage<SubmitTranscriptionRequest> | undefined, b: SubmitTranscriptionRequest | PlainMessage<SubmitTranscriptionRequest> | undefined): boolean {
+    return proto3.util.equals(SubmitTranscriptionRequest, a, b);
+  }
+}
+

@@ -6,16 +6,20 @@ import (
 	"context"
 	"fmt"
 	"github.com/bcc-code/bcc-media-flows/services/cantemo"
+	"github.com/bcc-code/bcc-media-flows/workflows/ingest"
 	"github.com/samber/lo"
+	"go.temporal.io/sdk/client"
 )
 
 type TranscriptionAPI struct {
-	cantemoClient *cantemo.Client
+	cantemoClient  *cantemo.Client
+	temporalClient client.Client
 }
 
-func NewTranscriptionAPI(baseURL, token string) *TranscriptionAPI {
+func NewTranscriptionAPI(baseURL, token string, temporalClient client.Client) *TranscriptionAPI {
 	return &TranscriptionAPI{
-		cantemoClient: cantemo.NewClient(baseURL, token),
+		cantemoClient:  cantemo.NewClient(baseURL, token),
+		temporalClient: temporalClient,
 	}
 }
 
@@ -111,4 +115,84 @@ func (t TranscriptionAPI) GetPreview(ctx context.Context, req *connect.Request[a
 	}
 
 	return connect.NewResponse(&apiv1.Preview{Url: preview}), nil
+}
+
+func (t TranscriptionAPI) SubmitTranscription(ctx context.Context, req *connect.Request[apiv1.SubmitTranscriptionRequest]) (*connect.Response[apiv1.Void], error) {
+	fmt.Printf("Received transcription for VXID %s: %+v\n", req.Msg.GetVXID(), req.Msg.GetTranscription())
+
+	// Trigger flow
+	queue := getQueue()
+	workflowOptions := client.StartWorkflowOptions{
+		TaskQueue: queue,
+	}
+
+	wfRun, err := t.temporalClient.ExecuteWorkflow(ctx, workflowOptions, ingestworkflows.ImportSubtitles, ingestworkflows.ImportSubtitlesInput{
+		VXID:      req.Msg.VXID,
+		Subtitles: mapApiTranscriptionToModel(req.Msg.Transcription),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	err = wfRun.Get(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return connect.NewResponse(&apiv1.Void{}), nil
+}
+
+// mapApiTranscriptionToModel maps apiv1.Transcription (protobuf) to ingestworkflows.Transcription (model)
+func mapApiTranscriptionToModel(api *apiv1.Transcription) ingestworkflows.Transcription {
+	if api == nil {
+		return ingestworkflows.Transcription{}
+	}
+	segments := make([]ingestworkflows.Segment, len(api.Segments))
+	for i, s := range api.Segments {
+		segments[i] = ingestworkflows.Segment{
+			Start:            s.Start,
+			End:              s.End,
+			Text:             s.Text,
+			ID:               int(s.Id),
+			Seek:             int(s.Seek),
+			Tokens:           toIntSlice(s.Tokens),
+			Temperature:      s.Temperature,
+			AvgLogprob:       s.AvgLogprob,
+			CompressionRatio: s.CompressionRatio,
+			NoSpeechProb:     s.NoSpeechProb,
+			Confidence:       s.Confidence,
+			Words:            mapApiWordsToModel(s.Words),
+		}
+	}
+	return ingestworkflows.Transcription{
+		Text:     api.Text,
+		Segments: segments,
+	}
+}
+
+func mapApiWordsToModel(words []*apiv1.Words) []ingestworkflows.Word {
+	if words == nil {
+		return nil
+	}
+	result := make([]ingestworkflows.Word, len(words))
+	for i, w := range words {
+		result[i] = ingestworkflows.Word{
+			Start:      w.Start,
+			End:        w.End,
+			Text:       w.Text,
+			Confidence: w.Confidence,
+		}
+	}
+	return result
+}
+
+func toIntSlice(tokens []int32) []int {
+	if tokens == nil {
+		return nil
+	}
+	result := make([]int, len(tokens))
+	for i, t := range tokens {
+		result[i] = int(t)
+	}
+	return result
 }

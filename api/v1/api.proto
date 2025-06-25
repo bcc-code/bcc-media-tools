@@ -158,6 +158,11 @@ message GetBMMTranscriptionRequest {
   BmmEnvironment environment = 3;
 }
 
+message SubmitTranscriptionRequest {
+  string VXID = 1;
+  Transcription transcription = 2;
+}
+
 service APIService {
 	// Permissions
 	rpc GetPermissions (Void) returns (Permissions) {}
@@ -168,6 +173,7 @@ service APIService {
   // Transcriptions
   rpc GetTranscription(GetTranscriptionReqest) returns (Transcription) {}
   rpc GetPreview(GetPreviewRequest) returns (Preview) {}
+  rpc SubmitTranscription(SubmitTranscriptionRequest) returns (Void) {}
 
 	// BMM
 	rpc GetYears(GetYearsRequest) returns (GetYearsResponse) {}
@@ -176,5 +182,4 @@ service APIService {
 	rpc GetPodcastTracks(GetPodcastTracksRequest) returns (TracksList) {}
   rpc GetLanguages(GetAvailableLanguagesRequest) returns (LanguageList) {}
   rpc GetBMMTranscription(GetBMMTranscriptionRequest) returns (Transcription) {}
-
 }
