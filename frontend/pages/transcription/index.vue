@@ -104,7 +104,7 @@ const truncatedFileName = computed(() => {
                                 @input="handleFile"
                             />
                         </div>
-                        <template v-if="!fileName && me?.transcription && (me.transcription.admin || me.transcription.mediabanken)">
+                        <template v-if="!fileName && me?.transcription && me.transcription.admin">
                             <span class="text-sm text-tertiary">or</span>
                             <div
                                 class="flex gap-1 rounded-xl bg-neutral-100 p-2"
