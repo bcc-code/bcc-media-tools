@@ -25,6 +25,7 @@ export class Analytics {
         title: string;
         meta?: {
             setting?: "webSettings";
+            [key: string]: string | undefined;
         };
     }) {
         if (!this.initialized) {

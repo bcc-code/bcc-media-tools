@@ -1,7 +1,7 @@
 type StringWithAutocomplete<T> = T | (string & {});
 
 export type Page = StringWithAutocomplete<
-    "upload_index" | "upload_continue" | "upload_success" | "transcription"
+    "upload_index" | "upload_continue" | "upload_success" | "upload_redirect" | "transcription"
 >;
 
 type ElementType = "UPLOAD";

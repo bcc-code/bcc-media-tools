@@ -1,5 +1,10 @@
 <script lang="ts" setup>
-import { BccAlert, BccButton, BccTable } from "@bcc-code/design-library-vue";
+import {
+    BccAlert,
+    BccButton,
+    BccTable,
+    BccCheckbox,
+} from "@bcc-code/design-library-vue";
 import { BmmEnvironment } from "~/src/gen/api/v1/api_pb";
 import type { BMMSingleForm, FileAndLanguage } from "~/utils/bmm";
 import { usePermissionsLoading } from "~/utils/me";
@@ -61,7 +66,6 @@ const reset = () => {
     };
 };
 
-
 const formatter = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Oslo" });
 const dateString = (date: Date) => {
     return formatter.format(date);
@@ -85,7 +89,7 @@ const dateString = (date: Date) => {
                         v-model="form"
                         :permissions="me.bmm"
                         :environment="selectedEnvironment"
-                        @set="(metadataIsSet = true)"
+                        @set="metadataIsSet = true"
                     />
                     <div
                         v-if="metadataIsSet && form.track"
@@ -93,7 +97,11 @@ const dateString = (date: Date) => {
                     >
                         <header>
                             <h1 class="text-heading-xl">
-                                Upload files for "{{ form.track.title }}" ({{ dateString(form.track.publishedAt.toDate()) }})
+                                Upload files for "{{ form.track.title }}" ({{
+                                    dateString(
+                                        form.track.publishedAt!.toDate(),
+                                    )
+                                }})
                             </h1>
                             <p class="text-heading-md">
                                 Existing languages:
@@ -106,10 +114,10 @@ const dateString = (date: Date) => {
                                 />
                             </p>
                         </header>
-                        <div>
-                            <input type="checkbox" id="forceOverride" v-model="forceOverride" />
-                            <label for="forceOverride">Replace transcription even if has been manually corrected</label>
-                        </div>
+                        <BccCheckbox
+                            v-model="forceOverride"
+                            label="Replace transcription even if has been manually corrected"
+                        />
                         <BccTable
                             :items="selectedFiles"
                             :columns="[
@@ -172,11 +180,11 @@ const dateString = (date: Date) => {
                             :endpoint="config.public.grpcUrl + '/upload'"
                             :metadata="metadata"
                             :forceOverride="forceOverride"
-                            @uploaded="(uploaded = true)"
+                            @uploaded="uploaded = true"
                         />
                         <BccButton
                             variant="secondary"
-                            @click="(metadataIsSet = false)"
+                            @click="metadataIsSet = false"
                         >
                             Back
                         </BccButton>
