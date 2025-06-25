@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { BccModal } from "@bcc-code/design-library-vue";
+import { BccButton, BccModal } from "@bcc-code/design-library-vue";
 
 const open = defineModel<boolean>("open", { required: true });
 
@@ -11,7 +11,7 @@ const keyboardShortcuts = {
 </script>
 
 <template>
-    <BccModal :open="open" @close="(open = false)">
+    <BccModal :open="open" @close="(open = false)" :close-button="false">
         <dl
             class="grid gap-x-4 gap-y-2 py-4"
             style="grid-template-columns: max-content"

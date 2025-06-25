@@ -6,8 +6,9 @@ const props = defineProps<{
     transcription?: TranscriptionResult;
 }>();
 
-defineEmits<{
+const emit = defineEmits<{
     wordFocus: [Word];
+    updateSegments: [Segment[]];
 }>();
 
 const segments = defineModel<Segment[]>({ required: true });
@@ -38,7 +39,7 @@ const { deleteMode } = useDeleteMode();
 
 const segmentelements = defineModel<{
     [key: number]: ComponentPublicInstance;
-}>("segmentelements");
+}>("segmentelements", { default: {} });
 
 function focusSegment(index: number, direction: number) {
     const next = segmentelements.value?.[index + direction];
@@ -47,6 +48,37 @@ function focusSegment(index: number, direction: number) {
         "[contenteditable]",
     ) as HTMLSpanElement;
     child.focus();
+}
+
+function addNewSegmentAt(index: number) {
+    const arr = [...(segments.value.map((s) => ({ ...s })) || [])];
+    const prev = arr.at(index - 1);
+    const next = arr.at(index);
+    if (!prev || !next) return;
+
+    arr.splice(index, 0, {
+        id: Math.random() * 100,
+        seek: 0,
+        start: prev.end,
+        end: next.start,
+        text: "",
+        tokens: [],
+        temperature: 0,
+        avg_logprob: 0,
+        compression_ration: 0,
+        no_speech_prob: 0,
+        confidence: 0,
+        words: [
+            {
+                text: "...",
+                start: 0,
+                end: 0,
+                confidence: 0,
+            },
+        ],
+    });
+
+    emit("updateSegments", arr);
 }
 </script>
 
@@ -69,25 +101,37 @@ function focusSegment(index: number, direction: number) {
             leave-to-class="opacity-0 scale-95"
             move-class="transition duration-300 ease-out"
         >
-            <TranscriptionSegmentEditor
-                v-for="(s, index) in transcription.segments"
-                :key="s.id"
-                :ref="
-                    (el) => {
-                        if (el && segmentelements) {
-                            segmentelements[index] =
-                                el as ComponentPublicInstance;
+            <template v-for="(s, index) in transcription.segments" :key="s.id">
+                <TranscriptionSegmentEditor
+                    :ref="
+                        (el) => {
+                            if (el && segmentelements) {
+                                segmentelements[index] =
+                                    el as ComponentPublicInstance;
+                            }
                         }
-                    }
-                "
-                :segment="s"
-                :deleted="deletedIndexes.includes(index.toString())"
-                @word-focus="$emit('wordFocus', $event)"
-                @update="handleSegmentUpdate(index, $event)"
-                @toggle-delete="handleSegmentToggleDelete(index)"
-                @focus-previous="focusSegment(index, -1)"
-                @focus-next="focusSegment(index, 1)"
-            />
+                    "
+                    :segment="s"
+                    :deleted="deletedIndexes.includes(index.toString())"
+                    @word-focus="$emit('wordFocus', $event)"
+                    @update="handleSegmentUpdate(index, $event)"
+                    @toggle-delete="handleSegmentToggleDelete(index)"
+                    @focus-previous="focusSegment(index, -1)"
+                    @focus-next="focusSegment(index, 1)"
+                />
+                <div
+                    v-if="segments[index + 1]?.start >= segments[index].end + 1"
+                    class="relative w-full"
+                >
+                    <button
+                        class="absolute right-1/2 z-10 grid aspect-square size-6 -translate-y-1/2 place-items-center rounded-full bg-gray-200 p-0.5 text-sm hover:bg-gray-300"
+                        :title="$t('transcription.addSegment')"
+                        @click="addNewSegmentAt(index + 1)"
+                    >
+                        <Icon name="heroicons:plus-16-solid" />
+                    </button>
+                </div>
+            </template>
         </TransitionGroup>
     </div>
 </template>

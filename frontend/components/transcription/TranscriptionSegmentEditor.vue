@@ -12,6 +12,8 @@ const emit = defineEmits<{
     toggleDelete: [];
     focusNext: [];
     focusPrevious: [];
+    addBefore: [];
+    addAfter: [];
 }>();
 
 const words = ref(props.segment.words.map((w) => ({ ...w })));
@@ -38,6 +40,20 @@ const secondsToTimestamp = (seconds: number) => {
     return `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}:${second.toString().padStart(2, "0")}`;
 };
 
+function addWordAt(index: number) {
+    const arr = [...words.value];
+    arr.splice(index, 0, {
+        text: "",
+        start: 0,
+        end: 0,
+        confidence: 0,
+    });
+    console.log(arr);
+    words.value = arr;
+}
+
+const hovering = ref(false);
+
 const { deleteMode } = useDeleteMode();
 </script>
 
@@ -48,28 +64,43 @@ const { deleteMode } = useDeleteMode();
             'cursor-pointer hover:bg-red-200 hover:text-red-700': deleteMode,
             'bg-neutral-200 opacity-50': deleted,
         }"
+        :tabindex="deleteMode ? 0 : -1"
         @click="deleteMode ? $emit('toggleDelete') : undefined"
+        @keydown.enter="deleteMode ? $emit('toggleDelete') : undefined"
+        @keydown.space="deleteMode ? $emit('toggleDelete') : undefined"
+        @mouseenter="(hovering = true)"
+        @mouseleave="(hovering = false)"
     >
-        <div>
+        <div class="grow">
             <div class="flex gap-2 text-sm opacity-50">
                 <p>{{ secondsToTimestamp(segment.start) }}</p>
                 -
                 <p>{{ secondsToTimestamp(segment.end) }}</p>
             </div>
             <div :class="{ 'pointer-events-none': deleteMode }">
-                <div class="flex flex-wrap">
+                <TransitionGroup
+                    tag="div"
+                    class="relative flex flex-wrap items-center"
+                    leave-active-class="transition duration-200 ease-out absolute"
+                    leave-to-class="opacity-0 scale-0 rotate-180"
+                    enter-active-class="transition duration-200 ease-out"
+                    enter-from-class="opacity-0 scale-0 rotate-180"
+                    move-class="transition duration-200 ease-out"
+                >
                     <span
-                        contenteditable
                         v-for="(w, index) in segment.words"
+                        :key="`${w.start}-${w.end}`"
+                        contenteditable
+                        :tabindex="deleteMode ? -1 : 0"
+                        class="rounded-md border border-transparent px-2 leading-tight focus:border-gray-900 focus:bg-gray-100 focus:outline-none"
                         @input="handleTextUpdate(index, $event)"
-                        class="-mx-1 rounded-md border border-transparent px-2 focus:border-gray-900 focus:bg-gray-100 focus:outline-none"
                         @focus="$emit('wordFocus', w)"
                         @keydown.down="$emit('focusNext')"
                         @keydown.up="$emit('focusPrevious')"
                     >
                         {{ w.text }}
                     </span>
-                </div>
+                </TransitionGroup>
             </div>
         </div>
         <div v-if="!deleteMode" class="ml-auto">

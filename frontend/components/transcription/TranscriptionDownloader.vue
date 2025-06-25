@@ -1,6 +1,4 @@
 <script lang="ts" setup>
-import { BccButton, BccSelect } from "@bcc-code/design-library-vue";
-
 const props = defineProps<{
     segments: Segment[];
     filename: string;
@@ -8,6 +6,7 @@ const props = defineProps<{
 
 const format = ref<"json" | "srt" | "srt-words">("json");
 
+const { $toast } = useNuxtApp();
 const download = () => {
     switch (format.value) {
         case "json":
@@ -20,6 +19,8 @@ const download = () => {
             downloadTranscriptionSRT(props.segments, props.filename, false);
             break;
     }
+
+    $toast.success("Transcript downloaded successfully");
 };
 
 const widths = {

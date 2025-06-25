@@ -10,11 +10,12 @@
     "transcription": {
         "reset": "Reset",
         "changesSavedLocally": "Changes are saved locally",
-        "sendToReview": "Send to review",
+        "save": "Save changes",
         "deleteSegment": "Delete segment",
         "undeleteSegment": "Undelete segment",
         "goToNextSegment": "Go to next segment",
         "goToPreviousSegment": "Go to previous segment",
-        "goToNextWord": "Go to next word in segment"
+        "goToNextWord": "Go to next word in segment",
+        "addSegment": "Add segment"
     }
 }

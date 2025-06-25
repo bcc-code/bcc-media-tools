@@ -37,20 +37,25 @@ const segmentelements = ref<{
     [key: number]: ComponentPublicInstance;
 }>({});
 
+const { $toast } = useNuxtApp();
 const reset = async () => {
     loading.value = true;
     let result = await api.getTranscription({ VXID: route.params.id });
     setTranscription(result);
     localStorage[key] = JSON.stringify(result);
+    $toast.success("Transcription reset successfully");
     return result;
 };
 
 const setTranscription = (result: any) => {
     transcription.value = result;
-    console.log(transcription.value);
-    console.log(segments.value);
     segments.value = transcription.value?.segments!;
     loading.value = false;
+};
+
+const save = () => {
+    // TODO: implement saving
+    $toast.success("Transcription saved successfully");
 };
 
 onMounted(async () => {
@@ -127,6 +132,12 @@ const { deleteMode } = useDeleteMode();
 
 const showManual = ref(false);
 
+function setSegments(s: Segment[]) {
+    segments.value = s;
+    if (!transcription.value) return;
+    transcription.value.segments = s;
+}
+
 // Splitter
 const storedSplitterSize = useLocalStorage("splitterSize", [50, 50]);
 const splitterService = useMachine(splitter.machine, {
@@ -169,10 +180,12 @@ const splitterApi = computed(() =>
                     :segments="segments"
                     :filename="fileName"
                 />
-                <BccButton>{{ $t("transcription.sendToReview") }}</BccButton>
+                <BccButton @click="save">
+                    {{ $t("transcription.save") }}
+                </BccButton>
                 <button
                     class="-mx-3 aspect-square p-3"
-                    @click="() => (showManual = true)"
+                    @click="(showManual = true)"
                 >
                     <Icon
                         name="heroicons:question-mark-circle"
@@ -199,6 +212,7 @@ const splitterApi = computed(() =>
                     v-model="segments"
                     v-model:segmentelements="segmentelements"
                     @word-focus="handleWordFocus"
+                    @update-segments="(s) => setSegments(s)"
                 />
             </div>
             <div class="flex h-full items-center border-x px-1">
@@ -223,6 +237,7 @@ const splitterApi = computed(() =>
                         ref="videoelement"
                         :src="video"
                         controls
+                        class="bg-gray-200 shadow-xl"
                     />
                 </div>
             </div>
