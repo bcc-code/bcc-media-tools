@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { BccButton, BccInput } from "@bcc-code/design-library-vue";
+import { useMe } from "~/utils/me";
 
 useHead({
     title: "Transcription",
@@ -54,6 +55,8 @@ const vxId = ref("");
 
 const { deleteMode } = useDeleteMode();
 
+const { me, loading } = useMe();
+
 const truncatedFileName = computed(() => {
     if (!fileName.value) return;
     if (fileName.value.length < 30) return fileName.value;
@@ -101,7 +104,7 @@ const truncatedFileName = computed(() => {
                                 @input="handleFile"
                             />
                         </div>
-                        <template v-if="!fileName">
+                        <template v-if="!fileName && me?.transcription && me.transcription.admin">
                             <span class="text-sm text-tertiary">or</span>
                             <div
                                 class="flex gap-1 rounded-xl bg-neutral-100 p-2"

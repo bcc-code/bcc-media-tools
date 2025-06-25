@@ -20,6 +20,7 @@ const route = useRoute("transcription-id");
 const key = "ts-" + route.params.id;
 
 const loading = ref(true);
+const error = ref<string | null>(null);
 
 const transcription = ref<TranscriptionResult>();
 
@@ -35,12 +36,30 @@ const segmentelements = ref<{
     [key: number]: Element | ComponentPublicInstance;
 }>({});
 
+function formatErrorMessage(msg: string | null): string | null {
+    if (!msg) return null;
+    // Remove [unknown] or similar prefix
+    msg = msg.replace(/^\[.*?\]\s*/, "");
+    // Capitalize first letter
+    msg = msg.charAt(0).toUpperCase() + msg.slice(1);
+    return msg;
+}
+
 const reload = async () => {
     loading.value = true;
-    let result = await api.getTranscription({ VXID: route.params.id });
-    setTranscription(result);
-    localStorage[key] = JSON.stringify(result);
-    return result;
+    error.value = null;
+    try {
+        let result = await api.getTranscription({ VXID: route.params.id });
+        setTranscription(result);
+        localStorage[key] = JSON.stringify(result);
+        return result;
+    } catch (e: any) {
+        error.value = e?.message || e?.toString() || "Unknown error";
+        loading.value = false;
+        transcription.value = undefined;
+        segments.value = [];
+        return null;
+    }
 };
 
 const setTranscription = (result: any) => {
@@ -53,8 +72,14 @@ const setTranscription = (result: any) => {
 
 onMounted(async () => {
     const saved = localStorage[key];
-
-    video.value = (await api.getPreview({ VXID: route.params.id })).url;
+    error.value = null;
+    try {
+        video.value = (await api.getPreview({ VXID: route.params.id })).url;
+    } catch (e: any) {
+        error.value = e?.message || e?.toString() || "Unknown error";
+        loading.value = false;
+        return;
+    }
     fileName.value = key;
 
     if (saved) {
@@ -133,6 +158,7 @@ const seekOnFocus = computed({
     <div class="flex h-screen divide-x-2 divide-neutral-500">
         <div class="flex w-1/2 flex-col">
             <div v-if="loading" class="mx-auto animate-ping">Loading...</div>
+            <div v-if="error && !loading" class="mx-auto text-red-600 text-lg">{{ formatErrorMessage(error) }}</div>
             <TranscriptionEditor
                 class="overflow-auto"
                 v-if="transcription && !loading"

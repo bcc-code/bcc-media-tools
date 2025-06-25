@@ -4,6 +4,7 @@ import (
 	apiv1 "bcc-media-tools/api/v1"
 	"connectrpc.com/connect"
 	"context"
+	"fmt"
 	"github.com/bcc-code/bcc-media-flows/services/cantemo"
 	"github.com/samber/lo"
 )
@@ -18,7 +19,17 @@ func NewTranscriptionAPI(baseURL, token string) *TranscriptionAPI {
 	}
 }
 
-func (t TranscriptionAPI) GetTranscription(_ context.Context, req *connect.Request[apiv1.GetTranscriptionReqest]) (*connect.Response[apiv1.Transcription], error) {
+func (t TranscriptionAPI) GetTranscription(ctx context.Context, req *connect.Request[apiv1.GetTranscriptionReqest]) (*connect.Response[apiv1.Transcription], error) {
+	email := getEmail(req)
+	if email == "" {
+		return nil, connect.NewError(401, fmt.Errorf("missing email header"))
+	}
+
+	perms := PermissionsForEmail(email)
+	if perms.Transcription == nil || (!perms.Transcription.Admin && !perms.Transcription.Mediabanken) {
+		return nil, connect.NewError(403, fmt.Errorf("Not enough permissions for transcription."))
+	}
+
 	transcription, err := t.cantemoClient.GetTranscriptionJSON(req.Msg.VXID)
 
 	if err != nil {
@@ -59,7 +70,45 @@ func (t TranscriptionAPI) GetTranscription(_ context.Context, req *connect.Reque
 	return connect.NewResponse(&tr), nil
 }
 
-func (t TranscriptionAPI) GetPreview(_ context.Context, req *connect.Request[apiv1.GetPreviewRequest]) (*connect.Response[apiv1.Preview], error) {
-	url, err := t.cantemoClient.GetPreviewUrl(req.Msg.VXID)
-	return connect.NewResponse(&apiv1.Preview{Url: url}), err
+func (t TranscriptionAPI) GetPreview(ctx context.Context, req *connect.Request[apiv1.GetPreviewRequest]) (*connect.Response[apiv1.Preview], error) {
+	email := getEmail(req)
+	if email == "" {
+		return nil, connect.NewError(401, fmt.Errorf("missing email header"))
+	}
+
+	perms := PermissionsForEmail(email)
+	if perms.Transcription == nil || (!perms.Transcription.Admin && !perms.Transcription.Mediabanken) {
+		return nil, connect.NewError(403, fmt.Errorf("Not enough permissions for preview."))
+	}
+
+	// Check if any ACL entry is inherited from the requested VXID
+	accessAllowed := perms.Transcription.Admin
+
+	if perms.Transcription.Mediabanken {
+		m, err := t.cantemoClient.GetACL(req.Msg.VXID)
+		if err != nil {
+			return nil, err
+		}
+
+		if m != nil {
+			for _, acl := range m.ACLs {
+				if acl.InheritedFrom != nil && acl.InheritedFrom.ID == "VX-2677" {
+					// VX-2677 == "collection_name": "_AccessibleByTools"
+					accessAllowed = true
+					break
+				}
+			}
+		}
+	}
+
+	if !accessAllowed {
+		return nil, connect.NewError(403, fmt.Errorf("Not enough permissions for preview."))
+	}
+
+	preview, err := t.cantemoClient.GetPreviewUrl(req.Msg.VXID)
+	if err != nil {
+		return nil, err
+	}
+
+	return connect.NewResponse(&apiv1.Preview{Url: preview}), nil
 }
