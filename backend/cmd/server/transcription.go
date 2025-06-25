@@ -129,6 +129,7 @@ func (t TranscriptionAPI) SubmitTranscription(ctx context.Context, req *connect.
 	wfRun, err := t.temporalClient.ExecuteWorkflow(ctx, workflowOptions, ingestworkflows.ImportSubtitles, ingestworkflows.ImportSubtitlesInput{
 		VXID:      req.Msg.VXID,
 		Subtitles: mapApiTranscriptionToModel(req.Msg.Transcription),
+		Language:  "no", // Hardcoded to norwegian for now
 	})
 	if err != nil {
 		return nil, err
