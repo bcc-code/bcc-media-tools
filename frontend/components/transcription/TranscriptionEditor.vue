@@ -37,8 +37,17 @@ const handleSegmentUpdate = (index: number, segment: Segment) => {
 const { deleteMode } = useDeleteMode();
 
 const segmentelements = defineModel<{
-    [key: number]: Element | ComponentPublicInstance;
+    [key: number]: ComponentPublicInstance;
 }>("segmentelements");
+
+function focusSegment(index: number, direction: number) {
+    const next = segmentelements.value?.[index + direction];
+    if (!next) return;
+    const child = next.$el.querySelector(
+        "[contenteditable]",
+    ) as HTMLSpanElement;
+    child.focus();
+}
 </script>
 
 <template>
@@ -60,13 +69,14 @@ const segmentelements = defineModel<{
             leave-to-class="opacity-0 scale-95"
             move-class="transition duration-300 ease-out"
         >
-            <SegmentEditor
+            <TranscriptionSegmentEditor
                 v-for="(s, index) in transcription.segments"
                 :key="s.id"
                 :ref="
                     (el) => {
                         if (el && segmentelements) {
-                            segmentelements[index] = el;
+                            segmentelements[index] =
+                                el as ComponentPublicInstance;
                         }
                     }
                 "
@@ -75,6 +85,8 @@ const segmentelements = defineModel<{
                 @word-focus="$emit('wordFocus', $event)"
                 @update="handleSegmentUpdate(index, $event)"
                 @toggle-delete="handleSegmentToggleDelete(index)"
+                @focus-previous="focusSegment(index, -1)"
+                @focus-next="focusSegment(index, 1)"
             />
         </TransitionGroup>
     </div>

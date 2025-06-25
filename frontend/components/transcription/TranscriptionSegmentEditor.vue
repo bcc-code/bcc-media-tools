@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import { BccButton } from "@bcc-code/design-library-vue";
-import TrashIcon from "./TrashIcon.vue";
 
 const props = defineProps<{
     segment: Segment;
@@ -11,6 +10,8 @@ const emit = defineEmits<{
     update: [Segment];
     wordFocus: [Word];
     toggleDelete: [];
+    focusNext: [];
+    focusPrevious: [];
 }>();
 
 const words = ref(props.segment.words.map((w) => ({ ...w })));
@@ -61,8 +62,10 @@ const { deleteMode } = useDeleteMode();
                         contenteditable
                         v-for="(w, index) in segment.words"
                         @input="handleTextUpdate(index, $event)"
-                        class="rounded-md border border-transparent px-1 focus:border-neutral-500 focus:bg-neutral-200 focus:outline-none"
+                        class="-mx-1 rounded-md border border-transparent px-2 focus:border-gray-900 focus:bg-gray-100 focus:outline-none"
                         @focus="$emit('wordFocus', w)"
+                        @keydown.down="$emit('focusNext')"
+                        @keydown.up="$emit('focusPrevious')"
                     >
                         {{ w.text }}
                     </span>

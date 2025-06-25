@@ -34,7 +34,7 @@ const video = ref<string>();
 const videoelement = ref<HTMLVideoElement>();
 
 const segmentelements = ref<{
-    [key: number]: Element | ComponentPublicInstance;
+    [key: number]: ComponentPublicInstance;
 }>({});
 
 const reset = async () => {
@@ -125,6 +125,8 @@ const seekOnFocus = useLocalStorage("seekOnFocus", true);
 
 const { deleteMode } = useDeleteMode();
 
+const showManual = ref(false);
+
 // Splitter
 const storedSplitterSize = useLocalStorage("splitterSize", [50, 50]);
 const splitterService = useMachine(splitter.machine, {
@@ -147,7 +149,7 @@ const splitterApi = computed(() =>
 <template>
     <div class="flex h-screen flex-col">
         <div
-            class="flex items-center justify-between gap-4 border-b bg-primary px-6 py-3 shadow-sm"
+            class="flex items-center justify-between gap-4 border-b border-gray-400 bg-primary px-6 py-3"
         >
             <div class="flex gap-3">
                 <p>{{ $t("transcription.changesSavedLocally") }}</p>
@@ -168,6 +170,15 @@ const splitterApi = computed(() =>
                     :filename="fileName"
                 />
                 <BccButton>{{ $t("transcription.sendToReview") }}</BccButton>
+                <button
+                    class="-mx-3 aspect-square p-3"
+                    @click="() => (showManual = true)"
+                >
+                    <Icon
+                        name="heroicons:question-mark-circle"
+                        class="text-xl"
+                    />
+                </button>
             </div>
         </div>
         <div v-bind="splitterApi.getRootProps()" class="flex bg-white">
@@ -216,6 +227,7 @@ const splitterApi = computed(() =>
                 </div>
             </div>
         </div>
+        <TranscriptionManual v-model:open="showManual" />
     </div>
 </template>
 

@@ -12,6 +12,9 @@
         "changesSavedLocally": "Changes are saved locally",
         "sendToReview": "Send to review",
         "deleteSegment": "Delete segment",
-        "undeleteSegment": "Undelete segment"
+        "undeleteSegment": "Undelete segment",
+        "goToNextSegment": "Go to next segment",
+        "goToPreviousSegment": "Go to previous segment",
+        "goToNextWord": "Go to next word in segment"
     }
 }
