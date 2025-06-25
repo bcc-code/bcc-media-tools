@@ -121,25 +121,22 @@ watch(segments, () => {
     });
 });
 
-const seekOnFocus = computed({
-    get() {
-        return (localStorage.seekOnFocus ?? "true") === "true";
-    },
-    set(v) {
-        localStorage.seekOnFocus = v ? "true" : "false";
-    },
-});
+const seekOnFocus = useLocalStorage("seekOnFocus", true);
 
 const { deleteMode } = useDeleteMode();
 
 // Splitter
+const storedSplitterSize = useLocalStorage("splitterSize", [50, 50]);
 const splitterService = useMachine(splitter.machine, {
     id: useId(),
-    defaultSize: [50, 50],
+    defaultSize: storedSplitterSize.value,
     panels: [
         { id: "left", minSize: 25 },
         { id: "right", minSize: 25 },
     ],
+    onResizeEnd({ size }) {
+        storedSplitterSize.value = size;
+    },
 });
 
 const splitterApi = computed(() =>

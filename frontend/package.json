@@ -28,6 +28,8 @@
         "@bufbuild/protobuf": "^1.10.0",
         "@connectrpc/connect": "^1.6.1",
         "@connectrpc/connect-web": "^1.6.1",
+        "@vueuse/core": "^13.4.0",
+        "@vueuse/nuxt": "^13.4.0",
         "@zag-js/splitter": "^1.17.0",
         "@zag-js/vue": "^1.17.0",
         "dayjs": "^1.11.13",

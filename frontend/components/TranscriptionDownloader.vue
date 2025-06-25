@@ -21,15 +21,32 @@ const download = () => {
             break;
     }
 };
+
+const widths = {
+    json: "5.5rem",
+    "srt-words": "20rem",
+    srt: "5rem",
+};
 </script>
 
 <template>
-    <div class="flex items-center gap-1 rounded-xl bg-gray-100 p-1">
-        <BccSelect v-model="format">
+    <div
+        class="flex divide-x divide-gray-300 rounded-lg border border-gray-300 shadow-sm"
+    >
+        <button
+            class="flex-1 rounded-l-lg bg-white px-4 py-2"
+            @click="download"
+        >
+            Download
+        </button>
+        <select
+            v-model="format"
+            class="flex-1 rounded-r-lg bg-white px-4 py-2 text-gray-400 transition-all duration-200 ease-out"
+            :style="{ maxWidth: widths[format] }"
+        >
             <option value="json">JSON</option>
             <option value="srt">SRT</option>
             <option value="srt-words">SRT (words)</option>
-        </BccSelect>
-        <BccButton @click="download" variant="secondary"> Download </BccButton>
+        </select>
     </div>
 </template>
