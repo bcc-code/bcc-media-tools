@@ -10,7 +10,7 @@
     "transcription": {
         "reset": "Reset",
         "changesSavedLocally": "Changes are saved locally",
-        "save": "Save changes",
+        "save": "Submit to Mediabanken",
         "deleteSegment": "Delete segment",
         "undeleteSegment": "Undelete segment",
         "goToNextSegment": "Go to next segment",

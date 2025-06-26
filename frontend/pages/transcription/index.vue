@@ -70,7 +70,7 @@ const truncatedFileName = computed(() => {
 <template>
     <div
         :class="[
-            'flex h-screen',
+            'mx-auto flex h-screen max-w-7xl p-8',
             {
                 'border-8 border-red-700': deleteMode,
             },
@@ -103,27 +103,26 @@ const truncatedFileName = computed(() => {
                     "
                 >
                     <span class="text-sm text-tertiary">or</span>
-                    <div class="flex gap-1 rounded-xl bg-neutral-100 p-2">
+                    <form
+                        class="flex gap-1 rounded-xl bg-neutral-100 p-2"
+                        @submit.prevent="navigateTo(`/transcription/${vxId}`)"
+                    >
                         <BccInput
                             v-model="vxId"
                             placeholder="Vidispine-ID"
                             class="min-w-32"
                         />
-                        <BccButton
-                            @click="navigateTo(`/transcription/${vxId}`)"
-                            variant="tertiary"
-                        >
+                        <BccButton variant="tertiary" type="submit">
                             Go
                         </BccButton>
-                    </div>
+                    </form>
                 </template>
-            </div>
-            <template v-if="fileName" class="flex gap-4">
                 <TranscriptionDownloader
+                    v-if="fileName"
                     :segments="segments"
                     :filename="fileName"
                 />
-            </template>
+            </div>
             <TranscriptionEditor
                 :key="tKey"
                 :transcription="transcription"

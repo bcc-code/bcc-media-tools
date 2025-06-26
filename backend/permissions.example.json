@@ -2,16 +2,13 @@
   "user@example.com": {
     "admin": true,
     "bmm": {
-      "languages": [
-        "de",
-        "nl",
-        "en",
-        "fr"
-      ],
-      "albums": [
-        "fra-kaare"
-      ],
+      "languages": ["de", "nl", "en", "fr"],
+      "albums": ["fra-kaare"],
       "admin": true
+    },
+    "transcription": {
+      "admin": true,
+      "mediabanken": true
     }
   }
 }

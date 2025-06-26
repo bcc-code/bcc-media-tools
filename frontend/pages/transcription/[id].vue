@@ -253,7 +253,7 @@ const splitterApi = computed(() =>
                     {{ formatErrorMessage(error) }}
                 </div>
                 <TranscriptionEditor
-                    class="overflow-auto"
+                    class="ml-auto w-full max-w-7xl overflow-auto"
                     v-if="transcription && !loading"
                     :transcription="transcription"
                     :file-name="fileName!"
