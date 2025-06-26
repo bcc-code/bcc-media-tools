@@ -107,7 +107,7 @@ func main() {
 
 	permissionsApi := PermissionsAPI{}
 	bmmApi := NewBMMApi(os.Getenv("BMM_BASE_URL"), bmmToken)
-	transcriptionAPI := NewTranscriptionAPI(os.Getenv("CANTEMO_URL"), os.Getenv("CANTEMO_TOKEN"))
+	transcriptionAPI := NewTranscriptionAPI(os.Getenv("CANTEMO_URL"), os.Getenv("CANTEMO_TOKEN"), temporalClient)
 
 	api := &ApiServer{
 		PermissionsAPI:   permissionsApi,
