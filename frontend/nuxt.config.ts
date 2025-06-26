@@ -43,6 +43,9 @@ export default defineNuxtConfig({
             },
         },
     },
+    i18n: {
+        restructureDir: false
+    },
     devServer: {
         port: 8001,
         host: "localhost",
