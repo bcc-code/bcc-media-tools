@@ -50,6 +50,9 @@ const (
 	APIServiceGetTranscriptionProcedure = "/api.v1.APIService/GetTranscription"
 	// APIServiceGetPreviewProcedure is the fully-qualified name of the APIService's GetPreview RPC.
 	APIServiceGetPreviewProcedure = "/api.v1.APIService/GetPreview"
+	// APIServiceSubmitTranscriptionProcedure is the fully-qualified name of the APIService's
+	// SubmitTranscription RPC.
+	APIServiceSubmitTranscriptionProcedure = "/api.v1.APIService/SubmitTranscription"
 	// APIServiceGetYearsProcedure is the fully-qualified name of the APIService's GetYears RPC.
 	APIServiceGetYearsProcedure = "/api.v1.APIService/GetYears"
 	// APIServiceGetAlbumsProcedure is the fully-qualified name of the APIService's GetAlbums RPC.
@@ -76,6 +79,7 @@ var (
 	aPIServiceListPermissionsMethodDescriptor     = aPIServiceServiceDescriptor.Methods().ByName("ListPermissions")
 	aPIServiceGetTranscriptionMethodDescriptor    = aPIServiceServiceDescriptor.Methods().ByName("GetTranscription")
 	aPIServiceGetPreviewMethodDescriptor          = aPIServiceServiceDescriptor.Methods().ByName("GetPreview")
+	aPIServiceSubmitTranscriptionMethodDescriptor = aPIServiceServiceDescriptor.Methods().ByName("SubmitTranscription")
 	aPIServiceGetYearsMethodDescriptor            = aPIServiceServiceDescriptor.Methods().ByName("GetYears")
 	aPIServiceGetAlbumsMethodDescriptor           = aPIServiceServiceDescriptor.Methods().ByName("GetAlbums")
 	aPIServiceGetAlbumTracksMethodDescriptor      = aPIServiceServiceDescriptor.Methods().ByName("GetAlbumTracks")
@@ -94,6 +98,7 @@ type APIServiceClient interface {
 	// Transcriptions
 	GetTranscription(context.Context, *connect.Request[v1.GetTranscriptionReqest]) (*connect.Response[v1.Transcription], error)
 	GetPreview(context.Context, *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error)
+	SubmitTranscription(context.Context, *connect.Request[v1.SubmitTranscriptionRequest]) (*connect.Response[v1.Void], error)
 	// BMM
 	GetYears(context.Context, *connect.Request[v1.GetYearsRequest]) (*connect.Response[v1.GetYearsResponse], error)
 	GetAlbums(context.Context, *connect.Request[v1.GetAlbumsRequest]) (*connect.Response[v1.AlbumsList], error)
@@ -149,6 +154,12 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(aPIServiceGetPreviewMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
+		submitTranscription: connect.NewClient[v1.SubmitTranscriptionRequest, v1.Void](
+			httpClient,
+			baseURL+APIServiceSubmitTranscriptionProcedure,
+			connect.WithSchema(aPIServiceSubmitTranscriptionMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
 		getYears: connect.NewClient[v1.GetYearsRequest, v1.GetYearsResponse](
 			httpClient,
 			baseURL+APIServiceGetYearsProcedure,
@@ -196,6 +207,7 @@ type aPIServiceClient struct {
 	listPermissions     *connect.Client[v1.Void, v1.PermissionsList]
 	getTranscription    *connect.Client[v1.GetTranscriptionReqest, v1.Transcription]
 	getPreview          *connect.Client[v1.GetPreviewRequest, v1.Preview]
+	submitTranscription *connect.Client[v1.SubmitTranscriptionRequest, v1.Void]
 	getYears            *connect.Client[v1.GetYearsRequest, v1.GetYearsResponse]
 	getAlbums           *connect.Client[v1.GetAlbumsRequest, v1.AlbumsList]
 	getAlbumTracks      *connect.Client[v1.GetAlbumTracksRequest, v1.TracksList]
@@ -232,6 +244,11 @@ func (c *aPIServiceClient) GetTranscription(ctx context.Context, req *connect.Re
 // GetPreview calls api.v1.APIService.GetPreview.
 func (c *aPIServiceClient) GetPreview(ctx context.Context, req *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error) {
 	return c.getPreview.CallUnary(ctx, req)
+}
+
+// SubmitTranscription calls api.v1.APIService.SubmitTranscription.
+func (c *aPIServiceClient) SubmitTranscription(ctx context.Context, req *connect.Request[v1.SubmitTranscriptionRequest]) (*connect.Response[v1.Void], error) {
+	return c.submitTranscription.CallUnary(ctx, req)
 }
 
 // GetYears calls api.v1.APIService.GetYears.
@@ -274,6 +291,7 @@ type APIServiceHandler interface {
 	// Transcriptions
 	GetTranscription(context.Context, *connect.Request[v1.GetTranscriptionReqest]) (*connect.Response[v1.Transcription], error)
 	GetPreview(context.Context, *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error)
+	SubmitTranscription(context.Context, *connect.Request[v1.SubmitTranscriptionRequest]) (*connect.Response[v1.Void], error)
 	// BMM
 	GetYears(context.Context, *connect.Request[v1.GetYearsRequest]) (*connect.Response[v1.GetYearsResponse], error)
 	GetAlbums(context.Context, *connect.Request[v1.GetAlbumsRequest]) (*connect.Response[v1.AlbumsList], error)
@@ -323,6 +341,12 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 		APIServiceGetPreviewProcedure,
 		svc.GetPreview,
 		connect.WithSchema(aPIServiceGetPreviewMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
+	aPIServiceSubmitTranscriptionHandler := connect.NewUnaryHandler(
+		APIServiceSubmitTranscriptionProcedure,
+		svc.SubmitTranscription,
+		connect.WithSchema(aPIServiceSubmitTranscriptionMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
 	aPIServiceGetYearsHandler := connect.NewUnaryHandler(
@@ -375,6 +399,8 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceGetTranscriptionHandler.ServeHTTP(w, r)
 		case APIServiceGetPreviewProcedure:
 			aPIServiceGetPreviewHandler.ServeHTTP(w, r)
+		case APIServiceSubmitTranscriptionProcedure:
+			aPIServiceSubmitTranscriptionHandler.ServeHTTP(w, r)
 		case APIServiceGetYearsProcedure:
 			aPIServiceGetYearsHandler.ServeHTTP(w, r)
 		case APIServiceGetAlbumsProcedure:
@@ -418,6 +444,10 @@ func (UnimplementedAPIServiceHandler) GetTranscription(context.Context, *connect
 
 func (UnimplementedAPIServiceHandler) GetPreview(context.Context, *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetPreview is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) SubmitTranscription(context.Context, *connect.Request[v1.SubmitTranscriptionRequest]) (*connect.Response[v1.Void], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.SubmitTranscription is not implemented"))
 }
 
 func (UnimplementedAPIServiceHandler) GetYears(context.Context, *connect.Request[v1.GetYearsRequest]) (*connect.Response[v1.GetYearsResponse], error) {
