@@ -1,6 +1,9 @@
 <template>
     <NuxtLayout>
-        <Toaster position="bottom-right" rich-colors />
+        <Toaster position="bottom-right" />
         <NuxtPage />
+        <DevOnly>
+            <DevTools />
+        </DevOnly>
     </NuxtLayout>
 </template>
