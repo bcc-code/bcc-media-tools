@@ -131,7 +131,10 @@ watch(videoelement, (el) => {
     }
 });
 
-const handleWordFocus = (word: Word) => {
+const focusedSegment = ref<Segment>();
+const handleWordFocus = (word: Word, segment: Segment) => {
+    focusedSegment.value = segment;
+
     const el = videoelement.value as HTMLVideoElement;
     if (!el) {
         return;
@@ -156,7 +159,7 @@ watch(segments, () => {
 });
 
 const seekOnFocus = useLocalStorage("seekOnFocus", true);
-
+const previewSubtitles = useLocalStorage("previewSubtitles", false);
 const { deleteMode } = useDeleteMode();
 
 const showManual = ref(false);
@@ -212,12 +215,18 @@ const splitterApi = computed(() =>
             </div>
             <div class="flex items-center gap-4">
                 <BccToggle
-                    id="seekonfocus"
+                    v-model="previewSubtitles"
+                    :label="$t('transcription.previewSubtitles')"
+                />
+                <BccToggle
                     v-model="seekOnFocus"
                     was-toggled
-                    label="Seek on focus"
+                    :label="$t('transcription.seekOnFocus')"
                 />
-                <BccToggle v-model="deleteMode" label="Delete mode" />
+                <BccToggle
+                    v-model="deleteMode"
+                    :label="$t('transcription.deleteMode')"
+                />
                 <TranscriptionDownloader
                     :segments="segments"
                     :filename="fileName"
@@ -274,19 +283,26 @@ const splitterApi = computed(() =>
                 v-bind="splitterApi.getPanelProps({ id: 'right' })"
                 class="flex bg-gray-100"
             >
-                <div class="m-auto">
+                <div class="relative m-auto">
                     <Icon
                         v-if="loading && !video"
                         name="svg-spinners:bars-rotate-fade"
                         class="text-2xl"
                     />
-                    <video
-                        v-if="video"
-                        ref="videoelement"
-                        :src="video"
-                        controls
-                        class="bg-gray-200 shadow-xl"
-                    />
+                    <template v-if="video">
+                        <video
+                            ref="videoelement"
+                            :src="video"
+                            controls
+                            class="bg-gray-200 shadow-xl"
+                        />
+                        <p
+                            v-if="previewSubtitles && focusedSegment"
+                            class="absolute bottom-14 left-1/2 w-max max-w-[75%] -translate-x-1/2 bg-black/50 p-2 text-center text-2xl text-white"
+                        >
+                            {{ focusedSegment.text }}
+                        </p>
+                    </template>
                 </div>
             </div>
         </div>

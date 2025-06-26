@@ -16,6 +16,9 @@
         "goToNextSegment": "Go to next segment",
         "goToPreviousSegment": "Go to previous segment",
         "goToNextWord": "Go to next word in segment",
-        "addSegment": "Add missing segment"
+        "addSegment": "Add missing segment",
+        "deleteMode": "Delete mode",
+        "seekOnFocus": "Seek on focus",
+        "previewSubtitles": "Preview subtitles"
     }
 }

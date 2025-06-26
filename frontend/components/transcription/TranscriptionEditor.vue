@@ -7,7 +7,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-    wordFocus: [Word];
+    wordFocus: [Word, Segment];
     updateSegments: [Segment[]];
 }>();
 
@@ -120,7 +120,7 @@ function addNewSegmentAt(index: number) {
                     "
                     :segment="s"
                     :deleted="deletedIndexes.includes(index.toString())"
-                    @word-focus="$emit('wordFocus', $event)"
+                    @word-focus="(w, s) => $emit('wordFocus', w, s)"
                     @update="handleSegmentUpdate(index, $event)"
                     @toggle-delete="handleSegmentToggleDelete(index)"
                     @focus-previous="focusSegment(index, -1)"

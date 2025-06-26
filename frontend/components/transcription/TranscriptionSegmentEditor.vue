@@ -8,7 +8,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     update: [Segment];
-    wordFocus: [Word];
+    wordFocus: [Word, Segment];
     toggleDelete: [];
     focusNext: [];
     focusPrevious: [];
@@ -68,8 +68,8 @@ const { deleteMode } = useDeleteMode();
         @click="deleteMode ? $emit('toggleDelete') : undefined"
         @keydown.enter="deleteMode ? $emit('toggleDelete') : undefined"
         @keydown.space="deleteMode ? $emit('toggleDelete') : undefined"
-        @mouseenter="(hovering = true)"
-        @mouseleave="(hovering = false)"
+        @mouseenter="hovering = true"
+        @mouseleave="hovering = false"
     >
         <div class="grow">
             <div class="flex gap-2 text-sm opacity-50">
@@ -94,7 +94,7 @@ const { deleteMode } = useDeleteMode();
                         :tabindex="deleteMode ? -1 : 0"
                         class="rounded-md border border-transparent px-2 leading-tight focus:border-gray-900 focus:bg-gray-100 focus:outline-none"
                         @input="handleTextUpdate(index, $event)"
-                        @focus="$emit('wordFocus', w)"
+                        @focus="$emit('wordFocus', w, segment)"
                         @keydown.down="$emit('focusNext')"
                         @keydown.up="$emit('focusPrevious')"
                     >
