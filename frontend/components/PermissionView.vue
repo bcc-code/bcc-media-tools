@@ -16,7 +16,17 @@ defineEmits<{
     remove: [];
 }>();
 
-const perms = reactive(props.permissions);
+// Ensure all permission fields exist to avoid undefined errors
+function withDefaultPermissions(p: Permissions): Permissions {
+    return {
+        admin: p.admin ?? false,
+        bmm: p.bmm ?? { admin: false, integration: false, podcasts: [], languages: [] },
+        transcription: p.transcription ?? { admin: false, mediabanken: false },
+        email: p.email ?? '',
+    };
+}
+
+const perms = reactive(withDefaultPermissions(props.permissions));
 const api = useAPI();
 
 const availableLanguages = ref<string[]>([]);
@@ -38,7 +48,7 @@ const isOpen = ref(false);
 <template>
     <div class="flex flex-col rounded-2xl border bg-white shadow">
         <LayoutGroup>
-            <AnimatePresence multiple>
+            <AnimatePresence>
                 <motion.button
                     class="flex items-center justify-between p-4"
                     layout
@@ -90,14 +100,14 @@ const isOpen = ref(false);
                             <div>
                                 <div>
                                     <BccFormLabel>BMM Admin</BccFormLabel>
-                                    <BccToggle v-model="perms!.bmm!.admin" />
+                                    <BccToggle v-model="perms.bmm.admin" />
                                 </div>
                                 <div>
                                     <BccFormLabel>
                                         Integration environment
                                     </BccFormLabel>
                                     <BccToggle
-                                        v-model="perms!.bmm!.integration"
+                                        v-model="perms.bmm.integration"
                                     />
                                 </div>
                             </div>
@@ -105,18 +115,33 @@ const isOpen = ref(false);
                                 <BccFormLabel>Podcasts</BccFormLabel>
                                 <MultiSelector
                             :available="['fra-kaare', 'tjgu-podcast']"
-                                    v-model="perms.bmm!.podcasts"
+                                    v-model="perms.bmm.podcasts"
                                 />
                             </div>
                             <div>
                                 <BccFormLabel>Languages</BccFormLabel>
                                 <MultiSelector
                                     :available="availableLanguages"
-                                    v-model="perms.bmm!.languages"
+                                    v-model="perms.bmm.languages"
                                     :label-transformer="
                                         (v) => languageCodeToName(v)
                                     "
                                 />
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        class="col-span-full grid grid-cols-subgrid items-baseline rounded-xl border px-4 py-3 mt-4"
+                    >
+                        <h3>Transcription</h3>
+                        <div class="flex flex-wrap gap-4">
+                            <div>
+                                <BccFormLabel>Transcription Admin</BccFormLabel>
+                                <BccToggle v-model="perms.transcription.admin" />
+                            </div>
+                            <div>
+                                <BccFormLabel>Mediabanken</BccFormLabel>
+                                <BccToggle v-model="perms.transcription.mediabanken" />
                             </div>
                         </div>
                     </div>

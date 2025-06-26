@@ -24,6 +24,7 @@ const routeId =
     route.params.id instanceof Array ? route.params.id[0] : route.params.id;
 
 const loading = ref(true);
+const error = ref<string | null>(null);
 
 const transcription = ref<TranscriptionResult>();
 
@@ -39,16 +40,34 @@ const segmentelements = ref<{
     [key: number]: ComponentPublicInstance;
 }>({});
 
+function formatErrorMessage(msg: string | null): string | null {
+    if (!msg) return null;
+    // Remove [unknown] or similar prefix
+    msg = msg.replace(/^\[.*?\]\s*/, "");
+    // Capitalize first letter
+    msg = msg.charAt(0).toUpperCase() + msg.slice(1);
+    return msg;
+}
+
 const { $toast } = useNuxtApp();
 const reset = async (notify: boolean = true) => {
     loading.value = true;
-    let result = await api.getTranscription({ VXID: routeId });
-    setTranscription(result);
-    localStorage[key] = JSON.stringify(result);
-    if (notify) {
-        $toast.success("Transcription reset successfully");
+    error.value = null;
+    try {
+        let result = await api.getTranscription({ VXID: routeId });
+        setTranscription(result);
+        localStorage[key] = JSON.stringify(result);
+        if (notify) {
+            $toast.success("Transcription reset successfully");
+        }
+        return result;
+    } catch (e: any) {
+        error.value = e?.message || e?.toString() || "Unknown error";
+        loading.value = false;
+        transcription.value = undefined;
+        segments.value = [];
+        return null;
     }
-    return result;
 };
 
 const setTranscription = (result: any) => {
@@ -64,8 +83,14 @@ const save = () => {
 
 onMounted(async () => {
     const saved = localStorage[key];
-
-    video.value = (await api.getPreview({ VXID: routeId })).url;
+    error.value = null;
+    try {
+        video.value = (await api.getPreview({ VXID: routeId })).url;
+    } catch (e: any) {
+        error.value = e?.message || e?.toString() || "Unknown error";
+        loading.value = false;
+        return;
+    }
     fileName.value = key;
 
     if (saved) {
@@ -221,6 +246,12 @@ const splitterApi = computed(() =>
                     name="svg-spinners:bars-rotate-fade"
                     class="m-auto text-2xl"
                 />
+                <div
+                    v-if="error && !loading"
+                    class="mx-auto text-lg text-red-600"
+                >
+                    {{ formatErrorMessage(error) }}
+                </div>
                 <TranscriptionEditor
                     class="overflow-auto"
                     v-if="transcription && !loading"

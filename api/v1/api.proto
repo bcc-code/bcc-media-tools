@@ -15,10 +15,16 @@ message BMMPermission {
   bool integration = 5;
 }
 
+message TranscriptionPermission {
+  bool admin = 1;
+  bool mediabanken = 2;
+}
+
 message Permissions {
 	bool admin = 1;
 	BMMPermission bmm = 2;
   string email = 3;
+  TranscriptionPermission transcription = 4;
 }
 
 message GetPermissionsRequest {}

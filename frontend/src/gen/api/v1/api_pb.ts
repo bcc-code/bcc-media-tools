@@ -88,6 +88,49 @@ export class BMMPermission extends Message<BMMPermission> {
 }
 
 /**
+ * @generated from message api.v1.TranscriptionPermission
+ */
+export class TranscriptionPermission extends Message<TranscriptionPermission> {
+  /**
+   * @generated from field: bool admin = 1;
+   */
+  admin = false;
+
+  /**
+   * @generated from field: bool mediabanken = 2;
+   */
+  mediabanken = false;
+
+  constructor(data?: PartialMessage<TranscriptionPermission>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "api.v1.TranscriptionPermission";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "admin", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 2, name: "mediabanken", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): TranscriptionPermission {
+    return new TranscriptionPermission().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): TranscriptionPermission {
+    return new TranscriptionPermission().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): TranscriptionPermission {
+    return new TranscriptionPermission().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: TranscriptionPermission | PlainMessage<TranscriptionPermission> | undefined, b: TranscriptionPermission | PlainMessage<TranscriptionPermission> | undefined): boolean {
+    return proto3.util.equals(TranscriptionPermission, a, b);
+  }
+}
+
+/**
  * @generated from message api.v1.Permissions
  */
 export class Permissions extends Message<Permissions> {
@@ -106,6 +149,11 @@ export class Permissions extends Message<Permissions> {
    */
   email = "";
 
+  /**
+   * @generated from field: api.v1.TranscriptionPermission transcription = 4;
+   */
+  transcription?: TranscriptionPermission;
+
   constructor(data?: PartialMessage<Permissions>) {
     super();
     proto3.util.initPartial(data, this);
@@ -117,6 +165,7 @@ export class Permissions extends Message<Permissions> {
     { no: 1, name: "admin", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
     { no: 2, name: "bmm", kind: "message", T: BMMPermission },
     { no: 3, name: "email", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 4, name: "transcription", kind: "message", T: TranscriptionPermission },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Permissions {
