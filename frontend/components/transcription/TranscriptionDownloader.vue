@@ -38,7 +38,7 @@ const widths = {
             class="flex-1 rounded-l-lg bg-white px-4 py-2"
             @click="download"
         >
-            Download
+            {{ $t("transcription.download") }}
         </button>
         <select
             v-model="format"

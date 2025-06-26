@@ -65,30 +65,25 @@ const { deleteMode } = useDeleteMode();
                 -
                 <p>{{ secondsToTimestamp(segment.end) }}</p>
             </div>
-            <div :class="{ 'pointer-events-none': deleteMode }">
-                <TransitionGroup
-                    tag="div"
-                    class="relative flex flex-wrap items-center"
-                    leave-active-class="transition duration-200 ease-out absolute"
-                    leave-to-class="opacity-0 scale-0 rotate-180"
-                    enter-active-class="transition duration-200 ease-out"
-                    enter-from-class="opacity-0 scale-0 rotate-180"
-                    move-class="transition duration-200 ease-out"
+            <div
+                :class="[
+                    'relative flex flex-wrap items-center',
+                    { 'pointer-events-none': deleteMode },
+                ]"
+            >
+                <span
+                    v-for="(w, index) in segment.words"
+                    :key="`segment:${segment.id}:word:${w.start}:${w.end}:${index}`"
+                    contenteditable
+                    :tabindex="deleteMode ? -1 : 0"
+                    class="rounded-md border border-transparent px-2 leading-tight focus:border-gray-900 focus:bg-gray-100 focus:outline-none"
+                    @input="handleTextUpdate(index, $event)"
+                    @focus="$emit('wordFocus', w, segment)"
+                    @keydown.down="$emit('focusNext')"
+                    @keydown.up="$emit('focusPrevious')"
                 >
-                    <span
-                        v-for="(w, index) in segment.words"
-                        :key="`${w.start}-${w.end}`"
-                        contenteditable
-                        :tabindex="deleteMode ? -1 : 0"
-                        class="rounded-md border border-transparent px-2 leading-tight focus:border-gray-900 focus:bg-gray-100 focus:outline-none"
-                        @input="handleTextUpdate(index, $event)"
-                        @focus="$emit('wordFocus', w, segment)"
-                        @keydown.down="$emit('focusNext')"
-                        @keydown.up="$emit('focusPrevious')"
-                    >
-                        {{ w.text }}
-                    </span>
-                </TransitionGroup>
+                    {{ w.text }}
+                </span>
             </div>
         </div>
         <div v-if="!deleteMode" class="ml-auto">

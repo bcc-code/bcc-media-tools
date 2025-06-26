@@ -84,10 +84,11 @@ const submitToMediabanken = async () => {
             VXID: routeId,
             transcription: transcription.value,
         });
+        localStorage.removeItem(key);
         $toast.success("Transcription submitted successfully");
+        navigateTo("/transcription");
     } catch (err) {
         $toast.error("Failed to submit transcription");
-    } finally {
         loadingSubmit.value = false;
     }
 };
@@ -240,6 +241,7 @@ const splitterApi = computed(() =>
                     v-model="deleteMode"
                     :label="$t('transcription.deleteMode')"
                 />
+                <LanguageSwitcher />
                 <TranscriptionDownloader
                     :segments="segments"
                     :filename="fileName"
@@ -336,12 +338,7 @@ const splitterApi = computed(() =>
             <template #primaryAction>
                 <BccButton
                     :disabled="loadingSubmit"
-                    @click="
-                        async () => {
-                            await submitToMediabanken();
-                            showSubmitConfirmationModal = false;
-                        }
-                    "
+                    @click="submitToMediabanken"
                 >
                     <Icon
                         v-if="loadingSubmit"

@@ -44,7 +44,14 @@ export default defineNuxtConfig({
         },
     },
     i18n: {
-        restructureDir: false
+        defaultLocale: "en",
+        langDir: "locales",
+        locales: [
+            { code: "en", name: "English", file: "en.json" },
+            { code: "nb", name: "Norsk", file: "nb.json" },
+        ],
+        detectBrowserLanguage: false,
+        restructureDir: false,
     },
     devServer: {
         port: 8001,

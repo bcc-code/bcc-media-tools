@@ -108,7 +108,10 @@ function addNewSegmentAt(index: number) {
             leave-to-class="opacity-0 scale-95"
             move-class="transition duration-300 ease-out"
         >
-            <template v-for="(s, index) in transcription.segments" :key="s.id">
+            <template
+                v-for="(s, index) in transcription.segments"
+                :key="`segment:${s.id}:${index}`"
+            >
                 <TranscriptionSegmentEditor
                     :ref="
                         (el) => {
@@ -126,7 +129,11 @@ function addNewSegmentAt(index: number) {
                     @focus-previous="focusSegment(index, -1)"
                     @focus-next="focusSegment(index, 1)"
                 />
-                <div v-if="canAddSegment(index)" class="relative w-full">
+                <div
+                    v-if="canAddSegment(index)"
+                    :key="`segment:${s.id}:add`"
+                    class="relative w-full"
+                >
                     <button
                         class="absolute right-1/2 z-10 grid aspect-square size-6 -translate-y-1/2 place-items-center rounded-full bg-gray-200 p-0.5 text-sm hover:bg-gray-300"
                         :title="$t('transcription.addSegment')"
