@@ -50,6 +50,13 @@ function focusSegment(index: number, direction: number) {
     child.focus();
 }
 
+function canAddSegment(index: number) {
+    if (deleteMode.value) return false;
+    const curr = segments.value?.[index];
+    const next = segments.value?.[index + 1];
+    return next?.start >= curr?.end + 1;
+}
+
 function addNewSegmentAt(index: number) {
     const arr = [...(segments.value.map((s) => ({ ...s })) || [])];
     const prev = arr.at(index - 1);
@@ -57,7 +64,7 @@ function addNewSegmentAt(index: number) {
     if (!prev || !next) return;
 
     arr.splice(index, 0, {
-        id: Math.random() * 100,
+        id: (prev.id + next.id) / 2,
         seek: 0,
         start: prev.end,
         end: next.start,
@@ -119,10 +126,7 @@ function addNewSegmentAt(index: number) {
                     @focus-previous="focusSegment(index, -1)"
                     @focus-next="focusSegment(index, 1)"
                 />
-                <div
-                    v-if="segments[index + 1]?.start >= segments[index].end + 1"
-                    class="relative w-full"
-                >
+                <div v-if="canAddSegment(index)" class="relative w-full">
                     <button
                         class="absolute right-1/2 z-10 grid aspect-square size-6 -translate-y-1/2 place-items-center rounded-full bg-gray-200 p-0.5 text-sm hover:bg-gray-300"
                         :title="$t('transcription.addSegment')"

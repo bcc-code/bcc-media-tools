@@ -20,6 +20,8 @@ const api = useAPI();
 
 const route = useRoute("transcription-id");
 const key = "ts-" + route.params.id;
+const routeId =
+    route.params.id instanceof Array ? route.params.id[0] : route.params.id;
 
 const loading = ref(true);
 
@@ -38,12 +40,14 @@ const segmentelements = ref<{
 }>({});
 
 const { $toast } = useNuxtApp();
-const reset = async () => {
+const reset = async (notify: boolean = true) => {
     loading.value = true;
-    let result = await api.getTranscription({ VXID: route.params.id });
+    let result = await api.getTranscription({ VXID: routeId });
     setTranscription(result);
     localStorage[key] = JSON.stringify(result);
-    $toast.success("Transcription reset successfully");
+    if (notify) {
+        $toast.success("Transcription reset successfully");
+    }
     return result;
 };
 
@@ -61,13 +65,13 @@ const save = () => {
 onMounted(async () => {
     const saved = localStorage[key];
 
-    video.value = (await api.getPreview({ VXID: route.params.id })).url;
+    video.value = (await api.getPreview({ VXID: routeId })).url;
     fileName.value = key;
 
     if (saved) {
         setTranscription(JSON.parse(saved));
     } else {
-        await reset();
+        await reset(false);
     }
 });
 
@@ -131,6 +135,16 @@ const seekOnFocus = useLocalStorage("seekOnFocus", true);
 const { deleteMode } = useDeleteMode();
 
 const showManual = ref(false);
+// Show manual the first time the user opens the tool
+const hasOpenedManual = useLocalStorage("hasOpenedManual", false);
+onMounted(() => {
+    if (!hasOpenedManual.value) {
+        setTimeout(() => {
+            showManual.value = true;
+            hasOpenedManual.value = true;
+        }, 1000);
+    }
+});
 
 function setSegments(s: Segment[]) {
     segments.value = s;
@@ -164,7 +178,10 @@ const splitterApi = computed(() =>
         >
             <div class="flex gap-3">
                 <p>{{ $t("transcription.changesSavedLocally") }}</p>
-                <button class="-m-3 p-3 text-gray-500 underline" @click="reset">
+                <button
+                    class="-m-3 p-3 text-gray-500 underline"
+                    @click="() => reset()"
+                >
                     {{ $t("transcription.reset") }}
                 </button>
             </div>
@@ -185,7 +202,7 @@ const splitterApi = computed(() =>
                 </BccButton>
                 <button
                     class="-mx-3 aspect-square p-3"
-                    @click="(showManual = true)"
+                    @click="showManual = true"
                 >
                     <Icon
                         name="heroicons:question-mark-circle"
