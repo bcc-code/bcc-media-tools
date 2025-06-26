@@ -19,6 +19,10 @@
         "addSegment": "Add missing segment",
         "deleteMode": "Delete mode",
         "seekOnFocus": "Seek on focus",
-        "previewSubtitles": "Preview subtitles"
+        "previewSubtitles": "Preview subtitles",
+        "submitConfirmationTitle": "Are you sure you want to submit?",
+        "submitConfirmationMessage": "This will mark the transcription as complete, and you will lose access to the file.",
+        "submitConfirmationCancel": "Cancel",
+        "submitConfirmationSubmit": "Yes, submit"
     }
 }

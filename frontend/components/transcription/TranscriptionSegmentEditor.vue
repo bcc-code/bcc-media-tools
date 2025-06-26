@@ -40,18 +40,6 @@ const secondsToTimestamp = (seconds: number) => {
     return `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}:${second.toString().padStart(2, "0")}`;
 };
 
-function addWordAt(index: number) {
-    const arr = [...words.value];
-    arr.splice(index, 0, {
-        text: "",
-        start: 0,
-        end: 0,
-        confidence: 0,
-    });
-    console.log(arr);
-    words.value = arr;
-}
-
 const hovering = ref(false);
 
 const { deleteMode } = useDeleteMode();

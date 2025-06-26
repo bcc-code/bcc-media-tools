@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { BccButton, BccToggle } from "@bcc-code/design-library-vue";
+import { BccButton, BccModal, BccToggle } from "@bcc-code/design-library-vue";
 import { normalizeProps, useMachine } from "@zag-js/vue";
 import * as splitter from "@zag-js/splitter";
 import type { ComponentPublicInstance } from "vue";
@@ -76,9 +76,20 @@ const setTranscription = (result: any) => {
     loading.value = false;
 };
 
-const save = () => {
-    // TODO: implement saving
-    $toast.success("Transcription saved successfully");
+const loadingSubmit = ref(false);
+const submitToMediabanken = async () => {
+    loadingSubmit.value = true;
+    try {
+        await api.submitTranscription({
+            VXID: routeId,
+            transcription: transcription.value,
+        });
+        $toast.success("Transcription submitted successfully");
+    } catch (err) {
+        $toast.error("Failed to submit transcription");
+    } finally {
+        loadingSubmit.value = false;
+    }
 };
 
 onMounted(async () => {
@@ -180,6 +191,8 @@ function setSegments(s: Segment[]) {
     transcription.value.segments = s;
 }
 
+const showSubmitConfirmationModal = ref(false);
+
 // Splitter
 const storedSplitterSize = useLocalStorage("splitterSize", [50, 50]);
 const splitterService = useMachine(splitter.machine, {
@@ -231,7 +244,7 @@ const splitterApi = computed(() =>
                     :segments="segments"
                     :filename="fileName"
                 />
-                <BccButton @click="save">
+                <BccButton @click="showSubmitConfirmationModal = true">
                     {{ $t("transcription.save") }}
                 </BccButton>
                 <button
@@ -300,13 +313,52 @@ const splitterApi = computed(() =>
                             v-if="previewSubtitles && focusedSegment"
                             class="absolute bottom-16 left-1/2 w-max max-w-[75%] -translate-x-1/2 bg-black/50 p-2 text-center text-2xl text-white"
                         >
-                            {{ focusedSegment.text }}
+                            {{
+                                focusedSegment.words
+                                    .map((w) => w.text)
+                                    .join(" ")
+                            }}
                         </p>
                     </template>
                 </div>
             </div>
         </div>
         <TranscriptionManual v-model:open="showManual" />
+        <BccModal
+            :open="showSubmitConfirmationModal"
+            :close-button="false"
+            @close="showSubmitConfirmationModal = false"
+        >
+            <h3 class="mb-3 text-xl font-bold">
+                {{ $t("transcription.submitConfirmationTitle") }}
+            </h3>
+            <p>{{ $t("transcription.submitConfirmationMessage") }}</p>
+            <template #primaryAction>
+                <BccButton
+                    :disabled="loadingSubmit"
+                    @click="
+                        async () => {
+                            await submitToMediabanken();
+                            showSubmitConfirmationModal = false;
+                        }
+                    "
+                >
+                    <Icon
+                        v-if="loadingSubmit"
+                        name="svg-spinners:bars-rotate-fade"
+                    />
+                    {{ $t("transcription.submitConfirmationSubmit") }}
+                </BccButton>
+            </template>
+            <template #secondaryAction>
+                <BccButton
+                    variant="secondary"
+                    @click="showSubmitConfirmationModal = false"
+                >
+                    {{ $t("transcription.submitConfirmationCancel") }}
+                </BccButton>
+            </template>
+        </BccModal>
     </div>
 </template>
 

@@ -68,7 +68,7 @@ function addNewSegmentAt(index: number) {
         seek: 0,
         start: prev.end,
         end: next.start,
-        text: "",
+        text: "...",
         tokens: [],
         temperature: 0,
         avg_logprob: 0,
@@ -78,8 +78,8 @@ function addNewSegmentAt(index: number) {
         words: [
             {
                 text: "...",
-                start: 0,
-                end: 0,
+                start: prev.end,
+                end: next.start,
                 confidence: 0,
             },
         ],
