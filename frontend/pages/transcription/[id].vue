@@ -171,7 +171,7 @@ watch(segments, () => {
 });
 
 const seekOnFocus = useLocalStorage("seekOnFocus", true);
-const previewSubtitles = useLocalStorage("previewSubtitles", false);
+const previewSubtitles = useLocalStorage("previewSubtitles", true);
 const { deleteMode } = useDeleteMode();
 
 const showManual = ref(false);
