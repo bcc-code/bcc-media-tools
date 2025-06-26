@@ -283,7 +283,7 @@ const splitterApi = computed(() =>
                 v-bind="splitterApi.getPanelProps({ id: 'right' })"
                 class="flex bg-gray-100"
             >
-                <div class="relative m-auto">
+                <div class="relative m-auto p-4">
                     <Icon
                         v-if="loading && !video"
                         name="svg-spinners:bars-rotate-fade"
@@ -298,7 +298,7 @@ const splitterApi = computed(() =>
                         />
                         <p
                             v-if="previewSubtitles && focusedSegment"
-                            class="absolute bottom-14 left-1/2 w-max max-w-[75%] -translate-x-1/2 bg-black/50 p-2 text-center text-2xl text-white"
+                            class="absolute bottom-16 left-1/2 w-max max-w-[75%] -translate-x-1/2 bg-black/50 p-2 text-center text-2xl text-white"
                         >
                             {{ focusedSegment.text }}
                         </p>
