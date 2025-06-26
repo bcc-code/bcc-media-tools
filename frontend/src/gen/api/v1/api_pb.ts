@@ -983,7 +983,7 @@ export class Transcription extends Message<Transcription> {
  */
 export class Segments extends Message<Segments> {
   /**
-   * @generated from field: int32 id = 1;
+   * @generated from field: double id = 1;
    */
   id = 0;
 
@@ -1050,7 +1050,7 @@ export class Segments extends Message<Segments> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "api.v1.Segments";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "id", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 1, name: "id", kind: "scalar", T: 1 /* ScalarType.DOUBLE */ },
     { no: 2, name: "seek", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 3, name: "start", kind: "scalar", T: 1 /* ScalarType.DOUBLE */ },
     { no: 4, name: "end", kind: "scalar", T: 1 /* ScalarType.DOUBLE */ },

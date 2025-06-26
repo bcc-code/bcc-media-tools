@@ -123,7 +123,7 @@ message Transcription {
 }
 
 message Segments {
-  int32 id = 1;
+  double id = 1;
   int32 seek = 2;
   double start = 3;
   double end = 4;
