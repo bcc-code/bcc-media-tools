@@ -73,7 +73,7 @@ const { deleteMode } = useDeleteMode();
             >
                 <span
                     v-for="(w, index) in segment.words"
-                    :key="`segment:${segment.id}:word:${w.start}:${w.end}:${index}`"
+                    :key="`segment:${segment.id}:${segment.start}:${segment.end}:word:${w.start}:${w.end}`"
                     contenteditable
                     :tabindex="deleteMode ? -1 : 0"
                     class="rounded-md border border-transparent px-2 leading-tight focus:border-gray-900 focus:bg-gray-100 focus:outline-none"

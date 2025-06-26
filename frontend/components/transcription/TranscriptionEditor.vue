@@ -110,7 +110,7 @@ function addNewSegmentAt(index: number) {
         >
             <template
                 v-for="(s, index) in transcription.segments"
-                :key="`segment:${s.id}:${index}`"
+                :key="`segment:${s.id}:${s.start}:${s.end}`"
             >
                 <TranscriptionSegmentEditor
                     :ref="

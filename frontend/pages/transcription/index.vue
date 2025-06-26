@@ -55,7 +55,7 @@ const vxId = ref("");
 
 const { deleteMode } = useDeleteMode();
 
-const { me, loading } = useMe();
+const { me } = useMe();
 
 const truncatedFileName = computed(() => {
     if (!fileName.value) return;
@@ -65,6 +65,12 @@ const truncatedFileName = computed(() => {
     const last = fileName.value.slice(-10);
     return [first, last].join("...");
 });
+
+function setSegments(s: Segment[]) {
+    segments.value = s;
+    if (!transcription.value) return;
+    transcription.value.segments = s;
+}
 </script>
 
 <template>
@@ -128,6 +134,7 @@ const truncatedFileName = computed(() => {
                 :transcription="transcription"
                 :file-name="fileName"
                 v-model="segments"
+                @update-segments="(s) => setSegments(s)"
             />
         </div>
     </div>
