@@ -2,11 +2,12 @@ package main
 
 import (
 	apiv1 "bcc-media-tools/api/v1"
-	"connectrpc.com/connect"
 	"context"
 	"fmt"
+
+	"connectrpc.com/connect"
 	"github.com/bcc-code/bcc-media-flows/services/cantemo"
-	"github.com/bcc-code/bcc-media-flows/workflows/ingest"
+	ingestworkflows "github.com/bcc-code/bcc-media-flows/workflows/ingest"
 	"github.com/samber/lo"
 	"go.temporal.io/sdk/client"
 )
@@ -126,16 +127,11 @@ func (t TranscriptionAPI) SubmitTranscription(ctx context.Context, req *connect.
 		TaskQueue: queue,
 	}
 
-	wfRun, err := t.temporalClient.ExecuteWorkflow(ctx, workflowOptions, ingestworkflows.ImportSubtitles, ingestworkflows.ImportSubtitlesInput{
+	_, err := t.temporalClient.ExecuteWorkflow(ctx, workflowOptions, ingestworkflows.ImportSubtitles, ingestworkflows.ImportSubtitlesInput{
 		VXID:      req.Msg.VXID,
 		Subtitles: mapApiTranscriptionToModel(req.Msg.Transcription),
 		Language:  "no", // Hardcoded to norwegian for now
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	err = wfRun.Get(ctx, nil)
 	if err != nil {
 		return nil, err
 	}

@@ -1,0 +1,29 @@
+{
+    "dragAndDropFileHere": "Dra og slipp fil her eller klikk for å browse",
+    "title": "Tittel",
+    "language": "Språk",
+    "selectAnOption": "Velg et alternativ...",
+    "album": "Album",
+    "track": "Spor",
+    "next": "Neste",
+    "uploaded": "Lastet opp",
+    "transcription": {
+        "reset": "Tilbakestill",
+        "changesSavedLocally": "Endringer er lagret lokalt",
+        "save": "Send til Mediabanken",
+        "deleteSegment": "Slett segment",
+        "undeleteSegment": "Angre sletting av segment",
+        "goToNextSegment": "Gå til neste segment",
+        "goToPreviousSegment": "Gå til forrige segment",
+        "goToNextWord": "Gå til neste ord i segment",
+        "addSegment": "Legg til manglende segment",
+        "deleteMode": "Slettemodus",
+        "seekOnFocus": "Gå til videoposisjon ved fokus",
+        "previewSubtitles": "Forhåndsvis undertekster",
+        "submitConfirmationTitle": "Er du sikker på at du vil sende inn?",
+        "submitConfirmationMessage": "Dette vil markere transkripsjonen som ferdig, og du vil miste tilgang til filen.",
+        "submitConfirmationCancel": "Avbryt",
+        "submitConfirmationSubmit": "Ja, send inn",
+        "download": "Last ned"
+    }
+}

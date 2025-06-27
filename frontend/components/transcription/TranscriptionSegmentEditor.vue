@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import { BccButton } from "@bcc-code/design-library-vue";
-import TrashIcon from "./TrashIcon.vue";
 
 const props = defineProps<{
     segment: Segment;
@@ -9,8 +8,12 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     update: [Segment];
-    wordFocus: [Word];
+    wordFocus: [Word, Segment];
     toggleDelete: [];
+    focusNext: [];
+    focusPrevious: [];
+    addBefore: [];
+    addAfter: [];
 }>();
 
 const words = ref(props.segment.words.map((w) => ({ ...w })));
@@ -37,6 +40,8 @@ const secondsToTimestamp = (seconds: number) => {
     return `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}:${second.toString().padStart(2, "0")}`;
 };
 
+const hovering = ref(false);
+
 const { deleteMode } = useDeleteMode();
 </script>
 
@@ -44,36 +49,50 @@ const { deleteMode } = useDeleteMode();
     <div
         class="flex items-center px-6 py-4 transition-all ease-out"
         :class="{
-            'cursor-pointer  hover:bg-red-200 hover:text-red-700 ': deleteMode,
+            'cursor-pointer hover:bg-red-200 hover:text-red-700': deleteMode,
             'bg-neutral-200 opacity-50': deleted,
         }"
+        :tabindex="deleteMode ? 0 : -1"
         @click="deleteMode ? $emit('toggleDelete') : undefined"
+        @keydown.enter="deleteMode ? $emit('toggleDelete') : undefined"
+        @keydown.space="deleteMode ? $emit('toggleDelete') : undefined"
+        @mouseenter="hovering = true"
+        @mouseleave="hovering = false"
     >
-        <div>
+        <div class="grow">
             <div class="flex gap-2 text-sm opacity-50">
                 <p>{{ secondsToTimestamp(segment.start) }}</p>
                 -
                 <p>{{ secondsToTimestamp(segment.end) }}</p>
             </div>
-            <div :class="{ 'pointer-events-none': deleteMode }">
-                <div class="flex flex-wrap">
-                    <span
-                        contenteditable
-                        v-for="(w, index) in segment.words"
-                        @input="handleTextUpdate(index, $event)"
-                        class="rounded-md border border-transparent px-1 focus:border-neutral-500 focus:bg-neutral-200 focus:outline-none"
-                        @focus="$emit('wordFocus', w)"
-                    >
-                        {{ w.text }}
-                    </span>
-                </div>
+            <div
+                :class="[
+                    'relative flex flex-wrap items-center',
+                    { 'pointer-events-none': deleteMode },
+                ]"
+            >
+                <span
+                    v-for="(w, index) in segment.words"
+                    :key="`segment:${segment.id}:${segment.start}:${segment.end}:word:${w.start}:${w.end}`"
+                    contenteditable
+                    :tabindex="deleteMode ? -1 : 0"
+                    class="rounded-md border border-transparent px-2 leading-tight focus:border-gray-900 focus:bg-gray-100 focus:outline-none"
+                    @input="handleTextUpdate(index, $event)"
+                    @focus="$emit('wordFocus', w, segment)"
+                    @keydown.down="$emit('focusNext')"
+                    @keydown.up="$emit('focusPrevious')"
+                >
+                    {{ w.text }}
+                </span>
             </div>
         </div>
-        <div class="ml-auto">
+        <div v-if="!deleteMode" class="ml-auto">
             <BccButton
                 v-if="!deleted"
                 context="danger"
+                variant="tertiary"
                 size="sm"
+                :title="$t('transcription.deleteSegment')"
                 @click="$emit('toggleDelete')"
             >
                 <Icon name="heroicons:trash" />
@@ -82,6 +101,7 @@ const { deleteMode } = useDeleteMode();
                 v-else
                 variant="secondary"
                 size="sm"
+                :title="$t('transcription.undeleteSegment')"
                 @click="$emit('toggleDelete')"
             >
                 <Icon name="heroicons:arrow-path" />

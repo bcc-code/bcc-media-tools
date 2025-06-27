@@ -1,5 +1,7 @@
 <script lang="ts" setup>
-import { BccButton, BccToggle } from "@bcc-code/design-library-vue";
+import { BccButton, BccModal, BccToggle } from "@bcc-code/design-library-vue";
+import { normalizeProps, useMachine } from "@zag-js/vue";
+import * as splitter from "@zag-js/splitter";
 import type { ComponentPublicInstance } from "vue";
 
 const analytics = useAnalytics();
@@ -18,6 +20,8 @@ const api = useAPI();
 
 const route = useRoute("transcription-id");
 const key = "ts-" + route.params.id;
+const routeId =
+    route.params.id instanceof Array ? route.params.id[0] : route.params.id;
 
 const loading = ref(true);
 const error = ref<string | null>(null);
@@ -33,7 +37,7 @@ const video = ref<string>();
 const videoelement = ref<HTMLVideoElement>();
 
 const segmentelements = ref<{
-    [key: number]: Element | ComponentPublicInstance;
+    [key: number]: ComponentPublicInstance;
 }>({});
 
 function formatErrorMessage(msg: string | null): string | null {
@@ -45,13 +49,17 @@ function formatErrorMessage(msg: string | null): string | null {
     return msg;
 }
 
-const reload = async () => {
+const { $toast } = useNuxtApp();
+const reset = async (notify: boolean = true) => {
     loading.value = true;
     error.value = null;
     try {
-        let result = await api.getTranscription({ VXID: route.params.id });
+        let result = await api.getTranscription({ VXID: routeId });
         setTranscription(result);
         localStorage[key] = JSON.stringify(result);
+        if (notify) {
+            $toast.success("Transcription reset successfully");
+        }
         return result;
     } catch (e: any) {
         error.value = e?.message || e?.toString() || "Unknown error";
@@ -64,17 +72,32 @@ const reload = async () => {
 
 const setTranscription = (result: any) => {
     transcription.value = result;
-    console.log(transcription.value);
-    console.log(segments.value);
     segments.value = transcription.value?.segments!;
     loading.value = false;
+};
+
+const loadingSubmit = ref(false);
+const submitToMediabanken = async () => {
+    loadingSubmit.value = true;
+    try {
+        await api.submitTranscription({
+            VXID: routeId,
+            transcription: transcription.value,
+        });
+        localStorage.removeItem(key);
+        $toast.success("Transcription submitted successfully");
+        navigateTo("/transcription");
+    } catch (err) {
+        $toast.error("Failed to submit transcription");
+        loadingSubmit.value = false;
+    }
 };
 
 onMounted(async () => {
     const saved = localStorage[key];
     error.value = null;
     try {
-        video.value = (await api.getPreview({ VXID: route.params.id })).url;
+        video.value = (await api.getPreview({ VXID: routeId })).url;
     } catch (e: any) {
         error.value = e?.message || e?.toString() || "Unknown error";
         loading.value = false;
@@ -85,7 +108,7 @@ onMounted(async () => {
     if (saved) {
         setTranscription(JSON.parse(saved));
     } else {
-        await reload();
+        await reset(false);
     }
 });
 
@@ -120,7 +143,10 @@ watch(videoelement, (el) => {
     }
 });
 
-const handleWordFocus = (word: Word) => {
+const focusedSegment = ref<Segment>();
+const handleWordFocus = (word: Word, segment: Segment) => {
+    focusedSegment.value = segment;
+
     const el = videoelement.value as HTMLVideoElement;
     if (!el) {
         return;
@@ -144,54 +170,197 @@ watch(segments, () => {
     });
 });
 
-const seekOnFocus = computed({
-    get() {
-        return (localStorage.seekOnFocus ?? "true") === "true";
-    },
-    set(v) {
-        localStorage.seekOnFocus = v ? "true" : "false";
+const seekOnFocus = useLocalStorage("seekOnFocus", true);
+const previewSubtitles = useLocalStorage("previewSubtitles", true);
+const { deleteMode } = useDeleteMode();
+
+const showManual = ref(false);
+// Show manual the first time the user opens the tool
+const hasOpenedManual = useLocalStorage("hasOpenedManual", false);
+onMounted(() => {
+    if (!hasOpenedManual.value) {
+        setTimeout(() => {
+            showManual.value = true;
+            hasOpenedManual.value = true;
+        }, 1000);
+    }
+});
+
+function setSegments(s: Segment[]) {
+    segments.value = s;
+    if (!transcription.value) return;
+    transcription.value.segments = s;
+}
+
+const showSubmitConfirmationModal = ref(false);
+
+// Splitter
+const storedSplitterSize = useLocalStorage("splitterSize", [50, 50]);
+const splitterService = useMachine(splitter.machine, {
+    id: useId(),
+    defaultSize: storedSplitterSize.value,
+    panels: [
+        { id: "left", minSize: 25 },
+        { id: "right", minSize: 25 },
+    ],
+    onResizeEnd({ size }) {
+        storedSplitterSize.value = size;
     },
 });
+
+const splitterApi = computed(() =>
+    splitter.connect(splitterService, normalizeProps),
+);
 </script>
 
 <template>
-    <div class="flex h-screen divide-x-2 divide-neutral-500">
-        <div class="flex w-1/2 flex-col">
-            <div v-if="loading" class="mx-auto animate-ping">Loading...</div>
-            <div v-if="error && !loading" class="mx-auto text-red-600 text-lg">{{ formatErrorMessage(error) }}</div>
-            <TranscriptionEditor
-                class="overflow-auto"
-                v-if="transcription && !loading"
-                :transcription="transcription"
-                :file-name="fileName!"
-                v-model="segments"
-                v-model:segmentelements="segmentelements"
-                @word-focus="handleWordFocus"
-            >
-                <template #actions>
-                    <div class="flex flex-grow gap-4">
-                        <TranscriptionDownloader
-                            :segments="segments"
-                            :filename="fileName"
-                        />
-                        <BccButton @click="reload">Reload</BccButton>
-                        <p class="my-auto">Edits are saved locally</p>
-                        <div class="my-auto ml-auto">
-                            <BccToggle
-                                id="seekonfocus"
-                                v-model="seekOnFocus"
-                                was-toggled
-                                label="Seek on focus"
-                            />
-                        </div>
-                    </div>
-                </template>
-            </TranscriptionEditor>
-        </div>
-        <div class="flex w-1/2">
-            <div class="m-auto">
-                <video ref="videoelement" v-if="video" :src="video" controls />
+    <div class="flex h-screen flex-col">
+        <div
+            class="flex items-center justify-between gap-4 border-b border-gray-400 bg-primary px-6 py-3"
+        >
+            <div class="flex gap-3">
+                <p>{{ $t("transcription.changesSavedLocally") }}</p>
+                <button
+                    class="-m-3 p-3 text-gray-500 underline"
+                    @click="() => reset()"
+                >
+                    {{ $t("transcription.reset") }}
+                </button>
+            </div>
+            <div class="flex items-center gap-4">
+                <BccToggle
+                    v-model="previewSubtitles"
+                    :label="$t('transcription.previewSubtitles')"
+                />
+                <BccToggle
+                    v-model="seekOnFocus"
+                    was-toggled
+                    :label="$t('transcription.seekOnFocus')"
+                />
+                <BccToggle
+                    v-model="deleteMode"
+                    :label="$t('transcription.deleteMode')"
+                />
+                <LanguageSwitcher />
+                <TranscriptionDownloader
+                    :segments="segments"
+                    :filename="fileName"
+                />
+                <BccButton @click="showSubmitConfirmationModal = true">
+                    {{ $t("transcription.save") }}
+                </BccButton>
+                <button
+                    class="-mx-3 aspect-square p-3"
+                    @click="showManual = true"
+                >
+                    <Icon
+                        name="heroicons:question-mark-circle"
+                        class="text-xl"
+                    />
+                </button>
             </div>
         </div>
+        <div v-bind="splitterApi.getRootProps()" class="flex bg-white">
+            <div
+                v-bind="splitterApi.getPanelProps({ id: 'left' })"
+                class="flex flex-col"
+            >
+                <Icon
+                    v-if="loading"
+                    name="svg-spinners:bars-rotate-fade"
+                    class="m-auto text-2xl"
+                />
+                <div
+                    v-if="error && !loading"
+                    class="mx-auto text-lg text-red-600"
+                >
+                    {{ formatErrorMessage(error) }}
+                </div>
+                <TranscriptionEditor
+                    class="ml-auto w-full max-w-7xl overflow-auto"
+                    v-if="transcription && !loading"
+                    :transcription="transcription"
+                    :file-name="fileName!"
+                    v-model="segments"
+                    v-model:segmentelements="segmentelements"
+                    @word-focus="handleWordFocus"
+                    @update-segments="(s) => setSegments(s)"
+                />
+            </div>
+            <div class="flex h-full items-center border-x px-1">
+                <div
+                    v-bind="
+                        splitterApi.getResizeTriggerProps({ id: 'left:right' })
+                    "
+                />
+            </div>
+            <div
+                v-bind="splitterApi.getPanelProps({ id: 'right' })"
+                class="flex bg-gray-100"
+            >
+                <div class="relative m-auto p-4">
+                    <Icon
+                        v-if="loading && !video"
+                        name="svg-spinners:bars-rotate-fade"
+                        class="text-2xl"
+                    />
+                    <template v-if="video">
+                        <video
+                            ref="videoelement"
+                            :src="video"
+                            controls
+                            class="bg-gray-200 shadow-xl"
+                        />
+                        <p
+                            v-if="previewSubtitles && focusedSegment"
+                            class="absolute bottom-16 left-1/2 w-max max-w-[75%] -translate-x-1/2 bg-black/50 p-2 text-center text-2xl text-white"
+                        >
+                            {{
+                                focusedSegment.words
+                                    .map((w) => w.text)
+                                    .join(" ")
+                            }}
+                        </p>
+                    </template>
+                </div>
+            </div>
+        </div>
+        <TranscriptionManual v-model:open="showManual" />
+        <BccModal
+            :open="showSubmitConfirmationModal"
+            :close-button="false"
+            @close="showSubmitConfirmationModal = false"
+        >
+            <h3 class="mb-3 text-xl font-bold">
+                {{ $t("transcription.submitConfirmationTitle") }}
+            </h3>
+            <p>{{ $t("transcription.submitConfirmationMessage") }}</p>
+            <template #primaryAction>
+                <BccButton
+                    :disabled="loadingSubmit"
+                    @click="submitToMediabanken"
+                >
+                    <Icon
+                        v-if="loadingSubmit"
+                        name="svg-spinners:bars-rotate-fade"
+                    />
+                    {{ $t("transcription.submitConfirmationSubmit") }}
+                </BccButton>
+            </template>
+            <template #secondaryAction>
+                <BccButton
+                    variant="secondary"
+                    @click="showSubmitConfirmationModal = false"
+                >
+                    {{ $t("transcription.submitConfirmationCancel") }}
+                </BccButton>
+            </template>
+        </BccModal>
     </div>
 </template>
+
+<style>
+[data-scope="splitter"][data-part="resize-trigger"] {
+    @apply h-16 w-2 rounded-full bg-gray-300;
+}
+</style>

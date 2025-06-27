@@ -12,6 +12,8 @@ onMounted(() => {
         title: "index",
     });
 });
+
+const { me } = useMe();
 </script>
 
 <template>
@@ -22,11 +24,14 @@ onMounted(() => {
                 class="border-on-secondary bg-white"
             />
         </NuxtLink>
-        <NuxtLink to="/transcription">
+        <NuxtLink to="/transcription/">
             <BccItemTile
                 title="Transcription"
                 class="border-on-secondary bg-white"
             />
+        </NuxtLink>
+        <NuxtLink v-if="me?.admin" to="/admin/">
+            <BccItemTile title="Admin" class="border-on-secondary bg-white" />
         </NuxtLink>
     </div>
 </template>

@@ -55,7 +55,7 @@ const vxId = ref("");
 
 const { deleteMode } = useDeleteMode();
 
-const { me, loading } = useMe();
+const { me } = useMe();
 
 const truncatedFileName = computed(() => {
     if (!fileName.value) return;
@@ -65,74 +65,77 @@ const truncatedFileName = computed(() => {
     const last = fileName.value.slice(-10);
     return [first, last].join("...");
 });
+
+function setSegments(s: Segment[]) {
+    segments.value = s;
+    if (!transcription.value) return;
+    transcription.value.segments = s;
+}
 </script>
 
 <template>
     <div
         :class="[
-            'flex h-screen',
+            'mx-auto flex h-screen max-w-7xl p-8',
             {
                 'border-8 border-red-700': deleteMode,
             },
         ]"
     >
         <div class="flex flex-grow flex-col">
+            <div class="flex max-w-80 items-center gap-4">
+                <div class="shrink-0">
+                    <label for="file-input" class="cursor-pointer">
+                        <BccButton class="pointer-events-none">
+                            {{
+                                fileName && truncatedFileName
+                                    ? truncatedFileName
+                                    : "Select file"
+                            }}
+                        </BccButton>
+                    </label>
+                    <input
+                        id="file-input"
+                        hidden
+                        type="file"
+                        placeholder="File here"
+                        accept="application/json"
+                        @input="handleFile"
+                    />
+                </div>
+                <template
+                    v-if="
+                        !fileName && me?.transcription && me.transcription.admin
+                    "
+                >
+                    <span class="text-sm text-tertiary">or</span>
+                    <form
+                        class="flex gap-1 rounded-xl bg-neutral-100 p-2"
+                        @submit.prevent="navigateTo(`/transcription/${vxId}`)"
+                    >
+                        <BccInput
+                            v-model="vxId"
+                            placeholder="Vidispine-ID"
+                            class="min-w-32"
+                        />
+                        <BccButton variant="tertiary" type="submit">
+                            Go
+                        </BccButton>
+                    </form>
+                </template>
+                <TranscriptionDownloader
+                    v-if="fileName"
+                    :segments="segments"
+                    :filename="fileName"
+                />
+            </div>
             <TranscriptionEditor
                 :key="tKey"
                 :transcription="transcription"
                 :file-name="fileName"
                 v-model="segments"
-            >
-                <template #actions>
-                    <div class="flex max-w-80 items-center gap-4">
-                        <div class="shrink-0">
-                            <label for="file-input" class="cursor-pointer">
-                                <BccButton class="pointer-events-none">
-                                    {{
-                                        fileName && truncatedFileName
-                                            ? truncatedFileName
-                                            : "Select file"
-                                    }}
-                                </BccButton>
-                            </label>
-                            <input
-                                id="file-input"
-                                hidden
-                                type="file"
-                                placeholder="File here"
-                                accept="application/json"
-                                @input="handleFile"
-                            />
-                        </div>
-                        <template v-if="!fileName && me?.transcription && me.transcription.admin">
-                            <span class="text-sm text-tertiary">or</span>
-                            <div
-                                class="flex gap-1 rounded-xl bg-neutral-100 p-2"
-                            >
-                                <BccInput
-                                    v-model="vxId"
-                                    placeholder="Vidispine-ID"
-                                    class="min-w-32"
-                                />
-                                <BccButton
-                                    @click="
-                                        navigateTo(`/transcription/${vxId}`)
-                                    "
-                                    variant="tertiary"
-                                >
-                                    Go
-                                </BccButton>
-                            </div>
-                        </template>
-                    </div>
-                    <template v-if="fileName" class="flex gap-4">
-                        <TranscriptionDownloader
-                            :segments="segments"
-                            :filename="fileName"
-                        />
-                    </template>
-                </template>
-            </TranscriptionEditor>
+                @update-segments="(s) => setSegments(s)"
+            />
         </div>
     </div>
 </template>
