@@ -4,6 +4,7 @@ import { BccButton } from "@bcc-code/design-library-vue";
 const props = defineProps<{
     segment: Segment;
     deleted: boolean;
+    focused?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -51,6 +52,7 @@ const { deleteMode } = useDeleteMode();
         :class="{
             'cursor-pointer hover:bg-red-200 hover:text-red-700': deleteMode,
             'bg-neutral-200 opacity-50': deleted,
+            'ring-2 ring-inset ring-black': focused,
         }"
         :tabindex="deleteMode ? 0 : -1"
         @click="deleteMode ? $emit('toggleDelete') : undefined"

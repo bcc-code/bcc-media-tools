@@ -114,7 +114,8 @@ onMounted(async () => {
 
 watch(videoelement, (el) => {
     if (el) {
-        el.onseeked = () => {
+        let prevIndex: number | null = null;
+        el.ontimeupdate = () => {
             const current = el.currentTime;
             let index: number | null = null;
 
@@ -129,6 +130,9 @@ watch(videoelement, (el) => {
             }
 
             if (!index) return;
+            if (index === prevIndex) return;
+
+            focusedSegment.value = segments.value[index];
 
             const segmentElement = (
                 segmentelements.value[index] as ComponentPublicInstance
@@ -139,6 +143,8 @@ watch(videoelement, (el) => {
                 block: "nearest",
                 inline: "nearest",
             });
+
+            prevIndex = index;
         };
     }
 });
@@ -279,10 +285,11 @@ const splitterApi = computed(() =>
                 <TranscriptionEditor
                     class="ml-auto w-full max-w-7xl overflow-auto"
                     v-if="transcription && !loading"
-                    :transcription="transcription"
-                    :file-name="fileName!"
                     v-model="segments"
                     v-model:segmentelements="segmentelements"
+                    :transcription="transcription"
+                    :file-name="fileName!"
+                    :focused-segment="focusedSegment"
                     @word-focus="handleWordFocus"
                     @update-segments="(s) => setSegments(s)"
                 />

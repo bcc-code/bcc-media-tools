@@ -4,6 +4,7 @@ import type { ComponentPublicInstance } from "vue";
 const props = defineProps<{
     fileName?: string;
     transcription?: TranscriptionResult;
+    focusedSegment?: Segment;
 }>();
 
 const emit = defineEmits<{
@@ -122,6 +123,7 @@ function addNewSegmentAt(index: number) {
                         }
                     "
                     :segment="s"
+                    :focused="focusedSegment?.id === s.id"
                     :deleted="deletedIndexes.includes(index.toString())"
                     @word-focus="(w, s) => $emit('wordFocus', w, s)"
                     @update="handleSegmentUpdate(index, $event)"
