@@ -66,9 +66,20 @@ const showNewEmailForm = ref(false);
                     v-model="searchQuery"
                     clearable
                     placeholder="Search email..."
-                    icon="heroicons:magnifying-glass"
+                    leading-icon="heroicons:magnifying-glass"
                     class="ml-auto"
-                />
+                >
+                    <template #trailing>
+                        <UButton
+                            v-if="searchQuery"
+                            size="xs"
+                            color="neutral"
+                            variant="outline"
+                            @click="searchQuery = ''"
+                            >Clear</UButton
+                        >
+                    </template>
+                </UInput>
                 <UButton @click="showNewEmailForm = true">
                     Add new email
                 </UButton>
