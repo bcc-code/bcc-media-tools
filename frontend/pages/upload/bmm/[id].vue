@@ -1,10 +1,4 @@
 <script lang="ts" setup>
-import {
-    BccAlert,
-    BccButton,
-    BccTable,
-    BccCheckbox,
-} from "@bcc-code/design-library-vue";
 import { BmmEnvironment } from "~/src/gen/api/v1/api_pb";
 import type { BMMSingleForm, FileAndLanguage } from "~/utils/bmm";
 import { usePermissionsLoading } from "~/utils/me";
@@ -85,9 +79,9 @@ const uploaded = ref(false);
 <template>
     <div class="h-full p-4">
         <div
-            class="mx-auto flex h-full max-w-screen-lg flex-col gap-4 rounded-2xl border border-on-secondary bg-white p-4 text-black"
+            class="border-on-secondary mx-auto flex h-full max-w-screen-lg flex-col gap-4 rounded-2xl border bg-white p-4 text-black"
         >
-            <BccAlert v-if="!routeParamsAreValid" context="danger">
+            <UAlert v-if="!routeParamsAreValid" variant="subtle" color="error">
                 <div class="flex items-center gap-2">
                     <Icon
                         name="heroicons:exclamation-triangle"
@@ -95,7 +89,7 @@ const uploaded = ref(false);
                     />
                     Invalid route parameters
                 </div>
-            </BccAlert>
+            </UAlert>
             <template v-else>
                 <template
                     v-if="
@@ -111,64 +105,61 @@ const uploaded = ref(false);
                                     Upload files for "{{ routeParams.title }}"
                                 </h1>
                             </header>
-                            <BccCheckbox
+                            <UCheckbox
                                 v-model="forceOverride"
                                 label="Replace transcription even if has been manually corrected"
                             />
-                            <BccTable
-                                :items="selectedFiles"
+                            <UTable
+                                :data="selectedFiles"
                                 :columns="[
                                     {
-                                        key: 'language',
-                                        text: 'Language',
-                                        sortable: false,
+                                        accessorKey: 'language',
+                                        header: 'Language',
                                     },
-                                    { key: 'file.name', text: 'Name' },
                                     {
-                                        key: 'actions',
-                                        text: 'Actions',
-                                        sortable: false,
+                                        accessorKey: 'file.name',
+                                        header: 'Name',
+                                    },
+                                    {
+                                        accessorKey: 'actions',
                                     },
                                 ]"
                             >
-                                <template #item.file.name="{ item }">
-                                    <div
-                                        class="max-w-[420px] truncate"
-                                        :title="item.file.name"
-                                    >
-                                        {{ item.file.name }}
+                                <template #file.name-cell="item">
+                                    <div class="max-w-[420px] truncate">
+                                        {{ item.getValue() }}
                                     </div>
                                 </template>
-                                <template #item.language="{ item }">
+                                <template #language-cell="{ row }">
                                     <LanguageSelector
-                                        v-model="item.language"
+                                        v-model="row.original.language"
                                         :disabled="!me.bmm.admin"
                                         :languages="me.bmm.languages"
                                         :env="selectedEnvironment"
                                         label=""
                                     />
                                 </template>
-                                <template #item.actions="{ item }">
-                                    <BccButton
+                                <template #actions-cell="{ row }">
+                                    <UButton
                                         @click="
                                             selectedFiles.splice(
                                                 selectedFiles.indexOf(
-                                                    item as any,
+                                                    row.original as any,
                                                 ),
                                                 1,
                                             )
                                         "
-                                        context="danger"
-                                        variant="tertiary"
+                                        color="error"
+                                        variant="link"
                                     >
                                         <Icon name="heroicons:trash" />
-                                    </BccButton>
+                                    </UButton>
                                 </template>
-                            </BccTable>
+                            </UTable>
                             <SelectFile
                                 v-if="selectedFiles.length < 1 || me.bmm.admin"
                                 v-model="selectedFiles"
-                                :default-language="metadata.language[0]"
+                                :default-language="metadata.language![0]!"
                                 :accept-multiple="me.bmm.admin"
                             />
                             <FileUploader
@@ -176,20 +167,17 @@ const uploaded = ref(false);
                                 :endpoint="config.public.grpcUrl + '/upload'"
                                 :metadata="metadata"
                                 :forceOverride="forceOverride"
-                                @uploaded="(uploaded = true)"
+                                @uploaded="uploaded = true"
                             />
                         </div>
                     </template>
                     <template v-else>
-                        <BccAlert context="success">
-                            <div class="flex items-center gap-2">
-                                <Icon
-                                    name="heroicons:check"
-                                    class="text-lg opacity-50"
-                                />
-                                {{ $t("uploaded") }}
-                            </div>
-                        </BccAlert>
+                        <UAlert
+                            color="success"
+                            variant="subtle"
+                            :title="$t('uploaded')"
+                            icon="heroicons:check"
+                        />
                         <p>You can now close this tab.</p>
                     </template>
                 </template>

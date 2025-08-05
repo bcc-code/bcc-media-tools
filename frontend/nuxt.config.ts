@@ -3,9 +3,9 @@ export default defineNuxtConfig({
     modules: [
         "@nuxt/icon",
         "@nuxtjs/i18n",
-        "vue-sonner/nuxt",
         "motion-v/nuxt",
         "@vueuse/nuxt",
+        "@nuxt/ui",
     ],
     typescript: {
         shim: false,
@@ -18,17 +18,18 @@ export default defineNuxtConfig({
                 class: "bg-neutral-100",
             },
             titleTemplate: "%s - BCC Media Tools",
+            link: [
+                {
+                    rel: "icon",
+                    type: "image/x-icon",
+                    href: "/images/logo.png",
+                },
+            ],
         },
         pageTransition: { name: "page", mode: "out-in" },
     },
     experimental: {
         typedPages: true,
-    },
-    postcss: {
-        plugins: {
-            tailwindcss: {},
-            autoprefixer: {},
-        },
     },
     nitro: {
         preset: "node-server",
@@ -55,6 +56,9 @@ export default defineNuxtConfig({
     devServer: {
         port: 8001,
         host: "localhost",
+    },
+    ui: {
+        colorMode: false,
     },
     compatibilityDate: "2024-10-16",
 });

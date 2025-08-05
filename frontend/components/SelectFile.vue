@@ -51,7 +51,7 @@ const props = defineProps<{
 
 <template>
     <div
-        class="mx-auto flex h-48 w-full cursor-pointer rounded-lg border bg-neutral-100 text-center text-primary transition hover:bg-neutral-200"
+        class="mx-auto flex h-48 w-full cursor-pointer rounded-lg border bg-neutral-100 text-center transition hover:bg-neutral-200"
         @click="fileInput?.click()"
         :class="[isDragOver ? 'border-green-500' : 'border-neutral-300']"
         @dragenter.prevent="dragEnter"

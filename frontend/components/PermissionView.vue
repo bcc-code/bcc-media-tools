@@ -1,10 +1,5 @@
 <script lang="ts" setup>
 import { BmmEnvironment, Permissions } from "~/src/gen/api/v1/api_pb";
-import {
-    BccButton,
-    BccFormLabel,
-    BccToggle,
-} from "@bcc-code/design-library-vue";
 import { motion } from "motion-v";
 
 const props = defineProps<{
@@ -20,9 +15,14 @@ defineEmits<{
 function withDefaultPermissions(p: Permissions): Permissions {
     return {
         admin: p.admin ?? false,
-        bmm: p.bmm ?? { admin: false, integration: false, podcasts: [], languages: [] },
+        bmm: p.bmm ?? {
+            admin: false,
+            integration: false,
+            podcasts: [],
+            languages: [],
+        },
         transcription: p.transcription ?? { admin: false, mediabanken: false },
-        email: p.email ?? '',
+        email: p.email ?? "",
     };
 }
 
@@ -46,13 +46,13 @@ const isOpen = ref(false);
 </script>
 
 <template>
-    <div class="flex flex-col rounded-2xl border bg-white shadow">
+    <div class="flex flex-col rounded-xl border border-neutral-300 bg-white">
         <LayoutGroup>
             <AnimatePresence>
                 <motion.button
                     class="flex items-center justify-between p-4"
                     layout
-                    @click="(isOpen = !isOpen)"
+                    @click="isOpen = !isOpen"
                 >
                     <div class="flex items-center gap-2">
                         <h3 class="text-lg">{{ email }}</h3>
@@ -64,65 +64,69 @@ const isOpen = ref(false);
                             ]"
                         />
                     </div>
-                    <BccButton
+                    <UButton
                         size="sm"
-                        variant="tertiary"
-                        context="danger"
+                        variant="ghost"
+                        color="error"
+                        icon="heroicons:trash"
                         @click.stop="$emit('remove')"
                     >
                         Remove
-                    </BccButton>
+                    </UButton>
                 </motion.button>
                 <motion.div
                     v-if="isOpen"
                     layout
-                    class="grid max-w-full grid-cols-[1fr_3fr] gap-4 overflow-hidden border-t p-4"
+                    class="grid max-w-full grid-cols-[1fr_3fr] gap-4 overflow-hidden border-t border-neutral-300 p-4"
                     :initial="{ height: 0 }"
                     :animate="{ height: 'auto' }"
                     :exit="{ height: 0 }"
                 >
                     <div
-                        class="grid-span-1 col-span-full grid grid-cols-subgrid items-baseline gap-4 rounded-lg border px-4 py-3"
+                        class="grid-span-1 col-span-full grid grid-cols-subgrid items-baseline gap-4 rounded-lg border border-neutral-300 px-4 py-3"
                     >
                         <h3>General</h3>
-                        <div class="flex gap-4">
-                            <div>
-                                <BccFormLabel>Admin</BccFormLabel>
-                                <BccToggle v-model="perms.admin" />
-                            </div>
+                        <div class="flex flex-wrap gap-4">
+                            <USwitch
+                                v-model="perms.admin"
+                                label="Admin"
+                                description="Can manage users and their roles"
+                            />
                         </div>
                     </div>
                     <div
-                        class="col-span-full grid grid-cols-subgrid grid-rows-1 items-baseline rounded-xl border px-4 py-3"
+                        class="col-span-full grid grid-cols-subgrid grid-rows-1 items-baseline rounded-xl border border-neutral-300 px-4 py-3"
                     >
                         <h3>BMM</h3>
-                        <div class="flex flex-wrap gap-4">
-                            <div>
-                                <div>
-                                    <BccFormLabel>BMM Admin</BccFormLabel>
-                                    <BccToggle v-model="perms.bmm.admin" />
-                                </div>
-                                <div>
-                                    <BccFormLabel>
-                                        Integration environment
-                                    </BccFormLabel>
-                                    <BccToggle
-                                        v-model="perms.bmm.integration"
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <BccFormLabel>Podcasts</BccFormLabel>
+                        <div v-if="perms.bmm" class="flex flex-wrap gap-4">
+                            <USwitch
+                                v-model="perms.bmm.admin"
+                                label="BMM Admin"
+                                description="Has full access to BMM upload tools"
+                            />
+                            <USwitch
+                                v-model="perms.bmm.integration"
+                                label="Integration environment"
+                                description="Can upload to the integration environment"
+                            />
+                            <div class="flex flex-col gap-1">
+                                <label for="podcasts" class="text-sm">
+                                    Podcasts
+                                </label>
                                 <MultiSelector
-                            :available="['fra-kaare', 'tjgu-podcast']"
                                     v-model="perms.bmm.podcasts"
+                                    id="podcasts"
+                                    :available="['fra-kaare', 'tjgu-podcast']"
                                 />
                             </div>
-                            <div>
-                                <BccFormLabel>Languages</BccFormLabel>
+                            <div class="flex flex-col gap-1">
+                                <label for="languages" class="text-sm">
+                                    Languages
+                                </label>
                                 <MultiSelector
-                                    :available="availableLanguages"
                                     v-model="perms.bmm.languages"
+                                    id="languages"
+                                    :available="availableLanguages"
                                     :label-transformer="
                                         (v) => languageCodeToName(v)
                                     "
@@ -131,18 +135,23 @@ const isOpen = ref(false);
                         </div>
                     </div>
                     <div
-                        class="col-span-full grid grid-cols-subgrid items-baseline rounded-xl border px-4 py-3 mt-4"
+                        class="col-span-full grid grid-cols-subgrid grid-rows-1 items-baseline rounded-xl border border-neutral-300 px-4 py-3"
                     >
                         <h3>Transcription</h3>
-                        <div class="flex flex-wrap gap-4">
-                            <div>
-                                <BccFormLabel>Transcription Admin</BccFormLabel>
-                                <BccToggle v-model="perms.transcription.admin" />
-                            </div>
-                            <div>
-                                <BccFormLabel>Mediabanken</BccFormLabel>
-                                <BccToggle v-model="perms.transcription.mediabanken" />
-                            </div>
+                        <div
+                            v-if="perms.transcription"
+                            class="flex flex-wrap gap-4"
+                        >
+                            <USwitch
+                                v-model="perms.transcription.admin"
+                                label="Transcription Admin"
+                                description="Can correct transcriptions (and preview) any asset in Mediabanken"
+                            />
+                            <USwitch
+                                v-model="perms.transcription.mediabanken"
+                                label="Mediabanken"
+                                description="Can correct transcriptions shared from Mediabanken"
+                            />
                         </div>
                     </div>
                 </motion.div>

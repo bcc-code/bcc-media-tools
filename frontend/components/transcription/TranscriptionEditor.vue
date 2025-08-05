@@ -55,7 +55,8 @@ function canAddSegment(index: number) {
     if (deleteMode.value) return false;
     const curr = segments.value?.[index];
     const next = segments.value?.[index + 1];
-    return next?.start >= curr?.end + 1;
+    if (!curr || !next) return false;
+    return next.start >= curr.end + 1;
 }
 
 function addNewSegmentAt(index: number) {
@@ -94,13 +95,13 @@ function addNewSegmentAt(index: number) {
     <div
         :class="[
             'relative flex flex-col overflow-auto text-xl transition-all',
-            { 'ring-4 ring-inset ring-red-200': deleteMode },
+            { 'ring-4 ring-red-200 ring-inset': deleteMode },
         ]"
     >
         <TransitionGroup
             v-if="transcription"
             tag="div"
-            class="flex flex-col divide-y overflow-auto"
+            class="flex flex-col divide-y divide-neutral-300 overflow-auto"
             enter-active-class="transition duration-300 ease-out"
             enter-from-class="opacity-0 scale-95"
             enter-to-class="opacity-100 scale-100"
@@ -137,7 +138,7 @@ function addNewSegmentAt(index: number) {
                     class="relative w-full"
                 >
                     <button
-                        class="absolute right-1/2 z-10 grid aspect-square size-6 -translate-y-1/2 place-items-center rounded-full bg-gray-200 p-0.5 text-sm hover:bg-gray-300"
+                        class="absolute right-1/2 z-10 grid aspect-square size-6 -translate-y-1/2 place-items-center rounded-full bg-neutral-300 p-0.5 text-sm hover:scale-110"
                         :title="$t('transcription.addSegment')"
                         @click="addNewSegmentAt(index + 1)"
                     >

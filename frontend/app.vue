@@ -1,9 +1,11 @@
 <template>
-    <NuxtLayout>
-        <Toaster position="bottom-right" />
-        <NuxtPage />
-        <DevOnly>
-            <DevTools />
-        </DevOnly>
-    </NuxtLayout>
+    <UApp>
+        <NuxtLayout>
+            <NuxtRouteAnnouncer />
+            <NuxtPage />
+            <DevOnly>
+                <DevTools />
+            </DevOnly>
+        </NuxtLayout>
+    </UApp>
 </template>

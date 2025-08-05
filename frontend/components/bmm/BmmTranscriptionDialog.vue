@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { BccButton, BccModal, BccSpinner } from "@bcc-code/design-library-vue";
 import type {
     BmmEnvironment,
     BMMTrack,
@@ -86,16 +85,18 @@ function copyToClipboard() {
 </script>
 
 <template>
-    <BccModal
+    <UModal
         id="bmm-transcription-modal"
         class="h-full w-full max-w-[800px]"
-        :open="showTranscription"
-        @close="resetTranscription"
+        dismissible
+        title="Transcript"
+        v-model:open="showTranscription"
+        @after:leave="resetTranscription"
     >
-        <template #header>
-            <div class="flex justify-between gap-4">
+        <template #header="{ close }">
+            <div class="flex w-full items-start justify-between gap-4">
                 <div>
-                    <h2 class="text-heading-xl">Transcript</h2>
+                    <h2 class="mb-2 text-xl font-bold">Transcript</h2>
                     <LanguageSelector
                         v-if="transcriptionLanguages?.length"
                         v-model="transcriptionLanguage"
@@ -103,35 +104,35 @@ function copyToClipboard() {
                         :languages="transcriptionLanguages"
                     />
                 </div>
+                <UButton
+                    type="button"
+                    @click="
+                        () => {
+                            copyToClipboard();
+                            close();
+                        }
+                    "
+                >
+                    Copy to clipboard
+                </UButton>
             </div>
         </template>
 
-        <template v-if="transcription && !loadingTranscription">
-            <p
-                v-for="segment in transcription.segments"
-                class="leading-relaxed"
-            >
-                {{ segment.text }}
-            </p>
+        <template #body>
+            <template v-if="transcription && !loadingTranscription">
+                <p
+                    v-for="segment in transcription.segments"
+                    class="leading-relaxed"
+                >
+                    {{ segment.text }}
+                </p>
+            </template>
+            <div v-else-if="loadingTranscription">
+                <Icon
+                    name="svg-spinners:bars-rotate-fade"
+                    class="absolute top-1/2 left-1/2 size-8"
+                />
+            </div>
         </template>
-        <div v-else-if="loadingTranscription">
-            <BccSpinner size="sm" class="absolute left-1/2 top-1/2" />
-        </div>
-
-        <template #secondaryAction>
-            <BccButton
-                variant="secondary"
-                type="button"
-                @click="copyToClipboard"
-            >
-                Copy to clipboard
-            </BccButton>
-        </template>
-    </BccModal>
+    </UModal>
 </template>
-
-<style>
-#bmm-transcription-modal .bcc-modal-body {
-    flex-grow: 1;
-}
-</style>

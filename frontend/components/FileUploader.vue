@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { BccButton } from "@bcc-code/design-library-vue";
 import type { FileAndLanguage } from "~/utils/bmm";
 
 const props = defineProps<{
@@ -42,12 +41,13 @@ const abort = ref<() => void>();
 const showProgress = ref(false);
 
 const uploadFile = () => {
+    const trackId = props.metadata.trackId![0]!;
     for (const selectedFile of selectedFiles.value || []) {
         const start = Date.now();
 
         analytics.track("upload_started", {
             language: selectedFile.language,
-            trackId: props.metadata.trackId[0],
+            trackId: trackId,
             forceOverride: props.forceOverride,
         });
 
@@ -91,7 +91,7 @@ const uploadFile = () => {
 
             analytics.track("upload_finished", {
                 language: selectedFile.language,
-                trackId: props.metadata.trackId[0],
+                trackId: trackId,
                 success: false,
                 error: t.statusText,
                 duration: Date.now() - start,
@@ -115,7 +115,7 @@ const uploadFile = () => {
 
             analytics.track("upload_finished", {
                 language: selectedFile.language,
-                trackId: props.metadata.trackId[0],
+                trackId: trackId,
                 success: true,
                 duration: Date.now() - start,
                 size: selectedFile.file.size,
@@ -136,21 +136,23 @@ const uploadFile = () => {
 
 <template>
     <div class="flex flex-col gap-2">
-        <BccButton
-            @click="uploadFile"
+        <UButton
             v-if="!uploading"
             :disabled="selectedFiles.length < 1"
+            block
+            @click="uploadFile"
         >
             Upload
-        </BccButton>
-        <BccButton
-            @click="abort"
+        </UButton>
+        <UButton
             v-else
-            variant="secondary"
+            variant="soft"
             :disabled="uploadPercentage >= 100"
+            block
+            @click="abort"
         >
             Cancel
-        </BccButton>
+        </UButton>
         <Transition
             enter-active-class="transition duration-300 ease-out"
             enter-from-class="opacity-0 -translate-y-2 scale-95"
@@ -159,24 +161,13 @@ const uploadFile = () => {
             leave-from-class="opacity-100 translate-y-0 scale-100"
             leave-to-class="opacity-0 -translate-y-2 scale-95"
         >
-            <div
+            <UProgress
                 v-if="showProgress"
-                class="relative overflow-clip rounded-lg border border-neutral-200 bg-neutral-100 p-1"
-            >
-                <div
-                    class="flex h-6 rounded bg-green-600"
-                    :style="{ width: `${uploadPercentage}%` }"
-                />
-                <div
-                    class="absolute right-3 top-1/2 -translate-y-1/2 tabular-nums"
-                >
-                    {{
-                        uploadPercentage !== 100
-                            ? uploadPercentage.toFixed(1)
-                            : 100
-                    }}%
-                </div>
-            </div>
+                v-model="uploadPercentage"
+                :max="100"
+                size="lg"
+                status
+            />
         </Transition>
     </div>
 </template>

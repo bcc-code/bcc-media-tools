@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { BccButton, BccSelect } from "@bcc-code/design-library-vue";
 import { BmmEnvironment, BMMPermission } from "~/src/gen/api/v1/api_pb";
 
 defineProps<{
@@ -29,16 +28,19 @@ function checkForm() {
 </script>
 <template>
     <form class="flex h-full flex-col gap-4 p-4" @submit.prevent="checkForm">
-        <h3 class="text-heading-xl">BMM Upload</h3>
+        <h3 class="text-2xl font-bold">BMM Upload</h3>
 
-        <BccSelect
-            v-if="permissions.integration"
-            v-model="selectedEnvironment"
-            :label="$t('Environment')"
-        >
-            <option value="prod">{{ $t("Production") }}</option>
-            <option value="int">{{ $t("Integration") }}</option>
-        </BccSelect>
+        <UFormField v-if="permissions.integration" :label="$t('Environment')">
+            <USelectMenu
+                v-model="selectedEnvironment"
+                value-key="value"
+                label-key="label"
+                :items="[
+                    { label: $t('Integration'), value: 'int' },
+                    { label: $t('Production'), value: 'prod' },
+                ]"
+            />
+        </UFormField>
 
         <AlbumSelector
             v-model="albumId"
@@ -59,6 +61,8 @@ function checkForm() {
             :env="environment"
         />
 
-        <BccButton type="submit" class="mt-4">{{ $t("next") }}</BccButton>
+        <UButton type="submit" class="mt-4" block size="lg">
+            {{ $t("next") }}
+        </UButton>
     </form>
 </template>

@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import type { BMMTrack, Language, LanguageList } from "~/src/gen/api/v1/api_pb";
 import dayjs from "dayjs";
-import { BccButton } from "@bcc-code/design-library-vue";
 
 const props = defineProps<{
     track: BMMTrack;
@@ -51,38 +50,36 @@ const isInFuture = computed(() => {
 
 <template>
     <div
-        class="grid w-full cursor-pointer grid-cols-[auto_1fr] grid-rows-[auto_1fr] overflow-clip rounded-md border border-on-primary bg-primary shadow-sm hover:border-neutral-300"
+        class="grid w-full cursor-pointer grid-cols-[auto_1fr] grid-rows-[auto_1fr] overflow-clip rounded-md border border-neutral-300 bg-white shadow-xs hover:bg-neutral-50"
     >
         <span
             v-if="track && track.publishedAt"
             :class="[
-                'row-span-2 border-r border-on-primary px-2 py-1 text-left tabular-nums',
+                'row-span-2 border-r border-neutral-300 px-2 py-1 text-left tabular-nums',
                 {
-                    'bg-secondary text-tertiary': isInPast,
-                    'text-secondary': isInFuture,
+                    'text-neutral-400': isInPast,
+                    'text-neutral-600': isInFuture,
                 },
             ]"
         >
             {{ dateString(track.publishedAt.toDate()) }}
             <small v-if="publishedAtToday" class="block">Today</small>
         </span>
-        <div
-            class="col-start-2 flex grow justify-between gap-2 px-2 py-1 text-primary"
-        >
+        <div class="col-start-2 flex grow justify-between gap-2 px-2 py-1">
             <p>{{ track.title }}</p>
-            <BccButton
+            <UButton
                 v-if="track.hasTranscriptions"
                 size="xs"
-                variant="tertiary"
+                variant="link"
                 type="button"
                 @click.stop="emit('clickTranscription')"
             >
                 Show transcript
-            </BccButton>
+            </UButton>
         </div>
         <div
             v-if="availableLanguages?.length"
-            class="col-start-2 row-start-2 flex h-full flex-wrap gap-1 border-t border-on-primary px-2 py-2"
+            class="col-start-2 row-start-2 flex h-full flex-wrap gap-1 border-t border-neutral-300 px-2 py-2"
         >
             <img
                 v-for="l in availableLanguages"

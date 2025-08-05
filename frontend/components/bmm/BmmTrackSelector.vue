@@ -1,9 +1,4 @@
 <script lang="ts" setup>
-import {
-    BccFormLabel,
-    BccSpinner,
-    BccButton,
-} from "@bcc-code/design-library-vue";
 import type {
     BmmEnvironment,
     BMMTrack,
@@ -116,24 +111,24 @@ const transcriptionTrack = ref<BMMTrack>();
 
 <template>
     <div class="h-full overflow-y-auto">
-        <BccFormLabel>
+        <p>
             {{ label }}
-        </BccFormLabel>
+        </p>
         <div
             v-if="tracks && tracks.length > 0"
             class="relative mt-2 gap-2 space-y-2"
         >
-            <BccButton
+            <UButton
                 v-if="olderTracks.length"
                 @click="showOlderTracks = !showOlderTracks"
                 type="button"
-                variant="tertiary"
-                class="w-full"
+                variant="link"
+                block
             >
                 {{
                     showOlderTracks ? "Hide older tracks" : "Show older tracks"
                 }}
-            </BccButton>
+            </UButton>
             <TransitionGroup
                 move-class="transition duration-300 ease-out"
                 enter-active-class="transition duration-300 ease-out"
@@ -154,7 +149,9 @@ const transcriptionTrack = ref<BMMTrack>();
             </TransitionGroup>
         </div>
 
-        <BccSpinner v-else size="sm" class="mx-auto" />
+        <div v-else class="flex justify-center">
+            <Icon name="svg-spinners:bars-rotate-fade" class="size-8" />
+        </div>
     </div>
     <BmmTranscriptionDialog v-model:track="transcriptionTrack" :env="env" />
 </template>

@@ -1,13 +1,16 @@
 <script setup lang="ts">
-import { BccButton } from "@bcc-code/design-library-vue";
-
-const { $toast } = useNuxtApp();
-
 const show = ref(false);
 
+const toast = useToast();
 const clearLocalStorage = () => {
     localStorage.clear();
-    $toast.success("Local storage cleared");
+    toast.add({
+        icon: "heroicons:check",
+        title: "Cleared local storage",
+        description:
+            "All relevant data has been cleared from the local storage",
+        color: "success",
+    });
 };
 </script>
 
@@ -24,17 +27,13 @@ const clearLocalStorage = () => {
                 class="flex min-w-64 flex-col gap-2 rounded-lg border border-gray-300 bg-white p-4 shadow-lg"
             >
                 <h4 class="font-bold">Developer tools</h4>
-                <BccButton
-                    size="sm"
-                    variant="secondary"
-                    @click="clearLocalStorage"
-                >
+                <UButton size="sm" variant="soft" @click="clearLocalStorage">
                     Clear local storage
-                </BccButton>
+                </UButton>
             </div>
         </transition>
-        <BccButton size="lg" variant="secondary" rounded @click="show = !show">
+        <UButton size="xl" variant="subtle" square @click="show = !show">
             <Icon name="tabler:tool" />
-        </BccButton>
+        </UButton>
     </div>
 </template>

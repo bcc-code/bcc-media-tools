@@ -1,10 +1,4 @@
 <script lang="ts" setup>
-import {
-    BccAlert,
-    BccButton,
-    BccTable,
-    BccCheckbox,
-} from "@bcc-code/design-library-vue";
 import { BmmEnvironment } from "~/src/gen/api/v1/api_pb";
 import type { BMMSingleForm, FileAndLanguage } from "~/utils/bmm";
 import { usePermissionsLoading } from "~/utils/me";
@@ -75,7 +69,7 @@ const dateString = (date: Date) => {
 <template>
     <div class="h-full p-4">
         <div
-            class="mx-auto flex h-full max-w-screen-lg flex-col gap-4 rounded-2xl border border-on-secondary bg-white p-4 text-black"
+            class="mx-auto flex h-full max-w-screen-lg flex-col gap-4 rounded-2xl border border-neutral-300 bg-white p-4 text-black"
         >
             <template
                 v-if="
@@ -96,14 +90,14 @@ const dateString = (date: Date) => {
                         class="flex flex-col gap-4 p-4 transition"
                     >
                         <header>
-                            <h1 class="text-heading-xl">
+                            <h1 class="text-2xl font-bold">
                                 Upload files for "{{ form.track.title }}" ({{
                                     dateString(
                                         form.track.publishedAt!.toDate(),
                                     )
                                 }})
                             </h1>
-                            <p class="text-heading-md">
+                            <p class="text-xl">
                                 Existing languages:
                                 <img
                                     v-for="l in form.track.languages?.Languages"
@@ -114,37 +108,37 @@ const dateString = (date: Date) => {
                                 />
                             </p>
                         </header>
-                        <BccCheckbox
+                        <UCheckbox
                             v-model="forceOverride"
                             label="Replace transcription even if has been manually corrected"
                         />
-                        <BccTable
+                        <UTable
+                            :key="selectedFiles.length"
                             :items="selectedFiles"
                             :columns="[
                                 {
-                                    key: 'language',
-                                    text: 'Language',
-                                    sortable: false,
+                                    accessorKey: 'language',
+                                    header: 'Language',
                                 },
-                                { key: 'file.name', text: 'Name' },
                                 {
-                                    key: 'actions',
-                                    text: 'Actions',
-                                    sortable: false,
+                                    accessorKey: 'file.name',
+                                    header: 'Name',
+                                },
+                                {
+                                    id: 'actions',
+                                    size: 50,
                                 },
                             ]"
+                            :data="selectedFiles"
                         >
-                            <template #item.file.name="{ item }">
-                                <div
-                                    class="max-w-[420px] truncate"
-                                    :title="item.file.name"
-                                >
-                                    {{ item.file.name }}
+                            <template #name-cell="item">
+                                <div class="max-w-[420px] truncate">
+                                    {{ item.getValue() }}
                                 </div>
                             </template>
-                            <template #item.language="{ item }">
+                            <template #language-cell="{ row }">
                                 <LanguageSelector
-                                    v-model="item.language"
+                                    v-model="row.original.language"
                                     :class="{
                                         hidden: !me.bmm.admin,
                                     }"
@@ -154,25 +148,28 @@ const dateString = (date: Date) => {
                                     label=""
                                 />
                             </template>
-                            <template #item.actions="{ item }">
-                                <BccButton
+                            <template #actions-cell="{ row }">
+                                <UButton
                                     @click="
                                         selectedFiles.splice(
-                                            selectedFiles.indexOf(item as any),
+                                            selectedFiles.indexOf(
+                                                row.original as any,
+                                            ),
                                             1,
                                         )
                                     "
-                                    context="danger"
-                                    variant="tertiary"
+                                    color="error"
+                                    variant="link"
+                                    square
                                 >
                                     <Icon name="heroicons:trash" />
-                                </BccButton>
+                                </UButton>
                             </template>
-                        </BccTable>
+                        </UTable>
                         <SelectFile
                             v-if="selectedFiles.length < 1 || me.bmm.admin"
                             v-model="selectedFiles"
-                            :default-language="metadata.language[0]"
+                            :default-language="metadata.language![0]!"
                             :accept-multiple="me.bmm.admin"
                         />
                         <FileUploader
@@ -182,21 +179,24 @@ const dateString = (date: Date) => {
                             :forceOverride="forceOverride"
                             @uploaded="uploaded = true"
                         />
-                        <BccButton
-                            variant="secondary"
+                        <UButton
+                            variant="ghost"
+                            block
                             @click="metadataIsSet = false"
                         >
                             Back
-                        </BccButton>
+                        </UButton>
                     </div>
                 </template>
                 <template v-else>
-                    <BccAlert context="success">
-                        {{ $t("uploaded") }}
-                    </BccAlert>
-                    <BccButton variant="secondary" @click="reset">
+                    <UAlert
+                        color="success"
+                        variant="subtle"
+                        :title="$t('uploaded')"
+                    />
+                    <UButton variant="soft" @click="reset" block>
                         Upload more
-                    </BccButton>
+                    </UButton>
                 </template>
             </template>
             <template v-else-if="permissionsLoading">Loading...</template>

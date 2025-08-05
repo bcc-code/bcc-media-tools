@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { BccSelect } from "@bcc-code/design-library-vue";
 import type { BmmEnvironment } from "~/src/gen/api/v1/api_pb";
 
 const props = defineProps<{
@@ -46,15 +45,34 @@ const languageDisplay = (l: string) => {
         return dn.of(l);
     }
 };
+
+const items = computed(() => {
+    const langs = [];
+
+    langs.push(
+        ...bmmLanguages.value.map((l) => ({
+            label: languageDisplay(l),
+            value: l,
+        })),
+    );
+
+    return langs;
+});
 </script>
 
 <template>
-    <BccSelect required v-model="model" :label="label ?? $t('language')">
-        <option v-if="bmmLanguages.length > 1" disabled value="">
-            {{ $t("selectAnOption") }}
-        </option>
-        <option v-for="l in bmmLanguages" :value="l">
-            {{ languageDisplay(l) }}
-        </option>
-    </BccSelect>
+    <UFormField required :label="label ?? $t('Language')">
+        <USelect
+            v-model="model"
+            :placeholder="$t('selectAnOption')"
+            :items="
+                bmmLanguages.map((l) => ({
+                    label: languageDisplay(l),
+                    value: l,
+                }))
+            "
+            size="lg"
+            class="w-full"
+        />
+    </UFormField>
 </template>

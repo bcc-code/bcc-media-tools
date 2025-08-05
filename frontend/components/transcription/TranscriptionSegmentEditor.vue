@@ -1,6 +1,4 @@
 <script lang="ts" setup>
-import { BccButton } from "@bcc-code/design-library-vue";
-
 const props = defineProps<{
     segment: Segment;
     deleted: boolean;
@@ -30,7 +28,7 @@ watch(words.value, (v) => {
 const handleTextUpdate = (index: number, event: Event) => {
     const target = event.target as HTMLSpanElement;
     const arr = words.value;
-    arr[index].text = target.innerText;
+    arr[index]!.text = target.innerText;
     words.value = arr;
 };
 
@@ -52,7 +50,7 @@ const { deleteMode } = useDeleteMode();
         :class="{
             'cursor-pointer hover:bg-red-200 hover:text-red-700': deleteMode,
             'bg-neutral-200 opacity-50': deleted,
-            'ring-2 ring-inset ring-black': focused,
+            'ring-2 ring-black ring-inset': focused,
         }"
         :tabindex="deleteMode ? 0 : -1"
         @click="deleteMode ? $emit('toggleDelete') : undefined"
@@ -89,25 +87,26 @@ const { deleteMode } = useDeleteMode();
             </div>
         </div>
         <div v-if="!deleteMode" class="ml-auto">
-            <BccButton
-                v-if="!deleted"
-                context="danger"
-                variant="tertiary"
-                size="sm"
-                :title="$t('transcription.deleteSegment')"
-                @click="$emit('toggleDelete')"
-            >
-                <Icon name="heroicons:trash" />
-            </BccButton>
-            <BccButton
-                v-else
-                variant="secondary"
-                size="sm"
-                :title="$t('transcription.undeleteSegment')"
-                @click="$emit('toggleDelete')"
-            >
-                <Icon name="heroicons:arrow-path" />
-            </BccButton>
+            <UTooltip v-if="!deleted" :text="$t('transcription.deleteSegment')">
+                <UButton
+                    color="error"
+                    variant="ghost"
+                    square
+                    @click="$emit('toggleDelete')"
+                >
+                    <Icon name="heroicons:trash" />
+                </UButton>
+            </UTooltip>
+            <UTooltip v-else :text="$t('transcription.undeleteSegment')">
+                <UButton
+                    variant="ghost"
+                    color="neutral"
+                    square
+                    @click="$emit('toggleDelete')"
+                >
+                    <Icon name="heroicons:arrow-path" />
+                </UButton>
+            </UTooltip>
         </div>
     </div>
 </template>

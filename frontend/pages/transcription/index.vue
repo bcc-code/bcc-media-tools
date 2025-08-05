@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { BccButton, BccInput } from "@bcc-code/design-library-vue";
 import { useMe } from "~/utils/me";
 
 useHead({
@@ -86,13 +85,13 @@ function setSegments(s: Segment[]) {
             <div class="flex max-w-80 items-center gap-4">
                 <div class="shrink-0">
                     <label for="file-input" class="cursor-pointer">
-                        <BccButton class="pointer-events-none">
+                        <UButton class="pointer-events-none">
                             {{
                                 fileName && truncatedFileName
                                     ? truncatedFileName
                                     : "Select file"
                             }}
-                        </BccButton>
+                        </UButton>
                     </label>
                     <input
                         id="file-input"
@@ -108,19 +107,17 @@ function setSegments(s: Segment[]) {
                         !fileName && me?.transcription && me.transcription.admin
                     "
                 >
-                    <span class="text-sm text-tertiary">or</span>
+                    <span class="text-tertiary text-sm">or</span>
                     <form
                         class="flex gap-1 rounded-xl bg-neutral-100 p-2"
                         @submit.prevent="navigateTo(`/transcription/${vxId}`)"
                     >
-                        <BccInput
+                        <UInput
                             v-model="vxId"
                             placeholder="Vidispine-ID"
                             class="min-w-32"
                         />
-                        <BccButton variant="tertiary" type="submit">
-                            Go
-                        </BccButton>
+                        <UButton variant="ghost" type="submit">Go</UButton>
                     </form>
                 </template>
                 <TranscriptionDownloader

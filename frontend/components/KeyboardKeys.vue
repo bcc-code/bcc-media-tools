@@ -9,7 +9,7 @@ defineProps<{
         <kbd
             v-for="(key, i) in keys"
             :key="key + i"
-            class="rounded border border-b-4 border-black bg-white px-2 py-0.5 text-sm shadow-sm"
+            class="rounded border border-b-4 border-neutral-600 bg-white px-2 py-0.5 text-sm shadow-xs"
         >
             {{ key }}
         </kbd>

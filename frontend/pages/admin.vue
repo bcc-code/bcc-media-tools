@@ -1,5 +1,4 @@
 <script lang="tsx" setup>
-import { BccButton, BccInput } from "@bcc-code/design-library-vue";
 import { Permissions } from "~/src/gen/api/v1/api_pb";
 
 useHead({
@@ -63,15 +62,16 @@ const showNewEmailForm = ref(false);
         <div class="mx-auto w-full max-w-screen-md p-8 text-black">
             <div class="mb-8 flex items-center justify-between gap-2">
                 <h2 class="text-2xl font-bold">Admin</h2>
-                <BccInput
+                <UInput
                     v-model="searchQuery"
                     clearable
                     placeholder="Search email..."
+                    icon="heroicons:magnifying-glass"
                     class="ml-auto"
                 />
-                <BccButton @click="(showNewEmailForm = true)">
+                <UButton @click="showNewEmailForm = true">
                     Add new email
-                </BccButton>
+                </UButton>
             </div>
             <TransitionGroup
                 v-if="filteredPermissions"
@@ -90,10 +90,8 @@ const showNewEmailForm = ref(false);
                     class="flex items-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 p-4"
                     @submit.prevent="addEmail"
                 >
-                    <BccInput v-model="newEmail" type="email" clearable />
-                    <BccButton type="submit" variant="secondary">
-                        Add
-                    </BccButton>
+                    <UInput v-model="newEmail" type="email" />
+                    <UButton type="submit" variant="soft">Add</UButton>
                 </form>
                 <PermissionView
                     v-for="[email, perms] in Object.entries(
@@ -113,7 +111,7 @@ const showNewEmailForm = ref(false);
     >
         <h1 class="text-2xl font-bold">You are not an admin</h1>
         <NuxtLink to="/">
-            <BccButton variant="secondary">Go home</BccButton>
+            <UButton variant="soft" block>Go home</UButton>
         </NuxtLink>
     </div>
 </template>

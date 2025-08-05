@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { BccButton, BccModal, BccToggle } from "@bcc-code/design-library-vue";
 import { normalizeProps, useMachine } from "@zag-js/vue";
 import * as splitter from "@zag-js/splitter";
 import type { ComponentPublicInstance } from "vue";
@@ -49,7 +48,7 @@ function formatErrorMessage(msg: string | null): string | null {
     return msg;
 }
 
-const { $toast } = useNuxtApp();
+const toast = useToast();
 const reset = async (notify: boolean = true) => {
     loading.value = true;
     error.value = null;
@@ -58,7 +57,11 @@ const reset = async (notify: boolean = true) => {
         setTranscription(result);
         localStorage[key] = JSON.stringify(result);
         if (notify) {
-            $toast.success("Transcription reset successfully");
+            toast.add({
+                icon: "heroicons:check",
+                title: "Transcription reset successfully",
+                color: "success",
+            });
         }
         return result;
     } catch (e: any) {
@@ -85,10 +88,18 @@ const submitToMediabanken = async () => {
             transcription: transcription.value,
         });
         localStorage.removeItem(key);
-        $toast.success("Transcription submitted successfully");
+        toast.add({
+            icon: "heroicons:check",
+            title: "Transcription submitted successfully",
+            color: "success",
+        });
         navigateTo("/transcription");
     } catch (err) {
-        $toast.error("Failed to submit transcription");
+        toast.add({
+            icon: "heroicons:exclamation",
+            title: "Failed to submit transcription",
+            color: "error",
+        });
         loadingSubmit.value = false;
     }
 };
@@ -121,7 +132,7 @@ watch(videoelement, (el) => {
 
             let prev = 0;
             for (let i = 0; i < segments.value.length; i++) {
-                const s = segments.value[i];
+                const s = segments.value[i]!;
                 if ((s.start < current || prev < current) && s.end > current) {
                     index = i;
                     break;
@@ -220,30 +231,30 @@ const splitterApi = computed(() =>
 </script>
 
 <template>
-    <div class="flex h-screen flex-col">
+    <div class="flex h-[calc(100dvh-var(--header-height))] flex-col">
         <div
-            class="flex items-center justify-between gap-4 border-b border-gray-400 bg-primary px-6 py-3"
+            class="flex items-center justify-between gap-4 border-b border-neutral-300 bg-white px-6 py-3"
         >
             <div class="flex gap-3">
                 <p>{{ $t("transcription.changesSavedLocally") }}</p>
                 <button
-                    class="-m-3 p-3 text-gray-500 underline"
+                    class="-m-3 p-3 text-neutral-500 underline"
                     @click="() => reset()"
                 >
                     {{ $t("transcription.reset") }}
                 </button>
             </div>
             <div class="flex items-center gap-4">
-                <BccToggle
+                <USwitch
                     v-model="previewSubtitles"
                     :label="$t('transcription.previewSubtitles')"
                 />
-                <BccToggle
+                <USwitch
                     v-model="seekOnFocus"
                     was-toggled
                     :label="$t('transcription.seekOnFocus')"
                 />
-                <BccToggle
+                <USwitch
                     v-model="deleteMode"
                     :label="$t('transcription.deleteMode')"
                 />
@@ -252,9 +263,9 @@ const splitterApi = computed(() =>
                     :segments="segments"
                     :filename="fileName"
                 />
-                <BccButton @click="showSubmitConfirmationModal = true">
+                <UButton @click="showSubmitConfirmationModal = true">
                     {{ $t("transcription.save") }}
-                </BccButton>
+                </UButton>
                 <button
                     class="-mx-3 aspect-square p-3"
                     @click="showManual = true"
@@ -294,7 +305,9 @@ const splitterApi = computed(() =>
                     @update-segments="(s) => setSegments(s)"
                 />
             </div>
-            <div class="flex h-full items-center border-x px-1">
+            <div
+                class="flex h-full items-center border-x border-neutral-300 px-1"
+            >
                 <div
                     v-bind="
                         splitterApi.getResizeTriggerProps({ id: 'left:right' })
@@ -303,7 +316,7 @@ const splitterApi = computed(() =>
             </div>
             <div
                 v-bind="splitterApi.getPanelProps({ id: 'right' })"
-                class="flex bg-gray-100"
+                class="flex bg-neutral-100"
             >
                 <div class="relative m-auto p-4">
                     <Icon
@@ -316,7 +329,7 @@ const splitterApi = computed(() =>
                             ref="videoelement"
                             :src="video"
                             controls
-                            class="bg-gray-200 shadow-xl"
+                            class="bg-neutral-200 shadow-xl"
                         />
                         <p
                             v-if="previewSubtitles && focusedSegment"
@@ -333,41 +346,39 @@ const splitterApi = computed(() =>
             </div>
         </div>
         <TranscriptionManual v-model:open="showManual" />
-        <BccModal
-            :open="showSubmitConfirmationModal"
-            :close-button="false"
-            @close="showSubmitConfirmationModal = false"
+        <UModal
+            v-model:open="showSubmitConfirmationModal"
+            :close="false"
+            :title="$t('transcription.submitConfirmationTitle')"
+            :description="$t('transcription.submitConfirmationMessage')"
         >
-            <h3 class="mb-3 text-xl font-bold">
-                {{ $t("transcription.submitConfirmationTitle") }}
-            </h3>
-            <p>{{ $t("transcription.submitConfirmationMessage") }}</p>
-            <template #primaryAction>
-                <BccButton
-                    :disabled="loadingSubmit"
-                    @click="submitToMediabanken"
+            <template #footer>
+                <UButton
+                    variant="link"
+                    autofocus
+                    class="ml-auto"
+                    @click="showSubmitConfirmationModal = false"
                 >
+                    {{ $t("transcription.submitConfirmationCancel") }}
+                </UButton>
+                <UButton :disabled="loadingSubmit" @click="submitToMediabanken">
                     <Icon
                         v-if="loadingSubmit"
                         name="svg-spinners:bars-rotate-fade"
                     />
                     {{ $t("transcription.submitConfirmationSubmit") }}
-                </BccButton>
+                </UButton>
             </template>
-            <template #secondaryAction>
-                <BccButton
-                    variant="secondary"
-                    @click="showSubmitConfirmationModal = false"
-                >
-                    {{ $t("transcription.submitConfirmationCancel") }}
-                </BccButton>
-            </template>
-        </BccModal>
+        </UModal>
     </div>
 </template>
 
 <style>
 [data-scope="splitter"][data-part="resize-trigger"] {
-    @apply h-16 w-2 rounded-full bg-gray-300;
+    height: calc(var(--spacing) * 16) /* 4rem = 64px */;
+    width: calc(var(--spacing) * 2) /* 0.5rem = 8px */;
+    border-radius: calc(infinity * 1px);
+    background-color: var(--color-gray-300)
+        /* oklch(87.2% 0.01 258.338) = #d1d5dc */;
 }
 </style>
