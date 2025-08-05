@@ -15,7 +15,7 @@ export default defineNuxtConfig({
     app: {
         head: {
             bodyAttrs: {
-                class: "bg-neutral-100",
+                class: "bg-neutral-100 dark:bg-neutral-950",
             },
             titleTemplate: "%s - BCC Media Tools",
             link: [
@@ -58,7 +58,7 @@ export default defineNuxtConfig({
         host: "localhost",
     },
     ui: {
-        colorMode: false,
+        // colorMode: false,
     },
     compatibilityDate: "2024-10-16",
 });

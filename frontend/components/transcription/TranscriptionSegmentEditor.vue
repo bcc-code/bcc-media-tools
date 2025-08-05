@@ -49,7 +49,7 @@ const { deleteMode } = useDeleteMode();
         class="flex items-center px-6 py-4 transition-all ease-out"
         :class="{
             'cursor-pointer hover:bg-red-200 hover:text-red-700': deleteMode,
-            'bg-neutral-200 opacity-50': deleted,
+            'bg-neutral-200 opacity-50 dark:bg-neutral-800': deleted,
             'ring-2 ring-black ring-inset': focused,
         }"
         :tabindex="deleteMode ? 0 : -1"
@@ -76,7 +76,7 @@ const { deleteMode } = useDeleteMode();
                     :key="`segment:${segment.id}:${segment.start}:${segment.end}:word:${w.start}:${w.end}`"
                     contenteditable
                     :tabindex="deleteMode ? -1 : 0"
-                    class="rounded-md border border-transparent px-2 leading-tight focus:border-gray-900 focus:bg-gray-100 focus:outline-none"
+                    class="rounded-md border border-transparent px-2 leading-tight focus:border-neutral-900 focus:bg-neutral-100 focus:outline-none dark:focus:border-neutral-100 dark:focus:bg-neutral-900"
                     @input="handleTextUpdate(index, $event)"
                     @focus="$emit('wordFocus', w, segment)"
                     @keydown.down="$emit('focusNext')"

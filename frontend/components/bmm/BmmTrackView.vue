@@ -50,12 +50,12 @@ const isInFuture = computed(() => {
 
 <template>
     <div
-        class="grid w-full cursor-pointer grid-cols-[auto_1fr] grid-rows-[auto_1fr] overflow-clip rounded-md border border-neutral-300 bg-white shadow-xs hover:bg-neutral-50"
+        class="grid w-full cursor-pointer grid-cols-[auto_1fr] grid-rows-[auto_1fr] overflow-clip rounded-md border border-neutral-300 bg-white shadow-xs hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800"
     >
         <span
             v-if="track && track.publishedAt"
             :class="[
-                'row-span-2 border-r border-neutral-300 px-2 py-1 text-left tabular-nums',
+                'row-span-2 border-r border-neutral-300 px-2 py-1 text-left tabular-nums dark:border-neutral-700',
                 {
                     'text-neutral-400': isInPast,
                     'text-neutral-600': isInFuture,
@@ -79,14 +79,14 @@ const isInFuture = computed(() => {
         </div>
         <div
             v-if="availableLanguages?.length"
-            class="col-start-2 row-start-2 flex h-full flex-wrap gap-1 border-t border-neutral-300 px-2 py-2"
+            class="col-start-2 row-start-2 flex h-full flex-wrap gap-1 border-t border-neutral-300 px-2 py-2 dark:border-neutral-700"
         >
             <img
                 v-for="l in availableLanguages"
                 :key="l.code"
                 :title="languageCodeToName(l.code)"
                 :src="'/images/flags/' + l.iconFile"
-                class="inline h-4 rounded-sm border border-white shadow data-[disabled=true]:scale-90 data-[disabled=true]:opacity-25 data-[disabled=true]:grayscale"
+                class="inline h-4 rounded-sm shadow data-[disabled=true]:scale-90 data-[disabled=true]:opacity-25 data-[disabled=true]:grayscale"
                 :alt="l.code"
                 :data-disabled="!trackHasLanguage(l)"
             />

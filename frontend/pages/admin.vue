@@ -59,7 +59,7 @@ const showNewEmailForm = ref(false);
 
 <template>
     <div class="flex h-screen w-screen" v-if="me?.admin">
-        <div class="mx-auto w-full max-w-screen-md p-8 text-black">
+        <div class="mx-auto w-full max-w-screen-md p-8">
             <div class="mb-8 flex items-center justify-between gap-2">
                 <h2 class="text-2xl font-bold">Admin</h2>
                 <UInput
@@ -98,7 +98,7 @@ const showNewEmailForm = ref(false);
             >
                 <form
                     v-if="showNewEmailForm"
-                    class="flex items-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 p-4"
+                    class="flex items-center gap-2 rounded-2xl border-2 border-dashed border-neutral-200 p-4 dark:border-neutral-700"
                     @submit.prevent="addEmail"
                 >
                     <UInput v-model="newEmail" type="email" />

@@ -46,7 +46,9 @@ const isOpen = ref(false);
 </script>
 
 <template>
-    <div class="flex flex-col rounded-xl border border-neutral-300 bg-white">
+    <div
+        class="flex flex-col rounded-xl border border-neutral-300 bg-white dark:border-neutral-700 dark:bg-neutral-900"
+    >
         <LayoutGroup>
             <AnimatePresence>
                 <motion.button
@@ -77,13 +79,13 @@ const isOpen = ref(false);
                 <motion.div
                     v-if="isOpen"
                     layout
-                    class="grid max-w-full grid-cols-[1fr_3fr] gap-4 overflow-hidden border-t border-neutral-300 p-4"
+                    class="grid max-w-full grid-cols-[1fr_3fr] gap-4 overflow-hidden border-t border-neutral-300 p-4 dark:border-neutral-700"
                     :initial="{ height: 0 }"
                     :animate="{ height: 'auto' }"
                     :exit="{ height: 0 }"
                 >
                     <div
-                        class="grid-span-1 col-span-full grid grid-cols-subgrid items-baseline gap-4 rounded-lg border border-neutral-300 px-4 py-3"
+                        class="grid-span-1 col-span-full grid grid-cols-subgrid items-baseline gap-4 rounded-lg border border-neutral-300 px-4 py-3 dark:border-neutral-700"
                     >
                         <h3>General</h3>
                         <div class="flex flex-wrap gap-4">
@@ -95,7 +97,7 @@ const isOpen = ref(false);
                         </div>
                     </div>
                     <div
-                        class="col-span-full grid grid-cols-subgrid grid-rows-1 items-baseline rounded-xl border border-neutral-300 px-4 py-3"
+                        class="col-span-full grid grid-cols-subgrid grid-rows-1 items-baseline rounded-xl border border-neutral-300 px-4 py-3 dark:border-neutral-700"
                     >
                         <h3>BMM</h3>
                         <div v-if="perms.bmm" class="flex flex-wrap gap-4">
@@ -135,7 +137,7 @@ const isOpen = ref(false);
                         </div>
                     </div>
                     <div
-                        class="col-span-full grid grid-cols-subgrid grid-rows-1 items-baseline rounded-xl border border-neutral-300 px-4 py-3"
+                        class="col-span-full grid grid-cols-subgrid grid-rows-1 items-baseline rounded-xl border border-neutral-300 px-4 py-3 dark:border-neutral-700"
                     >
                         <h3>Transcription</h3>
                         <div

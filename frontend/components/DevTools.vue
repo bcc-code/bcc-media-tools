@@ -24,7 +24,7 @@ const clearLocalStorage = () => {
         >
             <div
                 v-if="show"
-                class="flex min-w-64 flex-col gap-2 rounded-lg border border-gray-300 bg-white p-4 shadow-lg"
+                class="flex min-w-64 flex-col gap-2 rounded-lg border border-gray-300 bg-white p-4 shadow-lg dark:border-gray-700 dark:bg-gray-900"
             >
                 <h4 class="font-bold">Developer tools</h4>
                 <UButton size="sm" variant="soft" @click="clearLocalStorage">

@@ -6,7 +6,7 @@ const props = defineProps<{
 
 const format = ref<"json" | "srt" | "srt-words">("json");
 
-const { $toast } = useNuxtApp();
+const toast = useToast();
 const download = () => {
     switch (format.value) {
         case "json":
@@ -20,7 +20,11 @@ const download = () => {
             break;
     }
 
-    $toast.success("Transcript downloaded successfully");
+    toast.add({
+        icon: "heroicons:check",
+        title: "Transcript downloaded successfully",
+        color: "success",
+    });
 };
 
 const widths = {
@@ -32,17 +36,17 @@ const widths = {
 
 <template>
     <div
-        class="flex divide-x divide-gray-300 rounded-lg border border-gray-300 shadow-sm"
+        class="flex divide-x divide-neutral-300 rounded-lg border border-neutral-300 shadow-sm dark:divide-neutral-700 dark:border-neutral-700"
     >
         <button
-            class="flex-1 rounded-l-lg bg-white px-3 py-1.5 text-sm"
+            class="flex-1 rounded-l-lg bg-white px-3 py-1.5 text-sm dark:bg-neutral-800"
             @click="download"
         >
             {{ $t("transcription.download") }}
         </button>
         <select
             v-model="format"
-            class="flex-1 rounded-r-lg bg-white px-3 py-1.5 text-sm text-gray-400 transition-all duration-200 ease-out"
+            class="flex-1 rounded-r-lg bg-white px-3 py-1.5 text-sm text-neutral-400 transition-all duration-200 ease-out dark:bg-neutral-800"
             :style="{ maxWidth: widths[format] }"
         >
             <option value="json">JSON</option>

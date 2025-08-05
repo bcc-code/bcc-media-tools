@@ -233,7 +233,7 @@ const splitterApi = computed(() =>
 <template>
     <div class="flex h-[calc(100dvh-var(--header-height))] flex-col">
         <div
-            class="flex items-center justify-between gap-4 border-b border-neutral-300 bg-white px-6 py-3"
+            class="flex items-center justify-between gap-4 border-b border-neutral-300 bg-white px-6 py-3 dark:border-neutral-700 dark:bg-neutral-900"
         >
             <div class="flex gap-3">
                 <p>{{ $t("transcription.changesSavedLocally") }}</p>
@@ -277,7 +277,10 @@ const splitterApi = computed(() =>
                 </button>
             </div>
         </div>
-        <div v-bind="splitterApi.getRootProps()" class="flex bg-white">
+        <div
+            v-bind="splitterApi.getRootProps()"
+            class="flex bg-white dark:bg-neutral-900"
+        >
             <div
                 v-bind="splitterApi.getPanelProps({ id: 'left' })"
                 class="flex flex-col"
@@ -306,7 +309,7 @@ const splitterApi = computed(() =>
                 />
             </div>
             <div
-                class="flex h-full items-center border-x border-neutral-300 px-1"
+                class="flex h-full items-center border-x border-neutral-300 px-1 dark:border-neutral-700"
             >
                 <div
                     v-bind="
@@ -316,7 +319,7 @@ const splitterApi = computed(() =>
             </div>
             <div
                 v-bind="splitterApi.getPanelProps({ id: 'right' })"
-                class="flex bg-neutral-100"
+                class="flex bg-neutral-100 dark:bg-neutral-950"
             >
                 <div class="relative m-auto p-4">
                     <Icon
@@ -329,7 +332,7 @@ const splitterApi = computed(() =>
                             ref="videoelement"
                             :src="video"
                             controls
-                            class="bg-neutral-200 shadow-xl"
+                            class="bg-neutral-200 shadow-xl dark:bg-neutral-800"
                         />
                         <p
                             v-if="previewSubtitles && focusedSegment"
@@ -375,10 +378,13 @@ const splitterApi = computed(() =>
 
 <style>
 [data-scope="splitter"][data-part="resize-trigger"] {
-    height: calc(var(--spacing) * 16) /* 4rem = 64px */;
-    width: calc(var(--spacing) * 2) /* 0.5rem = 8px */;
+    height: calc(var(--spacing) * 16);
+    width: calc(var(--spacing) * 2);
     border-radius: calc(infinity * 1px);
-    background-color: var(--color-gray-300)
-        /* oklch(87.2% 0.01 258.338) = #d1d5dc */;
+    background-color: var(--color-gray-300);
+
+    &:where(.dark, .dark *) {
+        background-color: var(--ui-color-neutral-700);
+    }
 }
 </style>

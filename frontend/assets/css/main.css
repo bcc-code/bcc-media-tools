@@ -8,3 +8,11 @@ body,
     display: flex;
     flex-direction: column;
 }
+
+:root {
+    --ui-primary: black;
+}
+
+.dark {
+    --ui-primary: white;
+}

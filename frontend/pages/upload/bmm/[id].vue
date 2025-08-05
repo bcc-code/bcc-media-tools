@@ -79,7 +79,7 @@ const uploaded = ref(false);
 <template>
     <div class="h-full p-4">
         <div
-            class="border-on-secondary mx-auto flex h-full max-w-screen-lg flex-col gap-4 rounded-2xl border bg-white p-4 text-black"
+            class="border-on-secondary mx-auto flex h-full max-w-screen-lg flex-col gap-4 rounded-2xl border bg-white p-4 dark:border-neutral-700 dark:bg-neutral-900"
         >
             <UAlert v-if="!routeParamsAreValid" variant="subtle" color="error">
                 <div class="flex items-center gap-2">

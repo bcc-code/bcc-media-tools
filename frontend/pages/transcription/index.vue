@@ -109,7 +109,7 @@ function setSegments(s: Segment[]) {
                 >
                     <span class="text-tertiary text-sm">or</span>
                     <form
-                        class="flex gap-1 rounded-xl bg-neutral-100 p-2"
+                        class="flex gap-1 rounded-xl bg-neutral-200 p-2 dark:bg-neutral-800"
                         @submit.prevent="navigateTo(`/transcription/${vxId}`)"
                     >
                         <UInput

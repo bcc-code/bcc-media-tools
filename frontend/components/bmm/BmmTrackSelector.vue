@@ -14,7 +14,7 @@ const props = defineProps<{
     env: BmmEnvironment;
 }>();
 
-const emit = defineEmits<{
+defineEmits<{
     transcription: [id: string];
 }>();
 

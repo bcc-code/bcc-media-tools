@@ -69,7 +69,7 @@ const dateString = (date: Date) => {
 <template>
     <div class="h-full p-4">
         <div
-            class="mx-auto flex h-full max-w-screen-lg flex-col gap-4 rounded-2xl border border-neutral-300 bg-white p-4 text-black"
+            class="mx-auto flex h-full max-w-screen-lg flex-col gap-4 rounded-2xl border border-neutral-300 bg-white p-4 dark:border-neutral-700 dark:bg-neutral-900"
         >
             <template
                 v-if="

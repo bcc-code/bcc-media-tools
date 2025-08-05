@@ -75,18 +75,19 @@ function resetTranscription() {
     transcriptionLanguages.value = undefined;
 }
 
-const { $toast } = useNuxtApp();
+const toast = useToast();
 function copyToClipboard() {
     if (!transcription.value) return;
     const text = transcription.value.segments.map((s) => s.text).join(" ");
     navigator.clipboard.writeText(text);
-    $toast.success("Copied to clipboard");
+    toast.add({
+        title: "Copied to clipboard",
+    });
 }
 </script>
 
 <template>
     <UModal
-        id="bmm-transcription-modal"
         class="h-full w-full max-w-[800px]"
         dismissible
         title="Transcript"
