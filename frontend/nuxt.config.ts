@@ -10,7 +10,6 @@ export default defineNuxtConfig({
     typescript: {
         shim: false,
     },
-    devtools: { enabled: false },
     ssr: false,
     css: ["~/assets/css/main.css"],
     app: {
@@ -51,7 +50,7 @@ export default defineNuxtConfig({
             { code: "nb", name: "Norsk", file: "nb.json" },
         ],
         detectBrowserLanguage: false,
-        restructureDir: false,
+        restructureDir: './',
     },
     devServer: {
         port: 8001,
