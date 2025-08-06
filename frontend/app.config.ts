@@ -4,5 +4,12 @@ export default defineAppConfig({
 			primary: 'indigo',
 			neutral: 'neutral'
 		},
+
+		// Custom default classes for components
+		select: {
+			slots: {
+				content: 'min-w-fit'
+			}
+		}
 	}
 })

@@ -10,6 +10,7 @@ body,
 }
 
 :root {
+    --font-sans: "Inter", sans-serif;
     --ui-primary: black;
 }
 

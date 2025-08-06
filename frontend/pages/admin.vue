@@ -104,7 +104,7 @@ const showNewEmailForm = ref(false);
                     <UInput v-model="newEmail" type="email" />
                     <UButton type="submit" variant="soft">Add</UButton>
                 </form>
-                <PermissionView
+                <AdminPermissionView
                     v-for="[email, perms] in Object.entries(
                         filteredPermissions,
                     )"
