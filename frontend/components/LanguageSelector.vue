@@ -65,12 +65,7 @@ const items = computed(() => {
         <USelect
             v-model="model"
             :placeholder="$t('selectAnOption')"
-            :items="
-                bmmLanguages.map((l) => ({
-                    label: languageDisplay(l),
-                    value: l,
-                }))
-            "
+            :items
             size="lg"
             class="w-full"
         />

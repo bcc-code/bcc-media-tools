@@ -1,23 +1,23 @@
 <script setup lang="ts">
-import type {
-    BmmEnvironment,
-    BMMTrack,
-    Transcription,
-} from "~/src/gen/api/v1/api_pb";
+import type { BmmEnvironment, BMMTrack } from "~/src/gen/api/v1/api_pb";
 
 const props = defineProps<{
     env: BmmEnvironment;
 }>();
 
-const track = defineModel<BMMTrack>("track");
-
 const api = useAPI();
 
-const transcription = ref<Transcription>();
-const showTranscription = ref(false);
+const track = defineModel<BMMTrack>("track");
+const showTranscription = computed({
+    get: () => !!track.value,
+    set: (v) => {
+        if (!v) {
+            resetTranscription();
+        }
+    },
+});
 const transcriptionLanguages = ref<string[]>();
 const transcriptionLanguage = ref<string>();
-const loadingTranscription = ref(false);
 
 const analytics = useAnalytics();
 watch(showTranscription, (s) => {
@@ -43,32 +43,26 @@ watch(track, (t) => {
         trackId: t.id,
     });
 });
-watch(transcriptionLanguage, (t) => {
-    if (!t) return;
-    getTranscription();
-});
 
-async function getTranscription() {
-    if (!track.value) return;
-
-    loadingTranscription.value = true;
-    showTranscription.value = true;
-
-    try {
-        transcription.value = await api.getBMMTranscription({
-            language: transcriptionLanguage.value,
-            bmmId: track.value.id,
-            environment: props.env,
-        });
-    } catch (e) {
-        resetTranscription();
-    } finally {
-        loadingTranscription.value = false;
-    }
-}
+const { data: transcription, status } = useLazyAsyncData(
+    () =>
+        `${props.env}:${track.value?.id}:${transcriptionLanguage.value}:transcription`,
+    async () => {
+        if (!track.value) return;
+        return api
+            .getBMMTranscription({
+                language: transcriptionLanguage.value,
+                bmmId: track.value.id,
+                environment: props.env,
+            })
+            .catch((e) => {
+                resetTranscription();
+                throw e;
+            });
+    },
+);
 
 function resetTranscription() {
-    showTranscription.value = false;
     track.value = undefined;
     transcription.value = undefined;
     transcriptionLanguage.value = undefined;
@@ -81,7 +75,9 @@ function copyToClipboard() {
     const text = transcription.value.segments.map((s) => s.text).join(" ");
     navigator.clipboard.writeText(text);
     toast.add({
+        icon: "heroicons:check",
         title: "Copied to clipboard",
+        color: "success",
     });
 }
 </script>
@@ -92,9 +88,8 @@ function copyToClipboard() {
         dismissible
         title="Transcript"
         v-model:open="showTranscription"
-        @after:leave="resetTranscription"
     >
-        <template #header="{ close }">
+        <template #header>
             <div class="flex w-full items-start justify-between gap-4">
                 <div>
                     <h2 class="mb-2 text-xl font-bold">Transcript</h2>
@@ -105,22 +100,14 @@ function copyToClipboard() {
                         :languages="transcriptionLanguages"
                     />
                 </div>
-                <UButton
-                    type="button"
-                    @click="
-                        () => {
-                            copyToClipboard();
-                            close();
-                        }
-                    "
-                >
+                <UButton type="button" @click="copyToClipboard">
                     Copy to clipboard
                 </UButton>
             </div>
         </template>
 
         <template #body>
-            <template v-if="transcription && !loadingTranscription">
+            <template v-if="transcription && status == 'success'">
                 <p
                     v-for="segment in transcription.segments"
                     class="leading-relaxed"
@@ -128,7 +115,7 @@ function copyToClipboard() {
                     {{ segment.text }}
                 </p>
             </template>
-            <div v-else-if="loadingTranscription">
+            <div v-else-if="status == 'pending'">
                 <Icon
                     name="svg-spinners:bars-rotate-fade"
                     class="absolute top-1/2 left-1/2 size-8"

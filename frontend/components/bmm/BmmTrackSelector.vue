@@ -1,12 +1,6 @@
 <script lang="ts" setup>
-import type {
-    BmmEnvironment,
-    BMMTrack,
-    LanguageList,
-} from "~/src/gen/api/v1/api_pb";
+import type { BmmEnvironment, BMMTrack } from "~/src/gen/api/v1/api_pb";
 import dayjs from "dayjs";
-
-const tracks = ref<BMMTrack[]>();
 
 const props = defineProps<{
     album: string;
@@ -20,27 +14,29 @@ defineEmits<{
 
 const api = useAPI();
 
-watch(
-    [() => props.env, () => props.album],
-    async ([env, album]) => {
-        tracks.value = [];
-        if (/^\d+$/.test(album)) {
-            // Actual album
-            tracks.value = (
-                await api.getAlbumTracks({ albumId: album, environment: env })
-            ).tracks;
+const isYearAlbum = (album: string) => /^\d+$/.test(album);
+
+const {
+    data: tracks,
+    status,
+    error,
+} = useAsyncData(
+    () => `${props.env}:${props.album}:tracks`,
+    () => {
+        if (isYearAlbum(props.album)) {
+            return api.getAlbumTracks({
+                albumId: props.album,
+                environment: props.env,
+            });
         } else {
-            // Podcast tag
-            tracks.value = (
-                await api.getPodcastTracks({
-                    podcastTag: album,
-                    environment: env,
-                    limit: 30,
-                })
-            ).tracks;
+            return api.getPodcastTracks({
+                podcastTag: props.album,
+                environment: props.env,
+                limit: 30,
+            });
         }
     },
-    { immediate: true },
+    { transform: (data) => data.tracks },
 );
 
 const selectedTrack = defineModel<BMMTrack>();
@@ -95,15 +91,9 @@ const filteredTracks = computed(() => {
     return tracks.value.filter((t) => t.id == selectedTrack.value!.id);
 });
 
-const languages = ref<LanguageList | undefined>();
-watch(
-    () => props.env,
-    async (env) => {
-        languages.value = await api.getLanguages({
-            environment: env,
-        });
-    },
-    { immediate: true },
+const { data: languages } = useAsyncData(
+    () => `${props.env}:languages`,
+    () => api.getLanguages({ environment: props.env }),
 );
 
 const transcriptionTrack = ref<BMMTrack>();
@@ -115,7 +105,7 @@ const transcriptionTrack = ref<BMMTrack>();
             {{ label }}
         </p>
         <div
-            v-if="tracks && tracks.length > 0"
+            v-if="status == 'success' && tracks && tracks.length"
             class="relative mt-2 gap-2 space-y-2"
         >
             <UButton
@@ -149,9 +139,18 @@ const transcriptionTrack = ref<BMMTrack>();
             </TransitionGroup>
         </div>
 
-        <div v-else class="flex justify-center">
+        <div v-else-if="status == 'pending'" class="flex justify-center">
             <Icon name="svg-spinners:bars-rotate-fade" class="size-8" />
         </div>
+
+        <p
+            v-else-if="tracks && !tracks.length"
+            class="my-8 text-center text-sm text-neutral-400 dark:text-neutral-600"
+        >
+            No tracks found
+        </p>
+
+        <pre>{{ error }}</pre>
     </div>
     <BmmTranscriptionDialog v-model:track="transcriptionTrack" :env="env" />
 </template>

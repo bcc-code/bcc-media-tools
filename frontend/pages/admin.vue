@@ -1,5 +1,5 @@
 <script lang="tsx" setup>
-import { Permissions } from "~/src/gen/api/v1/api_pb";
+import { BmmEnvironment, Permissions } from "~/src/gen/api/v1/api_pb";
 
 useHead({
     title: "Admin",
@@ -55,6 +55,15 @@ const filteredPermissions = computed(() => {
 });
 
 const showNewEmailForm = ref(false);
+
+const { data: availableLanguages } = useAsyncData(
+    () => `languages`,
+    () => api.getLanguages({ environment: BmmEnvironment.Production }),
+    {
+        default: () => [],
+        transform: (data) => data.Languages.map((l) => l.code),
+    },
+);
 </script>
 
 <template>
@@ -108,9 +117,10 @@ const showNewEmailForm = ref(false);
                     v-for="[email, perms] in Object.entries(
                         filteredPermissions,
                     )"
+                    :key="email"
                     :email="email"
                     :permissions="perms"
-                    :key="email"
+                    :languages="availableLanguages"
                     @remove="removeEmail(email)"
                 />
             </TransitionGroup>

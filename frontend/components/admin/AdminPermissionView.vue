@@ -1,10 +1,11 @@
 <script lang="ts" setup>
-import { BmmEnvironment, Permissions } from "~/src/gen/api/v1/api_pb";
+import { Permissions } from "~/src/gen/api/v1/api_pb";
 import { motion } from "motion-v";
 
 const props = defineProps<{
     email: string;
     permissions: Permissions;
+    languages: string[];
 }>();
 
 defineEmits<{
@@ -28,12 +29,6 @@ function withDefaultPermissions(p: Permissions): Permissions {
 
 const perms = reactive(withDefaultPermissions(props.permissions));
 const api = useAPI();
-
-const availableLanguages = ref<string[]>([]);
-api.getLanguages({ environment: BmmEnvironment.Production }).then(
-    (result) =>
-        (availableLanguages.value = result.Languages.map((f) => f.code)),
-);
 
 watch(perms, () => {
     api.updatePermissions({
@@ -121,7 +116,7 @@ const isOpen = ref(false);
                                 v-model="perms.bmm.languages"
                                 multiple
                                 :items="
-                                    availableLanguages.map((v) => ({
+                                    props.languages.map((v) => ({
                                         label: languageCodeToName(v),
                                         value: v,
                                     }))
