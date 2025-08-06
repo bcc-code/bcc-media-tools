@@ -20,7 +20,7 @@ const form = ref<BMMSingleForm>({
     environment: "prod",
 });
 
-const metadataIsSet = ref(false);
+const step = ref<"metadata" | "upload" | "done">("metadata");
 const forceOverride = ref(false);
 
 const selectedFiles = ref<FileAndLanguage[]>([]);
@@ -47,11 +47,8 @@ const metadata = computed<Record<string, string[]>>(() => {
     return f;
 });
 
-const uploaded = ref(false);
-
 const reset = () => {
-    metadataIsSet.value = false;
-    uploaded.value = false;
+    step.value = "metadata";
     selectedFiles.value = [];
     form.value = {
         title: "",
@@ -67,26 +64,42 @@ const dateString = (date: Date) => {
 </script>
 
 <template>
-    <div class="h-full p-4">
+    <div class="flex h-full w-full flex-col items-stretch p-4">
+        <div class="mx-auto w-full max-w-screen-lg py-6">
+            <UStepper
+                v-model="step"
+                disabled
+                :items="[
+                    {
+                        title: 'Metadata',
+                        value: 'metadata',
+                        icon: 'tabler:file',
+                    },
+                    { title: 'Upload', value: 'upload', icon: 'tabler:upload' },
+                    { title: 'Done', value: 'done', icon: 'tabler:check' },
+                ]"
+            />
+        </div>
         <div
-            class="mx-auto flex h-full max-w-screen-lg flex-col gap-4 rounded-2xl border border-neutral-300 bg-white p-4 dark:border-neutral-700 dark:bg-neutral-900"
+            class="mx-auto flex h-full w-full max-w-screen-lg grow-1 flex-col gap-4 rounded-2xl border border-neutral-300 bg-white p-4 dark:border-neutral-700 dark:bg-neutral-900"
         >
             <template
                 v-if="
                     me && me.bmm && (me.bmm.podcasts.length > 0 || me.bmm.admin)
                 "
             >
-                <template v-if="!uploaded">
+                <template v-if="step != 'done'">
                     <!-- @vue-expect-error The component's `v-model` expects a form with the type `BMMSingleForm` -->
                     <BmmSingleMetadata
-                        v-if="!metadataIsSet"
+                        v-if="step == 'metadata'"
                         v-model="form"
                         :permissions="me.bmm"
                         :environment="selectedEnvironment"
-                        @set="metadataIsSet = true"
+                        class="grow-1"
+                        @set="step = 'upload'"
                     />
                     <div
-                        v-if="metadataIsSet && form.track"
+                        v-if="step == 'upload' && form.track"
                         class="flex flex-col gap-4 p-4 transition"
                     >
                         <header>
@@ -124,12 +137,12 @@ const dateString = (date: Date) => {
                             :endpoint="config.public.grpcUrl + '/upload'"
                             :metadata="metadata"
                             :forceOverride="forceOverride"
-                            @uploaded="uploaded = true"
+                            @uploaded="step = 'done'"
                         />
                         <UButton
                             variant="ghost"
                             block
-                            @click="metadataIsSet = false"
+                            @click="step = 'metadata'"
                         >
                             Back
                         </UButton>
