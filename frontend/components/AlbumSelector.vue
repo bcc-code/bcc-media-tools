@@ -17,7 +17,7 @@ const albums = ref<{ [key: string]: string }>({});
 
 const currentYear = new Date().getFullYear();
 const selectedType = ref<"podcasts" | "albums">("albums");
-const selectedYear = ref(currentYear.toString());
+const selectedYear = ref(currentYear);
 const albumId = defineModel<string>();
 
 watch(
@@ -34,14 +34,11 @@ watch(
         albumId.value = "";
         albums.value = {};
         let albumsRes = (
-            await api.getAlbums({ year: parseInt(newYear), environment: env })
+            await api.getAlbums({ year: newYear, environment: env })
         ).albums;
-        for (let a in albumsRes) {
-            const alb = albumsRes[a];
-            if (alb) {
-                albums.value[alb.id] = alb.title;
-            }
-        }
+        albumsRes.forEach((a) => {
+            albums.value[a.id] = a.title;
+        });
     },
     { immediate: true },
 );
@@ -54,6 +51,23 @@ watch(
     },
     { immediate: true },
 );
+
+const yearItems = computed(() => {
+    if (!years.value) return [];
+    return Object.values(years.value)
+        .sort((a, b) => b.year - a.year)
+        .map((y) => ({
+            label: `${y.year} (${y.count})`,
+            value: y.year,
+        }));
+});
+
+const albumItems = computed(() => {
+    return Object.entries(albums.value).map(([id, title]) => ({
+        label: title,
+        value: id,
+    }));
+});
 </script>
 
 <template>
@@ -86,18 +100,18 @@ watch(
     </UFormField>
 
     <template v-else-if="selectedType == 'albums' && years">
-        <UFormField v-model="selectedYear" :label="$t('Year')">
+        <UFormField :label="$t('Year')">
             <USelect
-                value-key="value"
-                label-key="label"
-                :items="
-                    Object.values(years)
-                        .map((y) => ({
-                            label: `${y.year} (${y.count})`,
-                            value: y.year,
-                        }))
-                        .sort((a, b) => b.value - a.value)
-                "
+                v-model="selectedYear"
+                :items="yearItems"
+                size="lg"
+                class="w-full"
+            />
+        </UFormField>
+        <UFormField v-if="Object.keys(albums).length" :label="$t('Album')">
+            <USelect
+                v-model="albumId"
+                :items="albumItems"
                 size="lg"
                 class="w-full"
             />

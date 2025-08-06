@@ -39,9 +39,9 @@ function checkForm() {
                     { label: $t('Integration'), value: 'int' },
                     { label: $t('Production'), value: 'prod' },
                 ]"
+                class="w-full"
             />
         </UFormField>
-
         <AlbumSelector
             v-model="albumId"
             :permissions="permissions"
