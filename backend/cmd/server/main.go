@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"path/filepath"
 
 	"github.com/bcc-code/mediabank-bridge/log"
 	"github.com/rs/zerolog"
@@ -130,7 +129,8 @@ func main() {
 		TempPath:       tempPath,
 	})
 
-	mux.Handle("/", http.HandlerFunc(serveFiles))
+	fs := http.FileServer(http.Dir(staticFilePath))
+	mux.Handle("/", fs)
 
 	log.L.Debug().Msg("Starting server on http://localhost:8080/")
 
@@ -141,14 +141,4 @@ func main() {
 	if err != nil {
 		log.L.Error().Err(err).Msg("Error starting server")
 	}
-}
-
-func serveFiles(w http.ResponseWriter, r *http.Request) {
-	localPath := filepath.Join(staticFilePath, r.URL.Path)
-
-	if r.URL.Path[len(r.URL.Path)-1] == '/' {
-		localPath = filepath.Join(staticFilePath, "/index.html")
-	}
-
-	http.ServeFile(w, r, localPath)
 }
