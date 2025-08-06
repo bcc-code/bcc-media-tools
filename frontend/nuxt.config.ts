@@ -52,6 +52,7 @@ export default defineNuxtConfig({
         ],
         detectBrowserLanguage: false,
         restructureDir: './',
+        strategy: 'no_prefix',
     },
     devServer: {
         port: 8001,

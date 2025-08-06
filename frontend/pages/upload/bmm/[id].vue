@@ -7,6 +7,10 @@ useHead({
     title: "BMM Upload",
 });
 
+definePageMeta({
+    layout: false,
+});
+
 type RouteParams = {
     id?: string;
     lang?: string | string[];
@@ -161,6 +165,7 @@ const uploaded = ref(false);
                                 v-model="selectedFiles"
                                 :default-language="metadata.language![0]!"
                                 :accept-multiple="me.bmm.admin"
+                                :environment="selectedEnvironment"
                             />
                             <FileUploader
                                 v-model="selectedFiles"

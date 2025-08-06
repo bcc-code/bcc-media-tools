@@ -1,76 +1,57 @@
 <script lang="ts" setup>
+import type { BmmEnvironment } from "~/src/gen/api/v1/api_pb";
 import type { FileAndLanguage } from "~/utils/bmm";
-
-const selectedFiles = defineModel<FileAndLanguage[]>({ required: true });
-
-const isDragOver = ref(false);
-const dragEnter = () => {
-    isDragOver.value = true;
-};
-
-const dragLeave = () => {
-    isDragOver.value = false;
-};
-
-const handleDrop = (event: DragEvent) => {
-    isDragOver.value = false;
-    const files = event.dataTransfer?.files;
-
-    if (!files) return;
-
-    for (const file of files) {
-        if (!file.type.startsWith("audio/")) {
-            continue;
-        }
-
-        selectedFiles.value.push({ file, language: props.defaultLanguage });
-
-        if (!props.acceptMultiple) {
-            break;
-        }
-    }
-};
-
-const fileInput = ref<HTMLInputElement>(null!);
-
-const selectFile = (event: Event) => {
-    const target = event.target as HTMLInputElement;
-    for (const file of target.files ?? []) {
-        selectedFiles.value.push({
-            file: file as File,
-            language: props.defaultLanguage,
-        });
-    }
-};
 
 const props = defineProps<{
     defaultLanguage: string;
     acceptMultiple: boolean;
+    environment: BmmEnvironment;
 }>();
+
+const selectedFiles = defineModel<FileAndLanguage[]>({ required: true });
+const selectedFilesComputed = computed({
+    get() {
+        return selectedFiles.value.map((f) => f.file);
+    },
+    set(value: File | File[]) {
+        if (!Array.isArray(value)) value = [value];
+        selectedFiles.value = value.map((f, i) => ({
+            file: f,
+            language: selectedFiles.value[i]?.language || props.defaultLanguage,
+        }));
+    },
+});
+
+const { me } = useMe();
 </script>
 
 <template>
-    <div
-        class="mx-auto flex h-48 w-full cursor-pointer rounded-lg border bg-neutral-100 text-center transition hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700"
-        :class="[
-            isDragOver
-                ? 'border-green-500'
-                : 'border-neutral-300 dark:border-neutral-700',
-        ]"
-        @click="fileInput?.click()"
-        @dragenter.prevent="dragEnter"
-        @dragover.prevent
-        @dragleave.prevent="dragLeave"
-        @drop.prevent="handleDrop"
+    <UFileUpload
+        v-model="selectedFilesComputed"
+        :multiple="props.acceptMultiple"
+        accept="audio/mpeg"
+        layout="list"
+        label="Add files"
+        description="Drag and drop files, or click to browse"
     >
-        <p class="m-auto text-lg">{{ $t("dragAndDropFileHere") }}</p>
-        <input
-            ref="fileInput"
-            type="file"
-            class="hidden"
-            accept="audio/*"
-            :multiple="props.acceptMultiple ?? null"
-            @change="selectFile"
-        />
-    </div>
+        <template #file-trailing="{ index }">
+            <div class="ml-auto flex items-center gap-2">
+                <LanguageSelector
+                    v-if="selectedFiles[index] && me?.bmm"
+                    v-model="selectedFiles[index].language"
+                    :disabled="!me.bmm.admin"
+                    :languages="me.bmm.languages"
+                    :env="props.environment"
+                    label=""
+                />
+                <UButton
+                    icon="heroicons:x-mark"
+                    variant="ghost"
+                    color="error"
+                    square
+                    @click="selectedFiles.splice(index, 1)"
+                />
+            </div>
+        </template>
+    </UFileUpload>
 </template>

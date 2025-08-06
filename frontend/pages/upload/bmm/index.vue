@@ -112,65 +112,12 @@ const dateString = (date: Date) => {
                             v-model="forceOverride"
                             label="Replace transcription even if has been manually corrected"
                         />
-                        <UTable
-                            :key="selectedFiles.length"
-                            :items="selectedFiles"
-                            :columns="[
-                                {
-                                    accessorKey: 'language',
-                                    header: 'Language',
-                                },
-                                {
-                                    accessorKey: 'file.name',
-                                    header: 'Name',
-                                },
-                                {
-                                    id: 'actions',
-                                    size: 50,
-                                },
-                            ]"
-                            :data="selectedFiles"
-                        >
-                            <template #name-cell="item">
-                                <div class="max-w-[420px] truncate">
-                                    {{ item.getValue() }}
-                                </div>
-                            </template>
-                            <template #language-cell="{ row }">
-                                <LanguageSelector
-                                    v-model="row.original.language"
-                                    :class="{
-                                        hidden: !me.bmm.admin,
-                                    }"
-                                    :disabled="!me.bmm.admin"
-                                    :languages="me.bmm.languages"
-                                    :env="selectedEnvironment"
-                                    label=""
-                                />
-                            </template>
-                            <template #actions-cell="{ row }">
-                                <UButton
-                                    @click="
-                                        selectedFiles.splice(
-                                            selectedFiles.indexOf(
-                                                row.original as any,
-                                            ),
-                                            1,
-                                        )
-                                    "
-                                    color="error"
-                                    variant="link"
-                                    square
-                                >
-                                    <Icon name="heroicons:trash" />
-                                </UButton>
-                            </template>
-                        </UTable>
                         <SelectFile
                             v-if="selectedFiles.length < 1 || me.bmm.admin"
                             v-model="selectedFiles"
                             :default-language="metadata.language![0]!"
                             :accept-multiple="me.bmm.admin"
+                            :environment="selectedEnvironment"
                         />
                         <FileUploader
                             v-model="selectedFiles"
