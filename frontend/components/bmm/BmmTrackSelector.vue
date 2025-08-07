@@ -116,7 +116,9 @@ const transcriptionTrack = ref<BMMTrack>();
                 block
             >
                 {{
-                    showOlderTracks ? "Hide older tracks" : "Show older tracks"
+                    showOlderTracks
+                        ? $t("bmmUpload.hideOlderTracks")
+                        : $t("bmmUpload.showOlderTracks")
                 }}
             </UButton>
             <TransitionGroup
@@ -147,7 +149,7 @@ const transcriptionTrack = ref<BMMTrack>();
             v-else-if="tracks && !tracks.length"
             class="my-8 text-center text-sm text-neutral-400 dark:text-neutral-600"
         >
-            No tracks found
+            {{ $t("bmmUpload.noTracks") }}
         </p>
 
         <pre>{{ error }}</pre>

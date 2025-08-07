@@ -12,22 +12,23 @@ watch(
     { immediate: true },
 );
 
+const { t } = useI18n();
 const route = useRoute();
 const items = computed(() => {
     return [
         {
-            label: "BMM Upload",
+            label: t("home.bmmUpload.title"),
             icon: "tabler:upload",
             to: "/upload/bmm",
         },
         {
-            label: "Transcription",
+            label: t("home.transcription.title"),
             icon: "tabler:text-recognition",
             to: "/transcription",
             active: route.path.includes("/transcription"),
         },
         {
-            label: "Admin",
+            label: t("home.admin.title"),
             icon: "tabler:settings",
             enabled: me.value?.admin,
             to: "/admin",
@@ -40,7 +41,7 @@ const items = computed(() => {
     <div class="flex grow-1 flex-col">
         <header
             ref="header"
-            class="sticky top-0 z-10 flex items-center gap-8 border-b border-neutral-300 bg-white px-4 dark:border-neutral-700 dark:bg-neutral-900"
+            class="sticky top-0 z-10 flex items-center gap-4 border-b border-neutral-300 bg-white px-4 dark:border-neutral-700 dark:bg-neutral-900"
         >
             <NuxtLink to="/" class="flex items-center gap-2 text-sm font-bold">
                 <img
@@ -53,6 +54,7 @@ const items = computed(() => {
             </NuxtLink>
             <UNavigationMenu orientation="horizontal" highlight :items />
             <ThemeSwitch class="ml-auto" />
+            <LanguageSwitcher />
         </header>
         <main class="grow-1">
             <slot />

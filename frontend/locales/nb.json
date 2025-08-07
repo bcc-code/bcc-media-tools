@@ -3,10 +3,7 @@
     "title": "Tittel",
     "language": "Språk",
     "selectAnOption": "Velg et alternativ...",
-    "album": "Album",
-    "track": "Spor",
-    "next": "Neste",
-    "uploaded": "Lastet opp",
+    "noPermissions": "Du har ikke nok tilgang til dette",
     "transcription": {
         "reset": "Tilbakestill",
         "changesSavedLocally": "Endringer er lagret lokalt",
@@ -24,6 +21,60 @@
         "submitConfirmationMessage": "Dette vil markere transkripsjonen som ferdig, og du vil miste tilgang til filen.",
         "submitConfirmationCancel": "Avbryt",
         "submitConfirmationSubmit": "Ja, send inn",
-        "download": "Last ned"
+        "download": "Last ned",
+        "load": "Åpne",
+        "selectFile": "Velg fil",
+        "or": "eller"
+    },
+    "bmmUpload": {
+        "title": "BMM opplasting",
+        "next": "Neste",
+        "back": "Forrige",
+        "album": "Album | Album",
+        "podcast": "Podcast | Podcaster",
+        "track": "Spor",
+        "year": "År",
+        "type": "Type",
+        "environment": "Miljø",
+        "trackRequiredAlert": "Vennligst velg et spor",
+        "uploadedLanguages": "Opplastede språk",
+        "uploaded": "Opplastet",
+        "uploadMore": "Last opp mer",
+        "forceOverride": "Erstatt transkripsjon selv om den er manuelt endret",
+        "uploadFilesFor": "Last opp filer for \"{title}\" ({date})",
+        "albumCount": "{count} album | {count} album",
+        "noTracks": "Ingen spor funnet",
+        "hideOlderTracks": "Skjul eldre spor",
+        "showOlderTracks": "Vis eldre spor",
+        "steps": {
+            "metadata": "Metadata",
+            "upload": "Last opp",
+            "done": "Ferdig"
+        },
+        "showTranscription": "Vis transkripsjon",
+        "transcription": "Transkripsjon",
+        "copyToClipboard": "Kopier til utklippstavle",
+        "copiedToClipboard": "Kopiert til utklippstavle",
+        "addFiles": "Legg til filer",
+        "addFilesDescription": "Dra og slipp filer her eller klikk for å browse",
+        "uploadError": "Opplasting feilet. Vennligst prøv igjen",
+        "resetSuccess": "Transkripsjon er tilbakestilt",
+        "submitSuccess": "Transkripsjon er sendt til Mediabanken",
+        "submitError": "Feil ved sending til Mediabanken"
+    },
+    "home": {
+        "bmmUpload": {
+            "title": "BMM opplasting",
+            "description": "Last opp oversettede lydfiler til BMM"
+        },
+        "transcription": {
+            "title": "Transkripsjon",
+            "description": "Rediger og last ned transkripsjoner av videoer"
+        },
+        "admin": {
+            "title": "Admin",
+            "description": "Administrer brukere og tilganger",
+            "badge": "Kun for admin"
+        }
     }
 }

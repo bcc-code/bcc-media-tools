@@ -63,7 +63,9 @@ const isInFuture = computed(() => {
             ]"
         >
             {{ dateString(track.publishedAt.toDate()) }}
-            <small v-if="publishedAtToday" class="block">Today</small>
+            <small v-if="publishedAtToday" class="block">
+                {{ $t("bmmUpload.today") }}
+            </small>
         </span>
         <div class="col-start-2 flex grow justify-between gap-2 px-2 py-1">
             <p>{{ track.title }}</p>
@@ -74,7 +76,7 @@ const isInFuture = computed(() => {
                 type="button"
                 @click.stop="emit('clickTranscription')"
             >
-                Show transcript
+                {{ $t("bmmUpload.showTranscription") }}
             </UButton>
         </div>
         <div

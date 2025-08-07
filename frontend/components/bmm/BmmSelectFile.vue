@@ -31,12 +31,12 @@ const { me } = useMe();
         :multiple="props.acceptMultiple"
         accept="audio/mpeg"
         layout="list"
-        label="Add files"
-        description="Drag and drop files, or click to browse"
+        :label="$t('bmmUpload.addFiles')"
+        :description="$t('bmmUpload.addFilesDescription')"
     >
         <template #file-trailing="{ index }">
             <div class="ml-auto flex items-center gap-2">
-                <LanguageSelector
+                <BmmLanguageSelector
                     v-if="selectedFiles[index] && me?.bmm"
                     v-model="selectedFiles[index].language"
                     :disabled="!me.bmm.admin"

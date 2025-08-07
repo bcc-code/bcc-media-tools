@@ -50,7 +50,6 @@ export default defineNuxtConfig({
             { code: "en", name: "English", file: "en.json" },
             { code: "nb", name: "Norsk", file: "nb.json" },
         ],
-        detectBrowserLanguage: false,
         restructureDir: './',
         strategy: 'no_prefix',
     },

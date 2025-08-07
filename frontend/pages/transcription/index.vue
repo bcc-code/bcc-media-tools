@@ -89,7 +89,7 @@ function setSegments(s: Segment[]) {
                             {{
                                 fileName && truncatedFileName
                                     ? truncatedFileName
-                                    : "Select file"
+                                    : $t("transcription.selectFile")
                             }}
                         </UButton>
                     </label>
@@ -107,7 +107,9 @@ function setSegments(s: Segment[]) {
                         !fileName && me?.transcription && me.transcription.admin
                     "
                 >
-                    <span class="text-tertiary text-sm">or</span>
+                    <span class="text-tertiary text-sm">
+                        {{ $t("transcription.or") }}
+                    </span>
                     <form
                         class="flex gap-1 rounded-xl bg-neutral-200 p-2 dark:bg-neutral-800"
                         @submit.prevent="navigateTo(`/transcription/${vxId}`)"
@@ -117,7 +119,9 @@ function setSegments(s: Segment[]) {
                             placeholder="Vidispine-ID"
                             class="min-w-32"
                         />
-                        <UButton variant="ghost" type="submit">Go</UButton>
+                        <UButton variant="ghost" type="submit">
+                            {{ $t("transcription.load") }}
+                        </UButton>
                     </form>
                 </template>
                 <TranscriptionDownloader

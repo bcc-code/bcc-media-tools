@@ -61,12 +61,11 @@ const items = computed(() => {
 </script>
 
 <template>
-    <UFormField required :label="label ?? $t('Language')">
+    <UFormField required :label="label ?? $t('language')">
         <USelect
             v-model="model"
             :placeholder="$t('selectAnOption')"
             :items
-            size="lg"
             class="w-full"
         />
     </UFormField>

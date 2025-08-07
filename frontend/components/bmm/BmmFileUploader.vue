@@ -40,6 +40,8 @@ const abort = ref<() => void>();
 
 const showProgress = ref(false);
 
+const { t: i18n } = useI18n();
+
 const uploadFile = () => {
     const trackId = props.metadata.trackId![0]!;
     for (const selectedFile of selectedFiles.value || []) {
@@ -97,7 +99,7 @@ const uploadFile = () => {
                 duration: Date.now() - start,
             });
 
-            if (confirm("Upload failed, try again?")) {
+            if (confirm(i18n("bmmUpload.uploadError"))) {
                 uploadFile();
             }
         };
@@ -142,7 +144,7 @@ const uploadFile = () => {
             block
             @click="uploadFile"
         >
-            Upload
+            {{ $t("bmmUpload.upload") }}
         </UButton>
         <UButton
             v-else
@@ -151,7 +153,7 @@ const uploadFile = () => {
             block
             @click="abort"
         >
-            Cancel
+            {{ $t("bmmUpload.cancel") }}
         </UButton>
         <Transition
             enter-active-class="transition duration-300 ease-out"

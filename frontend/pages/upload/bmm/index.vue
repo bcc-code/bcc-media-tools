@@ -71,12 +71,20 @@ const dateString = (date: Date) => {
                 disabled
                 :items="[
                     {
-                        title: 'Metadata',
+                        title: $t('bmmUpload.steps.metadata'),
                         value: 'metadata',
                         icon: 'tabler:file',
                     },
-                    { title: 'Upload', value: 'upload', icon: 'tabler:upload' },
-                    { title: 'Done', value: 'done', icon: 'tabler:check' },
+                    {
+                        title: $t('bmmUpload.steps.upload'),
+                        value: 'upload',
+                        icon: 'tabler:upload',
+                    },
+                    {
+                        title: $t('bmmUpload.steps.done'),
+                        value: 'done',
+                        icon: 'tabler:check',
+                    },
                 ]"
             />
         </div>
@@ -102,37 +110,44 @@ const dateString = (date: Date) => {
                         v-if="step == 'upload' && form.track"
                         class="flex flex-col gap-4 p-4 transition"
                     >
-                        <header>
+                        <header class="mb-2">
                             <h1 class="text-2xl font-bold">
-                                Upload files for "{{ form.track.title }}" ({{
-                                    dateString(
-                                        form.track.publishedAt!.toDate(),
-                                    )
-                                }})
+                                {{
+                                    $t("bmmUpload.uploadFilesFor", {
+                                        title: form.track.title,
+                                        date: dateString(
+                                            form.track.publishedAt!.toDate(),
+                                        ),
+                                    })
+                                }}
                             </h1>
-                            <p class="text-xl">
-                                Existing languages:
+                            <div class="mt-1">
+                                <p
+                                    class="text-sm text-neutral-400 dark:text-neutral-600"
+                                >
+                                    {{ $t("bmmUpload.uploadedLanguages") }}
+                                </p>
                                 <img
                                     v-for="l in form.track.languages?.Languages"
                                     :title="l.code"
                                     :src="'/images/flags/' + l.iconFile"
-                                    class="ml-2 inline h-4 rounded-sm shadow-sm"
+                                    class="inline h-4 rounded-sm shadow-sm not-first-of-type:ml-2"
                                     :alt="l.code"
                                 />
-                            </p>
+                            </div>
                         </header>
                         <UCheckbox
                             v-model="forceOverride"
-                            label="Replace transcription even if has been manually corrected"
+                            :label="$t('bmmUpload.forceOverride')"
                         />
-                        <SelectFile
+                        <BmmSelectFile
                             v-if="selectedFiles.length < 1 || me.bmm.admin"
                             v-model="selectedFiles"
                             :default-language="metadata.language![0]!"
                             :accept-multiple="me.bmm.admin"
                             :environment="selectedEnvironment"
                         />
-                        <FileUploader
+                        <BmmFileUploader
                             v-model="selectedFiles"
                             :endpoint="config.public.grpcUrl + '/upload'"
                             :metadata="metadata"
@@ -144,7 +159,7 @@ const dateString = (date: Date) => {
                             block
                             @click="step = 'metadata'"
                         >
-                            Back
+                            {{ $t("bmmUpload.back") }}
                         </UButton>
                     </div>
                 </template>
@@ -152,15 +167,17 @@ const dateString = (date: Date) => {
                     <UAlert
                         color="success"
                         variant="subtle"
-                        :title="$t('uploaded')"
+                        :title="$t('bmmUpload.uploaded')"
                     />
-                    <UButton variant="soft" @click="reset" block>
-                        Upload more
+                    <UButton @click="reset" block>
+                        {{ $t("bmmUpload.uploadMore") }}
                     </UButton>
                 </template>
             </template>
-            <template v-else-if="permissionsLoading">Loading...</template>
-            <template v-else> You don't have enough permissions </template>
+            <template v-else-if="permissionsLoading">
+                <Icon name="svg-spinners:bars-rotate-fade" />
+            </template>
+            <template v-else>{{ $t("noPermissions") }}</template>
         </div>
     </div>
 </template>

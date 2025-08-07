@@ -17,9 +17,10 @@ const emit = defineEmits<{
     set: [];
 }>();
 
+const { t } = useI18n();
 function checkForm() {
     if (!track.value) {
-        alert("Please select a track");
+        alert(t("bmmUpload.trackRequiredAlert"));
         return;
     }
 
@@ -28,21 +29,27 @@ function checkForm() {
 </script>
 <template>
     <form class="flex h-full flex-col gap-4 p-4" @submit.prevent="checkForm">
-        <h3 class="text-2xl font-bold">BMM Upload</h3>
+        <h3 class="text-2xl font-bold">{{ $t("bmmUpload.title") }}</h3>
 
-        <UFormField v-if="permissions.integration" :label="$t('Environment')">
-            <USelectMenu
+        <UFormField v-if="true" :label="$t('bmmUpload.environment')">
+            <USelect
                 v-model="selectedEnvironment"
                 value-key="value"
                 label-key="label"
                 :items="[
-                    { label: $t('Integration'), value: 'int' },
-                    { label: $t('Production'), value: 'prod' },
+                    {
+                        label: 'Integration',
+                        value: 'int',
+                    },
+                    {
+                        label: 'Production',
+                        value: 'prod',
+                    },
                 ]"
                 class="w-full"
             />
         </UFormField>
-        <AlbumSelector
+        <BmmAlbumSelector
             v-model="albumId"
             :permissions="permissions"
             :env="environment"
@@ -50,19 +57,19 @@ function checkForm() {
         <BmmTrackSelector
             v-if="albumId"
             :key="albumId"
-            label="Track"
+            :label="$t('bmmUpload.track')"
             v-model="track"
             :album="albumId"
             :env="environment"
         />
-        <LanguageSelector
+        <BmmLanguageSelector
             v-model="language"
             :languages="permissions.languages"
             :env="environment"
         />
 
         <UButton type="submit" class="mt-4" block size="lg">
-            {{ $t("next") }}
+            {{ $t("bmmUpload.next") }}
         </UButton>
     </form>
 </template>

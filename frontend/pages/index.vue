@@ -20,18 +20,18 @@ const { me } = useMe();
             <NuxtLink to="/upload/bmm/" class="aspect-video">
                 <UCard class="size-full">
                     <Icon name="tabler:upload" class="mb-2 size-8" />
-                    <p>BMM Upload</p>
+                    <p>{{ $t("home.bmmUpload.title") }}</p>
                     <p class="text-sm text-neutral-400">
-                        Upload localized audio files to BMM
+                        {{ $t("home.bmmUpload.description") }}
                     </p>
                 </UCard>
             </NuxtLink>
             <NuxtLink to="/transcription/" class="aspect-video">
                 <UCard class="size-full">
                     <Icon name="tabler:text-recognition" class="mb-2 size-8" />
-                    <p>Transcription</p>
+                    <p>{{ $t("home.transcription.title") }}</p>
                     <p class="text-sm text-neutral-400">
-                        Edit and download transcriptions of video files
+                        {{ $t("home.transcription.description") }}
                     </p>
                 </UCard>
             </NuxtLink>
@@ -41,9 +41,9 @@ const { me } = useMe();
                     :ui="{ body: 'flex flex-col h-full items-start' }"
                 >
                     <Icon name="tabler:settings" class="mb-2 size-8" />
-                    <p>Admin</p>
+                    <p>{{ $t("home.admin.title") }}</p>
                     <p class="text-sm text-neutral-400">
-                        Manage users and settings
+                        {{ $t("home.admin.description") }}
                     </p>
                     <UBadge
                         size="sm"
@@ -51,7 +51,7 @@ const { me } = useMe();
                         color="neutral"
                         class="mt-auto"
                     >
-                        Only for Admins
+                        {{ $t("home.admin.badge") }}
                     </UBadge>
                 </UCard>
             </NuxtLink>

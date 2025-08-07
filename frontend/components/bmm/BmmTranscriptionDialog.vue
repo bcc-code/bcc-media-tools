@@ -69,6 +69,7 @@ function resetTranscription() {
     transcriptionLanguages.value = undefined;
 }
 
+const { t } = useI18n();
 const toast = useToast();
 function copyToClipboard() {
     if (!transcription.value) return;
@@ -76,7 +77,7 @@ function copyToClipboard() {
     navigator.clipboard.writeText(text);
     toast.add({
         icon: "heroicons:check",
-        title: "Copied to clipboard",
+        title: t("bmmUpload.copiedToClipboard"),
         color: "success",
     });
 }
@@ -86,14 +87,15 @@ function copyToClipboard() {
     <UModal
         class="h-full w-full max-w-[800px]"
         dismissible
-        title="Transcript"
         v-model:open="showTranscription"
     >
         <template #header>
             <div class="flex w-full items-start justify-between gap-4">
                 <div>
-                    <h2 class="mb-2 text-xl font-bold">Transcript</h2>
-                    <LanguageSelector
+                    <h2 class="mb-2 text-xl font-bold">
+                        {{ $t("bmmUpload.transcription") }}
+                    </h2>
+                    <BmmLanguageSelector
                         v-if="transcriptionLanguages?.length"
                         v-model="transcriptionLanguage"
                         :env="env"
@@ -101,7 +103,7 @@ function copyToClipboard() {
                     />
                 </div>
                 <UButton type="button" @click="copyToClipboard">
-                    Copy to clipboard
+                    {{ $t("bmmUpload.copyToClipboard") }}
                 </UButton>
             </div>
         </template>

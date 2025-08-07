@@ -19,8 +19,7 @@ const api = useAPI();
 
 const route = useRoute("transcription-id");
 const key = "ts-" + route.params.id;
-const routeId =
-    route.params.id instanceof Array ? route.params.id[0] : route.params.id;
+const routeId = route.params.id;
 
 const loading = ref(true);
 const error = ref<string | null>(null);
@@ -48,6 +47,7 @@ function formatErrorMessage(msg: string | null): string | null {
     return msg;
 }
 
+const { t } = useI18n();
 const toast = useToast();
 const reset = async (notify: boolean = true) => {
     loading.value = true;
@@ -59,7 +59,7 @@ const reset = async (notify: boolean = true) => {
         if (notify) {
             toast.add({
                 icon: "heroicons:check",
-                title: "Transcription reset successfully",
+                title: t("transcription.resetSuccess"),
                 color: "success",
             });
         }
@@ -90,14 +90,14 @@ const submitToMediabanken = async () => {
         localStorage.removeItem(key);
         toast.add({
             icon: "heroicons:check",
-            title: "Transcription submitted successfully",
+            title: t("transcription.submitSuccess"),
             color: "success",
         });
         navigateTo("/transcription");
     } catch (err) {
         toast.add({
             icon: "heroicons:exclamation",
-            title: "Failed to submit transcription",
+            title: t("transcription.submitError"),
             color: "error",
         });
         loadingSubmit.value = false;

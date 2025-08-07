@@ -3,10 +3,7 @@
     "title": "Title",
     "language": "Language",
     "selectAnOption": "Select an option...",
-    "album": "Album",
-    "track": "Track",
-    "next": "Next",
-    "uploaded": "Uploaded",
+    "noPermissions": "You don't have enough permissions",
     "transcription": {
         "reset": "Reset",
         "changesSavedLocally": "Changes are saved locally",
@@ -24,6 +21,60 @@
         "submitConfirmationMessage": "This will mark the transcription as complete, and you will lose access to the file.",
         "submitConfirmationCancel": "Cancel",
         "submitConfirmationSubmit": "Yes, submit",
-        "download": "Download"
+        "download": "Download",
+        "load": "Load",
+        "selectFile": "Select file",
+        "or": "or"
+    },
+    "bmmUpload": {
+        "title": "BMM Upload",
+        "next": "Next",
+        "back": "Back",
+        "album": "Album | Albums",
+        "podcast": "Podcast | Podcasts",
+        "track": "Track",
+        "year": "Year",
+        "type": "Type",
+        "environment": "Environment",
+        "trackRequiredAlert": "Please select a track",
+        "uploadedLanguages": "Uploaded languages",
+        "uploaded": "Uploaded",
+        "uploadMore": "Upload more",
+        "forceOverride": "Replace transcription even if has been manually corrected",
+        "uploadFilesFor": "Upload files for \"{title}\" ({date})",
+        "albumCount": "{count} album | {count} albums",
+        "noTracks": "No tracks found",
+        "hideOlderTracks": "Hide older tracks",
+        "showOlderTracks": "Show older tracks",
+        "steps": {
+            "metadata": "Metadata",
+            "upload": "Upload",
+            "done": "Done"
+        },
+        "showTranscription": "Show transcription",
+        "transcription": "Transcription",
+        "copyToClipboard": "Copy to clipboard",
+        "copiedToClipboard": "Copied to clipboard",
+        "addFiles": "Add files",
+        "addFilesDescription": "Drag and drop files here or click to browse",
+        "uploadError": "Upload failed, try again?",
+        "resetSuccess": "Transcription was successfully reset",
+        "submitSuccess": "Transcription was successfully submitted",
+        "submitError": "Transcription could not be submitted"
+    },
+    "home": {
+        "bmmUpload": {
+            "title": "BMM Upload",
+            "description": "Upload localized audio files to BMM"
+        },
+        "transcription": {
+            "title": "Transcription",
+            "description": "Edit and download transcriptions of video files"
+        },
+        "admin": {
+            "title": "Admin",
+            "description": "Manage users and permissions",
+            "badge": "Only for Admins"
+        }
     }
 }

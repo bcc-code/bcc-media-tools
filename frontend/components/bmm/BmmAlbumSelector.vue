@@ -57,8 +57,9 @@ const yearItems = computed(() => {
     return Object.values(years.value)
         .sort((a, b) => b.year - a.year)
         .map((y) => ({
-            label: `${y.year} (${y.count})`,
+            label: y.year.toString(),
             value: y.year,
+            count: y.count,
         }));
 });
 
@@ -71,16 +72,16 @@ const albumItems = computed(() => {
 </script>
 
 <template>
-    <UFormField v-if="permissions.admin" :label="$t('Type')">
+    <UFormField v-if="permissions.admin" :label="$t('bmmUpload.type')">
         <USelect
             v-model="selectedType"
             :items="[
                 {
-                    label: $t('Albums'),
+                    label: $t('bmmUpload.album', 2),
                     value: 'albums',
                 },
                 {
-                    label: $t('Podcasts'),
+                    label: $t('bmmUpload.podcast', 2),
                     value: 'podcasts',
                 },
             ]"
@@ -89,7 +90,10 @@ const albumItems = computed(() => {
         />
     </UFormField>
 
-    <UFormField v-if="selectedType == 'podcasts'" :label="$t('Podcast')">
+    <UFormField
+        v-if="selectedType == 'podcasts'"
+        :label="$t('bmmUpload.podcast')"
+    >
         <USelect
             v-model="albumId"
             :disabled="permissions.podcasts.length < 2"
@@ -100,15 +104,30 @@ const albumItems = computed(() => {
     </UFormField>
 
     <template v-else-if="selectedType == 'albums' && years">
-        <UFormField :label="$t('Year')">
+        <UFormField :label="$t('bmmUpload.year')">
             <USelect
                 v-model="selectedYear"
                 :items="yearItems"
                 size="lg"
                 class="w-full"
-            />
+            >
+                <template #item-trailing="{ item }">
+                    <span class="text-neutral-400 dark:text-neutral-600">
+                        {{
+                            $t(
+                                "bmmUpload.albumCount",
+                                { count: item.count },
+                                item.count,
+                            )
+                        }}
+                    </span>
+                </template>
+            </USelect>
         </UFormField>
-        <UFormField v-if="Object.keys(albums).length" :label="$t('Album')">
+        <UFormField
+            v-if="Object.keys(albums).length"
+            :label="$t('bmmUpload.album')"
+        >
             <USelect
                 v-model="albumId"
                 :items="albumItems"

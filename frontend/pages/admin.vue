@@ -85,8 +85,9 @@ const { data: availableLanguages } = useAsyncData(
                             color="neutral"
                             variant="outline"
                             @click="searchQuery = ''"
-                            >Clear</UButton
                         >
+                            Clear
+                        </UButton>
                     </template>
                 </UInput>
                 <UButton @click="showNewEmailForm = true">
@@ -110,7 +111,11 @@ const { data: availableLanguages } = useAsyncData(
                     class="flex items-center gap-2 rounded-2xl border-2 border-dashed border-neutral-200 p-4 dark:border-neutral-700"
                     @submit.prevent="addEmail"
                 >
-                    <UInput v-model="newEmail" type="email" />
+                    <UInput
+                        v-model="newEmail"
+                        type="email"
+                        placeholder="john@doe.com"
+                    />
                     <UButton type="submit" variant="soft">Add</UButton>
                 </form>
                 <AdminPermissionView
