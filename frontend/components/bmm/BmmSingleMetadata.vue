@@ -31,7 +31,10 @@ function checkForm() {
     <form class="flex h-full flex-col gap-4 p-4" @submit.prevent="checkForm">
         <h3 class="text-2xl font-bold">{{ $t("bmmUpload.title") }}</h3>
 
-        <UFormField v-if="true" :label="$t('bmmUpload.environment')">
+        <UFormField
+            v-if="permissions.integration"
+            :label="$t('bmmUpload.environment')"
+        >
             <USelect
                 v-model="selectedEnvironment"
                 value-key="value"
