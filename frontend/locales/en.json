@@ -62,7 +62,7 @@
         "submitSuccess": "Transcription was successfully submitted",
         "submitError": "Transcription could not be submitted"
     },
-    "home": {
+    "tools": {
         "bmmUpload": {
             "title": "BMM Upload",
             "description": "Upload localized audio files to BMM"

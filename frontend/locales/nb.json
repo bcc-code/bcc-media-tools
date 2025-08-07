@@ -62,7 +62,7 @@
         "submitSuccess": "Transkripsjon er sendt til Mediabanken",
         "submitError": "Feil ved sending til Mediabanken"
     },
-    "home": {
+    "tools": {
         "bmmUpload": {
             "title": "BMM opplasting",
             "description": "Last opp oversettede lydfiler til BMM"

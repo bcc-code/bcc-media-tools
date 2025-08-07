@@ -11,47 +11,35 @@ onMounted(() => {
     });
 });
 
-const { me } = useMe();
+const { enabledTools } = useTools();
 </script>
 
 <template>
     <div class="flex w-full justify-center">
         <div class="grid min-w-1/2 gap-4 p-8 md:grid-cols-3">
-            <NuxtLink to="/upload/bmm/" class="aspect-video">
-                <UCard class="size-full">
-                    <Icon name="tabler:upload" class="mb-2 size-8" />
-                    <p>{{ $t("home.bmmUpload.title") }}</p>
-                    <p class="text-sm text-neutral-400">
-                        {{ $t("home.bmmUpload.description") }}
-                    </p>
-                </UCard>
-            </NuxtLink>
-            <NuxtLink to="/transcription/" class="aspect-video">
-                <UCard class="size-full">
-                    <Icon name="tabler:text-recognition" class="mb-2 size-8" />
-                    <p>{{ $t("home.transcription.title") }}</p>
-                    <p class="text-sm text-neutral-400">
-                        {{ $t("home.transcription.description") }}
-                    </p>
-                </UCard>
-            </NuxtLink>
-            <NuxtLink v-if="me?.admin" to="/admin/" class="aspect-video">
+            <NuxtLink
+                v-for="tool in enabledTools"
+                :key="tool.to"
+                :to="tool.to"
+                class="aspect-video"
+            >
                 <UCard
-                    class="size-full"
                     :ui="{ body: 'flex flex-col h-full items-start' }"
+                    class="relative size-full"
                 >
-                    <Icon name="tabler:settings" class="mb-2 size-8" />
-                    <p>{{ $t("home.admin.title") }}</p>
+                    <Icon :name="tool.icon" class="mb-2 size-8" />
+                    <p>{{ tool.label }}</p>
                     <p class="text-sm text-neutral-400">
-                        {{ $t("home.admin.description") }}
+                        {{ tool.description }}
                     </p>
                     <UBadge
+                        v-if="tool.to.startsWith('/admin')"
                         size="sm"
                         variant="outline"
                         color="neutral"
                         class="mt-auto"
                     >
-                        {{ $t("home.admin.badge") }}
+                        {{ $t("tools.admin.badge") }}
                     </UBadge>
                 </UCard>
             </NuxtLink>

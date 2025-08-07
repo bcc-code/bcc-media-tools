@@ -12,29 +12,7 @@ watch(
     { immediate: true },
 );
 
-const { t } = useI18n();
-const route = useRoute();
-const items = computed(() => {
-    return [
-        {
-            label: t("home.bmmUpload.title"),
-            icon: "tabler:upload",
-            to: "/upload/bmm",
-        },
-        {
-            label: t("home.transcription.title"),
-            icon: "tabler:text-recognition",
-            to: "/transcription",
-            active: route.path.includes("/transcription"),
-        },
-        {
-            label: t("home.admin.title"),
-            icon: "tabler:settings",
-            enabled: me.value?.admin,
-            to: "/admin",
-        },
-    ].filter((x) => x.enabled != false);
-});
+const { enabledTools } = useTools();
 </script>
 
 <template>
@@ -52,7 +30,11 @@ const items = computed(() => {
                 />
                 <p>BCC Media Tools</p>
             </NuxtLink>
-            <UNavigationMenu orientation="horizontal" highlight :items />
+            <UNavigationMenu
+                orientation="horizontal"
+                highlight
+                :items="enabledTools"
+            />
             <ThemeSwitch class="ml-auto" />
             <LanguageSwitcher />
         </header>
