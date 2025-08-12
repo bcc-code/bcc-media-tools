@@ -1,4 +1,3 @@
-// https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
     modules: [
         "@nuxt/icon",
@@ -26,7 +25,6 @@ export default defineNuxtConfig({
                 },
             ],
         },
-        pageTransition: { name: "page", mode: "out-in" },
     },
     experimental: {
         typedPages: true,
@@ -57,8 +55,5 @@ export default defineNuxtConfig({
         port: 8001,
         host: "localhost",
     },
-    ui: {
-        // colorMode: false,
-    },
-    compatibilityDate: "2024-10-16",
+    compatibilityDate: "2025-07-12",
 });

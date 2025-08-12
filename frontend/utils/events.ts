@@ -4,8 +4,6 @@ export type Page = StringWithAutocomplete<
     "upload_index" | "upload_continue" | "upload_success" | "upload_redirect" | "transcription"
 >;
 
-type ElementType = "UPLOAD";
-
 export type Events = {
     language_changed: {
         pageCode: string;
