@@ -31,7 +31,7 @@ const triggers: Trigger[] = [
 </script>
 
 <template>
-    <div class="mx-auto flex h-screen w-full max-w-2xl flex-col p-4">
+    <div class="mx-auto flex w-full max-w-2xl flex-col p-4">
         <div class="my-8">
             <h1 class="text-2xl font-bold">Export</h1>
             <p class="text-muted">Select and trigger an export workflow</p>

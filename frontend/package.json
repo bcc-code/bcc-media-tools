@@ -26,6 +26,7 @@
         "@bufbuild/protobuf": "^1.10.0",
         "@connectrpc/connect": "^1.6.1",
         "@connectrpc/connect-web": "^1.6.1",
+        "@nuxt/ui": "^3.3.0",
         "@vueuse/core": "^13.6.0",
         "@vueuse/nuxt": "^13.6.0",
         "@zag-js/splitter": "^1.21.1",
@@ -36,7 +37,7 @@
         "rudder-sdk-js": "^2.52.1",
         "vue": "^3.5.18",
         "vue-router": "^4.5.1",
-        "@nuxt/ui": "^3.3.0"
+        "zod": "^4.0.17"
     },
     "packageManager": "pnpm@9.12.1"
 }
