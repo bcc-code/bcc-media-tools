@@ -9,8 +9,15 @@ interface Tool {
 export function useTools() {
 	const { t } = useI18n();
 	const { me } = useMe();
+	const route = useRoute()
 
 	const tools = computed<Tool[]>(() => [
+		{
+			label: 'Export',
+			icon: "tabler:file-export",
+			description: 'Trigger export workflows',
+			to: "/export",
+		},
 		{
 			label: t("tools.bmmUpload.title"),
 			icon: "tabler:upload",
@@ -32,9 +39,14 @@ export function useTools() {
 		},
 	]);
 
+
 	const enabledTools = computed(() =>
 		tools.value.filter((t) => t.enabled != false),
 	);
 
-	return { tools, enabledTools };
+	const currentTool = computed(() =>
+		tools.value.find((t) => route.path.startsWith(t.to)),
+	);
+
+	return { tools, enabledTools, currentTool };
 }
