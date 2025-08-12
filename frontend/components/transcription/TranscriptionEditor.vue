@@ -101,7 +101,7 @@ function addNewSegmentAt(index: number) {
         <TransitionGroup
             v-if="transcription"
             tag="div"
-            class="flex flex-col divide-y divide-neutral-300 overflow-auto dark:divide-neutral-700"
+            class="divide-default flex flex-col divide-y overflow-auto"
             enter-active-class="transition duration-300 ease-out"
             enter-from-class="opacity-0 scale-95"
             enter-to-class="opacity-100 scale-100"
@@ -138,7 +138,7 @@ function addNewSegmentAt(index: number) {
                     class="relative w-full"
                 >
                     <button
-                        class="absolute right-1/2 z-10 grid aspect-square size-6 -translate-y-1/2 place-items-center rounded-full bg-neutral-300 p-0.5 text-sm hover:scale-110 dark:bg-neutral-700"
+                        class="bg-accented absolute right-1/2 z-10 grid aspect-square size-6 -translate-y-1/2 place-items-center rounded-full p-0.5 text-sm hover:scale-110"
                         :title="$t('transcription.addSegment')"
                         @click="addNewSegmentAt(index + 1)"
                     >

@@ -60,7 +60,8 @@
         "uploadError": "Opplasting feilet. Vennligst prøv igjen",
         "resetSuccess": "Transkripsjon er tilbakestilt",
         "submitSuccess": "Transkripsjon er sendt til Mediabanken",
-        "submitError": "Feil ved sending til Mediabanken"
+        "submitError": "Feil ved sending til Mediabanken",
+        "upload": "Last opp"
     },
     "tools": {
         "bmmUpload": {

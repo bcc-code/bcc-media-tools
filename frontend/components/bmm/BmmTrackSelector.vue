@@ -147,7 +147,7 @@ const transcriptionTrack = ref<BMMTrack>();
 
         <p
             v-else-if="tracks && !tracks.length"
-            class="my-8 text-center text-sm text-neutral-400 dark:text-neutral-600"
+            class="text-dimmed my-8 text-center text-sm"
         >
             {{ $t("bmmUpload.noTracks") }}
         </p>

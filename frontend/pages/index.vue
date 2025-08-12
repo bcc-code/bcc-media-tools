@@ -27,7 +27,7 @@ const { enabledTools } = useTools();
                     :ui="{ body: 'flex flex-col h-full items-start' }"
                     class="relative size-full"
                 >
-                    <Icon :name="tool.icon" class="mb-2 size-8" />
+                    <Icon :name="tool.icon" class="mb-2 text-lg" />
                     <p>{{ tool.label }}</p>
                     <p class="text-sm text-neutral-400">
                         {{ tool.description }}

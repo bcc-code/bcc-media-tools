@@ -233,7 +233,7 @@ const splitterApi = computed(() =>
 <template>
     <div class="flex h-[calc(100dvh-var(--header-height))] flex-col">
         <div
-            class="flex items-center justify-between gap-4 border-b border-neutral-300 bg-white px-6 py-3 dark:border-neutral-700 dark:bg-neutral-900"
+            class="border-default bg-default flex items-center justify-between gap-4 border-b px-6 py-3"
         >
             <div class="flex gap-3">
                 <p>{{ $t("transcription.changesSavedLocally") }}</p>
@@ -277,10 +277,7 @@ const splitterApi = computed(() =>
                 </button>
             </div>
         </div>
-        <div
-            v-bind="splitterApi.getRootProps()"
-            class="flex bg-white dark:bg-neutral-900"
-        >
+        <div v-bind="splitterApi.getRootProps()" class="bg-default flex">
             <div
                 v-bind="splitterApi.getPanelProps({ id: 'left' })"
                 class="flex flex-col"
@@ -308,9 +305,7 @@ const splitterApi = computed(() =>
                     @update-segments="(s) => setSegments(s)"
                 />
             </div>
-            <div
-                class="flex h-full items-center border-x border-neutral-300 px-1 dark:border-neutral-700"
-            >
+            <div class="border-default flex h-full items-center border-x px-1">
                 <div
                     v-bind="
                         splitterApi.getResizeTriggerProps({ id: 'left:right' })
@@ -332,7 +327,7 @@ const splitterApi = computed(() =>
                             ref="videoelement"
                             :src="video"
                             controls
-                            class="bg-neutral-200 shadow-xl dark:bg-neutral-800"
+                            class="bg-default shadow-xl"
                         />
                         <p
                             v-if="previewSubtitles && focusedSegment"
@@ -381,7 +376,7 @@ const splitterApi = computed(() =>
     height: calc(var(--spacing) * 16);
     width: calc(var(--spacing) * 2);
     border-radius: calc(infinity * 1px);
-    background-color: var(--color-gray-300);
+    background-color: var(--ui-color-neutral-300);
 
     &:where(.dark, .dark *) {
         background-color: var(--ui-color-neutral-700);

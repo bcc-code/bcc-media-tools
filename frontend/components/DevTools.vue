@@ -24,15 +24,20 @@ const clearLocalStorage = () => {
         >
             <div
                 v-if="show"
-                class="flex min-w-64 flex-col gap-2 rounded-lg border border-gray-300 bg-white p-4 shadow-lg dark:border-gray-700 dark:bg-gray-900"
+                class="border-default bg-default flex min-w-64 flex-col gap-2 rounded-lg border p-4 shadow-lg"
             >
                 <h4 class="font-bold">Developer tools</h4>
-                <UButton size="sm" variant="soft" @click="clearLocalStorage">
+                <UButton
+                    size="sm"
+                    variant="soft"
+                    block
+                    @click="clearLocalStorage"
+                >
                     Clear local storage
                 </UButton>
             </div>
         </transition>
-        <UButton size="xl" variant="subtle" square @click="show = !show">
+        <UButton size="xl" variant="solid" square @click="show = !show">
             <Icon name="tabler:tool" />
         </UButton>
     </div>

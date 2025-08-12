@@ -1,14 +1,6 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
 
-html,
-body,
-#__nuxt {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
 :root {
     --font-sans: "Inter", sans-serif;
     --ui-primary: black;
@@ -16,4 +8,12 @@ body,
 
 .dark {
     --ui-primary: white;
+}
+
+html,
+body,
+#__nuxt {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }

@@ -108,7 +108,7 @@ const { data: availableLanguages } = useAsyncData(
             >
                 <form
                     v-if="showNewEmailForm"
-                    class="flex items-center gap-2 rounded-2xl border-2 border-dashed border-neutral-200 p-4 dark:border-neutral-700"
+                    class="border-default flex items-center gap-2 rounded-2xl border-2 border-dashed p-4"
                     @submit.prevent="addEmail"
                 >
                     <UInput

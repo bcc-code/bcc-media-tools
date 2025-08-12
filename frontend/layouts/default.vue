@@ -1,6 +1,4 @@
 <script setup lang="ts">
-const { me } = useMe();
-
 // Set header height CSS variable
 const header = useTemplateRef("header");
 const { height } = useElementSize(header);
@@ -19,7 +17,7 @@ const { enabledTools } = useTools();
     <div class="flex grow-1 flex-col">
         <header
             ref="header"
-            class="sticky top-0 z-10 flex items-center gap-4 border-b border-neutral-300 bg-white px-4 dark:border-neutral-700 dark:bg-neutral-900"
+            class="border-accented bg-default sticky top-0 z-10 flex items-center gap-4 border-b px-4"
         >
             <NuxtLink to="/" class="flex items-center gap-2 text-sm font-bold">
                 <img

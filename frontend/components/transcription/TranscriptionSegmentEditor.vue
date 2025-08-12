@@ -49,8 +49,8 @@ const { deleteMode } = useDeleteMode();
         class="flex items-center px-6 py-4 transition-all ease-out"
         :class="{
             'cursor-pointer hover:bg-red-200 hover:text-red-700': deleteMode,
-            'bg-neutral-200 opacity-50 dark:bg-neutral-800': deleted,
-            'ring-2 ring-black ring-inset': focused,
+            'bg-elevated opacity-50': deleted,
+            'ring-inverted ring-2 ring-inset': focused,
         }"
         :tabindex="deleteMode ? 0 : -1"
         @click="deleteMode ? $emit('toggleDelete') : undefined"
@@ -60,7 +60,7 @@ const { deleteMode } = useDeleteMode();
         @mouseleave="hovering = false"
     >
         <div class="grow">
-            <div class="flex gap-2 text-sm opacity-50">
+            <div class="text-dimmed flex gap-2 text-sm tabular-nums">
                 <p>{{ secondsToTimestamp(segment.start) }}</p>
                 -
                 <p>{{ secondsToTimestamp(segment.end) }}</p>
@@ -76,7 +76,7 @@ const { deleteMode } = useDeleteMode();
                     :key="`segment:${segment.id}:${segment.start}:${segment.end}:word:${w.start}:${w.end}`"
                     contenteditable
                     :tabindex="deleteMode ? -1 : 0"
-                    class="rounded-md border border-transparent px-2 leading-tight focus:border-neutral-900 focus:bg-neutral-100 focus:outline-none dark:focus:border-neutral-100 dark:focus:bg-neutral-900"
+                    class="focus:border-inverted focus:bg-muted rounded-md border border-transparent px-2 leading-tight focus:outline-none"
                     @input="handleTextUpdate(index, $event)"
                     @focus="$emit('wordFocus', w, segment)"
                     @keydown.down="$emit('focusNext')"

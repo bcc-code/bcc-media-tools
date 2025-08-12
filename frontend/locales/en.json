@@ -60,7 +60,8 @@
         "uploadError": "Upload failed, try again?",
         "resetSuccess": "Transcription was successfully reset",
         "submitSuccess": "Transcription was successfully submitted",
-        "submitError": "Transcription could not be submitted"
+        "submitError": "Transcription could not be submitted",
+        "upload": "Upload"
     },
     "tools": {
         "bmmUpload": {

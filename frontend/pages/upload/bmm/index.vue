@@ -89,7 +89,7 @@ const dateString = (date: Date) => {
             />
         </div>
         <div
-            class="mx-auto flex h-full w-full max-w-screen-lg grow-1 flex-col gap-4 rounded-2xl border border-neutral-300 bg-white p-4 dark:border-neutral-700 dark:bg-neutral-900"
+            class="border-default bg-default mx-auto flex h-full w-full max-w-screen-lg grow-1 flex-col gap-4 rounded-2xl border p-4"
         >
             <template
                 v-if="
@@ -108,7 +108,7 @@ const dateString = (date: Date) => {
                     />
                     <div
                         v-if="step == 'upload' && form.track"
-                        class="flex flex-col gap-4 p-4 transition"
+                        class="flex flex-col gap-2 p-4 transition"
                     >
                         <header class="mb-2">
                             <h1 class="text-2xl font-bold">
@@ -122,9 +122,7 @@ const dateString = (date: Date) => {
                                 }}
                             </h1>
                             <div class="mt-1">
-                                <p
-                                    class="text-sm text-neutral-400 dark:text-neutral-600"
-                                >
+                                <p class="text-muted text-sm">
                                     {{ $t("bmmUpload.uploadedLanguages") }}
                                 </p>
                                 <img

@@ -10,6 +10,11 @@ export default defineAppConfig({
 			slots: {
 				content: 'min-w-fit'
 			}
+		},
+		modal: {
+			slots: {
+				overlay: 'bg-black/50 dark:bg-black/80',
+			}
 		}
 	}
 })

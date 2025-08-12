@@ -42,12 +42,12 @@ const isOpen = ref(false);
 
 <template>
     <div
-        class="flex flex-col overflow-hidden rounded-xl border border-neutral-300 bg-white dark:border-neutral-700 dark:bg-neutral-900"
+        class="border-accented bg-default flex flex-col overflow-hidden rounded-xl border"
     >
         <LayoutGroup>
             <AnimatePresence>
                 <motion.button
-                    class="flex items-center justify-between bg-neutral-50 p-4 dark:bg-neutral-800"
+                    class="bg-muted flex items-center justify-between p-4"
                     layout
                     @click="isOpen = !isOpen"
                 >
@@ -74,7 +74,7 @@ const isOpen = ref(false);
                 <motion.div
                     v-if="isOpen"
                     layout
-                    class="grid max-w-full grid-cols-[1fr_3fr] divide-y divide-neutral-200 overflow-hidden border-t border-neutral-300 dark:divide-neutral-800 dark:border-neutral-700"
+                    class="divide-default border-accented grid max-w-full grid-cols-[1fr_3fr] divide-y overflow-hidden border-t"
                     :initial="{ height: 0 }"
                     :animate="{ height: 'auto' }"
                     :exit="{ height: 0 }"

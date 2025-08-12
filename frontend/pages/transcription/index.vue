@@ -107,11 +107,11 @@ function setSegments(s: Segment[]) {
                         !fileName && me?.transcription && me.transcription.admin
                     "
                 >
-                    <span class="text-tertiary text-sm">
+                    <span class="text-muted text-sm">
                         {{ $t("transcription.or") }}
                     </span>
                     <form
-                        class="flex gap-1 rounded-xl bg-neutral-200 p-2 dark:bg-neutral-800"
+                        class="bg-default flex gap-1 rounded-xl p-2"
                         @submit.prevent="navigateTo(`/transcription/${vxId}`)"
                     >
                         <UInput

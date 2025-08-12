@@ -83,7 +83,7 @@ const uploaded = ref(false);
 <template>
     <div class="h-full p-4">
         <div
-            class="border-on-secondary mx-auto flex h-full max-w-screen-lg flex-col gap-4 rounded-2xl border bg-white p-4 dark:border-neutral-700 dark:bg-neutral-900"
+            class="border-default bg-default mx-auto flex h-full max-w-screen-lg flex-col gap-4 rounded-2xl border p-4"
         >
             <UAlert v-if="!routeParamsAreValid" variant="subtle" color="error">
                 <div class="flex items-center gap-2">
@@ -105,7 +105,7 @@ const uploaded = ref(false);
                     <template v-if="!uploaded">
                         <div class="flex flex-col gap-4 p-4 transition">
                             <header v-if="routeParams.title">
-                                <h1 class="text-heading-xl">
+                                <h1 class="text-2xl font-bold">
                                     Upload files for "{{ routeParams.title }}"
                                 </h1>
                             </header>

@@ -36,17 +36,17 @@ const widths = {
 
 <template>
     <div
-        class="flex divide-x divide-neutral-300 rounded-lg border border-neutral-300 shadow-sm dark:divide-neutral-700 dark:border-neutral-700"
+        class="divide-accented border-accented flex divide-x rounded-lg border shadow-sm"
     >
         <button
-            class="flex-1 rounded-l-lg bg-white px-3 py-1.5 text-sm dark:bg-neutral-800"
+            class="bg-default flex-1 rounded-l-lg px-3 py-1.5 text-sm"
             @click="download"
         >
             {{ $t("transcription.download") }}
         </button>
         <select
             v-model="format"
-            class="flex-1 rounded-r-lg bg-white px-3 py-1.5 text-sm text-neutral-400 transition-all duration-200 ease-out dark:bg-neutral-800"
+            class="bg-default text-muted flex-1 rounded-r-lg px-3 py-1.5 text-sm transition-all duration-200 ease-out"
             :style="{ maxWidth: widths[format] }"
         >
             <option value="json">JSON</option>

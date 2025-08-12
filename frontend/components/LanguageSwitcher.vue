@@ -14,7 +14,7 @@ const localeComp = computed({
 <template>
     <select
         v-model="localeComp"
-        class="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm shadow-sm dark:border-neutral-700 dark:bg-neutral-800"
+        class="border-accented bg-default rounded-lg border px-3 py-1.5 text-sm shadow-sm"
     >
         <option
             v-for="locale in locales"

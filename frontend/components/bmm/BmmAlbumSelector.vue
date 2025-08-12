@@ -112,7 +112,7 @@ const albumItems = computed(() => {
                 class="w-full"
             >
                 <template #item-trailing="{ item }">
-                    <span class="text-neutral-400 dark:text-neutral-600">
+                    <span class="text-dimmed">
                         {{
                             $t(
                                 "bmmUpload.albumCount",
