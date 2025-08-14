@@ -151,8 +151,7 @@ watch(videoelement, (el) => {
 
             segmentElement.scrollIntoView({
                 behavior: "smooth",
-                block: "nearest",
-                inline: "nearest",
+                block: "center",
             });
 
             prevIndex = index;
@@ -314,7 +313,7 @@ const splitterApi = computed(() =>
             </div>
             <div
                 v-bind="splitterApi.getPanelProps({ id: 'right' })"
-                class="flex bg-neutral-100 dark:bg-neutral-950"
+                class="flex flex-col bg-neutral-100 dark:bg-neutral-950"
             >
                 <div class="relative m-auto p-4">
                     <Icon
