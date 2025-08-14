@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { BmmEnvironment } from "~/src/gen/api/v1/api_pb";
+import type { BmmEnvironment } from "~~/src/gen/api/v1/api_pb";
 
 const props = defineProps<{
     languages: string[];

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { BmmEnvironment, BMMTrack } from "~/src/gen/api/v1/api_pb";
+import type { BmmEnvironment, BMMTrack } from "~~/src/gen/api/v1/api_pb";
 
 const props = defineProps<{
     env: BmmEnvironment;
