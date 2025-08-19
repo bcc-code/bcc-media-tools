@@ -113,61 +113,14 @@ const uploaded = ref(false);
                                 v-model="forceOverride"
                                 label="Replace transcription even if has been manually corrected"
                             />
-                            <UTable
-                                :data="selectedFiles"
-                                :columns="[
-                                    {
-                                        accessorKey: 'language',
-                                        header: 'Language',
-                                    },
-                                    {
-                                        accessorKey: 'file.name',
-                                        header: 'Name',
-                                    },
-                                    {
-                                        accessorKey: 'actions',
-                                    },
-                                ]"
-                            >
-                                <template #file.name-cell="item">
-                                    <div class="max-w-[420px] truncate">
-                                        {{ item.getValue() }}
-                                    </div>
-                                </template>
-                                <template #language-cell="{ row }">
-                                    <LanguageSelector
-                                        v-model="row.original.language"
-                                        :disabled="!me.bmm.admin"
-                                        :languages="me.bmm.languages"
-                                        :env="selectedEnvironment"
-                                        label=""
-                                    />
-                                </template>
-                                <template #actions-cell="{ row }">
-                                    <UButton
-                                        @click="
-                                            selectedFiles.splice(
-                                                selectedFiles.indexOf(
-                                                    row.original as any,
-                                                ),
-                                                1,
-                                            )
-                                        "
-                                        color="error"
-                                        variant="link"
-                                    >
-                                        <Icon name="heroicons:trash" />
-                                    </UButton>
-                                </template>
-                            </UTable>
-                            <SelectFile
+                            <BmmSelectFile
                                 v-if="selectedFiles.length < 1 || me.bmm.admin"
                                 v-model="selectedFiles"
                                 :default-language="metadata.language![0]!"
                                 :accept-multiple="me.bmm.admin"
                                 :environment="selectedEnvironment"
                             />
-                            <FileUploader
+                            <BmmFileUploader
                                 v-model="selectedFiles"
                                 :endpoint="config.public.grpcUrl + '/upload'"
                                 :metadata="metadata"
