@@ -81,9 +81,13 @@ const uploaded = ref(false);
 </script>
 
 <template>
-    <div class="h-full p-4">
+    <div class="mx-auto h-full w-full max-w-screen-lg p-4">
+        <div class="mb-4 flex items-center justify-end gap-4">
+            <ThemeSwitch />
+            <LanguageSwitcher />
+        </div>
         <div
-            class="border-default bg-default mx-auto flex h-full max-w-screen-lg flex-col gap-4 rounded-2xl border p-4"
+            class="border-default bg-default flex h-full flex-col gap-4 rounded-2xl border p-4"
         >
             <UAlert v-if="!routeParamsAreValid" variant="subtle" color="error">
                 <div class="flex items-center gap-2">
