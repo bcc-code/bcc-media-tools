@@ -1,5 +1,9 @@
 <script lang="ts" setup>
-import type { BMMTrack, Language, LanguageList } from "~/src/gen/api/v1/api_pb";
+import type {
+    BMMTrack,
+    Language,
+    LanguageList,
+} from "~~/src/gen/api/v1/api_pb";
 import dayjs from "dayjs";
 
 const props = defineProps<{

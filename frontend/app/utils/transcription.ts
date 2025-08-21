@@ -39,7 +39,7 @@ function downloadStringContent(
     URL.revokeObjectURL(url);
 }
 
-function formatTime(seconds: number) {
+export function formatTime(seconds: number) {
     // Calculate hours, minutes, seconds, and milliseconds
     const hours = Math.floor(seconds / 3600);
     seconds = seconds % 3600; // Remaining seconds
@@ -55,6 +55,17 @@ function formatTime(seconds: number) {
     const formattedMilliseconds = milliseconds.toString().padStart(3, "0");
 
     return `${formattedHours}:${formattedMinutes}:${formattedSeconds}.${formattedMilliseconds}`;
+}
+
+export function secondsFromFormattedTime(time: string) {
+    const [timeparts, milliseconds] = time.split(".");
+    const [hours, minutes, seconds] = timeparts!.split(":");
+    return (
+        parseInt(hours!) * 3600 +
+        parseInt(minutes!) * 60 +
+        parseInt(seconds!) +
+        parseInt(milliseconds!) / 1000
+    );
 }
 
 export function downloadTranscriptionSRT(

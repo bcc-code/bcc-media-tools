@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { BmmEnvironment } from "~/src/gen/api/v1/api_pb";
+import type { BmmEnvironment } from "~~/src/gen/api/v1/api_pb";
 
 const props = defineProps<{
     languages: string[];
@@ -33,12 +33,11 @@ watch(
 const languageDisplay = (l: string) => {
     if (typeof Intl.DisplayNames !== "undefined") {
         const dn = new Intl.DisplayNames(["en"], { type: "language" });
-        let name = dn.of(l);
 
         // Chrome doesn't support "kha"
-        if (name == "kha") {
+        if (l == "kha") {
             return "Khasi";
-        } else if (name == "zxx") {
+        } else if (l == "zxx") {
             return "Instrumental";
         }
 

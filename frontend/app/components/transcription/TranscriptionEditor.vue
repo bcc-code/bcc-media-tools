@@ -124,7 +124,7 @@ function addNewSegmentAt(index: number) {
                         }
                     "
                     :segment="s"
-                    :focused="focusedSegment?.id === s.id"
+                    :focused="focusedSegment == s"
                     :deleted="deletedIndexes.includes(index.toString())"
                     @word-focus="(w, s) => $emit('wordFocus', w, s)"
                     @update="handleSegmentUpdate(index, $event)"

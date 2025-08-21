@@ -1,5 +1,5 @@
 <script lang="tsx" setup>
-import { BmmEnvironment, Permissions } from "~/src/gen/api/v1/api_pb";
+import { BmmEnvironment, Permissions } from "~~/src/gen/api/v1/api_pb";
 
 useHead({
     title: "Admin",

@@ -1,4 +1,4 @@
-import type { BMMTrack } from "~/src/gen/api/v1/api_pb";
+import type { BMMTrack } from "~~/src/gen/api/v1/api_pb";
 
 export type BMMSingleForm = {
     title: string;

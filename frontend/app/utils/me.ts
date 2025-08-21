@@ -1,5 +1,5 @@
 import { useAPI } from "~/utils/api";
-import { BMMPermission, Permissions } from "~/src/gen/api/v1/api_pb";
+import { BMMPermission, Permissions } from "~~/src/gen/api/v1/api_pb";
 
 export type Me = {
     admin: boolean;

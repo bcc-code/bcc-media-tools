@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { BmmEnvironment } from "~/src/gen/api/v1/api_pb";
+import { BmmEnvironment } from "~~/src/gen/api/v1/api_pb";
 import type { BMMSingleForm, FileAndLanguage } from "~/utils/bmm";
 import { usePermissionsLoading } from "~/utils/me";
 
@@ -81,9 +81,13 @@ const uploaded = ref(false);
 </script>
 
 <template>
-    <div class="h-full p-4">
+    <div class="mx-auto h-full w-full max-w-screen-lg p-4">
+        <div class="mb-4 flex items-center justify-end gap-4">
+            <ThemeSwitch />
+            <LanguageSwitcher />
+        </div>
         <div
-            class="border-default bg-default mx-auto flex h-full max-w-screen-lg flex-col gap-4 rounded-2xl border p-4"
+            class="border-default bg-default flex h-full flex-col gap-4 rounded-2xl border p-4"
         >
             <UAlert v-if="!routeParamsAreValid" variant="subtle" color="error">
                 <div class="flex items-center gap-2">
@@ -113,61 +117,14 @@ const uploaded = ref(false);
                                 v-model="forceOverride"
                                 label="Replace transcription even if has been manually corrected"
                             />
-                            <UTable
-                                :data="selectedFiles"
-                                :columns="[
-                                    {
-                                        accessorKey: 'language',
-                                        header: 'Language',
-                                    },
-                                    {
-                                        accessorKey: 'file.name',
-                                        header: 'Name',
-                                    },
-                                    {
-                                        accessorKey: 'actions',
-                                    },
-                                ]"
-                            >
-                                <template #file.name-cell="item">
-                                    <div class="max-w-[420px] truncate">
-                                        {{ item.getValue() }}
-                                    </div>
-                                </template>
-                                <template #language-cell="{ row }">
-                                    <LanguageSelector
-                                        v-model="row.original.language"
-                                        :disabled="!me.bmm.admin"
-                                        :languages="me.bmm.languages"
-                                        :env="selectedEnvironment"
-                                        label=""
-                                    />
-                                </template>
-                                <template #actions-cell="{ row }">
-                                    <UButton
-                                        @click="
-                                            selectedFiles.splice(
-                                                selectedFiles.indexOf(
-                                                    row.original as any,
-                                                ),
-                                                1,
-                                            )
-                                        "
-                                        color="error"
-                                        variant="link"
-                                    >
-                                        <Icon name="heroicons:trash" />
-                                    </UButton>
-                                </template>
-                            </UTable>
-                            <SelectFile
+                            <BmmSelectFile
                                 v-if="selectedFiles.length < 1 || me.bmm.admin"
                                 v-model="selectedFiles"
                                 :default-language="metadata.language![0]!"
                                 :accept-multiple="me.bmm.admin"
                                 :environment="selectedEnvironment"
                             />
-                            <FileUploader
+                            <BmmFileUploader
                                 v-model="selectedFiles"
                                 :endpoint="config.public.grpcUrl + '/upload'"
                                 :metadata="metadata"
