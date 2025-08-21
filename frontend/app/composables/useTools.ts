@@ -13,12 +13,6 @@ export function useTools() {
 
 	const tools = computed<Tool[]>(() => [
 		{
-			label: 'Export',
-			icon: "tabler:file-export",
-			description: 'Trigger export workflows',
-			to: "/export",
-		},
-		{
 			label: t("tools.bmmUpload.title"),
 			icon: "tabler:upload",
 			description: t("tools.bmmUpload.description"),
@@ -29,6 +23,12 @@ export function useTools() {
 			icon: "tabler:edit",
 			description: t("tools.transcription.description"),
 			to: "/transcription/",
+		},
+		{
+			label: 'Export',
+			icon: "tabler:file-export",
+			description: 'Trigger export workflows',
+			to: "/export",
 		},
 		{
 			label: t("tools.admin.title"),
