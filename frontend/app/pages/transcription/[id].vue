@@ -257,7 +257,6 @@ const splitterApi = computed(() =>
                     v-model="deleteMode"
                     :label="$t('transcription.deleteMode')"
                 />
-                <LanguageSwitcher />
                 <TranscriptionDownloader
                     :segments="segments"
                     :filename="fileName"
@@ -276,10 +275,13 @@ const splitterApi = computed(() =>
                 </button>
             </div>
         </div>
-        <div v-bind="splitterApi.getRootProps()" class="bg-default flex">
+        <div
+            v-bind="splitterApi.getRootProps()"
+            class="flex bg-neutral-100 dark:bg-neutral-950"
+        >
             <div
                 v-bind="splitterApi.getPanelProps({ id: 'left' })"
-                class="flex flex-col"
+                class="bg-default border-default flex flex-col border-r"
             >
                 <Icon
                     v-if="loading"
@@ -304,7 +306,7 @@ const splitterApi = computed(() =>
                     @update-segments="(s) => setSegments(s)"
                 />
             </div>
-            <div class="border-default flex h-full items-center border-x px-1">
+            <div class="flex h-full items-center px-1">
                 <div
                     v-bind="
                         splitterApi.getResizeTriggerProps({ id: 'left:right' })
@@ -377,8 +379,16 @@ const splitterApi = computed(() =>
     border-radius: calc(infinity * 1px);
     background-color: var(--ui-color-neutral-300);
 
+    &:hover {
+        background-color: var(--ui-color-neutral-400);
+    }
+
     &:where(.dark, .dark *) {
         background-color: var(--ui-color-neutral-700);
+
+        &:hover {
+            background-color: var(--ui-color-neutral-600);
+        }
     }
 }
 </style>
