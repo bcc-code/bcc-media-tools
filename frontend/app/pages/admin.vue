@@ -1,5 +1,6 @@
 <script lang="tsx" setup>
-import { BmmEnvironment, Permissions } from "~~/src/gen/api/v1/api_pb";
+import { BmmEnvironment } from "~~/src/gen/api/v1/api_pb";
+import type { Permissions } from "~~/src/gen/api/v1/api_pb";
 
 useHead({
     title: "Admin",
@@ -44,15 +45,7 @@ const removeEmail = async (email: string) => {
     permissions.value = (await api.listPermissions({})).permissions;
 };
 
-const searchQuery = ref("");
-const filteredPermissions = computed(() => {
-    if (!searchQuery.value) return permissions.value;
-    return Object.fromEntries(
-        Object.entries(permissions.value ?? {}).filter(([email]) =>
-            email.toLowerCase().includes(searchQuery.value.toLowerCase()),
-        ),
-    );
-});
+const filteredPermissions = ref<Record<string, Permissions>>({});
 
 const showNewEmailForm = ref(false);
 
@@ -69,31 +62,18 @@ const { data: availableLanguages } = useAsyncData(
 <template>
     <div class="flex h-screen w-screen" v-if="me?.admin">
         <div class="mx-auto w-full max-w-screen-md p-8">
-            <div class="mb-8 flex items-center justify-between gap-2">
+            <div class="flex items-center justify-between gap-2">
                 <h2 class="text-2xl font-bold">Admin</h2>
-                <UInput
-                    v-model="searchQuery"
-                    clearable
-                    placeholder="Search email..."
-                    leading-icon="heroicons:magnifying-glass"
-                    class="ml-auto"
-                >
-                    <template #trailing>
-                        <UButton
-                            v-if="searchQuery"
-                            size="xs"
-                            color="neutral"
-                            variant="outline"
-                            @click="searchQuery = ''"
-                        >
-                            Clear
-                        </UButton>
-                    </template>
-                </UInput>
                 <UButton @click="showNewEmailForm = true">
                     Add new email
                 </UButton>
             </div>
+            <AdminPermissionFilter
+                v-if="permissions"
+                :permissions="permissions"
+                @update:filtered-permissions="filteredPermissions = $event"
+                class="mt-4 mb-8"
+            />
             <TransitionGroup
                 v-if="filteredPermissions"
                 tag="div"
