@@ -94,9 +94,23 @@ watch([duration, scrubberWidth], ([d, s]) => {
     zoom.value = s / d;
 });
 
+const toast = useToast();
 const confirmSubmit = ref(false);
-function submit() {
-    confirmSubmit.value = false;
+async function submit() {
+    try {
+        await api.submitShort({
+            VXID: vxId.value,
+            InSeconds: startTime.value,
+            OutSeconds: endTime.value,
+        });
+        toast.add({
+            icon: "tabler:check",
+            title: "Short submitted successfully",
+            color: "success",
+        });
+        navigateTo("/shorts");
+        confirmSubmit.value = false;
+    } catch (err) {}
 }
 </script>
 
