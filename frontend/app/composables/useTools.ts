@@ -17,18 +17,26 @@ export function useTools() {
 			icon: "tabler:upload",
 			description: t("tools.bmmUpload.description"),
 			to: "/upload/bmm/",
+			enabled: me.value?.bmm && (me.value.bmm.podcasts.length > 0 || me.value.bmm.admin),
 		},
 		{
 			label: t("tools.transcription.title"),
 			icon: "tabler:edit",
 			description: t("tools.transcription.description"),
 			to: "/transcription/",
+			enabled: me.value?.transcription && (me.value.transcription.mediabanken || me.value.transcription.admin),
 		},
 		{
 			label: 'Export',
 			icon: "tabler:file-export",
 			description: 'Trigger export workflows',
-			to: "/export",
+			to: "/export/",
+		},
+		{
+			label: 'Shorts generation',
+			icon: "tabler:device-mobile",
+			description: 'Generate shorts from existing videos',
+			to: "/shorts/",
 		},
 		{
 			label: t("tools.admin.title"),

@@ -163,6 +163,12 @@ message SubmitTranscriptionRequest {
   Transcription transcription = 2;
 }
 
+message SubmitShortRequest {
+  string VXID = 1;
+  double InSeconds = 2;
+  double OutSeconds = 3;
+}
+
 service APIService {
 	// Permissions
 	rpc GetPermissions (Void) returns (Permissions) {}
@@ -182,4 +188,7 @@ service APIService {
 	rpc GetPodcastTracks(GetPodcastTracksRequest) returns (TracksList) {}
   rpc GetLanguages(GetAvailableLanguagesRequest) returns (LanguageList) {}
   rpc GetBMMTranscription(GetBMMTranscriptionRequest) returns (Transcription) {}
+
+  // Shorts
+  rpc SubmitShort(SubmitShortRequest) returns (Void) {}
 }

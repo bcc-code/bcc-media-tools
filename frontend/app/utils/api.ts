@@ -1,5 +1,6 @@
-import { createClient, type Client } from "@connectrpc/connect";
-import { APIService } from "~~/src/gen/api/v1/api_connect";
+import { createClient } from "@connectrpc/connect";
+import type { Client } from '@connectrpc/connect'
+import { APIService } from "~~/src/gen/api/v1/api_pb";
 import { createConnectTransport } from "@connectrpc/connect-web";
 
 let client: Client<typeof APIService>;
