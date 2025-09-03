@@ -11,9 +11,8 @@
     },
     "devDependencies": {
         "@auth0/auth0-vue": "^2.4.0",
-        "@bufbuild/buf": "^1.45.0",
-        "@bufbuild/protoc-gen-es": "^1.10.0",
-        "@connectrpc/protoc-gen-connect-es": "^1.6.1",
+        "@bufbuild/buf": "^1.57.0",
+        "@bufbuild/protoc-gen-es": "^2.7.0",
         "@nuxt/icon": "^1.15.0",
         "@nuxtjs/i18n": "^10.0.3",
         "prettier": "^3.6.2",
@@ -23,9 +22,9 @@
         "vue-tsc": "^3.0.5"
     },
     "dependencies": {
-        "@bufbuild/protobuf": "^1.10.0",
-        "@connectrpc/connect": "^1.6.1",
-        "@connectrpc/connect-web": "^1.6.1",
+        "@bufbuild/protobuf": "^2.7.0",
+        "@connectrpc/connect": "^2.1.0",
+        "@connectrpc/connect-web": "^2.1.0",
         "@nuxt/ui": "^3.3.0",
         "@vueuse/core": "^13.6.0",
         "@vueuse/nuxt": "^13.6.0",

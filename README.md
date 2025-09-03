@@ -52,6 +52,12 @@ go install connectrpc.com/connect/cmd/protoc-gen-connect-go@latest
 npm install -g @connectrpc/protoc-gen-connect-es @bufbuild/protoc-gen-es
 ```
 
+If you get issues where protobuf cannot find the go plugins, ensure your Go bin directory is in your PATH.
+
+```sh
+export PATH=$PATH:$(go env GOPATH)/bin
+```
+
 Install dependencies:
 
 ```bash

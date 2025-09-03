@@ -1,5 +1,7 @@
+import { create } from '@bufbuild/protobuf';
 import { useAPI } from "~/utils/api";
-import { BMMPermission, Permissions } from "~~/src/gen/api/v1/api_pb";
+import type { Permissions } from "~~/src/gen/api/v1/api_pb";
+import { BMMPermissionSchema, PermissionsSchema } from "~~/src/gen/api/v1/api_pb";
 
 export type Me = {
     admin: boolean;
@@ -28,8 +30,8 @@ export function useMe() {
         if (p) {
             me.value = p;
         } else {
-            me.value = new Permissions();
-            me.value!.bmm = new BMMPermission();
+            me.value = create(PermissionsSchema);
+            me.value!.bmm = create(BMMPermissionSchema);
         }
 
         loading.value = false;
