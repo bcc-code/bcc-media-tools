@@ -28,7 +28,13 @@ export function useTools() {
 			label: 'Export',
 			icon: "tabler:file-export",
 			description: 'Trigger export workflows',
-			to: "/export",
+			to: "/export/",
+		},
+		{
+			label: 'Shorts generation',
+			icon: "tabler:device-mobile",
+			description: 'Generate shorts from existing videos',
+			to: "/shorts/",
 		},
 		{
 			label: t("tools.admin.title"),
