@@ -50,6 +50,7 @@ type ApiServer struct {
 	PermissionsAPI
 	BMMApi
 	TranscriptionAPI
+	ShortsAPI
 }
 
 func withCORS(connectHandler http.Handler) http.Handler {
@@ -108,11 +109,13 @@ func main() {
 	permissionsApi := PermissionsAPI{}
 	bmmApi := NewBMMApi(os.Getenv("BMM_BASE_URL"), bmmToken)
 	transcriptionAPI := NewTranscriptionAPI(os.Getenv("CANTEMO_URL"), os.Getenv("CANTEMO_TOKEN"), temporalClient)
+	shortsAPI := NewShortsAPI(temporalClient)
 
 	api := &ApiServer{
 		PermissionsAPI:   permissionsApi,
 		BMMApi:           *bmmApi,
 		TranscriptionAPI: *transcriptionAPI,
+		ShortsAPI:        *shortsAPI,
 	}
 
 	if os.Getenv("STATIC_FILE_PATH") != "" {

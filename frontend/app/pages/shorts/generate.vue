@@ -93,15 +93,40 @@ watch([duration, scrubberWidth], ([d, s]) => {
     if (!d || !s) return;
     zoom.value = s / d;
 });
+
+const confirmSubmit = ref(false);
+function submit() {
+    confirmSubmit.value = false;
+}
 </script>
 
 <template>
     <div class="mx-auto flex w-full max-w-7xl flex-col gap-4 p-8">
-        <header class="mb-4">
-            <h1 class="text-2xl font-bold">Shorts generation</h1>
-            <p class="text-muted text-sm">
-                A simple tool to generate simple shorts.
-            </p>
+        <header class="mb-4 flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold">Shorts generation</h1>
+                <p class="text-muted text-sm">
+                    A simple tool to generate simple shorts.
+                </p>
+            </div>
+            <UButton @click="confirmSubmit = true">
+                <UIcon name="tabler:send" class="text-dimmed" />
+                Submit and Generate
+            </UButton>
+            <UModal
+                v-model:open="confirmSubmit"
+                title="Submit and Generate Short"
+                description="Are you sure you want to submit?"
+            >
+                <template #footer>
+                    <div class="flex w-full justify-end gap-2">
+                        <UButton @click="confirmSubmit = false" variant="ghost">
+                            Cancel
+                        </UButton>
+                        <UButton @click="submit">Submit</UButton>
+                    </div>
+                </template>
+            </UModal>
         </header>
         <template v-if="status == 'success'">
             <video
@@ -127,7 +152,9 @@ watch([duration, scrubberWidth], ([d, s]) => {
                 <UButton variant="soft" @click="endTime = currentTime">
                     Set end point
                 </UButton>
-                <UButton @click="previewShort">Preview short</UButton>
+                <UButton variant="soft" @click="previewShort">
+                    Preview short
+                </UButton>
             </div>
             <ShortsTimelineScrubber
                 v-if="
