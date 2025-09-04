@@ -63,6 +63,21 @@
         "submitError": "Transcription could not be submitted",
         "upload": "Upload"
     },
+    "shorts": {
+        "generation": {
+            "title": "Shorts generation",
+            "description": "A simple tool to generate simple shorts",
+            "submit": "Submit and Generate",
+            "submitConfirmationTitle": "Are you sure you want to submit?",
+            "submitConfirmationMessage": "This will start generating a short and send it to Mediabanken.",
+            "submitConfirmationCancel": "Cancel",
+            "submitConfirmationSubmit": "Yes, submit",
+            "setStartPoint": "Set start point",
+            "setEndPoint": "Set end point",
+            "previewShort": "Preview short",
+            "durationWarning": "Shorts should be less than 1 minute"
+        }
+    },
     "tools": {
         "bmmUpload": {
             "title": "BMM Upload",

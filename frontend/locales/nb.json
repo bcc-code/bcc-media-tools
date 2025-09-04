@@ -63,6 +63,21 @@
         "submitError": "Feil ved sending til Mediabanken",
         "upload": "Last opp"
     },
+    "shorts": {
+        "generation": {
+            "title": "Shorts generering",
+            "description": "En enkelt verktøy for å generere shorts",
+            "submit": "Send inn og generer",
+            "submitConfirmationTitle": "Er du sikker på at du vil sende inn?",
+            "submitConfirmationMessage": "Dette vil starte å generere en short og sende den til Mediabanken.",
+            "submitConfirmationCancel": "Avbryt",
+            "submitConfirmationSubmit": "Ja, send inn",
+            "setStartPoint": "Sett startpunkt",
+            "setEndPoint": "Sett sluttpunkt",
+            "previewShort": "Forhåndsvis short",
+            "durationWarning": "Shorts bør være mindre enn 1 minutt"
+        }
+    },
     "tools": {
         "bmmUpload": {
             "title": "BMM opplasting",

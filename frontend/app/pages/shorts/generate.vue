@@ -31,6 +31,11 @@ const duration = ref<number | undefined>(0);
 const startTime = ref<number | undefined>(0);
 const endTime = ref<number | undefined>(0);
 
+const shortDuration = computed(() => {
+    if (startTime.value == undefined || endTime.value == undefined) return 0;
+    return Math.ceil(endTime.value - startTime.value);
+});
+
 useEventListener(
     videoElement,
     "loadeddata",
@@ -112,32 +117,46 @@ async function submit() {
         confirmSubmit.value = false;
     } catch (err) {}
 }
+
+const formattedDuration = (duration: number) => {
+    const minutes = Math.floor(duration / 60);
+    const seconds = duration % 60;
+    return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+};
 </script>
 
 <template>
     <div class="mx-auto flex w-full max-w-7xl flex-col gap-4 p-8">
         <header class="mb-4 flex items-center justify-between">
             <div>
-                <h1 class="text-2xl font-bold">Shorts generation</h1>
+                <h1 class="text-2xl font-bold">
+                    {{ $t("shorts.generation.title") }}
+                </h1>
                 <p class="text-muted text-sm">
-                    A simple tool to generate simple shorts.
+                    {{ $t("shorts.generation.description") }}
                 </p>
             </div>
             <UButton @click="confirmSubmit = true">
                 <UIcon name="tabler:send" class="text-dimmed" />
-                Submit and Generate
+                {{ $t("shorts.generation.submit") }}
             </UButton>
             <UModal
                 v-model:open="confirmSubmit"
-                title="Submit and Generate Short"
-                description="Are you sure you want to submit?"
+                :title="$t('shorts.generation.submitConfirmationTitle')"
+                :description="$t('shorts.generation.submitConfirmationMessage')"
             >
                 <template #footer>
                     <div class="flex w-full justify-end gap-2">
                         <UButton @click="confirmSubmit = false" variant="ghost">
-                            Cancel
+                            {{
+                                $t("shorts.generation.submitConfirmationCancel")
+                            }}
                         </UButton>
-                        <UButton @click="submit">Submit</UButton>
+                        <UButton @click="submit">
+                            {{
+                                $t("shorts.generation.submitConfirmationSubmit")
+                            }}
+                        </UButton>
                     </div>
                 </template>
             </UModal>
@@ -150,24 +169,43 @@ async function submit() {
                 class="bg-default aspect-video w-full shadow-xl"
             />
             <div class="flex items-center gap-2">
-                <p
-                    v-if="startTime != undefined && endTime != undefined"
-                    class="tabular-nums"
-                >
-                    {{ formatTime(startTime) }} - {{ formatTime(endTime) }}
-                </p>
+                <div class="tabular-nums">
+                    <p
+                        :class="[
+                            'font-bold',
+                            {
+                                'text-red-600 dark:text-red-300':
+                                    shortDuration > 60,
+                            },
+                        ]"
+                    >
+                        {{ formattedDuration(shortDuration) }}
+                        <span
+                            v-if="shortDuration > 60"
+                            class="ml-1 inline-block origin-left font-normal opacity-50"
+                        >
+                            {{ $t("shorts.generation.durationWarning") }}
+                        </span>
+                    </p>
+                    <p
+                        v-if="startTime != undefined && endTime != undefined"
+                        class="text-dimmed text-sm"
+                    >
+                        {{ formatTime(startTime) }} - {{ formatTime(endTime) }}
+                    </p>
+                </div>
                 <UButton
                     class="ml-auto"
                     variant="soft"
                     @click="startTime = currentTime"
                 >
-                    Set start point
+                    {{ $t("shorts.generation.setStartPoint") }}
                 </UButton>
                 <UButton variant="soft" @click="endTime = currentTime">
-                    Set end point
+                    {{ $t("shorts.generation.setEndPoint") }}
                 </UButton>
                 <UButton variant="soft" @click="previewShort">
-                    Preview short
+                    {{ $t("shorts.generation.previewShort") }}
                 </UButton>
             </div>
             <ShortsTimelineScrubber
@@ -189,7 +227,10 @@ async function submit() {
         <template v-if="status != 'success'">
             <USkeleton class="aspect-video w-full" />
             <div class="flex items-center gap-2">
-                <USkeleton class="h-6 w-48" />
+                <div class="space-y-2">
+                    <USkeleton class="h-5 w-16" />
+                    <USkeleton class="h-4 w-48" />
+                </div>
                 <USkeleton class="ml-auto h-8 w-28" />
                 <USkeleton class="h-8 w-28" />
                 <USkeleton class="h-8 w-28" />
