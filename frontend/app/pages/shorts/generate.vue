@@ -47,12 +47,7 @@ useEventListener(
     { once: true },
 );
 
-const currentTime = ref(0);
-useEventListener(videoElement, "timeupdate", () => {
-    if (!videoElement.value) return;
-    currentTime.value = videoElement.value.currentTime;
-});
-
+const previewingShort = ref(false);
 function previewShort() {
     if (
         !videoElement.value ||
@@ -63,15 +58,22 @@ function previewShort() {
 
     videoElement.value.currentTime = startTime.value;
     videoElement.value.play();
-
-    const timeoutDuration = (endTime.value - startTime.value) * 1000;
-    const timeout = setTimeout(() => {
-        if (videoElement.value) {
-            videoElement.value.pause();
-        }
-        clearTimeout(timeout);
-    }, timeoutDuration);
+    previewingShort.value = true;
 }
+
+const currentTime = ref(0);
+useEventListener(videoElement, "timeupdate", () => {
+    if (!videoElement.value) return;
+    currentTime.value = videoElement.value.currentTime;
+    if (
+        endTime.value != undefined &&
+        currentTime.value >= endTime.value &&
+        previewingShort.value
+    ) {
+        previewingShort.value = false;
+        videoElement.value.pause();
+    }
+});
 
 const colorMode = useColorMode();
 const showManual = ref(false);
@@ -123,6 +125,26 @@ const formattedDuration = (duration: number) => {
     const seconds = duration % 60;
     return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
 };
+
+useVideoKeyboardControls({
+    togglePlay: () => {
+        if (videoElement.value) {
+            videoElement.value.paused
+                ? videoElement.value.play()
+                : videoElement.value.pause();
+        }
+    },
+    backward: () => {
+        if (videoElement.value) {
+            videoElement.value.currentTime -= 1;
+        }
+    },
+    forward: () => {
+        if (videoElement.value) {
+            videoElement.value.currentTime += 1;
+        }
+    },
+});
 </script>
 
 <template>
