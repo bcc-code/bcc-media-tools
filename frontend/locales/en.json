@@ -67,6 +67,7 @@
     },
     "shorts": {
         "generation": {
+            "loadFromMediabanken": "Load from Mediabanken",
             "title": "Shorts generation",
             "description": "A simple tool to generate simple shorts",
             "submit": "Submit and Generate",

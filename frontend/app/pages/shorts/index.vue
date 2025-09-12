@@ -49,7 +49,9 @@ function onSubmit(event: FormSubmitEvent<Schema>) {
                     placeholder="VX-123456"
                 />
             </UFormField>
-            <UButton type="submit" block>Submit</UButton>
+            <UButton type="submit" block>
+                {{ $t("shorts.generation.loadFromMediabanken") }}
+            </UButton>
         </UForm>
     </div>
 </template>

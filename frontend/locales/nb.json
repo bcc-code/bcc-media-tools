@@ -22,7 +22,7 @@
         "submitConfirmationCancel": "Avbryt",
         "submitConfirmationSubmit": "Ja, send inn",
         "download": "Last ned",
-        "load": "Last fra Mediabanken",
+        "load": "Hent fra Mediabanken",
         "selectFile": "Velg fil",
         "or": "eller",
         "uploadJsonFileTitle": "Rediger lokal transkripsjon",
@@ -67,6 +67,7 @@
     },
     "shorts": {
         "generation": {
+            "loadFromMediabanken": "Hent fra Mediabanken",
             "title": "Shorts generering",
             "description": "En enkelt verktøy for å generere shorts",
             "submit": "Send inn og generer",

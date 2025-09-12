@@ -105,18 +105,18 @@ function setSegments(s: Segment[]) {
                 >
                     <USeparator :label="$t('transcription.or')" />
                     <form
-                        class="bg-default flex w-full flex-col gap-2 rounded-xl p-4"
+                        class="flex w-full flex-col gap-2"
                         @submit.prevent="navigateTo(`/transcription/${vxId}`)"
                     >
-                        <UFormField label="Vidispine-ID">
+                        <UFormField label="VX-ID">
                             <UInput
                                 v-model="vxId"
                                 required
-                                placeholder="VX-12345"
+                                placeholder="VX-123456"
                                 class="w-full"
                             />
                         </UFormField>
-                        <UButton variant="soft" type="submit" block>
+                        <UButton type="submit" block>
                             {{ $t("transcription.load") }}
                         </UButton>
                     </form>
