@@ -22,9 +22,11 @@
         "submitConfirmationCancel": "Avbryt",
         "submitConfirmationSubmit": "Ja, send inn",
         "download": "Last ned",
-        "load": "Åpne",
+        "load": "Last fra Mediabanken",
         "selectFile": "Velg fil",
-        "or": "eller"
+        "or": "eller",
+        "uploadJsonFileTitle": "Rediger lokal transkripsjon",
+        "uploadJsonFileDescription": "Dra og slipp JSON-fil her eller klikk for å browse"
     },
     "bmmUpload": {
         "title": "BMM opplasting",

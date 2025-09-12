@@ -19,9 +19,7 @@ const fileName = ref<string>();
 
 const tKey = ref<string>();
 
-const handleFile = (event: Event) => {
-    const target = event.target as HTMLInputElement;
-    const file = target.files?.[0];
+const handleFile = (file: File | null | undefined) => {
     if (file) {
         fileName.value = file.name;
         transcription.value = undefined;
@@ -56,15 +54,6 @@ const { deleteMode } = useDeleteMode();
 
 const { me } = useMe();
 
-const truncatedFileName = computed(() => {
-    if (!fileName.value) return;
-    if (fileName.value.length < 30) return fileName.value;
-
-    const first = fileName.value.slice(0, 10);
-    const last = fileName.value.slice(-10);
-    return [first, last].join("...");
-});
-
 function setSegments(s: Segment[]) {
     segments.value = s;
     if (!transcription.value) return;
@@ -82,44 +71,52 @@ function setSegments(s: Segment[]) {
         ]"
     >
         <div class="flex flex-grow flex-col">
-            <div class="flex max-w-80 items-center gap-4">
-                <div class="shrink-0">
-                    <label for="file-input" class="cursor-pointer">
-                        <UButton class="pointer-events-none">
-                            {{
-                                fileName && truncatedFileName
-                                    ? truncatedFileName
-                                    : $t("transcription.selectFile")
-                            }}
-                        </UButton>
-                    </label>
-                    <input
-                        id="file-input"
-                        hidden
-                        type="file"
-                        placeholder="File here"
+            <div
+                class="mx-auto flex w-full max-w-sm flex-col items-center gap-4"
+            >
+                <div class="w-full shrink-0">
+                    <UFileUpload
+                        v-if="!transcription"
                         accept="application/json"
-                        @input="handleFile"
-                    />
+                        icon="heroicons:document-text"
+                        :label="$t('transcription.uploadJsonFileTitle')"
+                        :description="
+                            $t('transcription.uploadJsonFileDescription')
+                        "
+                        :interactive="false"
+                        layout="list"
+                        @update:model-value="handleFile"
+                    >
+                        <template #actions="{ open }">
+                            <UButton
+                                :label="$t('transcription.selectFile')"
+                                icon="i-lucide-upload"
+                                color="neutral"
+                                variant="outline"
+                                @click="open()"
+                            />
+                        </template>
+                    </UFileUpload>
                 </div>
                 <template
                     v-if="
                         !fileName && me?.transcription && me.transcription.admin
                     "
                 >
-                    <span class="text-muted text-sm">
-                        {{ $t("transcription.or") }}
-                    </span>
+                    <USeparator :label="$t('transcription.or')" />
                     <form
-                        class="bg-default flex gap-1 rounded-xl p-2"
+                        class="bg-default flex w-full flex-col gap-2 rounded-xl p-4"
                         @submit.prevent="navigateTo(`/transcription/${vxId}`)"
                     >
-                        <UInput
-                            v-model="vxId"
-                            placeholder="Vidispine-ID"
-                            class="min-w-32"
-                        />
-                        <UButton variant="ghost" type="submit">
+                        <UFormField label="Vidispine-ID">
+                            <UInput
+                                v-model="vxId"
+                                required
+                                placeholder="VX-12345"
+                                class="w-full"
+                            />
+                        </UFormField>
+                        <UButton variant="soft" type="submit" block>
                             {{ $t("transcription.load") }}
                         </UButton>
                     </form>

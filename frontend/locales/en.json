@@ -22,9 +22,11 @@
         "submitConfirmationCancel": "Cancel",
         "submitConfirmationSubmit": "Yes, submit",
         "download": "Download",
-        "load": "Load",
+        "load": "Load from Mediabanken",
         "selectFile": "Select file",
-        "or": "or"
+        "or": "or",
+        "uploadJsonFileTitle": "Edit local transcription",
+        "uploadJsonFileDescription": "Drag and drop JSON file here or click to browse"
     },
     "bmmUpload": {
         "title": "BMM Upload",
