@@ -109,19 +109,6 @@ const transcriptionTrack = ref<BMMTrack>();
             v-if="status == 'success' && tracks && tracks.length"
             class="relative mt-2 gap-2 space-y-2"
         >
-            <UButton
-                v-if="olderTracks.length"
-                @click="showOlderTracks = !showOlderTracks"
-                type="button"
-                variant="link"
-                block
-            >
-                {{
-                    showOlderTracks
-                        ? $t("bmmUpload.hideOlderTracks")
-                        : $t("bmmUpload.showOlderTracks")
-                }}
-            </UButton>
             <TransitionGroup
                 move-class="transition duration-300 ease-out"
                 enter-active-class="transition duration-300 ease-out"
@@ -131,11 +118,25 @@ const transcriptionTrack = ref<BMMTrack>();
                 leave-from-class="opacity-100 scale-100"
                 leave-to-class="opacity-0 scale-95"
             >
+                <UButton
+                    v-if="olderTracks.length && !selectedTrack"
+                    @click="showOlderTracks = !showOlderTracks"
+                    type="button"
+                    variant="link"
+                    block
+                >
+                    {{
+                        showOlderTracks
+                            ? $t("bmmUpload.hideOlderTracks")
+                            : $t("bmmUpload.showOlderTracks")
+                    }}
+                </UButton>
                 <BmmTrackView
                     v-for="t in filteredTracks"
                     :key="t.id"
                     :track="t"
                     :languages="languages"
+                    :selected="selectedTrack?.id == t.id"
                     @click="onTrackClick(t)"
                     @click-transcription="transcriptionTrack = t"
                 />

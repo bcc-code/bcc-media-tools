@@ -9,6 +9,7 @@ import dayjs from "dayjs";
 const props = defineProps<{
     track: BMMTrack;
     languages?: LanguageList;
+    selected?: boolean;
 }>();
 
 const emit = defineEmits<{
