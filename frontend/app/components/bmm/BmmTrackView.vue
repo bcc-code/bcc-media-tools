@@ -33,22 +33,25 @@ const availableLanguages = computed(() =>
     ),
 );
 
+const trackPublishedAt = computed(() =>
+    timestampToDate(props.track.publishedAt),
+);
 const today = new Date();
 const publishedAtToday = computed(() => {
-    return dayjs().isSame(props.track.publishedAt?.toDate(), "day");
+    return dayjs().isSame(props.track.publishedAt?.nanos, "day");
 });
 
 const isInPast = computed(() => {
-    if (!props.track.publishedAt) return false;
+    if (!trackPublishedAt.value) return false;
     return (
-        dayjs(props.track.publishedAt.toDate()).isBefore(today, "day") ||
+        dayjs(trackPublishedAt.value).isBefore(today, "day") ||
         publishedAtToday.value
     );
 });
 
 const isInFuture = computed(() => {
-    if (!props.track.publishedAt) return false;
-    return dayjs(props.track.publishedAt.toDate()).isAfter(today, "day");
+    if (!trackPublishedAt.value) return false;
+    return dayjs(trackPublishedAt.value).isAfter(today, "day");
 });
 </script>
 
@@ -57,7 +60,7 @@ const isInFuture = computed(() => {
         class="border-accented hover:bg-muted bg-default grid w-full cursor-pointer grid-cols-[auto_1fr] grid-rows-[auto_1fr] overflow-clip rounded-md border shadow-xs"
     >
         <span
-            v-if="track && track.publishedAt"
+            v-if="track && trackPublishedAt"
             :class="[
                 'border-accented row-span-2 border-r px-2 py-1 text-left tabular-nums',
                 {
@@ -66,7 +69,7 @@ const isInFuture = computed(() => {
                 },
             ]"
         >
-            {{ dateString(track.publishedAt.toDate()) }}
+            {{ dateString(trackPublishedAt) }}
             <small v-if="publishedAtToday" class="block">
                 {{ $t("bmmUpload.today") }}
             </small>

@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type { BmmEnvironment, BMMTrack } from "~~/src/gen/api/v1/api_pb";
 import dayjs from "dayjs";
+import type { Timestamp } from "@bufbuild/protobuf/wkt";
 
 const props = defineProps<{
     album: string;
@@ -52,16 +53,16 @@ function onTrackClick(track: BMMTrack) {
 const showOlderTracks = ref(false);
 const olderTracks = computed(() => {
     if (!tracks.value?.length) return [];
-    return tracks.value.filter((t) =>
-        dayjs(t.publishedAt!.toDate()).isBefore(dayjs(), "day"),
-    );
+    return tracks.value.filter((t) => {
+        return dayjs(timestampToDate(t.publishedAt)).isBefore(dayjs(), "day");
+    });
 });
 const futureTracks = computed(() => {
     if (!tracks.value?.length) return [];
     return tracks.value.filter(
         (t) =>
-            dayjs(t.publishedAt!.toDate()).isAfter(dayjs(), "day") ||
-            dayjs(t.publishedAt!.toDate()).isSame(dayjs(), "day"),
+            dayjs(timestampToDate(t.publishedAt)).isAfter(dayjs(), "day") ||
+            dayjs(timestampToDate(t.publishedAt)).isSame(dayjs(), "day"),
     );
 });
 
@@ -79,8 +80,8 @@ const filteredTracks = computed(() => {
             : tracks.value;
         return tracksToSort.toSorted((a, b) => {
             if (!a.publishedAt || !b.publishedAt) return 0;
-            return dayjs(a.publishedAt.toDate()).isBefore(
-                b.publishedAt.toDate(),
+            return dayjs(timestampToDate(a.publishedAt)).isBefore(
+                timestampToDate(b.publishedAt),
                 "day",
             )
                 ? -1
