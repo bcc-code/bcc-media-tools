@@ -89,19 +89,31 @@ function addNewSegmentAt(index: number) {
 
     emit("updateSegments", arr);
 }
+
+const transcriptionSegments = computed(
+    () => props.transcription?.segments ?? [],
+);
+const { list, wrapperProps, containerProps } = useVirtualList(
+    transcriptionSegments,
+    {
+        itemHeight: 80,
+        overscan: 10,
+    },
+);
 </script>
 
 <template>
     <div
         :class="[
-            'relative flex flex-col overflow-auto text-xl transition-all',
+            'relative text-xl transition-all',
             { 'ring-4 ring-red-200 ring-inset': deleteMode },
         ]"
+        v-bind="containerProps"
     >
         <TransitionGroup
-            v-if="transcription"
+            v-if="list"
             tag="div"
-            class="divide-default flex flex-col divide-y overflow-auto"
+            class="divide-default flex flex-col divide-y"
             enter-active-class="transition duration-300 ease-out"
             enter-from-class="opacity-0 scale-95"
             enter-to-class="opacity-100 scale-100"
@@ -109,38 +121,40 @@ function addNewSegmentAt(index: number) {
             leave-from-class="opacity-100 scale-100"
             leave-to-class="opacity-0 scale-95"
             move-class="transition duration-300 ease-out"
+            v-bind="wrapperProps"
         >
             <template
-                v-for="(s, index) in transcription.segments"
-                :key="`segment:${s.id}:${s.start}:${s.end}`"
+                v-for="s in list"
+                :key="`segment:${s.index}:${s.data.id}:${s.data.start}:${s.data.end}`"
             >
                 <TranscriptionSegmentEditor
                     :ref="
                         (el) => {
                             if (el && segmentelements) {
-                                segmentelements[index] =
+                                segmentelements[s.index] =
                                     el as ComponentPublicInstance;
                             }
                         }
                     "
-                    :segment="s"
-                    :focused="focusedSegment == s"
-                    :deleted="deletedIndexes.includes(index.toString())"
+                    :segment="s.data"
+                    :focused="focusedSegment == s.data"
+                    :deleted="deletedIndexes.includes(s.index.toString())"
+                    style="min-height: 80px"
                     @word-focus="(w, s) => $emit('wordFocus', w, s)"
-                    @update="handleSegmentUpdate(index, $event)"
-                    @toggle-delete="handleSegmentToggleDelete(index)"
-                    @focus-previous="focusSegment(index, -1)"
-                    @focus-next="focusSegment(index, 1)"
+                    @update="handleSegmentUpdate(s.index, $event)"
+                    @toggle-delete="handleSegmentToggleDelete(s.index)"
+                    @focus-previous="focusSegment(s.index, -1)"
+                    @focus-next="focusSegment(s.index, 1)"
                 />
                 <div
-                    v-if="canAddSegment(index)"
-                    :key="`segment:${s.id}:add`"
+                    v-if="canAddSegment(s.index)"
+                    :key="`segment:${s.index}:${s.data.id}:add`"
                     class="relative w-full"
                 >
                     <button
                         class="bg-accented absolute right-1/2 z-10 grid aspect-square size-6 -translate-y-1/2 place-items-center rounded-full p-0.5 text-sm hover:scale-110"
                         :title="$t('transcription.addSegment')"
-                        @click="addNewSegmentAt(index + 1)"
+                        @click="addNewSegmentAt(s.index + 1)"
                     >
                         <Icon name="heroicons:plus-16-solid" />
                     </button>
