@@ -29,7 +29,7 @@ const { me } = useMe();
     <UFileUpload
         v-model="selectedFilesComputed"
         :multiple="props.acceptMultiple"
-        accept="audio/mpeg"
+        accept="audio/mpeg,audio/wav"
         layout="list"
         :label="$t('bmmUpload.addFiles')"
         :description="$t('bmmUpload.addFilesDescription')"
