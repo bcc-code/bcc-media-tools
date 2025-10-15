@@ -26,7 +26,10 @@
         "selectFile": "Velg fil",
         "or": "eller",
         "uploadJsonFileTitle": "Rediger lokal transkripsjon",
-        "uploadJsonFileDescription": "Dra og slipp JSON-fil her eller klikk for å browse"
+        "uploadJsonFileDescription": "Dra og slipp JSON-fil her eller klikk for å browse",
+        "resetSuccess": "Transkripsjon er tilbakestilt",
+        "submitSuccess": "Transkripsjon er sendt til Mediabanken",
+        "submitError": "Feil ved sending til Mediabanken"
     },
     "bmmUpload": {
         "title": "BMM opplasting",
@@ -60,9 +63,6 @@
         "addFiles": "Legg til filer",
         "addFilesDescription": "Dra og slipp filer her eller klikk for å browse",
         "uploadError": "Opplasting feilet. Vennligst prøv igjen",
-        "resetSuccess": "Transkripsjon er tilbakestilt",
-        "submitSuccess": "Transkripsjon er sendt til Mediabanken",
-        "submitError": "Feil ved sending til Mediabanken",
         "upload": "Last opp"
     },
     "shorts": {

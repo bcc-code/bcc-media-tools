@@ -26,7 +26,10 @@
         "selectFile": "Select file",
         "or": "or",
         "uploadJsonFileTitle": "Edit local transcription",
-        "uploadJsonFileDescription": "Drag and drop JSON file here or click to browse"
+        "uploadJsonFileDescription": "Drag and drop JSON file here or click to browse",
+        "resetSuccess": "Transcription was successfully reset",
+        "submitSuccess": "Transcription was successfully submitted",
+        "submitError": "Transcription could not be submitted"
     },
     "bmmUpload": {
         "title": "BMM Upload",
@@ -60,9 +63,6 @@
         "addFiles": "Add files",
         "addFilesDescription": "Drag and drop files here or click to browse",
         "uploadError": "Upload failed, try again?",
-        "resetSuccess": "Transcription was successfully reset",
-        "submitSuccess": "Transcription was successfully submitted",
-        "submitError": "Transcription could not be submitted",
         "upload": "Upload"
     },
     "shorts": {

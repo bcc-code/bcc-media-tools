@@ -18,7 +18,7 @@ useHead({
 const api = useAPI();
 
 const route = useRoute("transcription-id");
-const key = "ts-" + route.params.id;
+const key = computed(() => "ts-" + route.params.id);
 const routeId = route.params.id;
 
 const loading = ref(true);
@@ -55,7 +55,7 @@ const reset = async (notify: boolean = true) => {
     try {
         let result = await api.getTranscription({ VXID: routeId });
         setTranscription(result);
-        localStorage[key] = JSON.stringify(result);
+        localStorage[key.value] = JSON.stringify(result);
         if (notify) {
             toast.add({
                 icon: "heroicons:check",
@@ -87,7 +87,7 @@ const submitToMediabanken = async () => {
             VXID: routeId,
             transcription: transcription.value,
         });
-        localStorage.removeItem(key);
+        localStorage.removeItem(key.value);
         toast.add({
             icon: "heroicons:check",
             title: t("transcription.submitSuccess"),
@@ -105,7 +105,7 @@ const submitToMediabanken = async () => {
 };
 
 onMounted(async () => {
-    const saved = localStorage[key];
+    const saved = localStorage[key.value];
     error.value = null;
     try {
         video.value = (await api.getPreview({ VXID: routeId })).url;
@@ -114,7 +114,7 @@ onMounted(async () => {
         loading.value = false;
         return;
     }
-    fileName.value = key;
+    fileName.value = key.value;
 
     if (saved) {
         setTranscription(JSON.parse(saved));
@@ -178,7 +178,7 @@ const handleWordFocus = (word: Word, segment: Segment) => {
 };
 
 watch(segments, () => {
-    localStorage[key] = JSON.stringify({
+    localStorage[key.value] = JSON.stringify({
         text: segments.value.map((s) => s.text).join(" "),
         segments: segments.value,
         video: video.value,
