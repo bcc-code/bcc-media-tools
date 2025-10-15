@@ -317,12 +317,12 @@ const splitterApi = computed(() =>
                 v-bind="splitterApi.getPanelProps({ id: 'right' })"
                 class="flex flex-col bg-neutral-100 dark:bg-neutral-950"
             >
-                <div class="relative m-auto p-4">
-                    <Icon
-                        v-if="loading && !video"
-                        name="svg-spinners:bars-rotate-fade"
-                        class="text-2xl"
-                    />
+                <Icon
+                    v-if="loading && !video"
+                    name="svg-spinners:bars-rotate-fade"
+                    class="m-auto text-2xl"
+                />
+                <div class="relative mx-auto p-4">
                     <template v-if="video">
                         <video
                             ref="videoelement"
