@@ -29,7 +29,9 @@
         "uploadJsonFileDescription": "Drag and drop JSON file here or click to browse",
         "resetSuccess": "Transcription was successfully reset",
         "submitSuccess": "Transcription was successfully submitted",
-        "submitError": "Transcription could not be submitted"
+        "submitError": "Transcription could not be submitted",
+        "clearAllLocalData": "Clear all local data",
+        "clear": "Clear"
     },
     "bmmUpload": {
         "title": "BMM Upload",

@@ -29,7 +29,9 @@
         "uploadJsonFileDescription": "Dra og slipp JSON-fil her eller klikk for å browse",
         "resetSuccess": "Transkripsjon er tilbakestilt",
         "submitSuccess": "Transkripsjon er sendt til Mediabanken",
-        "submitError": "Feil ved sending til Mediabanken"
+        "submitError": "Feil ved sending til Mediabanken",
+        "clearAllLocalData": "Tøm all lokal data",
+        "clear": "Tøm"
     },
     "bmmUpload": {
         "title": "BMM opplasting",

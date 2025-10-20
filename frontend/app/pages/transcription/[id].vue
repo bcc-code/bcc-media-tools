@@ -2,6 +2,7 @@
 import { normalizeProps, useMachine } from "@zag-js/vue";
 import * as splitter from "@zag-js/splitter";
 import type { ComponentPublicInstance } from "vue";
+import { onKeyDown, onKeyUp } from "@vueuse/core";
 
 const analytics = useAnalytics();
 onMounted(() => {
@@ -103,6 +104,21 @@ const submitToMediabanken = async () => {
         loadingSubmit.value = false;
     }
 };
+
+const showClearButton = ref(false);
+const isHoveringOverClearButton = ref(false);
+function clearLocalData() {
+    localStorage.clear();
+    reset();
+}
+
+onKeyDown("c", () => {
+    if (!isHoveringOverClearButton.value) return;
+    showClearButton.value = true;
+});
+onKeyUp("c", () => {
+    showClearButton.value = false;
+});
 
 onMounted(async () => {
     const saved = localStorage[key.value];
@@ -234,14 +250,32 @@ const splitterApi = computed(() =>
         <div
             class="border-default bg-default flex items-center justify-between gap-4 border-b px-6 py-3"
         >
-            <div class="flex gap-3">
-                <p>{{ $t("transcription.changesSavedLocally") }}</p>
-                <button
-                    class="-m-3 p-3 text-neutral-500 underline"
-                    @click="() => reset()"
+            <div
+                class="flex flex-col"
+                @mouseenter="isHoveringOverClearButton = true"
+                @mouseleave="isHoveringOverClearButton = false"
+            >
+                <div class="flex gap-3">
+                    <p>{{ $t("transcription.changesSavedLocally") }}</p>
+                    <button
+                        class="-m-3 p-3 text-neutral-500 underline"
+                        @click="() => reset()"
+                    >
+                        {{ $t("transcription.reset") }}
+                    </button>
+                </div>
+                <div
+                    v-if="showClearButton"
+                    class="flex gap-2 text-sm text-neutral-500"
                 >
-                    {{ $t("transcription.reset") }}
-                </button>
+                    <p>{{ $t("transcription.clearAllLocalData") }}</p>
+                    <button
+                        class="-m-3 p-3 underline"
+                        @click="() => clearLocalData()"
+                    >
+                        {{ $t("transcription.clear") }}
+                    </button>
+                </div>
             </div>
             <div class="flex items-center gap-4">
                 <USwitch
