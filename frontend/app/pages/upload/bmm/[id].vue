@@ -81,7 +81,7 @@ const uploaded = ref(false);
 </script>
 
 <template>
-    <div class="mx-auto h-full w-full max-w-screen-lg p-4">
+    <div class="mx-auto h-full w-full max-w-5xl p-4">
         <div class="mb-4 flex items-center justify-end gap-4">
             <ThemeSwitch />
             <LanguageSwitcher />

@@ -1,9 +1,6 @@
 <script lang="ts" setup>
-import {
-    BmmEnvironment,
-    BMMPermission,
-    BMMYear,
-} from "~~/src/gen/api/v1/api_pb";
+import { BmmEnvironment } from "~~/src/gen/api/v1/api_pb";
+import type { BMMPermission, BMMYear } from "~~/src/gen/api/v1/api_pb";
 
 const props = defineProps<{
     permissions: BMMPermission;

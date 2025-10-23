@@ -70,7 +70,7 @@ function setSegments(s: Segment[]) {
             },
         ]"
     >
-        <div class="flex flex-grow flex-col">
+        <div class="flex grow flex-col">
             <div
                 class="mx-auto flex w-full max-w-sm flex-col items-center gap-4"
             >

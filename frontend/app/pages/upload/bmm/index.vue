@@ -65,7 +65,7 @@ const dateString = (date: Date) => {
 
 <template>
     <div class="flex h-full w-full flex-col items-stretch p-4">
-        <div class="mx-auto w-full max-w-screen-lg py-6">
+        <div class="mx-auto w-full max-w-5xl py-6">
             <UStepper
                 v-model="step"
                 disabled
@@ -89,7 +89,7 @@ const dateString = (date: Date) => {
             />
         </div>
         <div
-            class="border-default bg-default mx-auto flex h-full w-full max-w-screen-lg grow-1 flex-col gap-4 rounded-2xl border p-4"
+            class="border-default bg-default mx-auto flex h-full w-full max-w-5xl grow flex-col gap-4 rounded-2xl border p-4"
         >
             <template
                 v-if="
@@ -103,7 +103,7 @@ const dateString = (date: Date) => {
                         v-model="form"
                         :permissions="me.bmm"
                         :environment="selectedEnvironment"
-                        class="grow-1"
+                        class="grow"
                         @set="step = 'upload'"
                     />
                     <div

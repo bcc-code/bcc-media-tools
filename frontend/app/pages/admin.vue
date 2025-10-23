@@ -61,7 +61,7 @@ const { data: availableLanguages } = useAsyncData(
 
 <template>
     <div class="flex h-screen w-screen" v-if="me?.admin">
-        <div class="mx-auto w-full max-w-screen-md p-8">
+        <div class="mx-auto w-full max-w-3xl p-8">
             <div class="flex items-center justify-between gap-2">
                 <h2 class="text-2xl font-bold">Admin</h2>
                 <UButton @click="showNewEmailForm = true">
