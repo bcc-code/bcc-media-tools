@@ -14,7 +14,7 @@ const { enabledTools } = useTools();
 </script>
 
 <template>
-    <div class="flex grow-1 flex-col">
+    <div class="flex grow flex-col">
         <header
             ref="header"
             class="border-accented bg-default sticky top-0 z-10 flex items-center gap-4 border-b px-4"
@@ -36,7 +36,7 @@ const { enabledTools } = useTools();
             <ThemeSwitch class="ml-auto" />
             <LanguageSwitcher />
         </header>
-        <main class="grow-1">
+        <main class="grow">
             <slot />
         </main>
     </div>

@@ -15,8 +15,8 @@ const { enabledTools } = useTools();
 </script>
 
 <template>
-    <div class="flex w-full justify-center">
-        <div class="grid min-w-1/2 gap-4 p-8 md:grid-cols-3">
+    <UContainer>
+        <div class="mt-8 grid min-w-1/2 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <NuxtLink
                 v-for="tool in enabledTools"
                 :key="tool.to"
@@ -25,7 +25,7 @@ const { enabledTools } = useTools();
             >
                 <UCard
                     :ui="{ body: 'flex flex-col h-full items-start' }"
-                    class="relative size-full"
+                    class="ease-out-expo relative size-full shadow-xs transition duration-300 hover:-translate-y-1 hover:shadow-md"
                 >
                     <Icon :name="tool.icon" class="mb-2 text-lg" />
                     <p>{{ tool.label }}</p>
@@ -44,5 +44,5 @@ const { enabledTools } = useTools();
                 </UCard>
             </NuxtLink>
         </div>
-    </div>
+    </UContainer>
 </template>
