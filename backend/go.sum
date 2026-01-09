@@ -157,8 +157,8 @@ github.com/aws/aws-sdk-go-v2/service/s3 v1.40.2 h1:Ll5/YVCOzRB+gxPqs2uD0R7/MyATC
 github.com/aws/aws-sdk-go-v2/service/s3 v1.40.2/go.mod h1:Zjfqt7KhQK+PO1bbOsFNzKgaq7TcxzmEoDWN8lM0qzQ=
 github.com/aws/smithy-go v1.15.0 h1:PS/durmlzvAFpQHDs4wi4sNNP9ExsqZh6IlfdHXgKK8=
 github.com/aws/smithy-go v1.15.0/go.mod h1:Tg+OJXh4MB2R/uN61Ko2f6hTZwB/ZYGOtib8J3gBHzA=
-github.com/bcc-code/bcc-media-flows v0.0.0-20250903110943-0adac1ae45e5 h1:7+8OpzQ8KYTJC4wExLS7uHew/D1uVCFSUtn4bANIA14=
-github.com/bcc-code/bcc-media-flows v0.0.0-20250903110943-0adac1ae45e5/go.mod h1:dIG+Qa/4D6U4YkNbkM4uAm7rcq8j2i+dtMSnAuhRo9s=
+github.com/bcc-code/bcc-media-flows v0.0.0-20260109104036-78c8298c7de2 h1:CHY+hXWLLPdmG9wBbKZV3pIJOmeR0pBCmBDPgM1aQc4=
+github.com/bcc-code/bcc-media-flows v0.0.0-20260109104036-78c8298c7de2/go.mod h1:MABBhR2mLwDVFrl/xXk9+MPiv/E1cpktVfojIj9ktvs=
 github.com/bcc-code/bcc-media-platform v0.0.0-20250903091027-11ead5481489 h1:XBnsZfsbxJhbTEJ3TlZrfVPnAD4gkEiQMUYwVLMR1jE=
 github.com/bcc-code/bcc-media-platform v0.0.0-20250903091027-11ead5481489/go.mod h1:KEsqkxFTff48mo32Mv9w9v3LfbggjlPQzZzSizSmD8o=
 github.com/bcc-code/mediabank-bridge v1.1.1 h1:9nnoicJvAnIY0IeNamQwKnj0/LRS2jLYF8ZOcHYvzDM=

@@ -7,7 +7,7 @@ toolchain go1.24.1
 require (
 	connectrpc.com/connect v1.18.1
 	connectrpc.com/cors v0.1.0
-	github.com/bcc-code/bcc-media-flows v0.0.0-20250903110943-0adac1ae45e5
+	github.com/bcc-code/bcc-media-flows v0.0.0-20260109104036-78c8298c7de2
 	github.com/bcc-code/mediabank-bridge v1.1.1
 	github.com/go-resty/resty/v2 v2.16.5
 	github.com/google/uuid v1.6.0
