@@ -6,6 +6,7 @@ export type BMMSingleForm = {
     language?: string;
     environment?: string;
     track?: BMMTrack;
+    contentType?: "podcast" | "album";
 };
 
 export type FileAndLanguage = {

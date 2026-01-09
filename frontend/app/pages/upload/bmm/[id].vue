@@ -64,7 +64,7 @@ const permissionsLoading = usePermissionsLoading();
 
 const metadata = computed<Record<string, string[]>>(() => {
     let f: Record<string, string[]> = {
-        title: [form.value.title],
+        title: [routeParams.title ?? ""],
         environment: [routeParams.env ?? "prod"],
     };
     if (routeParams.id) f["trackId"] = [routeParams.id];

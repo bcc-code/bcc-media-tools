@@ -136,6 +136,8 @@ func (u uploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		forceReplaceTranscription = false
 	}
 
+	isPodcast := formData["contentType"] == "podcast"
+
 	_, err = u.TemporalClient.ExecuteWorkflow(r.Context(), workflowOptions, ingestworkflows.BmmIngestUpload, ingestworkflows.BmmSimpleUploadParams{
 		Title:                     formData["title"],
 		Language:                  convertBMMLanguageCodeToMB(formData["file_language"]),
@@ -144,6 +146,7 @@ func (u uploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		FilePath:                  filePath,
 		BmmTargetEnvionment:       targetEnvironment,
 		ForceReplaceTranscription: forceReplaceTranscription,
+		IsPodcast:                 isPodcast,
 	})
 
 	if err != nil {

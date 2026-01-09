@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { BmmEnvironment } from "~~/src/gen/api/v1/api_pb";
+import { timestampDate } from "@bufbuild/protobuf/wkt";
 import type { BMMSingleForm, FileAndLanguage } from "~/utils/bmm";
 import { usePermissionsLoading } from "~/utils/me";
 
@@ -18,6 +19,7 @@ onMounted(() => {
 const form = ref<BMMSingleForm>({
     title: "",
     environment: "prod",
+    contentType: "album",
 });
 
 const step = ref<"metadata" | "upload" | "done">("metadata");
@@ -38,8 +40,9 @@ const selectedEnvironment = computed(() => {
 
 const metadata = computed<Record<string, string[]>>(() => {
     let f: Record<string, string[]> = {
-        title: [form.value.title],
+        title: [form.value.track?.title ?? ""],
         environment: [form.value.environment ?? "prod"],
+        contentType: [form.value.contentType ?? "album"],
     };
     if (form.value.track) f["trackId"] = [form.value.track.id];
     if (form.value.language) f["language"] = [form.value.language];
@@ -53,6 +56,7 @@ const reset = () => {
     form.value = {
         title: "",
         environment: "prod",
+        contentType: "album",
         track: undefined,
     };
 };
@@ -116,7 +120,7 @@ const dateString = (date: Date) => {
                                     $t("bmmUpload.uploadFilesFor", {
                                         title: form.track.title,
                                         date: dateString(
-                                            form.track.publishedAt!.toDate(),
+                                            timestampDate(form.track.publishedAt!),
                                         ),
                                     })
                                 }}

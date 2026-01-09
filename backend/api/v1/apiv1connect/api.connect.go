@@ -72,6 +72,25 @@ const (
 	APIServiceSubmitShortProcedure = "/api.v1.APIService/SubmitShort"
 )
 
+// These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
+var (
+	aPIServiceServiceDescriptor                   = v1.File_api_v1_api_proto.Services().ByName("APIService")
+	aPIServiceGetPermissionsMethodDescriptor      = aPIServiceServiceDescriptor.Methods().ByName("GetPermissions")
+	aPIServiceUpdatePermissionsMethodDescriptor   = aPIServiceServiceDescriptor.Methods().ByName("UpdatePermissions")
+	aPIServiceDeletePermissionsMethodDescriptor   = aPIServiceServiceDescriptor.Methods().ByName("DeletePermissions")
+	aPIServiceListPermissionsMethodDescriptor     = aPIServiceServiceDescriptor.Methods().ByName("ListPermissions")
+	aPIServiceGetTranscriptionMethodDescriptor    = aPIServiceServiceDescriptor.Methods().ByName("GetTranscription")
+	aPIServiceGetPreviewMethodDescriptor          = aPIServiceServiceDescriptor.Methods().ByName("GetPreview")
+	aPIServiceSubmitTranscriptionMethodDescriptor = aPIServiceServiceDescriptor.Methods().ByName("SubmitTranscription")
+	aPIServiceGetYearsMethodDescriptor            = aPIServiceServiceDescriptor.Methods().ByName("GetYears")
+	aPIServiceGetAlbumsMethodDescriptor           = aPIServiceServiceDescriptor.Methods().ByName("GetAlbums")
+	aPIServiceGetAlbumTracksMethodDescriptor      = aPIServiceServiceDescriptor.Methods().ByName("GetAlbumTracks")
+	aPIServiceGetPodcastTracksMethodDescriptor    = aPIServiceServiceDescriptor.Methods().ByName("GetPodcastTracks")
+	aPIServiceGetLanguagesMethodDescriptor        = aPIServiceServiceDescriptor.Methods().ByName("GetLanguages")
+	aPIServiceGetBMMTranscriptionMethodDescriptor = aPIServiceServiceDescriptor.Methods().ByName("GetBMMTranscription")
+	aPIServiceSubmitShortMethodDescriptor         = aPIServiceServiceDescriptor.Methods().ByName("SubmitShort")
+)
+
 // APIServiceClient is a client for the api.v1.APIService service.
 type APIServiceClient interface {
 	// Permissions
@@ -103,90 +122,89 @@ type APIServiceClient interface {
 // http://api.acme.com or https://acme.com/grpc).
 func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) APIServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
-	aPIServiceMethods := v1.File_api_v1_api_proto.Services().ByName("APIService").Methods()
 	return &aPIServiceClient{
 		getPermissions: connect.NewClient[v1.Void, v1.Permissions](
 			httpClient,
 			baseURL+APIServiceGetPermissionsProcedure,
-			connect.WithSchema(aPIServiceMethods.ByName("GetPermissions")),
+			connect.WithSchema(aPIServiceGetPermissionsMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
 		updatePermissions: connect.NewClient[v1.SetPermissionsRequest, v1.Void](
 			httpClient,
 			baseURL+APIServiceUpdatePermissionsProcedure,
-			connect.WithSchema(aPIServiceMethods.ByName("UpdatePermissions")),
+			connect.WithSchema(aPIServiceUpdatePermissionsMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
 		deletePermissions: connect.NewClient[v1.DeletePermissionsRequest, v1.Void](
 			httpClient,
 			baseURL+APIServiceDeletePermissionsProcedure,
-			connect.WithSchema(aPIServiceMethods.ByName("DeletePermissions")),
+			connect.WithSchema(aPIServiceDeletePermissionsMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
 		listPermissions: connect.NewClient[v1.Void, v1.PermissionsList](
 			httpClient,
 			baseURL+APIServiceListPermissionsProcedure,
-			connect.WithSchema(aPIServiceMethods.ByName("ListPermissions")),
+			connect.WithSchema(aPIServiceListPermissionsMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
 		getTranscription: connect.NewClient[v1.GetTranscriptionReqest, v1.Transcription](
 			httpClient,
 			baseURL+APIServiceGetTranscriptionProcedure,
-			connect.WithSchema(aPIServiceMethods.ByName("GetTranscription")),
+			connect.WithSchema(aPIServiceGetTranscriptionMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
 		getPreview: connect.NewClient[v1.GetPreviewRequest, v1.Preview](
 			httpClient,
 			baseURL+APIServiceGetPreviewProcedure,
-			connect.WithSchema(aPIServiceMethods.ByName("GetPreview")),
+			connect.WithSchema(aPIServiceGetPreviewMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
 		submitTranscription: connect.NewClient[v1.SubmitTranscriptionRequest, v1.Void](
 			httpClient,
 			baseURL+APIServiceSubmitTranscriptionProcedure,
-			connect.WithSchema(aPIServiceMethods.ByName("SubmitTranscription")),
+			connect.WithSchema(aPIServiceSubmitTranscriptionMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
 		getYears: connect.NewClient[v1.GetYearsRequest, v1.GetYearsResponse](
 			httpClient,
 			baseURL+APIServiceGetYearsProcedure,
-			connect.WithSchema(aPIServiceMethods.ByName("GetYears")),
+			connect.WithSchema(aPIServiceGetYearsMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
 		getAlbums: connect.NewClient[v1.GetAlbumsRequest, v1.AlbumsList](
 			httpClient,
 			baseURL+APIServiceGetAlbumsProcedure,
-			connect.WithSchema(aPIServiceMethods.ByName("GetAlbums")),
+			connect.WithSchema(aPIServiceGetAlbumsMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
 		getAlbumTracks: connect.NewClient[v1.GetAlbumTracksRequest, v1.TracksList](
 			httpClient,
 			baseURL+APIServiceGetAlbumTracksProcedure,
-			connect.WithSchema(aPIServiceMethods.ByName("GetAlbumTracks")),
+			connect.WithSchema(aPIServiceGetAlbumTracksMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
 		getPodcastTracks: connect.NewClient[v1.GetPodcastTracksRequest, v1.TracksList](
 			httpClient,
 			baseURL+APIServiceGetPodcastTracksProcedure,
-			connect.WithSchema(aPIServiceMethods.ByName("GetPodcastTracks")),
+			connect.WithSchema(aPIServiceGetPodcastTracksMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
 		getLanguages: connect.NewClient[v1.GetAvailableLanguagesRequest, v1.LanguageList](
 			httpClient,
 			baseURL+APIServiceGetLanguagesProcedure,
-			connect.WithSchema(aPIServiceMethods.ByName("GetLanguages")),
+			connect.WithSchema(aPIServiceGetLanguagesMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
 		getBMMTranscription: connect.NewClient[v1.GetBMMTranscriptionRequest, v1.Transcription](
 			httpClient,
 			baseURL+APIServiceGetBMMTranscriptionProcedure,
-			connect.WithSchema(aPIServiceMethods.ByName("GetBMMTranscription")),
+			connect.WithSchema(aPIServiceGetBMMTranscriptionMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
 		submitShort: connect.NewClient[v1.SubmitShortRequest, v1.Void](
 			httpClient,
 			baseURL+APIServiceSubmitShortProcedure,
-			connect.WithSchema(aPIServiceMethods.ByName("SubmitShort")),
+			connect.WithSchema(aPIServiceSubmitShortMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -308,89 +326,88 @@ type APIServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	aPIServiceMethods := v1.File_api_v1_api_proto.Services().ByName("APIService").Methods()
 	aPIServiceGetPermissionsHandler := connect.NewUnaryHandler(
 		APIServiceGetPermissionsProcedure,
 		svc.GetPermissions,
-		connect.WithSchema(aPIServiceMethods.ByName("GetPermissions")),
+		connect.WithSchema(aPIServiceGetPermissionsMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
 	aPIServiceUpdatePermissionsHandler := connect.NewUnaryHandler(
 		APIServiceUpdatePermissionsProcedure,
 		svc.UpdatePermissions,
-		connect.WithSchema(aPIServiceMethods.ByName("UpdatePermissions")),
+		connect.WithSchema(aPIServiceUpdatePermissionsMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
 	aPIServiceDeletePermissionsHandler := connect.NewUnaryHandler(
 		APIServiceDeletePermissionsProcedure,
 		svc.DeletePermissions,
-		connect.WithSchema(aPIServiceMethods.ByName("DeletePermissions")),
+		connect.WithSchema(aPIServiceDeletePermissionsMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
 	aPIServiceListPermissionsHandler := connect.NewUnaryHandler(
 		APIServiceListPermissionsProcedure,
 		svc.ListPermissions,
-		connect.WithSchema(aPIServiceMethods.ByName("ListPermissions")),
+		connect.WithSchema(aPIServiceListPermissionsMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
 	aPIServiceGetTranscriptionHandler := connect.NewUnaryHandler(
 		APIServiceGetTranscriptionProcedure,
 		svc.GetTranscription,
-		connect.WithSchema(aPIServiceMethods.ByName("GetTranscription")),
+		connect.WithSchema(aPIServiceGetTranscriptionMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
 	aPIServiceGetPreviewHandler := connect.NewUnaryHandler(
 		APIServiceGetPreviewProcedure,
 		svc.GetPreview,
-		connect.WithSchema(aPIServiceMethods.ByName("GetPreview")),
+		connect.WithSchema(aPIServiceGetPreviewMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
 	aPIServiceSubmitTranscriptionHandler := connect.NewUnaryHandler(
 		APIServiceSubmitTranscriptionProcedure,
 		svc.SubmitTranscription,
-		connect.WithSchema(aPIServiceMethods.ByName("SubmitTranscription")),
+		connect.WithSchema(aPIServiceSubmitTranscriptionMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
 	aPIServiceGetYearsHandler := connect.NewUnaryHandler(
 		APIServiceGetYearsProcedure,
 		svc.GetYears,
-		connect.WithSchema(aPIServiceMethods.ByName("GetYears")),
+		connect.WithSchema(aPIServiceGetYearsMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
 	aPIServiceGetAlbumsHandler := connect.NewUnaryHandler(
 		APIServiceGetAlbumsProcedure,
 		svc.GetAlbums,
-		connect.WithSchema(aPIServiceMethods.ByName("GetAlbums")),
+		connect.WithSchema(aPIServiceGetAlbumsMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
 	aPIServiceGetAlbumTracksHandler := connect.NewUnaryHandler(
 		APIServiceGetAlbumTracksProcedure,
 		svc.GetAlbumTracks,
-		connect.WithSchema(aPIServiceMethods.ByName("GetAlbumTracks")),
+		connect.WithSchema(aPIServiceGetAlbumTracksMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
 	aPIServiceGetPodcastTracksHandler := connect.NewUnaryHandler(
 		APIServiceGetPodcastTracksProcedure,
 		svc.GetPodcastTracks,
-		connect.WithSchema(aPIServiceMethods.ByName("GetPodcastTracks")),
+		connect.WithSchema(aPIServiceGetPodcastTracksMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
 	aPIServiceGetLanguagesHandler := connect.NewUnaryHandler(
 		APIServiceGetLanguagesProcedure,
 		svc.GetLanguages,
-		connect.WithSchema(aPIServiceMethods.ByName("GetLanguages")),
+		connect.WithSchema(aPIServiceGetLanguagesMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
 	aPIServiceGetBMMTranscriptionHandler := connect.NewUnaryHandler(
 		APIServiceGetBMMTranscriptionProcedure,
 		svc.GetBMMTranscription,
-		connect.WithSchema(aPIServiceMethods.ByName("GetBMMTranscription")),
+		connect.WithSchema(aPIServiceGetBMMTranscriptionMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
 	aPIServiceSubmitShortHandler := connect.NewUnaryHandler(
 		APIServiceSubmitShortProcedure,
 		svc.SubmitShort,
-		connect.WithSchema(aPIServiceMethods.ByName("SubmitShort")),
+		connect.WithSchema(aPIServiceSubmitShortMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/api.v1.APIService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

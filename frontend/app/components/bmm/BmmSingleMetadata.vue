@@ -13,6 +13,7 @@ const albumId = computedProperty(form, "albumId");
 const track = computedProperty(form, "track");
 const language = computedProperty(form, "language");
 const selectedEnvironment = computedProperty(form, "environment");
+const contentType = computedProperty(form, "contentType");
 
 const emit = defineEmits<{
     set: [];
@@ -55,6 +56,7 @@ function checkForm() {
         </UFormField>
         <BmmAlbumSelector
             v-model="albumId"
+            v-model:content-type="contentType"
             :permissions="permissions"
             :env="environment"
         />

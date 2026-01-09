@@ -13,9 +13,14 @@ const years = ref<{ [key: string]: BMMYear }>();
 const albums = ref<{ [key: string]: string }>({});
 
 const currentYear = new Date().getFullYear();
-const selectedType = ref<"podcasts" | "albums">("albums");
 const selectedYear = ref(currentYear);
 const albumId = defineModel<string>();
+const contentType = defineModel<"podcast" | "album">("contentType", { default: "album" });
+
+const selectedType = computed({
+    get: () => (contentType.value === "podcast" ? "podcasts" : "albums"),
+    set: (v) => (contentType.value = v === "podcasts" ? "podcast" : "album"),
+});
 
 watch(
     () => props.env,
