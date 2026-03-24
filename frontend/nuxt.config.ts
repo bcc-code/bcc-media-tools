@@ -48,12 +48,28 @@ export default defineNuxtConfig({
             { code: "en", name: "English", file: "en.json" },
             { code: "nb", name: "Norsk", file: "nb.json" },
         ],
-        restructureDir: './',
-        strategy: 'no_prefix',
+        restructureDir: "./",
+        strategy: "no_prefix",
     },
     devServer: {
         port: 8001,
         host: "localhost",
     },
     compatibilityDate: "2025-07-12",
+    vite: {
+        optimizeDeps: {
+            include: [
+                "@vue/devtools-core",
+                "@vue/devtools-kit",
+                "rudder-sdk-js",
+                "@connectrpc/connect",
+                "@connectrpc/connect-web",
+                "@bufbuild/protobuf/codegenv2",
+                "@bufbuild/protobuf/wkt",
+                "@bufbuild/protobuf",
+                "dayjs",
+                "zod",
+            ],
+        },
+    },
 });
