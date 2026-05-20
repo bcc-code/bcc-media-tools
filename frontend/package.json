@@ -10,33 +10,33 @@
         "postinstall": "nuxt prepare"
     },
     "devDependencies": {
-        "@auth0/auth0-vue": "^2.5.0",
-        "@bufbuild/buf": "^1.67.0",
-        "@bufbuild/protoc-gen-es": "^2.11.0",
-        "@nuxt/icon": "^2.2.1",
-        "@nuxtjs/i18n": "^10.2.4",
-        "prettier": "^3.8.2",
-        "prettier-plugin-tailwindcss": "^0.7.2",
-        "tailwindcss": "^4.2.2",
-        "typescript": "^6.0.2",
-        "vue-tsc": "^3.2.6"
+        "@auth0/auth0-vue": "^2.7.0",
+        "@bufbuild/buf": "^1.69.0",
+        "@bufbuild/protoc-gen-es": "^2.12.0",
+        "@nuxt/icon": "^2.2.2",
+        "@nuxtjs/i18n": "^10.3.0",
+        "prettier": "^3.8.3",
+        "prettier-plugin-tailwindcss": "^0.7.4",
+        "tailwindcss": "^4.3.0",
+        "typescript": "^6.0.3",
+        "vue-tsc": "^3.3.1"
     },
     "dependencies": {
-        "@bufbuild/protobuf": "^2.11.0",
+        "@bufbuild/protobuf": "^2.12.0",
         "@connectrpc/connect": "^2.1.1",
         "@connectrpc/connect-web": "^2.1.1",
-        "@nuxt/ui": "^4.6.1",
-        "@vueuse/core": "^14.2.1",
-        "@vueuse/nuxt": "^14.2.1",
+        "@nuxt/ui": "^4.7.1",
+        "@vueuse/core": "^14.3.0",
+        "@vueuse/nuxt": "^14.3.0",
         "@zag-js/splitter": "^1.40.0",
         "@zag-js/vue": "^1.40.0",
         "dayjs": "^1.11.20",
         "motion-v": "^2.2.1",
         "nuxt": "^4.4.6",
-        "rudder-sdk-js": "^2.52.11",
-        "vue": "^3.5.32",
-        "vue-router": "^5.0.4",
-        "zod": "^4.3.6"
+        "rudder-sdk-js": "^2.52.12",
+        "vue": "^3.5.34",
+        "vue-router": "^5.0.7",
+        "zod": "^4.4.3"
     },
     "packageManager": "pnpm@10.33.0"
 }
