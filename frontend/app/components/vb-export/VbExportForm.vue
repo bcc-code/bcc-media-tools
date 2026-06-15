@@ -62,7 +62,7 @@ function startExport() {
                     >
                         <template #label>
                             <span class="text-sm">{{ destinationName(d) }}</span>
-                            <span class="text-muted font-mono text-xs">
+                            <span class="text-muted font-mono text-xs ml-2">
                                 {{ d }}</span
                             >
                         </template>
