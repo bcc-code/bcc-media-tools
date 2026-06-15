@@ -83,7 +83,55 @@
             "durationWarning": "Shorts should be less than 1 minute"
         }
     },
+    "export": {
+        "title": "Export",
+        "openFromMediabanken": "Open this tool from an asset in Mediabanken to export it",
+        "loadFailed": "Could not load the export configuration",
+        "alternativeActions": "Alternative actions",
+        "exportTimedMetadata": "Export timed metadata",
+        "exportTimedMetadataHint": "Click to export timed metadata only",
+        "destinations": "Destinations",
+        "noDestinations": "You don't have permission to export to any destination",
+        "audioSource": "Audio source",
+        "subclips": "Subclips to export",
+        "subclipsHint": "Leave empty to export the entire asset",
+        "languageExports": "Language exports",
+        "nSelected": "{n} selected",
+        "all": "All",
+        "none": "None",
+        "resolutions": "Resolutions",
+        "downloadable": "downloadable",
+        "overlay": "Overlay",
+        "withChapters": "With chapters",
+        "ignoreSilence": "Ignore silence",
+        "exportAiSubs": "Export AI generated subs (if other subs are not available)",
+        "startExport": "Start export",
+        "exportStarted": "Export started",
+        "exportStartedCount": "Started {n} workflow(s)",
+        "timedMetadataStarted": "Timed metadata export started",
+        "exportFailed": "Export could not be started"
+    },
+    "vbExport": {
+        "title": "VB Export",
+        "openFromMediabanken": "Open this tool from an asset in Mediabanken to export it",
+        "loadFailed": "Could not load the export configuration",
+        "destinations": "Destinations",
+        "noDestinations": "You don't have permission to export to any destination",
+        "subtitlesBurnIn": "Subtitles (burn-in)",
+        "subtitlesBurnInStyle": "Subtitles burn in style",
+        "startExport": "Start export",
+        "exportStarted": "Export started",
+        "exportFailed": "Export could not be started"
+    },
     "tools": {
+        "export": {
+            "title": "Export",
+            "description": "Trigger export workflows"
+        },
+        "vbExport": {
+            "title": "VB Export",
+            "description": "Trigger VB (playout) export workflows"
+        },
         "bmmUpload": {
             "title": "BMM Upload",
             "description": "Upload localized audio files to BMM"

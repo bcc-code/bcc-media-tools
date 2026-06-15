@@ -6,6 +6,8 @@ const props = defineProps<{
     email: string;
     permissions: Permissions;
     languages: string[];
+    vxDestinations: string[];
+    vbDestinations: string[];
 }>();
 
 defineEmits<{
@@ -23,9 +25,22 @@ function withDefaultPermissions(p: Permissions): Permissions {
             languages: [],
         },
         transcription: p.transcription ?? { admin: false, mediabanken: false },
+        export: p.export ?? {
+            admin: false,
+            destinations: [],
+            timedMetadata: false,
+        },
+        vbExport: p.vbExport ?? { admin: false, destinations: [] },
         email: p.email ?? "",
     };
 }
+
+const exportDestinations = computed(() =>
+    destinationOptions(props.vxDestinations),
+);
+const vbExportDestinations = computed(() =>
+    destinationOptions(props.vbDestinations),
+);
 
 const perms = reactive(withDefaultPermissions(props.permissions));
 const api = useAPI();
@@ -139,6 +154,47 @@ const isOpen = ref(false);
                             label="Mediabanken"
                             description="Can correct transcriptions shared from Mediabanken"
                         />
+                    </AdminPermissionViewSection>
+                    <AdminPermissionViewSection
+                        v-if="perms.export"
+                        title="Export"
+                    >
+                        <USwitch
+                            v-model="perms.export.admin"
+                            label="Export Admin"
+                            description="Can export to all destinations"
+                        />
+                        <UFormField label="Destinations">
+                            <USelect
+                                v-model="perms.export.destinations"
+                                multiple
+                                :items="exportDestinations"
+                                class="w-full max-w-prose"
+                            />
+                        </UFormField>
+                        <USwitch
+                            v-model="perms.export.timedMetadata"
+                            label="Timed metadata export"
+                            description="Can trigger the timed metadata (VOD) export"
+                        />
+                    </AdminPermissionViewSection>
+                    <AdminPermissionViewSection
+                        v-if="perms.vbExport"
+                        title="VB Export"
+                    >
+                        <USwitch
+                            v-model="perms.vbExport.admin"
+                            label="VB Export Admin"
+                            description="Can export to all VB destinations"
+                        />
+                        <UFormField label="Destinations">
+                            <USelect
+                                v-model="perms.vbExport.destinations"
+                                multiple
+                                :items="vbExportDestinations"
+                                class="w-full max-w-prose"
+                            />
+                        </UFormField>
                     </AdminPermissionViewSection>
                 </motion.div>
             </AnimatePresence>

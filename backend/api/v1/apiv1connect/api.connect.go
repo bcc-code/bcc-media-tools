@@ -70,25 +70,23 @@ const (
 	APIServiceGetBMMTranscriptionProcedure = "/api.v1.APIService/GetBMMTranscription"
 	// APIServiceSubmitShortProcedure is the fully-qualified name of the APIService's SubmitShort RPC.
 	APIServiceSubmitShortProcedure = "/api.v1.APIService/SubmitShort"
-)
-
-// These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
-var (
-	aPIServiceServiceDescriptor                   = v1.File_api_v1_api_proto.Services().ByName("APIService")
-	aPIServiceGetPermissionsMethodDescriptor      = aPIServiceServiceDescriptor.Methods().ByName("GetPermissions")
-	aPIServiceUpdatePermissionsMethodDescriptor   = aPIServiceServiceDescriptor.Methods().ByName("UpdatePermissions")
-	aPIServiceDeletePermissionsMethodDescriptor   = aPIServiceServiceDescriptor.Methods().ByName("DeletePermissions")
-	aPIServiceListPermissionsMethodDescriptor     = aPIServiceServiceDescriptor.Methods().ByName("ListPermissions")
-	aPIServiceGetTranscriptionMethodDescriptor    = aPIServiceServiceDescriptor.Methods().ByName("GetTranscription")
-	aPIServiceGetPreviewMethodDescriptor          = aPIServiceServiceDescriptor.Methods().ByName("GetPreview")
-	aPIServiceSubmitTranscriptionMethodDescriptor = aPIServiceServiceDescriptor.Methods().ByName("SubmitTranscription")
-	aPIServiceGetYearsMethodDescriptor            = aPIServiceServiceDescriptor.Methods().ByName("GetYears")
-	aPIServiceGetAlbumsMethodDescriptor           = aPIServiceServiceDescriptor.Methods().ByName("GetAlbums")
-	aPIServiceGetAlbumTracksMethodDescriptor      = aPIServiceServiceDescriptor.Methods().ByName("GetAlbumTracks")
-	aPIServiceGetPodcastTracksMethodDescriptor    = aPIServiceServiceDescriptor.Methods().ByName("GetPodcastTracks")
-	aPIServiceGetLanguagesMethodDescriptor        = aPIServiceServiceDescriptor.Methods().ByName("GetLanguages")
-	aPIServiceGetBMMTranscriptionMethodDescriptor = aPIServiceServiceDescriptor.Methods().ByName("GetBMMTranscription")
-	aPIServiceSubmitShortMethodDescriptor         = aPIServiceServiceDescriptor.Methods().ByName("SubmitShort")
+	// APIServiceGetExportConfigProcedure is the fully-qualified name of the APIService's
+	// GetExportConfig RPC.
+	APIServiceGetExportConfigProcedure = "/api.v1.APIService/GetExportConfig"
+	// APIServiceStartExportProcedure is the fully-qualified name of the APIService's StartExport RPC.
+	APIServiceStartExportProcedure = "/api.v1.APIService/StartExport"
+	// APIServiceExportTimedMetadataProcedure is the fully-qualified name of the APIService's
+	// ExportTimedMetadata RPC.
+	APIServiceExportTimedMetadataProcedure = "/api.v1.APIService/ExportTimedMetadata"
+	// APIServiceGetVBExportConfigProcedure is the fully-qualified name of the APIService's
+	// GetVBExportConfig RPC.
+	APIServiceGetVBExportConfigProcedure = "/api.v1.APIService/GetVBExportConfig"
+	// APIServiceStartVBExportProcedure is the fully-qualified name of the APIService's StartVBExport
+	// RPC.
+	APIServiceStartVBExportProcedure = "/api.v1.APIService/StartVBExport"
+	// APIServiceGetExportDestinationsProcedure is the fully-qualified name of the APIService's
+	// GetExportDestinations RPC.
+	APIServiceGetExportDestinationsProcedure = "/api.v1.APIService/GetExportDestinations"
 )
 
 // APIServiceClient is a client for the api.v1.APIService service.
@@ -111,6 +109,15 @@ type APIServiceClient interface {
 	GetBMMTranscription(context.Context, *connect.Request[v1.GetBMMTranscriptionRequest]) (*connect.Response[v1.Transcription], error)
 	// Shorts
 	SubmitShort(context.Context, *connect.Request[v1.SubmitShortRequest]) (*connect.Response[v1.Void], error)
+	// Export
+	GetExportConfig(context.Context, *connect.Request[v1.GetExportConfigRequest]) (*connect.Response[v1.GetExportConfigResponse], error)
+	StartExport(context.Context, *connect.Request[v1.StartExportRequest]) (*connect.Response[v1.StartExportResponse], error)
+	ExportTimedMetadata(context.Context, *connect.Request[v1.ExportTimedMetadataRequest]) (*connect.Response[v1.Void], error)
+	// VB Export
+	GetVBExportConfig(context.Context, *connect.Request[v1.GetVBExportConfigRequest]) (*connect.Response[v1.GetVBExportConfigResponse], error)
+	StartVBExport(context.Context, *connect.Request[v1.StartVBExportRequest]) (*connect.Response[v1.StartVBExportResponse], error)
+	// Full destination lists for the admin permission editor
+	GetExportDestinations(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.ExportDestinationsResponse], error)
 }
 
 // NewAPIServiceClient constructs a client for the api.v1.APIService service. By default, it uses
@@ -122,89 +129,126 @@ type APIServiceClient interface {
 // http://api.acme.com or https://acme.com/grpc).
 func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) APIServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
+	aPIServiceMethods := v1.File_api_v1_api_proto.Services().ByName("APIService").Methods()
 	return &aPIServiceClient{
 		getPermissions: connect.NewClient[v1.Void, v1.Permissions](
 			httpClient,
 			baseURL+APIServiceGetPermissionsProcedure,
-			connect.WithSchema(aPIServiceGetPermissionsMethodDescriptor),
+			connect.WithSchema(aPIServiceMethods.ByName("GetPermissions")),
 			connect.WithClientOptions(opts...),
 		),
 		updatePermissions: connect.NewClient[v1.SetPermissionsRequest, v1.Void](
 			httpClient,
 			baseURL+APIServiceUpdatePermissionsProcedure,
-			connect.WithSchema(aPIServiceUpdatePermissionsMethodDescriptor),
+			connect.WithSchema(aPIServiceMethods.ByName("UpdatePermissions")),
 			connect.WithClientOptions(opts...),
 		),
 		deletePermissions: connect.NewClient[v1.DeletePermissionsRequest, v1.Void](
 			httpClient,
 			baseURL+APIServiceDeletePermissionsProcedure,
-			connect.WithSchema(aPIServiceDeletePermissionsMethodDescriptor),
+			connect.WithSchema(aPIServiceMethods.ByName("DeletePermissions")),
 			connect.WithClientOptions(opts...),
 		),
 		listPermissions: connect.NewClient[v1.Void, v1.PermissionsList](
 			httpClient,
 			baseURL+APIServiceListPermissionsProcedure,
-			connect.WithSchema(aPIServiceListPermissionsMethodDescriptor),
+			connect.WithSchema(aPIServiceMethods.ByName("ListPermissions")),
 			connect.WithClientOptions(opts...),
 		),
 		getTranscription: connect.NewClient[v1.GetTranscriptionReqest, v1.Transcription](
 			httpClient,
 			baseURL+APIServiceGetTranscriptionProcedure,
-			connect.WithSchema(aPIServiceGetTranscriptionMethodDescriptor),
+			connect.WithSchema(aPIServiceMethods.ByName("GetTranscription")),
 			connect.WithClientOptions(opts...),
 		),
 		getPreview: connect.NewClient[v1.GetPreviewRequest, v1.Preview](
 			httpClient,
 			baseURL+APIServiceGetPreviewProcedure,
-			connect.WithSchema(aPIServiceGetPreviewMethodDescriptor),
+			connect.WithSchema(aPIServiceMethods.ByName("GetPreview")),
 			connect.WithClientOptions(opts...),
 		),
 		submitTranscription: connect.NewClient[v1.SubmitTranscriptionRequest, v1.Void](
 			httpClient,
 			baseURL+APIServiceSubmitTranscriptionProcedure,
-			connect.WithSchema(aPIServiceSubmitTranscriptionMethodDescriptor),
+			connect.WithSchema(aPIServiceMethods.ByName("SubmitTranscription")),
 			connect.WithClientOptions(opts...),
 		),
 		getYears: connect.NewClient[v1.GetYearsRequest, v1.GetYearsResponse](
 			httpClient,
 			baseURL+APIServiceGetYearsProcedure,
-			connect.WithSchema(aPIServiceGetYearsMethodDescriptor),
+			connect.WithSchema(aPIServiceMethods.ByName("GetYears")),
 			connect.WithClientOptions(opts...),
 		),
 		getAlbums: connect.NewClient[v1.GetAlbumsRequest, v1.AlbumsList](
 			httpClient,
 			baseURL+APIServiceGetAlbumsProcedure,
-			connect.WithSchema(aPIServiceGetAlbumsMethodDescriptor),
+			connect.WithSchema(aPIServiceMethods.ByName("GetAlbums")),
 			connect.WithClientOptions(opts...),
 		),
 		getAlbumTracks: connect.NewClient[v1.GetAlbumTracksRequest, v1.TracksList](
 			httpClient,
 			baseURL+APIServiceGetAlbumTracksProcedure,
-			connect.WithSchema(aPIServiceGetAlbumTracksMethodDescriptor),
+			connect.WithSchema(aPIServiceMethods.ByName("GetAlbumTracks")),
 			connect.WithClientOptions(opts...),
 		),
 		getPodcastTracks: connect.NewClient[v1.GetPodcastTracksRequest, v1.TracksList](
 			httpClient,
 			baseURL+APIServiceGetPodcastTracksProcedure,
-			connect.WithSchema(aPIServiceGetPodcastTracksMethodDescriptor),
+			connect.WithSchema(aPIServiceMethods.ByName("GetPodcastTracks")),
 			connect.WithClientOptions(opts...),
 		),
 		getLanguages: connect.NewClient[v1.GetAvailableLanguagesRequest, v1.LanguageList](
 			httpClient,
 			baseURL+APIServiceGetLanguagesProcedure,
-			connect.WithSchema(aPIServiceGetLanguagesMethodDescriptor),
+			connect.WithSchema(aPIServiceMethods.ByName("GetLanguages")),
 			connect.WithClientOptions(opts...),
 		),
 		getBMMTranscription: connect.NewClient[v1.GetBMMTranscriptionRequest, v1.Transcription](
 			httpClient,
 			baseURL+APIServiceGetBMMTranscriptionProcedure,
-			connect.WithSchema(aPIServiceGetBMMTranscriptionMethodDescriptor),
+			connect.WithSchema(aPIServiceMethods.ByName("GetBMMTranscription")),
 			connect.WithClientOptions(opts...),
 		),
 		submitShort: connect.NewClient[v1.SubmitShortRequest, v1.Void](
 			httpClient,
 			baseURL+APIServiceSubmitShortProcedure,
-			connect.WithSchema(aPIServiceSubmitShortMethodDescriptor),
+			connect.WithSchema(aPIServiceMethods.ByName("SubmitShort")),
+			connect.WithClientOptions(opts...),
+		),
+		getExportConfig: connect.NewClient[v1.GetExportConfigRequest, v1.GetExportConfigResponse](
+			httpClient,
+			baseURL+APIServiceGetExportConfigProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("GetExportConfig")),
+			connect.WithClientOptions(opts...),
+		),
+		startExport: connect.NewClient[v1.StartExportRequest, v1.StartExportResponse](
+			httpClient,
+			baseURL+APIServiceStartExportProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("StartExport")),
+			connect.WithClientOptions(opts...),
+		),
+		exportTimedMetadata: connect.NewClient[v1.ExportTimedMetadataRequest, v1.Void](
+			httpClient,
+			baseURL+APIServiceExportTimedMetadataProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("ExportTimedMetadata")),
+			connect.WithClientOptions(opts...),
+		),
+		getVBExportConfig: connect.NewClient[v1.GetVBExportConfigRequest, v1.GetVBExportConfigResponse](
+			httpClient,
+			baseURL+APIServiceGetVBExportConfigProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("GetVBExportConfig")),
+			connect.WithClientOptions(opts...),
+		),
+		startVBExport: connect.NewClient[v1.StartVBExportRequest, v1.StartVBExportResponse](
+			httpClient,
+			baseURL+APIServiceStartVBExportProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("StartVBExport")),
+			connect.WithClientOptions(opts...),
+		),
+		getExportDestinations: connect.NewClient[v1.Void, v1.ExportDestinationsResponse](
+			httpClient,
+			baseURL+APIServiceGetExportDestinationsProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("GetExportDestinations")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -212,20 +256,26 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 
 // aPIServiceClient implements APIServiceClient.
 type aPIServiceClient struct {
-	getPermissions      *connect.Client[v1.Void, v1.Permissions]
-	updatePermissions   *connect.Client[v1.SetPermissionsRequest, v1.Void]
-	deletePermissions   *connect.Client[v1.DeletePermissionsRequest, v1.Void]
-	listPermissions     *connect.Client[v1.Void, v1.PermissionsList]
-	getTranscription    *connect.Client[v1.GetTranscriptionReqest, v1.Transcription]
-	getPreview          *connect.Client[v1.GetPreviewRequest, v1.Preview]
-	submitTranscription *connect.Client[v1.SubmitTranscriptionRequest, v1.Void]
-	getYears            *connect.Client[v1.GetYearsRequest, v1.GetYearsResponse]
-	getAlbums           *connect.Client[v1.GetAlbumsRequest, v1.AlbumsList]
-	getAlbumTracks      *connect.Client[v1.GetAlbumTracksRequest, v1.TracksList]
-	getPodcastTracks    *connect.Client[v1.GetPodcastTracksRequest, v1.TracksList]
-	getLanguages        *connect.Client[v1.GetAvailableLanguagesRequest, v1.LanguageList]
-	getBMMTranscription *connect.Client[v1.GetBMMTranscriptionRequest, v1.Transcription]
-	submitShort         *connect.Client[v1.SubmitShortRequest, v1.Void]
+	getPermissions        *connect.Client[v1.Void, v1.Permissions]
+	updatePermissions     *connect.Client[v1.SetPermissionsRequest, v1.Void]
+	deletePermissions     *connect.Client[v1.DeletePermissionsRequest, v1.Void]
+	listPermissions       *connect.Client[v1.Void, v1.PermissionsList]
+	getTranscription      *connect.Client[v1.GetTranscriptionReqest, v1.Transcription]
+	getPreview            *connect.Client[v1.GetPreviewRequest, v1.Preview]
+	submitTranscription   *connect.Client[v1.SubmitTranscriptionRequest, v1.Void]
+	getYears              *connect.Client[v1.GetYearsRequest, v1.GetYearsResponse]
+	getAlbums             *connect.Client[v1.GetAlbumsRequest, v1.AlbumsList]
+	getAlbumTracks        *connect.Client[v1.GetAlbumTracksRequest, v1.TracksList]
+	getPodcastTracks      *connect.Client[v1.GetPodcastTracksRequest, v1.TracksList]
+	getLanguages          *connect.Client[v1.GetAvailableLanguagesRequest, v1.LanguageList]
+	getBMMTranscription   *connect.Client[v1.GetBMMTranscriptionRequest, v1.Transcription]
+	submitShort           *connect.Client[v1.SubmitShortRequest, v1.Void]
+	getExportConfig       *connect.Client[v1.GetExportConfigRequest, v1.GetExportConfigResponse]
+	startExport           *connect.Client[v1.StartExportRequest, v1.StartExportResponse]
+	exportTimedMetadata   *connect.Client[v1.ExportTimedMetadataRequest, v1.Void]
+	getVBExportConfig     *connect.Client[v1.GetVBExportConfigRequest, v1.GetVBExportConfigResponse]
+	startVBExport         *connect.Client[v1.StartVBExportRequest, v1.StartVBExportResponse]
+	getExportDestinations *connect.Client[v1.Void, v1.ExportDestinationsResponse]
 }
 
 // GetPermissions calls api.v1.APIService.GetPermissions.
@@ -298,6 +348,36 @@ func (c *aPIServiceClient) SubmitShort(ctx context.Context, req *connect.Request
 	return c.submitShort.CallUnary(ctx, req)
 }
 
+// GetExportConfig calls api.v1.APIService.GetExportConfig.
+func (c *aPIServiceClient) GetExportConfig(ctx context.Context, req *connect.Request[v1.GetExportConfigRequest]) (*connect.Response[v1.GetExportConfigResponse], error) {
+	return c.getExportConfig.CallUnary(ctx, req)
+}
+
+// StartExport calls api.v1.APIService.StartExport.
+func (c *aPIServiceClient) StartExport(ctx context.Context, req *connect.Request[v1.StartExportRequest]) (*connect.Response[v1.StartExportResponse], error) {
+	return c.startExport.CallUnary(ctx, req)
+}
+
+// ExportTimedMetadata calls api.v1.APIService.ExportTimedMetadata.
+func (c *aPIServiceClient) ExportTimedMetadata(ctx context.Context, req *connect.Request[v1.ExportTimedMetadataRequest]) (*connect.Response[v1.Void], error) {
+	return c.exportTimedMetadata.CallUnary(ctx, req)
+}
+
+// GetVBExportConfig calls api.v1.APIService.GetVBExportConfig.
+func (c *aPIServiceClient) GetVBExportConfig(ctx context.Context, req *connect.Request[v1.GetVBExportConfigRequest]) (*connect.Response[v1.GetVBExportConfigResponse], error) {
+	return c.getVBExportConfig.CallUnary(ctx, req)
+}
+
+// StartVBExport calls api.v1.APIService.StartVBExport.
+func (c *aPIServiceClient) StartVBExport(ctx context.Context, req *connect.Request[v1.StartVBExportRequest]) (*connect.Response[v1.StartVBExportResponse], error) {
+	return c.startVBExport.CallUnary(ctx, req)
+}
+
+// GetExportDestinations calls api.v1.APIService.GetExportDestinations.
+func (c *aPIServiceClient) GetExportDestinations(ctx context.Context, req *connect.Request[v1.Void]) (*connect.Response[v1.ExportDestinationsResponse], error) {
+	return c.getExportDestinations.CallUnary(ctx, req)
+}
+
 // APIServiceHandler is an implementation of the api.v1.APIService service.
 type APIServiceHandler interface {
 	// Permissions
@@ -318,6 +398,15 @@ type APIServiceHandler interface {
 	GetBMMTranscription(context.Context, *connect.Request[v1.GetBMMTranscriptionRequest]) (*connect.Response[v1.Transcription], error)
 	// Shorts
 	SubmitShort(context.Context, *connect.Request[v1.SubmitShortRequest]) (*connect.Response[v1.Void], error)
+	// Export
+	GetExportConfig(context.Context, *connect.Request[v1.GetExportConfigRequest]) (*connect.Response[v1.GetExportConfigResponse], error)
+	StartExport(context.Context, *connect.Request[v1.StartExportRequest]) (*connect.Response[v1.StartExportResponse], error)
+	ExportTimedMetadata(context.Context, *connect.Request[v1.ExportTimedMetadataRequest]) (*connect.Response[v1.Void], error)
+	// VB Export
+	GetVBExportConfig(context.Context, *connect.Request[v1.GetVBExportConfigRequest]) (*connect.Response[v1.GetVBExportConfigResponse], error)
+	StartVBExport(context.Context, *connect.Request[v1.StartVBExportRequest]) (*connect.Response[v1.StartVBExportResponse], error)
+	// Full destination lists for the admin permission editor
+	GetExportDestinations(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.ExportDestinationsResponse], error)
 }
 
 // NewAPIServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -326,88 +415,125 @@ type APIServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	aPIServiceMethods := v1.File_api_v1_api_proto.Services().ByName("APIService").Methods()
 	aPIServiceGetPermissionsHandler := connect.NewUnaryHandler(
 		APIServiceGetPermissionsProcedure,
 		svc.GetPermissions,
-		connect.WithSchema(aPIServiceGetPermissionsMethodDescriptor),
+		connect.WithSchema(aPIServiceMethods.ByName("GetPermissions")),
 		connect.WithHandlerOptions(opts...),
 	)
 	aPIServiceUpdatePermissionsHandler := connect.NewUnaryHandler(
 		APIServiceUpdatePermissionsProcedure,
 		svc.UpdatePermissions,
-		connect.WithSchema(aPIServiceUpdatePermissionsMethodDescriptor),
+		connect.WithSchema(aPIServiceMethods.ByName("UpdatePermissions")),
 		connect.WithHandlerOptions(opts...),
 	)
 	aPIServiceDeletePermissionsHandler := connect.NewUnaryHandler(
 		APIServiceDeletePermissionsProcedure,
 		svc.DeletePermissions,
-		connect.WithSchema(aPIServiceDeletePermissionsMethodDescriptor),
+		connect.WithSchema(aPIServiceMethods.ByName("DeletePermissions")),
 		connect.WithHandlerOptions(opts...),
 	)
 	aPIServiceListPermissionsHandler := connect.NewUnaryHandler(
 		APIServiceListPermissionsProcedure,
 		svc.ListPermissions,
-		connect.WithSchema(aPIServiceListPermissionsMethodDescriptor),
+		connect.WithSchema(aPIServiceMethods.ByName("ListPermissions")),
 		connect.WithHandlerOptions(opts...),
 	)
 	aPIServiceGetTranscriptionHandler := connect.NewUnaryHandler(
 		APIServiceGetTranscriptionProcedure,
 		svc.GetTranscription,
-		connect.WithSchema(aPIServiceGetTranscriptionMethodDescriptor),
+		connect.WithSchema(aPIServiceMethods.ByName("GetTranscription")),
 		connect.WithHandlerOptions(opts...),
 	)
 	aPIServiceGetPreviewHandler := connect.NewUnaryHandler(
 		APIServiceGetPreviewProcedure,
 		svc.GetPreview,
-		connect.WithSchema(aPIServiceGetPreviewMethodDescriptor),
+		connect.WithSchema(aPIServiceMethods.ByName("GetPreview")),
 		connect.WithHandlerOptions(opts...),
 	)
 	aPIServiceSubmitTranscriptionHandler := connect.NewUnaryHandler(
 		APIServiceSubmitTranscriptionProcedure,
 		svc.SubmitTranscription,
-		connect.WithSchema(aPIServiceSubmitTranscriptionMethodDescriptor),
+		connect.WithSchema(aPIServiceMethods.ByName("SubmitTranscription")),
 		connect.WithHandlerOptions(opts...),
 	)
 	aPIServiceGetYearsHandler := connect.NewUnaryHandler(
 		APIServiceGetYearsProcedure,
 		svc.GetYears,
-		connect.WithSchema(aPIServiceGetYearsMethodDescriptor),
+		connect.WithSchema(aPIServiceMethods.ByName("GetYears")),
 		connect.WithHandlerOptions(opts...),
 	)
 	aPIServiceGetAlbumsHandler := connect.NewUnaryHandler(
 		APIServiceGetAlbumsProcedure,
 		svc.GetAlbums,
-		connect.WithSchema(aPIServiceGetAlbumsMethodDescriptor),
+		connect.WithSchema(aPIServiceMethods.ByName("GetAlbums")),
 		connect.WithHandlerOptions(opts...),
 	)
 	aPIServiceGetAlbumTracksHandler := connect.NewUnaryHandler(
 		APIServiceGetAlbumTracksProcedure,
 		svc.GetAlbumTracks,
-		connect.WithSchema(aPIServiceGetAlbumTracksMethodDescriptor),
+		connect.WithSchema(aPIServiceMethods.ByName("GetAlbumTracks")),
 		connect.WithHandlerOptions(opts...),
 	)
 	aPIServiceGetPodcastTracksHandler := connect.NewUnaryHandler(
 		APIServiceGetPodcastTracksProcedure,
 		svc.GetPodcastTracks,
-		connect.WithSchema(aPIServiceGetPodcastTracksMethodDescriptor),
+		connect.WithSchema(aPIServiceMethods.ByName("GetPodcastTracks")),
 		connect.WithHandlerOptions(opts...),
 	)
 	aPIServiceGetLanguagesHandler := connect.NewUnaryHandler(
 		APIServiceGetLanguagesProcedure,
 		svc.GetLanguages,
-		connect.WithSchema(aPIServiceGetLanguagesMethodDescriptor),
+		connect.WithSchema(aPIServiceMethods.ByName("GetLanguages")),
 		connect.WithHandlerOptions(opts...),
 	)
 	aPIServiceGetBMMTranscriptionHandler := connect.NewUnaryHandler(
 		APIServiceGetBMMTranscriptionProcedure,
 		svc.GetBMMTranscription,
-		connect.WithSchema(aPIServiceGetBMMTranscriptionMethodDescriptor),
+		connect.WithSchema(aPIServiceMethods.ByName("GetBMMTranscription")),
 		connect.WithHandlerOptions(opts...),
 	)
 	aPIServiceSubmitShortHandler := connect.NewUnaryHandler(
 		APIServiceSubmitShortProcedure,
 		svc.SubmitShort,
-		connect.WithSchema(aPIServiceSubmitShortMethodDescriptor),
+		connect.WithSchema(aPIServiceMethods.ByName("SubmitShort")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aPIServiceGetExportConfigHandler := connect.NewUnaryHandler(
+		APIServiceGetExportConfigProcedure,
+		svc.GetExportConfig,
+		connect.WithSchema(aPIServiceMethods.ByName("GetExportConfig")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aPIServiceStartExportHandler := connect.NewUnaryHandler(
+		APIServiceStartExportProcedure,
+		svc.StartExport,
+		connect.WithSchema(aPIServiceMethods.ByName("StartExport")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aPIServiceExportTimedMetadataHandler := connect.NewUnaryHandler(
+		APIServiceExportTimedMetadataProcedure,
+		svc.ExportTimedMetadata,
+		connect.WithSchema(aPIServiceMethods.ByName("ExportTimedMetadata")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aPIServiceGetVBExportConfigHandler := connect.NewUnaryHandler(
+		APIServiceGetVBExportConfigProcedure,
+		svc.GetVBExportConfig,
+		connect.WithSchema(aPIServiceMethods.ByName("GetVBExportConfig")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aPIServiceStartVBExportHandler := connect.NewUnaryHandler(
+		APIServiceStartVBExportProcedure,
+		svc.StartVBExport,
+		connect.WithSchema(aPIServiceMethods.ByName("StartVBExport")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aPIServiceGetExportDestinationsHandler := connect.NewUnaryHandler(
+		APIServiceGetExportDestinationsProcedure,
+		svc.GetExportDestinations,
+		connect.WithSchema(aPIServiceMethods.ByName("GetExportDestinations")),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/api.v1.APIService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -440,6 +566,18 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceGetBMMTranscriptionHandler.ServeHTTP(w, r)
 		case APIServiceSubmitShortProcedure:
 			aPIServiceSubmitShortHandler.ServeHTTP(w, r)
+		case APIServiceGetExportConfigProcedure:
+			aPIServiceGetExportConfigHandler.ServeHTTP(w, r)
+		case APIServiceStartExportProcedure:
+			aPIServiceStartExportHandler.ServeHTTP(w, r)
+		case APIServiceExportTimedMetadataProcedure:
+			aPIServiceExportTimedMetadataHandler.ServeHTTP(w, r)
+		case APIServiceGetVBExportConfigProcedure:
+			aPIServiceGetVBExportConfigHandler.ServeHTTP(w, r)
+		case APIServiceStartVBExportProcedure:
+			aPIServiceStartVBExportHandler.ServeHTTP(w, r)
+		case APIServiceGetExportDestinationsProcedure:
+			aPIServiceGetExportDestinationsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -503,4 +641,28 @@ func (UnimplementedAPIServiceHandler) GetBMMTranscription(context.Context, *conn
 
 func (UnimplementedAPIServiceHandler) SubmitShort(context.Context, *connect.Request[v1.SubmitShortRequest]) (*connect.Response[v1.Void], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.SubmitShort is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) GetExportConfig(context.Context, *connect.Request[v1.GetExportConfigRequest]) (*connect.Response[v1.GetExportConfigResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetExportConfig is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) StartExport(context.Context, *connect.Request[v1.StartExportRequest]) (*connect.Response[v1.StartExportResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.StartExport is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) ExportTimedMetadata(context.Context, *connect.Request[v1.ExportTimedMetadataRequest]) (*connect.Response[v1.Void], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.ExportTimedMetadata is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) GetVBExportConfig(context.Context, *connect.Request[v1.GetVBExportConfigRequest]) (*connect.Response[v1.GetVBExportConfigResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetVBExportConfig is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) StartVBExport(context.Context, *connect.Request[v1.StartVBExportRequest]) (*connect.Response[v1.StartVBExportResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.StartVBExport is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) GetExportDestinations(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.ExportDestinationsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetExportDestinations is not implemented"))
 }

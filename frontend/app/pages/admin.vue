@@ -57,6 +57,12 @@ const { data: availableLanguages } = useAsyncData(
         transform: (data) => data.Languages.map((l) => l.code),
     },
 );
+
+const { data: exportDestinations } = useAsyncData(
+    () => `export-destinations`,
+    () => api.getExportDestinations({}),
+    { default: () => ({ vx: [] as string[], vb: [] as string[] }) },
+);
 </script>
 
 <template>
@@ -106,6 +112,8 @@ const { data: availableLanguages } = useAsyncData(
                     :email="email"
                     :permissions="perms"
                     :languages="availableLanguages"
+                    :vx-destinations="exportDestinations.vx"
+                    :vb-destinations="exportDestinations.vb"
                     @remove="removeEmail(email)"
                 />
             </TransitionGroup>
