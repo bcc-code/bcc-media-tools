@@ -144,6 +144,10 @@ func PermissionsForEmail(email string) *apiv1.Permissions {
 			Destinations: make([]string, 0),
 			Admin:        false,
 		},
+		VbExport: &apiv1.VBExportPermission{
+			Destinations: make([]string, 0),
+			Admin:        false,
+		},
 	}
 }
 

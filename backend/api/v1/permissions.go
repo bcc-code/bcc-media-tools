@@ -20,3 +20,23 @@ func (p *Permissions) CanExportTo(destination string) bool {
 	return p.Admin ||
 		(p.Export != nil && (p.Export.Admin || slices.Contains(p.Export.Destinations, destination)))
 }
+
+// CanExportTimedMetadata reports whether the user may trigger the (VOD-affecting)
+// timed metadata export. This is a dedicated permission, not implied by general
+// export access.
+func (p *Permissions) CanExportTimedMetadata() bool {
+	return p.Admin ||
+		(p.Export != nil && (p.Export.Admin || p.Export.TimedMetadata))
+}
+
+// CanVBExport reports whether the user may use the VB export tool at all.
+func (p *Permissions) CanVBExport() bool {
+	return p.Admin ||
+		(p.VbExport != nil && (p.VbExport.Admin || len(p.VbExport.Destinations) > 0))
+}
+
+// CanVBExportTo reports whether the user may VB-export to a specific destination.
+func (p *Permissions) CanVBExportTo(destination string) bool {
+	return p.Admin ||
+		(p.VbExport != nil && (p.VbExport.Admin || slices.Contains(p.VbExport.Destinations, destination)))
+}

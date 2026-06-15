@@ -111,10 +111,26 @@
         "timedMetadataStarted": "Eksport av tidsbestemt metadata startet",
         "exportFailed": "Eksport kunne ikke startes"
     },
+    "vbExport": {
+        "title": "VB-eksport",
+        "openFromMediabanken": "Åpne dette verktøyet fra et element i Mediabanken for å eksportere det",
+        "loadFailed": "Kunne ikke laste eksportoppsettet",
+        "destinations": "Destinasjoner",
+        "noDestinations": "Du har ikke tilgang til å eksportere til noen destinasjon",
+        "subtitlesBurnIn": "Undertekster (innbrent)",
+        "subtitlesBurnInStyle": "Stil for innbrenning av undertekster",
+        "startExport": "Start eksport",
+        "exportStarted": "Eksport startet",
+        "exportFailed": "Eksport kunne ikke startes"
+    },
     "tools": {
         "export": {
             "title": "Eksport",
             "description": "Utløs eksport-arbeidsflyter"
+        },
+        "vbExport": {
+            "title": "VB-eksport",
+            "description": "Utløs VB (playout) eksport-arbeidsflyter"
         },
         "bmmUpload": {
             "title": "BMM opplasting",

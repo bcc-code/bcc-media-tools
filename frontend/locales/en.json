@@ -111,10 +111,26 @@
         "timedMetadataStarted": "Timed metadata export started",
         "exportFailed": "Export could not be started"
     },
+    "vbExport": {
+        "title": "VB Export",
+        "openFromMediabanken": "Open this tool from an asset in Mediabanken to export it",
+        "loadFailed": "Could not load the export configuration",
+        "destinations": "Destinations",
+        "noDestinations": "You don't have permission to export to any destination",
+        "subtitlesBurnIn": "Subtitles (burn-in)",
+        "subtitlesBurnInStyle": "Subtitles burn in style",
+        "startExport": "Start export",
+        "exportStarted": "Export started",
+        "exportFailed": "Export could not be started"
+    },
     "tools": {
         "export": {
             "title": "Export",
             "description": "Trigger export workflows"
+        },
+        "vbExport": {
+            "title": "VB Export",
+            "description": "Trigger VB (playout) export workflows"
         },
         "bmmUpload": {
             "title": "BMM Upload",

@@ -25,6 +25,15 @@ message ExportPermission {
   repeated string destinations = 1;
   // admin can export to all destinations
   bool admin = 2;
+  // can trigger the (VOD-affecting) timed metadata export
+  bool timed_metadata = 3;
+}
+
+message VBExportPermission {
+  // destinations the user is allowed to export to (abekas, raw-abekas, b-stage, gfx, hippo_v2, hippo_hap, dubbing, hyperdeck, xdcam, caspar-cg)
+  repeated string destinations = 1;
+  // admin can export to all destinations
+  bool admin = 2;
 }
 
 message Permissions {
@@ -33,6 +42,7 @@ message Permissions {
   string email = 3;
   TranscriptionPermission transcription = 4;
   ExportPermission export = 5;
+  VBExportPermission vb_export = 6;
 }
 
 message GetPermissionsRequest {}
@@ -213,6 +223,8 @@ message GetExportConfigResponse {
   // overlay file names, including "None"
   repeated string overlays = 9;
   repeated ExportSubclip subclips = 10;
+  // whether this user may trigger the timed metadata export
+  bool can_export_timed_metadata = 11;
 }
 
 message ExportResolutionSelection {
@@ -244,6 +256,35 @@ message ExportTimedMetadataRequest {
   string VXID = 1;
 }
 
+// ---- VB Export ----
+
+message GetVBExportConfigRequest {
+  string VXID = 1;
+}
+
+message GetVBExportConfigResponse {
+  string VXID = 1;
+  string title = 2;
+  // destinations filtered to what this user is allowed to export to
+  repeated string destinations = 3;
+  // subtitle shape tags available on the asset (for burn-in)
+  repeated string subtitle_shapes = 4;
+  // available subtitle burn-in style files
+  repeated string subtitle_styles = 5;
+}
+
+message StartVBExportRequest {
+  string VXID = 1;
+  repeated string destinations = 2;
+  // subtitle shape tag to burn in; "" or "None" means no subtitles
+  string subtitle_shape = 3;
+  string subtitle_style = 4;
+}
+
+message StartVBExportResponse {
+  string workflow_id = 1;
+}
+
 service APIService {
 	// Permissions
 	rpc GetPermissions (Void) returns (Permissions) {}
@@ -271,4 +312,8 @@ service APIService {
   rpc GetExportConfig(GetExportConfigRequest) returns (GetExportConfigResponse) {}
   rpc StartExport(StartExportRequest) returns (StartExportResponse) {}
   rpc ExportTimedMetadata(ExportTimedMetadataRequest) returns (Void) {}
+
+  // VB Export
+  rpc GetVBExportConfig(GetVBExportConfigRequest) returns (GetVBExportConfigResponse) {}
+  rpc StartVBExport(StartVBExportRequest) returns (StartVBExportResponse) {}
 }

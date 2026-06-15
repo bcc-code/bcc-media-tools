@@ -78,6 +78,12 @@ const (
 	// APIServiceExportTimedMetadataProcedure is the fully-qualified name of the APIService's
 	// ExportTimedMetadata RPC.
 	APIServiceExportTimedMetadataProcedure = "/api.v1.APIService/ExportTimedMetadata"
+	// APIServiceGetVBExportConfigProcedure is the fully-qualified name of the APIService's
+	// GetVBExportConfig RPC.
+	APIServiceGetVBExportConfigProcedure = "/api.v1.APIService/GetVBExportConfig"
+	// APIServiceStartVBExportProcedure is the fully-qualified name of the APIService's StartVBExport
+	// RPC.
+	APIServiceStartVBExportProcedure = "/api.v1.APIService/StartVBExport"
 )
 
 // APIServiceClient is a client for the api.v1.APIService service.
@@ -104,6 +110,9 @@ type APIServiceClient interface {
 	GetExportConfig(context.Context, *connect.Request[v1.GetExportConfigRequest]) (*connect.Response[v1.GetExportConfigResponse], error)
 	StartExport(context.Context, *connect.Request[v1.StartExportRequest]) (*connect.Response[v1.StartExportResponse], error)
 	ExportTimedMetadata(context.Context, *connect.Request[v1.ExportTimedMetadataRequest]) (*connect.Response[v1.Void], error)
+	// VB Export
+	GetVBExportConfig(context.Context, *connect.Request[v1.GetVBExportConfigRequest]) (*connect.Response[v1.GetVBExportConfigResponse], error)
+	StartVBExport(context.Context, *connect.Request[v1.StartVBExportRequest]) (*connect.Response[v1.StartVBExportResponse], error)
 }
 
 // NewAPIServiceClient constructs a client for the api.v1.APIService service. By default, it uses
@@ -219,6 +228,18 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(aPIServiceMethods.ByName("ExportTimedMetadata")),
 			connect.WithClientOptions(opts...),
 		),
+		getVBExportConfig: connect.NewClient[v1.GetVBExportConfigRequest, v1.GetVBExportConfigResponse](
+			httpClient,
+			baseURL+APIServiceGetVBExportConfigProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("GetVBExportConfig")),
+			connect.WithClientOptions(opts...),
+		),
+		startVBExport: connect.NewClient[v1.StartVBExportRequest, v1.StartVBExportResponse](
+			httpClient,
+			baseURL+APIServiceStartVBExportProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("StartVBExport")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -241,6 +262,8 @@ type aPIServiceClient struct {
 	getExportConfig     *connect.Client[v1.GetExportConfigRequest, v1.GetExportConfigResponse]
 	startExport         *connect.Client[v1.StartExportRequest, v1.StartExportResponse]
 	exportTimedMetadata *connect.Client[v1.ExportTimedMetadataRequest, v1.Void]
+	getVBExportConfig   *connect.Client[v1.GetVBExportConfigRequest, v1.GetVBExportConfigResponse]
+	startVBExport       *connect.Client[v1.StartVBExportRequest, v1.StartVBExportResponse]
 }
 
 // GetPermissions calls api.v1.APIService.GetPermissions.
@@ -328,6 +351,16 @@ func (c *aPIServiceClient) ExportTimedMetadata(ctx context.Context, req *connect
 	return c.exportTimedMetadata.CallUnary(ctx, req)
 }
 
+// GetVBExportConfig calls api.v1.APIService.GetVBExportConfig.
+func (c *aPIServiceClient) GetVBExportConfig(ctx context.Context, req *connect.Request[v1.GetVBExportConfigRequest]) (*connect.Response[v1.GetVBExportConfigResponse], error) {
+	return c.getVBExportConfig.CallUnary(ctx, req)
+}
+
+// StartVBExport calls api.v1.APIService.StartVBExport.
+func (c *aPIServiceClient) StartVBExport(ctx context.Context, req *connect.Request[v1.StartVBExportRequest]) (*connect.Response[v1.StartVBExportResponse], error) {
+	return c.startVBExport.CallUnary(ctx, req)
+}
+
 // APIServiceHandler is an implementation of the api.v1.APIService service.
 type APIServiceHandler interface {
 	// Permissions
@@ -352,6 +385,9 @@ type APIServiceHandler interface {
 	GetExportConfig(context.Context, *connect.Request[v1.GetExportConfigRequest]) (*connect.Response[v1.GetExportConfigResponse], error)
 	StartExport(context.Context, *connect.Request[v1.StartExportRequest]) (*connect.Response[v1.StartExportResponse], error)
 	ExportTimedMetadata(context.Context, *connect.Request[v1.ExportTimedMetadataRequest]) (*connect.Response[v1.Void], error)
+	// VB Export
+	GetVBExportConfig(context.Context, *connect.Request[v1.GetVBExportConfigRequest]) (*connect.Response[v1.GetVBExportConfigResponse], error)
+	StartVBExport(context.Context, *connect.Request[v1.StartVBExportRequest]) (*connect.Response[v1.StartVBExportResponse], error)
 }
 
 // NewAPIServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -463,6 +499,18 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(aPIServiceMethods.ByName("ExportTimedMetadata")),
 		connect.WithHandlerOptions(opts...),
 	)
+	aPIServiceGetVBExportConfigHandler := connect.NewUnaryHandler(
+		APIServiceGetVBExportConfigProcedure,
+		svc.GetVBExportConfig,
+		connect.WithSchema(aPIServiceMethods.ByName("GetVBExportConfig")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aPIServiceStartVBExportHandler := connect.NewUnaryHandler(
+		APIServiceStartVBExportProcedure,
+		svc.StartVBExport,
+		connect.WithSchema(aPIServiceMethods.ByName("StartVBExport")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/api.v1.APIService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case APIServiceGetPermissionsProcedure:
@@ -499,6 +547,10 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceStartExportHandler.ServeHTTP(w, r)
 		case APIServiceExportTimedMetadataProcedure:
 			aPIServiceExportTimedMetadataHandler.ServeHTTP(w, r)
+		case APIServiceGetVBExportConfigProcedure:
+			aPIServiceGetVBExportConfigHandler.ServeHTTP(w, r)
+		case APIServiceStartVBExportProcedure:
+			aPIServiceStartVBExportHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -574,4 +626,12 @@ func (UnimplementedAPIServiceHandler) StartExport(context.Context, *connect.Requ
 
 func (UnimplementedAPIServiceHandler) ExportTimedMetadata(context.Context, *connect.Request[v1.ExportTimedMetadataRequest]) (*connect.Response[v1.Void], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.ExportTimedMetadata is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) GetVBExportConfig(context.Context, *connect.Request[v1.GetVBExportConfigRequest]) (*connect.Response[v1.GetVBExportConfigResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetVBExportConfig is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) StartVBExport(context.Context, *connect.Request[v1.StartVBExportRequest]) (*connect.Response[v1.StartVBExportResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.StartVBExport is not implemented"))
 }

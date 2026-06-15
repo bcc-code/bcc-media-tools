@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"connectrpc.com/connect"
 	bccmflows "github.com/bcc-code/bcc-media-flows"
@@ -15,6 +16,7 @@ import (
 	"github.com/bcc-code/bcc-media-flows/services/vidispine/vscommon"
 	"github.com/bcc-code/bcc-media-flows/utils"
 	exportworkflows "github.com/bcc-code/bcc-media-flows/workflows/export"
+	vbexportworkflows "github.com/bcc-code/bcc-media-flows/workflows/vb_export"
 	"github.com/bcc-code/mediabank-bridge/log"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
@@ -93,6 +95,43 @@ func allowedDestinations(perms *apiv1.Permissions) []string {
 	})
 }
 
+// dirFilenames returns the (sorted) file names in dir, or nil if it can't be read.
+func dirFilenames(dir string) []string {
+	if dir == "" {
+		return nil
+	}
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		log.L.Warn().Err(err).Str("dir", dir).Msg("could not read directory")
+		return nil
+	}
+	var names []string
+	for _, f := range files {
+		if f.IsDir() {
+			continue
+		}
+		names = append(names, f.Name())
+	}
+	sort.Strings(names)
+	return names
+}
+
+// vbUIDestinations returns the VB export destinations shown in the UI: the
+// canonical list minus the legacy "hippo" (v1) destination (matching trigger_ui).
+func vbUIDestinations() []string {
+	return lo.Filter(vbexportworkflows.Destinations.Values(), func(d string, _ int) bool {
+		return d != vbexportworkflows.DestinationHippo.Value
+	})
+}
+
+// allowedVBDestinations returns the UI VB destinations the user is permitted to
+// export to.
+func allowedVBDestinations(perms *apiv1.Permissions) []string {
+	return lo.Filter(vbUIDestinations(), func(d string, _ int) bool {
+		return perms.CanVBExportTo(d)
+	})
+}
+
 func (e ExportAPI) GetExportConfig(ctx context.Context, req *connect.Request[apiv1.GetExportConfigRequest]) (*connect.Response[apiv1.GetExportConfigResponse], error) {
 	email := getEmail(req)
 	if email == "" {
@@ -141,8 +180,9 @@ func (e ExportAPI) GetExportConfig(ctx context.Context, req *connect.Request[api
 		Resolutions: lo.Map(resolutions, func(r vsapi.Resolution, _ int) *apiv1.ExportResolution {
 			return &apiv1.ExportResolution{Width: int32(r.Width), Height: int32(r.Height)}
 		}),
-		Overlays: overlayFilenames(),
-		Subclips: e.getSubclips(vxID),
+		Overlays:               overlayFilenames(),
+		Subclips:               e.getSubclips(vxID),
+		CanExportTimedMetadata: perms.CanExportTimedMetadata(),
 	}
 
 	return connect.NewResponse(resp), nil
@@ -307,8 +347,8 @@ func (e ExportAPI) ExportTimedMetadata(ctx context.Context, req *connect.Request
 		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("missing email header"))
 	}
 	perms := PermissionsForEmail(email)
-	if !perms.CanExport() {
-		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("not authorized to export"))
+	if !perms.CanExportTimedMetadata() {
+		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("not authorized to export timed metadata"))
 	}
 
 	vxID := req.Msg.GetVXID()
@@ -335,4 +375,113 @@ func (e ExportAPI) ExportTimedMetadata(ctx context.Context, req *connect.Request
 	}
 
 	return connect.NewResponse(&apiv1.Void{}), nil
+}
+
+func (e ExportAPI) GetVBExportConfig(ctx context.Context, req *connect.Request[apiv1.GetVBExportConfigRequest]) (*connect.Response[apiv1.GetVBExportConfigResponse], error) {
+	email := getEmail(req)
+	if email == "" {
+		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("missing email header"))
+	}
+	perms := PermissionsForEmail(email)
+	if !perms.CanVBExport() {
+		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("not authorized to export"))
+	}
+
+	vxID := req.Msg.GetVXID()
+	if vxID == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("missing VXID"))
+	}
+
+	meta, err := e.vidispine.GetMetadata(vxID)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+
+	clips := meta.SplitByClips()
+	title := ""
+	if oc, ok := clips[vsapi.OriginalClip]; ok {
+		title = oc.Get(vscommon.FieldTitle, "")
+	}
+	if title == "" {
+		title = meta.Get(vscommon.FieldTitle, "")
+	}
+
+	// Subtitle shapes available for burn-in: tags like "sub_xxx_srt".
+	subtitleShapes := []string{"None"}
+	shapes, err := e.vidispine.GetShapes(vxID)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	for _, shape := range shapes.Shape {
+		for _, tag := range shape.Tag {
+			if strings.HasPrefix(tag, "sub_") && strings.HasSuffix(tag, "_srt") {
+				subtitleShapes = append(subtitleShapes, tag)
+			}
+		}
+	}
+
+	resp := &apiv1.GetVBExportConfigResponse{
+		VXID:           vxID,
+		Title:          title,
+		Destinations:   allowedVBDestinations(perms),
+		SubtitleShapes: subtitleShapes,
+		SubtitleStyles: dirFilenames(os.Getenv("SUBTITLE_STYLES_DIR")),
+	}
+
+	return connect.NewResponse(resp), nil
+}
+
+func (e ExportAPI) StartVBExport(ctx context.Context, req *connect.Request[apiv1.StartVBExportRequest]) (*connect.Response[apiv1.StartVBExportResponse], error) {
+	email := getEmail(req)
+	if email == "" {
+		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("missing email header"))
+	}
+	perms := PermissionsForEmail(email)
+	if !perms.CanVBExport() {
+		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("not authorized to export"))
+	}
+
+	msg := req.Msg
+	vxID := msg.GetVXID()
+	if vxID == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("missing VXID"))
+	}
+	if len(msg.GetDestinations()) == 0 {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no destinations selected"))
+	}
+	for _, d := range msg.GetDestinations() {
+		if !perms.CanVBExportTo(d) {
+			return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("not authorized to export to %q", d))
+		}
+	}
+
+	// "None" / empty means no subtitle burn-in.
+	subtitleShape := msg.GetSubtitleShape()
+	if subtitleShape == "None" {
+		subtitleShape = ""
+	}
+
+	params := vbexportworkflows.VBExportParams{
+		VXID:             vxID,
+		Destinations:     msg.GetDestinations(),
+		SubtitleShapeTag: subtitleShape,
+		SubtitleStyle:    msg.GetSubtitleStyle(),
+	}
+
+	opts := client.StartWorkflowOptions{
+		TaskQueue: getQueue(),
+		ID:        uuid.NewString(),
+	}
+	if os.Getenv("DEBUG") == "" {
+		opts.SearchAttributes = map[string]any{
+			"CustomStringField": vxID,
+		}
+	}
+
+	run, err := e.temporalClient.ExecuteWorkflow(ctx, opts, vbexportworkflows.VBExport, params)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+
+	return connect.NewResponse(&apiv1.StartVBExportResponse{WorkflowId: run.GetID()}), nil
 }

@@ -23,18 +23,18 @@ function withDefaultPermissions(p: Permissions): Permissions {
             languages: [],
         },
         transcription: p.transcription ?? { admin: false, mediabanken: false },
-        export: p.export ?? { admin: false, destinations: [] },
+        export: p.export ?? {
+            admin: false,
+            destinations: [],
+            timedMetadata: false,
+        },
+        vbExport: p.vbExport ?? { admin: false, destinations: [] },
         email: p.email ?? "",
     };
 }
 
-const exportDestinations = [
-    { label: "XDCAM", value: "xdcam" },
-    { label: "VOD", value: "vod" },
-    { label: "BMM", value: "bmm" },
-    { label: "BMM Integration", value: "bmm-integration" },
-    { label: "Isilon", value: "isilon" },
-];
+const exportDestinations = destinationOptions(VX_EXPORT_DESTINATIONS);
+const vbExportDestinations = destinationOptions(VB_EXPORT_DESTINATIONS);
 
 const perms = reactive(withDefaultPermissions(props.permissions));
 const api = useAPI();
@@ -163,6 +163,29 @@ const isOpen = ref(false);
                                 v-model="perms.export.destinations"
                                 multiple
                                 :items="exportDestinations"
+                                class="w-full max-w-prose"
+                            />
+                        </UFormField>
+                        <USwitch
+                            v-model="perms.export.timedMetadata"
+                            label="Timed metadata export"
+                            description="Can trigger the timed metadata (VOD) export"
+                        />
+                    </AdminPermissionViewSection>
+                    <AdminPermissionViewSection
+                        v-if="perms.vbExport"
+                        title="VB Export"
+                    >
+                        <USwitch
+                            v-model="perms.vbExport.admin"
+                            label="VB Export Admin"
+                            description="Can export to all VB destinations"
+                        />
+                        <UFormField label="Destinations">
+                            <USelect
+                                v-model="perms.vbExport.destinations"
+                                multiple
+                                :items="vbExportDestinations"
                                 class="w-full max-w-prose"
                             />
                         </UFormField>

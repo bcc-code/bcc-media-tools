@@ -201,7 +201,9 @@ type ExportPermission struct {
 	// destinations the user is allowed to export to (xdcam, vod, bmm, bmm-integration, isilon)
 	Destinations []string `protobuf:"bytes,1,rep,name=destinations,proto3" json:"destinations,omitempty"`
 	// admin can export to all destinations
-	Admin         bool `protobuf:"varint,2,opt,name=admin,proto3" json:"admin,omitempty"`
+	Admin bool `protobuf:"varint,2,opt,name=admin,proto3" json:"admin,omitempty"`
+	// can trigger the (VOD-affecting) timed metadata export
+	TimedMetadata bool `protobuf:"varint,3,opt,name=timed_metadata,json=timedMetadata,proto3" json:"timed_metadata,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -250,6 +252,67 @@ func (x *ExportPermission) GetAdmin() bool {
 	return false
 }
 
+func (x *ExportPermission) GetTimedMetadata() bool {
+	if x != nil {
+		return x.TimedMetadata
+	}
+	return false
+}
+
+type VBExportPermission struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// destinations the user is allowed to export to (abekas, raw-abekas, b-stage, gfx, hippo_v2, hippo_hap, dubbing, hyperdeck, xdcam, caspar-cg)
+	Destinations []string `protobuf:"bytes,1,rep,name=destinations,proto3" json:"destinations,omitempty"`
+	// admin can export to all destinations
+	Admin         bool `protobuf:"varint,2,opt,name=admin,proto3" json:"admin,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *VBExportPermission) Reset() {
+	*x = VBExportPermission{}
+	mi := &file_api_v1_api_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *VBExportPermission) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*VBExportPermission) ProtoMessage() {}
+
+func (x *VBExportPermission) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_api_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use VBExportPermission.ProtoReflect.Descriptor instead.
+func (*VBExportPermission) Descriptor() ([]byte, []int) {
+	return file_api_v1_api_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *VBExportPermission) GetDestinations() []string {
+	if x != nil {
+		return x.Destinations
+	}
+	return nil
+}
+
+func (x *VBExportPermission) GetAdmin() bool {
+	if x != nil {
+		return x.Admin
+	}
+	return false
+}
+
 type Permissions struct {
 	state         protoimpl.MessageState   `protogen:"open.v1"`
 	Admin         bool                     `protobuf:"varint,1,opt,name=admin,proto3" json:"admin,omitempty"`
@@ -257,13 +320,14 @@ type Permissions struct {
 	Email         string                   `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
 	Transcription *TranscriptionPermission `protobuf:"bytes,4,opt,name=transcription,proto3" json:"transcription,omitempty"`
 	Export        *ExportPermission        `protobuf:"bytes,5,opt,name=export,proto3" json:"export,omitempty"`
+	VbExport      *VBExportPermission      `protobuf:"bytes,6,opt,name=vb_export,json=vbExport,proto3" json:"vb_export,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Permissions) Reset() {
 	*x = Permissions{}
-	mi := &file_api_v1_api_proto_msgTypes[3]
+	mi := &file_api_v1_api_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -275,7 +339,7 @@ func (x *Permissions) String() string {
 func (*Permissions) ProtoMessage() {}
 
 func (x *Permissions) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[3]
+	mi := &file_api_v1_api_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -288,7 +352,7 @@ func (x *Permissions) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Permissions.ProtoReflect.Descriptor instead.
 func (*Permissions) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{3}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *Permissions) GetAdmin() bool {
@@ -326,6 +390,13 @@ func (x *Permissions) GetExport() *ExportPermission {
 	return nil
 }
 
+func (x *Permissions) GetVbExport() *VBExportPermission {
+	if x != nil {
+		return x.VbExport
+	}
+	return nil
+}
+
 type GetPermissionsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -334,7 +405,7 @@ type GetPermissionsRequest struct {
 
 func (x *GetPermissionsRequest) Reset() {
 	*x = GetPermissionsRequest{}
-	mi := &file_api_v1_api_proto_msgTypes[4]
+	mi := &file_api_v1_api_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -346,7 +417,7 @@ func (x *GetPermissionsRequest) String() string {
 func (*GetPermissionsRequest) ProtoMessage() {}
 
 func (x *GetPermissionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[4]
+	mi := &file_api_v1_api_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -359,7 +430,7 @@ func (x *GetPermissionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPermissionsRequest.ProtoReflect.Descriptor instead.
 func (*GetPermissionsRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{4}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{5}
 }
 
 type SetPermissionsRequest struct {
@@ -372,7 +443,7 @@ type SetPermissionsRequest struct {
 
 func (x *SetPermissionsRequest) Reset() {
 	*x = SetPermissionsRequest{}
-	mi := &file_api_v1_api_proto_msgTypes[5]
+	mi := &file_api_v1_api_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -384,7 +455,7 @@ func (x *SetPermissionsRequest) String() string {
 func (*SetPermissionsRequest) ProtoMessage() {}
 
 func (x *SetPermissionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[5]
+	mi := &file_api_v1_api_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -397,7 +468,7 @@ func (x *SetPermissionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetPermissionsRequest.ProtoReflect.Descriptor instead.
 func (*SetPermissionsRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{5}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *SetPermissionsRequest) GetEmail() string {
@@ -423,7 +494,7 @@ type DeletePermissionsRequest struct {
 
 func (x *DeletePermissionsRequest) Reset() {
 	*x = DeletePermissionsRequest{}
-	mi := &file_api_v1_api_proto_msgTypes[6]
+	mi := &file_api_v1_api_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -435,7 +506,7 @@ func (x *DeletePermissionsRequest) String() string {
 func (*DeletePermissionsRequest) ProtoMessage() {}
 
 func (x *DeletePermissionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[6]
+	mi := &file_api_v1_api_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -448,7 +519,7 @@ func (x *DeletePermissionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeletePermissionsRequest.ProtoReflect.Descriptor instead.
 func (*DeletePermissionsRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{6}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *DeletePermissionsRequest) GetEmail() string {
@@ -467,7 +538,7 @@ type PermissionsList struct {
 
 func (x *PermissionsList) Reset() {
 	*x = PermissionsList{}
-	mi := &file_api_v1_api_proto_msgTypes[7]
+	mi := &file_api_v1_api_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -479,7 +550,7 @@ func (x *PermissionsList) String() string {
 func (*PermissionsList) ProtoMessage() {}
 
 func (x *PermissionsList) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[7]
+	mi := &file_api_v1_api_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -492,7 +563,7 @@ func (x *PermissionsList) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PermissionsList.ProtoReflect.Descriptor instead.
 func (*PermissionsList) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{7}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *PermissionsList) GetPermissions() map[string]*Permissions {
@@ -512,7 +583,7 @@ type BMMYear struct {
 
 func (x *BMMYear) Reset() {
 	*x = BMMYear{}
-	mi := &file_api_v1_api_proto_msgTypes[8]
+	mi := &file_api_v1_api_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -524,7 +595,7 @@ func (x *BMMYear) String() string {
 func (*BMMYear) ProtoMessage() {}
 
 func (x *BMMYear) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[8]
+	mi := &file_api_v1_api_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -537,7 +608,7 @@ func (x *BMMYear) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BMMYear.ProtoReflect.Descriptor instead.
 func (*BMMYear) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{8}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *BMMYear) GetYear() uint32 {
@@ -563,7 +634,7 @@ type GetYearsResponse struct {
 
 func (x *GetYearsResponse) Reset() {
 	*x = GetYearsResponse{}
-	mi := &file_api_v1_api_proto_msgTypes[9]
+	mi := &file_api_v1_api_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -575,7 +646,7 @@ func (x *GetYearsResponse) String() string {
 func (*GetYearsResponse) ProtoMessage() {}
 
 func (x *GetYearsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[9]
+	mi := &file_api_v1_api_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -588,7 +659,7 @@ func (x *GetYearsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetYearsResponse.ProtoReflect.Descriptor instead.
 func (*GetYearsResponse) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{9}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *GetYearsResponse) GetData() map[uint32]*BMMYear {
@@ -607,7 +678,7 @@ type GetYearsRequest struct {
 
 func (x *GetYearsRequest) Reset() {
 	*x = GetYearsRequest{}
-	mi := &file_api_v1_api_proto_msgTypes[10]
+	mi := &file_api_v1_api_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -619,7 +690,7 @@ func (x *GetYearsRequest) String() string {
 func (*GetYearsRequest) ProtoMessage() {}
 
 func (x *GetYearsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[10]
+	mi := &file_api_v1_api_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -632,7 +703,7 @@ func (x *GetYearsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetYearsRequest.ProtoReflect.Descriptor instead.
 func (*GetYearsRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{10}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *GetYearsRequest) GetEnvironment() BmmEnvironment {
@@ -652,7 +723,7 @@ type GetAlbumsRequest struct {
 
 func (x *GetAlbumsRequest) Reset() {
 	*x = GetAlbumsRequest{}
-	mi := &file_api_v1_api_proto_msgTypes[11]
+	mi := &file_api_v1_api_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -664,7 +735,7 @@ func (x *GetAlbumsRequest) String() string {
 func (*GetAlbumsRequest) ProtoMessage() {}
 
 func (x *GetAlbumsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[11]
+	mi := &file_api_v1_api_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -677,7 +748,7 @@ func (x *GetAlbumsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAlbumsRequest.ProtoReflect.Descriptor instead.
 func (*GetAlbumsRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{11}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *GetAlbumsRequest) GetYear() uint32 {
@@ -706,7 +777,7 @@ type Album struct {
 
 func (x *Album) Reset() {
 	*x = Album{}
-	mi := &file_api_v1_api_proto_msgTypes[12]
+	mi := &file_api_v1_api_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -718,7 +789,7 @@ func (x *Album) String() string {
 func (*Album) ProtoMessage() {}
 
 func (x *Album) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[12]
+	mi := &file_api_v1_api_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -731,7 +802,7 @@ func (x *Album) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Album.ProtoReflect.Descriptor instead.
 func (*Album) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{12}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *Album) GetId() string {
@@ -771,7 +842,7 @@ type AlbumsList struct {
 
 func (x *AlbumsList) Reset() {
 	*x = AlbumsList{}
-	mi := &file_api_v1_api_proto_msgTypes[13]
+	mi := &file_api_v1_api_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -783,7 +854,7 @@ func (x *AlbumsList) String() string {
 func (*AlbumsList) ProtoMessage() {}
 
 func (x *AlbumsList) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[13]
+	mi := &file_api_v1_api_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -796,7 +867,7 @@ func (x *AlbumsList) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AlbumsList.ProtoReflect.Descriptor instead.
 func (*AlbumsList) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{13}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *AlbumsList) GetAlbums() []*Album {
@@ -816,7 +887,7 @@ type GetAlbumTracksRequest struct {
 
 func (x *GetAlbumTracksRequest) Reset() {
 	*x = GetAlbumTracksRequest{}
-	mi := &file_api_v1_api_proto_msgTypes[14]
+	mi := &file_api_v1_api_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -828,7 +899,7 @@ func (x *GetAlbumTracksRequest) String() string {
 func (*GetAlbumTracksRequest) ProtoMessage() {}
 
 func (x *GetAlbumTracksRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[14]
+	mi := &file_api_v1_api_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -841,7 +912,7 @@ func (x *GetAlbumTracksRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAlbumTracksRequest.ProtoReflect.Descriptor instead.
 func (*GetAlbumTracksRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{14}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *GetAlbumTracksRequest) GetAlbumId() string {
@@ -869,7 +940,7 @@ type GetPodcastTracksRequest struct {
 
 func (x *GetPodcastTracksRequest) Reset() {
 	*x = GetPodcastTracksRequest{}
-	mi := &file_api_v1_api_proto_msgTypes[15]
+	mi := &file_api_v1_api_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -881,7 +952,7 @@ func (x *GetPodcastTracksRequest) String() string {
 func (*GetPodcastTracksRequest) ProtoMessage() {}
 
 func (x *GetPodcastTracksRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[15]
+	mi := &file_api_v1_api_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -894,7 +965,7 @@ func (x *GetPodcastTracksRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPodcastTracksRequest.ProtoReflect.Descriptor instead.
 func (*GetPodcastTracksRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{15}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *GetPodcastTracksRequest) GetPodcastTag() string {
@@ -927,7 +998,7 @@ type GetAvailableLanguagesRequest struct {
 
 func (x *GetAvailableLanguagesRequest) Reset() {
 	*x = GetAvailableLanguagesRequest{}
-	mi := &file_api_v1_api_proto_msgTypes[16]
+	mi := &file_api_v1_api_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -939,7 +1010,7 @@ func (x *GetAvailableLanguagesRequest) String() string {
 func (*GetAvailableLanguagesRequest) ProtoMessage() {}
 
 func (x *GetAvailableLanguagesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[16]
+	mi := &file_api_v1_api_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -952,7 +1023,7 @@ func (x *GetAvailableLanguagesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAvailableLanguagesRequest.ProtoReflect.Descriptor instead.
 func (*GetAvailableLanguagesRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{16}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *GetAvailableLanguagesRequest) GetEnvironment() BmmEnvironment {
@@ -976,7 +1047,7 @@ type BMMTrack struct {
 
 func (x *BMMTrack) Reset() {
 	*x = BMMTrack{}
-	mi := &file_api_v1_api_proto_msgTypes[17]
+	mi := &file_api_v1_api_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -988,7 +1059,7 @@ func (x *BMMTrack) String() string {
 func (*BMMTrack) ProtoMessage() {}
 
 func (x *BMMTrack) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[17]
+	mi := &file_api_v1_api_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1001,7 +1072,7 @@ func (x *BMMTrack) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BMMTrack.ProtoReflect.Descriptor instead.
 func (*BMMTrack) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{17}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *BMMTrack) GetId() string {
@@ -1055,7 +1126,7 @@ type TracksList struct {
 
 func (x *TracksList) Reset() {
 	*x = TracksList{}
-	mi := &file_api_v1_api_proto_msgTypes[18]
+	mi := &file_api_v1_api_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1067,7 +1138,7 @@ func (x *TracksList) String() string {
 func (*TracksList) ProtoMessage() {}
 
 func (x *TracksList) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[18]
+	mi := &file_api_v1_api_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1080,7 +1151,7 @@ func (x *TracksList) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TracksList.ProtoReflect.Descriptor instead.
 func (*TracksList) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{18}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *TracksList) GetTracks() []*BMMTrack {
@@ -1099,7 +1170,7 @@ type LanguageList struct {
 
 func (x *LanguageList) Reset() {
 	*x = LanguageList{}
-	mi := &file_api_v1_api_proto_msgTypes[19]
+	mi := &file_api_v1_api_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1111,7 +1182,7 @@ func (x *LanguageList) String() string {
 func (*LanguageList) ProtoMessage() {}
 
 func (x *LanguageList) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[19]
+	mi := &file_api_v1_api_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1124,7 +1195,7 @@ func (x *LanguageList) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LanguageList.ProtoReflect.Descriptor instead.
 func (*LanguageList) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{19}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *LanguageList) GetLanguages() []*Language {
@@ -1144,7 +1215,7 @@ type Language struct {
 
 func (x *Language) Reset() {
 	*x = Language{}
-	mi := &file_api_v1_api_proto_msgTypes[20]
+	mi := &file_api_v1_api_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1156,7 +1227,7 @@ func (x *Language) String() string {
 func (*Language) ProtoMessage() {}
 
 func (x *Language) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[20]
+	mi := &file_api_v1_api_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1169,7 +1240,7 @@ func (x *Language) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Language.ProtoReflect.Descriptor instead.
 func (*Language) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{20}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *Language) GetCode() string {
@@ -1195,7 +1266,7 @@ type GetTranscriptionReqest struct {
 
 func (x *GetTranscriptionReqest) Reset() {
 	*x = GetTranscriptionReqest{}
-	mi := &file_api_v1_api_proto_msgTypes[21]
+	mi := &file_api_v1_api_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1207,7 +1278,7 @@ func (x *GetTranscriptionReqest) String() string {
 func (*GetTranscriptionReqest) ProtoMessage() {}
 
 func (x *GetTranscriptionReqest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[21]
+	mi := &file_api_v1_api_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1220,7 +1291,7 @@ func (x *GetTranscriptionReqest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTranscriptionReqest.ProtoReflect.Descriptor instead.
 func (*GetTranscriptionReqest) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{21}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *GetTranscriptionReqest) GetVXID() string {
@@ -1240,7 +1311,7 @@ type Transcription struct {
 
 func (x *Transcription) Reset() {
 	*x = Transcription{}
-	mi := &file_api_v1_api_proto_msgTypes[22]
+	mi := &file_api_v1_api_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1252,7 +1323,7 @@ func (x *Transcription) String() string {
 func (*Transcription) ProtoMessage() {}
 
 func (x *Transcription) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[22]
+	mi := &file_api_v1_api_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1265,7 +1336,7 @@ func (x *Transcription) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Transcription.ProtoReflect.Descriptor instead.
 func (*Transcription) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{22}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *Transcription) GetText() string {
@@ -1302,7 +1373,7 @@ type Segments struct {
 
 func (x *Segments) Reset() {
 	*x = Segments{}
-	mi := &file_api_v1_api_proto_msgTypes[23]
+	mi := &file_api_v1_api_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1314,7 +1385,7 @@ func (x *Segments) String() string {
 func (*Segments) ProtoMessage() {}
 
 func (x *Segments) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[23]
+	mi := &file_api_v1_api_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1327,7 +1398,7 @@ func (x *Segments) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Segments.ProtoReflect.Descriptor instead.
 func (*Segments) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{23}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *Segments) GetId() float64 {
@@ -1426,7 +1497,7 @@ type Words struct {
 
 func (x *Words) Reset() {
 	*x = Words{}
-	mi := &file_api_v1_api_proto_msgTypes[24]
+	mi := &file_api_v1_api_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1438,7 +1509,7 @@ func (x *Words) String() string {
 func (*Words) ProtoMessage() {}
 
 func (x *Words) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[24]
+	mi := &file_api_v1_api_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1451,7 +1522,7 @@ func (x *Words) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Words.ProtoReflect.Descriptor instead.
 func (*Words) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{24}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *Words) GetText() string {
@@ -1491,7 +1562,7 @@ type GetPreviewRequest struct {
 
 func (x *GetPreviewRequest) Reset() {
 	*x = GetPreviewRequest{}
-	mi := &file_api_v1_api_proto_msgTypes[25]
+	mi := &file_api_v1_api_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1503,7 +1574,7 @@ func (x *GetPreviewRequest) String() string {
 func (*GetPreviewRequest) ProtoMessage() {}
 
 func (x *GetPreviewRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[25]
+	mi := &file_api_v1_api_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1516,7 +1587,7 @@ func (x *GetPreviewRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPreviewRequest.ProtoReflect.Descriptor instead.
 func (*GetPreviewRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{25}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *GetPreviewRequest) GetVXID() string {
@@ -1535,7 +1606,7 @@ type Preview struct {
 
 func (x *Preview) Reset() {
 	*x = Preview{}
-	mi := &file_api_v1_api_proto_msgTypes[26]
+	mi := &file_api_v1_api_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1547,7 +1618,7 @@ func (x *Preview) String() string {
 func (*Preview) ProtoMessage() {}
 
 func (x *Preview) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[26]
+	mi := &file_api_v1_api_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1560,7 +1631,7 @@ func (x *Preview) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Preview.ProtoReflect.Descriptor instead.
 func (*Preview) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{26}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *Preview) GetUrl() string {
@@ -1581,7 +1652,7 @@ type GetBMMTranscriptionRequest struct {
 
 func (x *GetBMMTranscriptionRequest) Reset() {
 	*x = GetBMMTranscriptionRequest{}
-	mi := &file_api_v1_api_proto_msgTypes[27]
+	mi := &file_api_v1_api_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1593,7 +1664,7 @@ func (x *GetBMMTranscriptionRequest) String() string {
 func (*GetBMMTranscriptionRequest) ProtoMessage() {}
 
 func (x *GetBMMTranscriptionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[27]
+	mi := &file_api_v1_api_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1606,7 +1677,7 @@ func (x *GetBMMTranscriptionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetBMMTranscriptionRequest.ProtoReflect.Descriptor instead.
 func (*GetBMMTranscriptionRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{27}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *GetBMMTranscriptionRequest) GetBmmId() string {
@@ -1640,7 +1711,7 @@ type SubmitTranscriptionRequest struct {
 
 func (x *SubmitTranscriptionRequest) Reset() {
 	*x = SubmitTranscriptionRequest{}
-	mi := &file_api_v1_api_proto_msgTypes[28]
+	mi := &file_api_v1_api_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1652,7 +1723,7 @@ func (x *SubmitTranscriptionRequest) String() string {
 func (*SubmitTranscriptionRequest) ProtoMessage() {}
 
 func (x *SubmitTranscriptionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[28]
+	mi := &file_api_v1_api_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1665,7 +1736,7 @@ func (x *SubmitTranscriptionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubmitTranscriptionRequest.ProtoReflect.Descriptor instead.
 func (*SubmitTranscriptionRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{28}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *SubmitTranscriptionRequest) GetVXID() string {
@@ -1693,7 +1764,7 @@ type SubmitShortRequest struct {
 
 func (x *SubmitShortRequest) Reset() {
 	*x = SubmitShortRequest{}
-	mi := &file_api_v1_api_proto_msgTypes[29]
+	mi := &file_api_v1_api_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1705,7 +1776,7 @@ func (x *SubmitShortRequest) String() string {
 func (*SubmitShortRequest) ProtoMessage() {}
 
 func (x *SubmitShortRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[29]
+	mi := &file_api_v1_api_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1718,7 +1789,7 @@ func (x *SubmitShortRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubmitShortRequest.ProtoReflect.Descriptor instead.
 func (*SubmitShortRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{29}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *SubmitShortRequest) GetVXID() string {
@@ -1752,7 +1823,7 @@ type ExportResolution struct {
 
 func (x *ExportResolution) Reset() {
 	*x = ExportResolution{}
-	mi := &file_api_v1_api_proto_msgTypes[30]
+	mi := &file_api_v1_api_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1764,7 +1835,7 @@ func (x *ExportResolution) String() string {
 func (*ExportResolution) ProtoMessage() {}
 
 func (x *ExportResolution) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[30]
+	mi := &file_api_v1_api_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1777,7 +1848,7 @@ func (x *ExportResolution) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExportResolution.ProtoReflect.Descriptor instead.
 func (*ExportResolution) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{30}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *ExportResolution) GetWidth() int32 {
@@ -1806,7 +1877,7 @@ type ExportLanguage struct {
 
 func (x *ExportLanguage) Reset() {
 	*x = ExportLanguage{}
-	mi := &file_api_v1_api_proto_msgTypes[31]
+	mi := &file_api_v1_api_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1818,7 +1889,7 @@ func (x *ExportLanguage) String() string {
 func (*ExportLanguage) ProtoMessage() {}
 
 func (x *ExportLanguage) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[31]
+	mi := &file_api_v1_api_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1831,7 +1902,7 @@ func (x *ExportLanguage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExportLanguage.ProtoReflect.Descriptor instead.
 func (*ExportLanguage) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{31}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *ExportLanguage) GetCode() string {
@@ -1871,7 +1942,7 @@ type ExportSubclip struct {
 
 func (x *ExportSubclip) Reset() {
 	*x = ExportSubclip{}
-	mi := &file_api_v1_api_proto_msgTypes[32]
+	mi := &file_api_v1_api_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1883,7 +1954,7 @@ func (x *ExportSubclip) String() string {
 func (*ExportSubclip) ProtoMessage() {}
 
 func (x *ExportSubclip) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[32]
+	mi := &file_api_v1_api_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1896,7 +1967,7 @@ func (x *ExportSubclip) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExportSubclip.ProtoReflect.Descriptor instead.
 func (*ExportSubclip) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{32}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *ExportSubclip) GetTitle() string {
@@ -1915,7 +1986,7 @@ type GetExportConfigRequest struct {
 
 func (x *GetExportConfigRequest) Reset() {
 	*x = GetExportConfigRequest{}
-	mi := &file_api_v1_api_proto_msgTypes[33]
+	mi := &file_api_v1_api_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1927,7 +1998,7 @@ func (x *GetExportConfigRequest) String() string {
 func (*GetExportConfigRequest) ProtoMessage() {}
 
 func (x *GetExportConfigRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[33]
+	mi := &file_api_v1_api_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1940,7 +2011,7 @@ func (x *GetExportConfigRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetExportConfigRequest.ProtoReflect.Descriptor instead.
 func (*GetExportConfigRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{33}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *GetExportConfigRequest) GetVXID() string {
@@ -1963,15 +2034,17 @@ type GetExportConfigResponse struct {
 	SelectedLanguages   []string            `protobuf:"bytes,7,rep,name=selected_languages,json=selectedLanguages,proto3" json:"selected_languages,omitempty"`
 	Resolutions         []*ExportResolution `protobuf:"bytes,8,rep,name=resolutions,proto3" json:"resolutions,omitempty"`
 	// overlay file names, including "None"
-	Overlays      []string         `protobuf:"bytes,9,rep,name=overlays,proto3" json:"overlays,omitempty"`
-	Subclips      []*ExportSubclip `protobuf:"bytes,10,rep,name=subclips,proto3" json:"subclips,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Overlays []string         `protobuf:"bytes,9,rep,name=overlays,proto3" json:"overlays,omitempty"`
+	Subclips []*ExportSubclip `protobuf:"bytes,10,rep,name=subclips,proto3" json:"subclips,omitempty"`
+	// whether this user may trigger the timed metadata export
+	CanExportTimedMetadata bool `protobuf:"varint,11,opt,name=can_export_timed_metadata,json=canExportTimedMetadata,proto3" json:"can_export_timed_metadata,omitempty"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *GetExportConfigResponse) Reset() {
 	*x = GetExportConfigResponse{}
-	mi := &file_api_v1_api_proto_msgTypes[34]
+	mi := &file_api_v1_api_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1983,7 +2056,7 @@ func (x *GetExportConfigResponse) String() string {
 func (*GetExportConfigResponse) ProtoMessage() {}
 
 func (x *GetExportConfigResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[34]
+	mi := &file_api_v1_api_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1996,7 +2069,7 @@ func (x *GetExportConfigResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetExportConfigResponse.ProtoReflect.Descriptor instead.
 func (*GetExportConfigResponse) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{34}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *GetExportConfigResponse) GetVXID() string {
@@ -2069,6 +2142,13 @@ func (x *GetExportConfigResponse) GetSubclips() []*ExportSubclip {
 	return nil
 }
 
+func (x *GetExportConfigResponse) GetCanExportTimedMetadata() bool {
+	if x != nil {
+		return x.CanExportTimedMetadata
+	}
+	return false
+}
+
 type ExportResolutionSelection struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Width         int32                  `protobuf:"varint,1,opt,name=width,proto3" json:"width,omitempty"`
@@ -2080,7 +2160,7 @@ type ExportResolutionSelection struct {
 
 func (x *ExportResolutionSelection) Reset() {
 	*x = ExportResolutionSelection{}
-	mi := &file_api_v1_api_proto_msgTypes[35]
+	mi := &file_api_v1_api_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2092,7 +2172,7 @@ func (x *ExportResolutionSelection) String() string {
 func (*ExportResolutionSelection) ProtoMessage() {}
 
 func (x *ExportResolutionSelection) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[35]
+	mi := &file_api_v1_api_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2105,7 +2185,7 @@ func (x *ExportResolutionSelection) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExportResolutionSelection.ProtoReflect.Descriptor instead.
 func (*ExportResolutionSelection) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{35}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *ExportResolutionSelection) GetWidth() int32 {
@@ -2149,7 +2229,7 @@ type StartExportRequest struct {
 
 func (x *StartExportRequest) Reset() {
 	*x = StartExportRequest{}
-	mi := &file_api_v1_api_proto_msgTypes[36]
+	mi := &file_api_v1_api_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2161,7 +2241,7 @@ func (x *StartExportRequest) String() string {
 func (*StartExportRequest) ProtoMessage() {}
 
 func (x *StartExportRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[36]
+	mi := &file_api_v1_api_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2174,7 +2254,7 @@ func (x *StartExportRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartExportRequest.ProtoReflect.Descriptor instead.
 func (*StartExportRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{36}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *StartExportRequest) GetVXID() string {
@@ -2256,7 +2336,7 @@ type StartExportResponse struct {
 
 func (x *StartExportResponse) Reset() {
 	*x = StartExportResponse{}
-	mi := &file_api_v1_api_proto_msgTypes[37]
+	mi := &file_api_v1_api_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2268,7 +2348,7 @@ func (x *StartExportResponse) String() string {
 func (*StartExportResponse) ProtoMessage() {}
 
 func (x *StartExportResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[37]
+	mi := &file_api_v1_api_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2281,7 +2361,7 @@ func (x *StartExportResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartExportResponse.ProtoReflect.Descriptor instead.
 func (*StartExportResponse) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{37}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *StartExportResponse) GetWorkflowIds() []string {
@@ -2300,7 +2380,7 @@ type ExportTimedMetadataRequest struct {
 
 func (x *ExportTimedMetadataRequest) Reset() {
 	*x = ExportTimedMetadataRequest{}
-	mi := &file_api_v1_api_proto_msgTypes[38]
+	mi := &file_api_v1_api_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2312,7 +2392,7 @@ func (x *ExportTimedMetadataRequest) String() string {
 func (*ExportTimedMetadataRequest) ProtoMessage() {}
 
 func (x *ExportTimedMetadataRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[38]
+	mi := &file_api_v1_api_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2325,12 +2405,248 @@ func (x *ExportTimedMetadataRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExportTimedMetadataRequest.ProtoReflect.Descriptor instead.
 func (*ExportTimedMetadataRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{38}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *ExportTimedMetadataRequest) GetVXID() string {
 	if x != nil {
 		return x.VXID
+	}
+	return ""
+}
+
+type GetVBExportConfigRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	VXID          string                 `protobuf:"bytes,1,opt,name=VXID,proto3" json:"VXID,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetVBExportConfigRequest) Reset() {
+	*x = GetVBExportConfigRequest{}
+	mi := &file_api_v1_api_proto_msgTypes[40]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetVBExportConfigRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetVBExportConfigRequest) ProtoMessage() {}
+
+func (x *GetVBExportConfigRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_api_proto_msgTypes[40]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetVBExportConfigRequest.ProtoReflect.Descriptor instead.
+func (*GetVBExportConfigRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_api_proto_rawDescGZIP(), []int{40}
+}
+
+func (x *GetVBExportConfigRequest) GetVXID() string {
+	if x != nil {
+		return x.VXID
+	}
+	return ""
+}
+
+type GetVBExportConfigResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	VXID  string                 `protobuf:"bytes,1,opt,name=VXID,proto3" json:"VXID,omitempty"`
+	Title string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	// destinations filtered to what this user is allowed to export to
+	Destinations []string `protobuf:"bytes,3,rep,name=destinations,proto3" json:"destinations,omitempty"`
+	// subtitle shape tags available on the asset (for burn-in)
+	SubtitleShapes []string `protobuf:"bytes,4,rep,name=subtitle_shapes,json=subtitleShapes,proto3" json:"subtitle_shapes,omitempty"`
+	// available subtitle burn-in style files
+	SubtitleStyles []string `protobuf:"bytes,5,rep,name=subtitle_styles,json=subtitleStyles,proto3" json:"subtitle_styles,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *GetVBExportConfigResponse) Reset() {
+	*x = GetVBExportConfigResponse{}
+	mi := &file_api_v1_api_proto_msgTypes[41]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetVBExportConfigResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetVBExportConfigResponse) ProtoMessage() {}
+
+func (x *GetVBExportConfigResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_api_proto_msgTypes[41]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetVBExportConfigResponse.ProtoReflect.Descriptor instead.
+func (*GetVBExportConfigResponse) Descriptor() ([]byte, []int) {
+	return file_api_v1_api_proto_rawDescGZIP(), []int{41}
+}
+
+func (x *GetVBExportConfigResponse) GetVXID() string {
+	if x != nil {
+		return x.VXID
+	}
+	return ""
+}
+
+func (x *GetVBExportConfigResponse) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *GetVBExportConfigResponse) GetDestinations() []string {
+	if x != nil {
+		return x.Destinations
+	}
+	return nil
+}
+
+func (x *GetVBExportConfigResponse) GetSubtitleShapes() []string {
+	if x != nil {
+		return x.SubtitleShapes
+	}
+	return nil
+}
+
+func (x *GetVBExportConfigResponse) GetSubtitleStyles() []string {
+	if x != nil {
+		return x.SubtitleStyles
+	}
+	return nil
+}
+
+type StartVBExportRequest struct {
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	VXID         string                 `protobuf:"bytes,1,opt,name=VXID,proto3" json:"VXID,omitempty"`
+	Destinations []string               `protobuf:"bytes,2,rep,name=destinations,proto3" json:"destinations,omitempty"`
+	// subtitle shape tag to burn in; "" or "None" means no subtitles
+	SubtitleShape string `protobuf:"bytes,3,opt,name=subtitle_shape,json=subtitleShape,proto3" json:"subtitle_shape,omitempty"`
+	SubtitleStyle string `protobuf:"bytes,4,opt,name=subtitle_style,json=subtitleStyle,proto3" json:"subtitle_style,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StartVBExportRequest) Reset() {
+	*x = StartVBExportRequest{}
+	mi := &file_api_v1_api_proto_msgTypes[42]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StartVBExportRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StartVBExportRequest) ProtoMessage() {}
+
+func (x *StartVBExportRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_api_proto_msgTypes[42]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StartVBExportRequest.ProtoReflect.Descriptor instead.
+func (*StartVBExportRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_api_proto_rawDescGZIP(), []int{42}
+}
+
+func (x *StartVBExportRequest) GetVXID() string {
+	if x != nil {
+		return x.VXID
+	}
+	return ""
+}
+
+func (x *StartVBExportRequest) GetDestinations() []string {
+	if x != nil {
+		return x.Destinations
+	}
+	return nil
+}
+
+func (x *StartVBExportRequest) GetSubtitleShape() string {
+	if x != nil {
+		return x.SubtitleShape
+	}
+	return ""
+}
+
+func (x *StartVBExportRequest) GetSubtitleStyle() string {
+	if x != nil {
+		return x.SubtitleStyle
+	}
+	return ""
+}
+
+type StartVBExportResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	WorkflowId    string                 `protobuf:"bytes,1,opt,name=workflow_id,json=workflowId,proto3" json:"workflow_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StartVBExportResponse) Reset() {
+	*x = StartVBExportResponse{}
+	mi := &file_api_v1_api_proto_msgTypes[43]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StartVBExportResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StartVBExportResponse) ProtoMessage() {}
+
+func (x *StartVBExportResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_api_proto_msgTypes[43]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StartVBExportResponse.ProtoReflect.Descriptor instead.
+func (*StartVBExportResponse) Descriptor() ([]byte, []int) {
+	return file_api_v1_api_proto_rawDescGZIP(), []int{43}
+}
+
+func (x *StartVBExportResponse) GetWorkflowId() string {
+	if x != nil {
+		return x.WorkflowId
 	}
 	return ""
 }
@@ -2348,16 +2664,21 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\vintegration\x18\x05 \x01(\bR\vintegration\"Q\n" +
 	"\x17TranscriptionPermission\x12\x14\n" +
 	"\x05admin\x18\x01 \x01(\bR\x05admin\x12 \n" +
-	"\vmediabanken\x18\x02 \x01(\bR\vmediabanken\"L\n" +
+	"\vmediabanken\x18\x02 \x01(\bR\vmediabanken\"s\n" +
 	"\x10ExportPermission\x12\"\n" +
 	"\fdestinations\x18\x01 \x03(\tR\fdestinations\x12\x14\n" +
-	"\x05admin\x18\x02 \x01(\bR\x05admin\"\xdb\x01\n" +
+	"\x05admin\x18\x02 \x01(\bR\x05admin\x12%\n" +
+	"\x0etimed_metadata\x18\x03 \x01(\bR\rtimedMetadata\"N\n" +
+	"\x12VBExportPermission\x12\"\n" +
+	"\fdestinations\x18\x01 \x03(\tR\fdestinations\x12\x14\n" +
+	"\x05admin\x18\x02 \x01(\bR\x05admin\"\x94\x02\n" +
 	"\vPermissions\x12\x14\n" +
 	"\x05admin\x18\x01 \x01(\bR\x05admin\x12'\n" +
 	"\x03bmm\x18\x02 \x01(\v2\x15.api.v1.BMMPermissionR\x03bmm\x12\x14\n" +
 	"\x05email\x18\x03 \x01(\tR\x05email\x12E\n" +
 	"\rtranscription\x18\x04 \x01(\v2\x1f.api.v1.TranscriptionPermissionR\rtranscription\x120\n" +
-	"\x06export\x18\x05 \x01(\v2\x18.api.v1.ExportPermissionR\x06export\"\x17\n" +
+	"\x06export\x18\x05 \x01(\v2\x18.api.v1.ExportPermissionR\x06export\x127\n" +
+	"\tvb_export\x18\x06 \x01(\v2\x1a.api.v1.VBExportPermissionR\bvbExport\"\x17\n" +
 	"\x15GetPermissionsRequest\"d\n" +
 	"\x15SetPermissionsRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x125\n" +
@@ -2472,7 +2793,7 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\rExportSubclip\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\",\n" +
 	"\x16GetExportConfigRequest\x12\x12\n" +
-	"\x04VXID\x18\x01 \x01(\tR\x04VXID\"\xb0\x03\n" +
+	"\x04VXID\x18\x01 \x01(\tR\x04VXID\"\xeb\x03\n" +
 	"\x17GetExportConfigResponse\x12\x12\n" +
 	"\x04VXID\x18\x01 \x01(\tR\x04VXID\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\"\n" +
@@ -2484,7 +2805,8 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\vresolutions\x18\b \x03(\v2\x18.api.v1.ExportResolutionR\vresolutions\x12\x1a\n" +
 	"\boverlays\x18\t \x03(\tR\boverlays\x121\n" +
 	"\bsubclips\x18\n" +
-	" \x03(\v2\x15.api.v1.ExportSubclipR\bsubclips\"m\n" +
+	" \x03(\v2\x15.api.v1.ExportSubclipR\bsubclips\x129\n" +
+	"\x19can_export_timed_metadata\x18\v \x01(\bR\x16canExportTimedMetadata\"m\n" +
 	"\x19ExportResolutionSelection\x12\x14\n" +
 	"\x05width\x18\x01 \x01(\x05R\x05width\x12\x16\n" +
 	"\x06height\x18\x02 \x01(\x05R\x06height\x12\"\n" +
@@ -2504,11 +2826,28 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\x13StartExportResponse\x12!\n" +
 	"\fworkflow_ids\x18\x01 \x03(\tR\vworkflowIds\"0\n" +
 	"\x1aExportTimedMetadataRequest\x12\x12\n" +
-	"\x04VXID\x18\x01 \x01(\tR\x04VXID*1\n" +
+	"\x04VXID\x18\x01 \x01(\tR\x04VXID\".\n" +
+	"\x18GetVBExportConfigRequest\x12\x12\n" +
+	"\x04VXID\x18\x01 \x01(\tR\x04VXID\"\xbb\x01\n" +
+	"\x19GetVBExportConfigResponse\x12\x12\n" +
+	"\x04VXID\x18\x01 \x01(\tR\x04VXID\x12\x14\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\x12\"\n" +
+	"\fdestinations\x18\x03 \x03(\tR\fdestinations\x12'\n" +
+	"\x0fsubtitle_shapes\x18\x04 \x03(\tR\x0esubtitleShapes\x12'\n" +
+	"\x0fsubtitle_styles\x18\x05 \x03(\tR\x0esubtitleStyles\"\x9c\x01\n" +
+	"\x14StartVBExportRequest\x12\x12\n" +
+	"\x04VXID\x18\x01 \x01(\tR\x04VXID\x12\"\n" +
+	"\fdestinations\x18\x02 \x03(\tR\fdestinations\x12%\n" +
+	"\x0esubtitle_shape\x18\x03 \x01(\tR\rsubtitleShape\x12%\n" +
+	"\x0esubtitle_style\x18\x04 \x01(\tR\rsubtitleStyle\"8\n" +
+	"\x15StartVBExportResponse\x12\x1f\n" +
+	"\vworkflow_id\x18\x01 \x01(\tR\n" +
+	"workflowId*1\n" +
 	"\x0eBmmEnvironment\x12\x0e\n" +
 	"\n" +
 	"Production\x10\x00\x12\x0f\n" +
-	"\vIntegration\x10\x012\xb6\t\n" +
+	"\vIntegration\x10\x012\xe2\n" +
+	"\n" +
 	"\n" +
 	"APIService\x125\n" +
 	"\x0eGetPermissions\x12\f.api.v1.Void\x1a\x13.api.v1.Permissions\"\x00\x12B\n" +
@@ -2528,7 +2867,9 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\vSubmitShort\x12\x1a.api.v1.SubmitShortRequest\x1a\f.api.v1.Void\"\x00\x12T\n" +
 	"\x0fGetExportConfig\x12\x1e.api.v1.GetExportConfigRequest\x1a\x1f.api.v1.GetExportConfigResponse\"\x00\x12H\n" +
 	"\vStartExport\x12\x1a.api.v1.StartExportRequest\x1a\x1b.api.v1.StartExportResponse\"\x00\x12I\n" +
-	"\x13ExportTimedMetadata\x12\".api.v1.ExportTimedMetadataRequest\x1a\f.api.v1.Void\"\x00B\x1eZ\x1cbcc-media-tools/api/v1;apiv1b\x06proto3"
+	"\x13ExportTimedMetadata\x12\".api.v1.ExportTimedMetadataRequest\x1a\f.api.v1.Void\"\x00\x12Z\n" +
+	"\x11GetVBExportConfig\x12 .api.v1.GetVBExportConfigRequest\x1a!.api.v1.GetVBExportConfigResponse\"\x00\x12N\n" +
+	"\rStartVBExport\x12\x1c.api.v1.StartVBExportRequest\x1a\x1d.api.v1.StartVBExportResponse\"\x00B\x1eZ\x1cbcc-media-tools/api/v1;apiv1b\x06proto3"
 
 var (
 	file_api_v1_api_proto_rawDescOnce sync.Once
@@ -2543,120 +2884,130 @@ func file_api_v1_api_proto_rawDescGZIP() []byte {
 }
 
 var file_api_v1_api_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_api_v1_api_proto_msgTypes = make([]protoimpl.MessageInfo, 41)
+var file_api_v1_api_proto_msgTypes = make([]protoimpl.MessageInfo, 46)
 var file_api_v1_api_proto_goTypes = []any{
 	(BmmEnvironment)(0),                  // 0: api.v1.BmmEnvironment
 	(*BMMPermission)(nil),                // 1: api.v1.BMMPermission
 	(*TranscriptionPermission)(nil),      // 2: api.v1.TranscriptionPermission
 	(*ExportPermission)(nil),             // 3: api.v1.ExportPermission
-	(*Permissions)(nil),                  // 4: api.v1.Permissions
-	(*GetPermissionsRequest)(nil),        // 5: api.v1.GetPermissionsRequest
-	(*SetPermissionsRequest)(nil),        // 6: api.v1.SetPermissionsRequest
-	(*DeletePermissionsRequest)(nil),     // 7: api.v1.DeletePermissionsRequest
-	(*PermissionsList)(nil),              // 8: api.v1.PermissionsList
-	(*BMMYear)(nil),                      // 9: api.v1.BMMYear
-	(*GetYearsResponse)(nil),             // 10: api.v1.GetYearsResponse
-	(*GetYearsRequest)(nil),              // 11: api.v1.GetYearsRequest
-	(*GetAlbumsRequest)(nil),             // 12: api.v1.GetAlbumsRequest
-	(*Album)(nil),                        // 13: api.v1.Album
-	(*AlbumsList)(nil),                   // 14: api.v1.AlbumsList
-	(*GetAlbumTracksRequest)(nil),        // 15: api.v1.GetAlbumTracksRequest
-	(*GetPodcastTracksRequest)(nil),      // 16: api.v1.GetPodcastTracksRequest
-	(*GetAvailableLanguagesRequest)(nil), // 17: api.v1.GetAvailableLanguagesRequest
-	(*BMMTrack)(nil),                     // 18: api.v1.BMMTrack
-	(*TracksList)(nil),                   // 19: api.v1.TracksList
-	(*LanguageList)(nil),                 // 20: api.v1.LanguageList
-	(*Language)(nil),                     // 21: api.v1.Language
-	(*GetTranscriptionReqest)(nil),       // 22: api.v1.GetTranscriptionReqest
-	(*Transcription)(nil),                // 23: api.v1.Transcription
-	(*Segments)(nil),                     // 24: api.v1.Segments
-	(*Words)(nil),                        // 25: api.v1.Words
-	(*GetPreviewRequest)(nil),            // 26: api.v1.GetPreviewRequest
-	(*Preview)(nil),                      // 27: api.v1.Preview
-	(*GetBMMTranscriptionRequest)(nil),   // 28: api.v1.GetBMMTranscriptionRequest
-	(*SubmitTranscriptionRequest)(nil),   // 29: api.v1.SubmitTranscriptionRequest
-	(*SubmitShortRequest)(nil),           // 30: api.v1.SubmitShortRequest
-	(*ExportResolution)(nil),             // 31: api.v1.ExportResolution
-	(*ExportLanguage)(nil),               // 32: api.v1.ExportLanguage
-	(*ExportSubclip)(nil),                // 33: api.v1.ExportSubclip
-	(*GetExportConfigRequest)(nil),       // 34: api.v1.GetExportConfigRequest
-	(*GetExportConfigResponse)(nil),      // 35: api.v1.GetExportConfigResponse
-	(*ExportResolutionSelection)(nil),    // 36: api.v1.ExportResolutionSelection
-	(*StartExportRequest)(nil),           // 37: api.v1.StartExportRequest
-	(*StartExportResponse)(nil),          // 38: api.v1.StartExportResponse
-	(*ExportTimedMetadataRequest)(nil),   // 39: api.v1.ExportTimedMetadataRequest
-	nil,                                  // 40: api.v1.PermissionsList.PermissionsEntry
-	nil,                                  // 41: api.v1.GetYearsResponse.DataEntry
-	(*timestamppb.Timestamp)(nil),        // 42: google.protobuf.Timestamp
-	(*Void)(nil),                         // 43: api.v1.Void
+	(*VBExportPermission)(nil),           // 4: api.v1.VBExportPermission
+	(*Permissions)(nil),                  // 5: api.v1.Permissions
+	(*GetPermissionsRequest)(nil),        // 6: api.v1.GetPermissionsRequest
+	(*SetPermissionsRequest)(nil),        // 7: api.v1.SetPermissionsRequest
+	(*DeletePermissionsRequest)(nil),     // 8: api.v1.DeletePermissionsRequest
+	(*PermissionsList)(nil),              // 9: api.v1.PermissionsList
+	(*BMMYear)(nil),                      // 10: api.v1.BMMYear
+	(*GetYearsResponse)(nil),             // 11: api.v1.GetYearsResponse
+	(*GetYearsRequest)(nil),              // 12: api.v1.GetYearsRequest
+	(*GetAlbumsRequest)(nil),             // 13: api.v1.GetAlbumsRequest
+	(*Album)(nil),                        // 14: api.v1.Album
+	(*AlbumsList)(nil),                   // 15: api.v1.AlbumsList
+	(*GetAlbumTracksRequest)(nil),        // 16: api.v1.GetAlbumTracksRequest
+	(*GetPodcastTracksRequest)(nil),      // 17: api.v1.GetPodcastTracksRequest
+	(*GetAvailableLanguagesRequest)(nil), // 18: api.v1.GetAvailableLanguagesRequest
+	(*BMMTrack)(nil),                     // 19: api.v1.BMMTrack
+	(*TracksList)(nil),                   // 20: api.v1.TracksList
+	(*LanguageList)(nil),                 // 21: api.v1.LanguageList
+	(*Language)(nil),                     // 22: api.v1.Language
+	(*GetTranscriptionReqest)(nil),       // 23: api.v1.GetTranscriptionReqest
+	(*Transcription)(nil),                // 24: api.v1.Transcription
+	(*Segments)(nil),                     // 25: api.v1.Segments
+	(*Words)(nil),                        // 26: api.v1.Words
+	(*GetPreviewRequest)(nil),            // 27: api.v1.GetPreviewRequest
+	(*Preview)(nil),                      // 28: api.v1.Preview
+	(*GetBMMTranscriptionRequest)(nil),   // 29: api.v1.GetBMMTranscriptionRequest
+	(*SubmitTranscriptionRequest)(nil),   // 30: api.v1.SubmitTranscriptionRequest
+	(*SubmitShortRequest)(nil),           // 31: api.v1.SubmitShortRequest
+	(*ExportResolution)(nil),             // 32: api.v1.ExportResolution
+	(*ExportLanguage)(nil),               // 33: api.v1.ExportLanguage
+	(*ExportSubclip)(nil),                // 34: api.v1.ExportSubclip
+	(*GetExportConfigRequest)(nil),       // 35: api.v1.GetExportConfigRequest
+	(*GetExportConfigResponse)(nil),      // 36: api.v1.GetExportConfigResponse
+	(*ExportResolutionSelection)(nil),    // 37: api.v1.ExportResolutionSelection
+	(*StartExportRequest)(nil),           // 38: api.v1.StartExportRequest
+	(*StartExportResponse)(nil),          // 39: api.v1.StartExportResponse
+	(*ExportTimedMetadataRequest)(nil),   // 40: api.v1.ExportTimedMetadataRequest
+	(*GetVBExportConfigRequest)(nil),     // 41: api.v1.GetVBExportConfigRequest
+	(*GetVBExportConfigResponse)(nil),    // 42: api.v1.GetVBExportConfigResponse
+	(*StartVBExportRequest)(nil),         // 43: api.v1.StartVBExportRequest
+	(*StartVBExportResponse)(nil),        // 44: api.v1.StartVBExportResponse
+	nil,                                  // 45: api.v1.PermissionsList.PermissionsEntry
+	nil,                                  // 46: api.v1.GetYearsResponse.DataEntry
+	(*timestamppb.Timestamp)(nil),        // 47: google.protobuf.Timestamp
+	(*Void)(nil),                         // 48: api.v1.Void
 }
 var file_api_v1_api_proto_depIdxs = []int32{
 	1,  // 0: api.v1.Permissions.bmm:type_name -> api.v1.BMMPermission
 	2,  // 1: api.v1.Permissions.transcription:type_name -> api.v1.TranscriptionPermission
 	3,  // 2: api.v1.Permissions.export:type_name -> api.v1.ExportPermission
-	4,  // 3: api.v1.SetPermissionsRequest.permissions:type_name -> api.v1.Permissions
-	40, // 4: api.v1.PermissionsList.permissions:type_name -> api.v1.PermissionsList.PermissionsEntry
-	41, // 5: api.v1.GetYearsResponse.data:type_name -> api.v1.GetYearsResponse.DataEntry
-	0,  // 6: api.v1.GetYearsRequest.environment:type_name -> api.v1.BmmEnvironment
-	0,  // 7: api.v1.GetAlbumsRequest.environment:type_name -> api.v1.BmmEnvironment
-	13, // 8: api.v1.AlbumsList.albums:type_name -> api.v1.Album
-	0,  // 9: api.v1.GetAlbumTracksRequest.environment:type_name -> api.v1.BmmEnvironment
-	0,  // 10: api.v1.GetPodcastTracksRequest.environment:type_name -> api.v1.BmmEnvironment
-	0,  // 11: api.v1.GetAvailableLanguagesRequest.environment:type_name -> api.v1.BmmEnvironment
-	42, // 12: api.v1.BMMTrack.publishedAt:type_name -> google.protobuf.Timestamp
-	20, // 13: api.v1.BMMTrack.languages:type_name -> api.v1.LanguageList
-	20, // 14: api.v1.BMMTrack.transcriptions:type_name -> api.v1.LanguageList
-	18, // 15: api.v1.TracksList.tracks:type_name -> api.v1.BMMTrack
-	21, // 16: api.v1.LanguageList.Languages:type_name -> api.v1.Language
-	24, // 17: api.v1.Transcription.segments:type_name -> api.v1.Segments
-	25, // 18: api.v1.Segments.words:type_name -> api.v1.Words
-	0,  // 19: api.v1.GetBMMTranscriptionRequest.environment:type_name -> api.v1.BmmEnvironment
-	23, // 20: api.v1.SubmitTranscriptionRequest.transcription:type_name -> api.v1.Transcription
-	32, // 21: api.v1.GetExportConfigResponse.languages:type_name -> api.v1.ExportLanguage
-	31, // 22: api.v1.GetExportConfigResponse.resolutions:type_name -> api.v1.ExportResolution
-	33, // 23: api.v1.GetExportConfigResponse.subclips:type_name -> api.v1.ExportSubclip
-	36, // 24: api.v1.StartExportRequest.resolutions:type_name -> api.v1.ExportResolutionSelection
-	4,  // 25: api.v1.PermissionsList.PermissionsEntry.value:type_name -> api.v1.Permissions
-	9,  // 26: api.v1.GetYearsResponse.DataEntry.value:type_name -> api.v1.BMMYear
-	43, // 27: api.v1.APIService.GetPermissions:input_type -> api.v1.Void
-	6,  // 28: api.v1.APIService.UpdatePermissions:input_type -> api.v1.SetPermissionsRequest
-	7,  // 29: api.v1.APIService.DeletePermissions:input_type -> api.v1.DeletePermissionsRequest
-	43, // 30: api.v1.APIService.ListPermissions:input_type -> api.v1.Void
-	22, // 31: api.v1.APIService.GetTranscription:input_type -> api.v1.GetTranscriptionReqest
-	26, // 32: api.v1.APIService.GetPreview:input_type -> api.v1.GetPreviewRequest
-	29, // 33: api.v1.APIService.SubmitTranscription:input_type -> api.v1.SubmitTranscriptionRequest
-	11, // 34: api.v1.APIService.GetYears:input_type -> api.v1.GetYearsRequest
-	12, // 35: api.v1.APIService.GetAlbums:input_type -> api.v1.GetAlbumsRequest
-	15, // 36: api.v1.APIService.GetAlbumTracks:input_type -> api.v1.GetAlbumTracksRequest
-	16, // 37: api.v1.APIService.GetPodcastTracks:input_type -> api.v1.GetPodcastTracksRequest
-	17, // 38: api.v1.APIService.GetLanguages:input_type -> api.v1.GetAvailableLanguagesRequest
-	28, // 39: api.v1.APIService.GetBMMTranscription:input_type -> api.v1.GetBMMTranscriptionRequest
-	30, // 40: api.v1.APIService.SubmitShort:input_type -> api.v1.SubmitShortRequest
-	34, // 41: api.v1.APIService.GetExportConfig:input_type -> api.v1.GetExportConfigRequest
-	37, // 42: api.v1.APIService.StartExport:input_type -> api.v1.StartExportRequest
-	39, // 43: api.v1.APIService.ExportTimedMetadata:input_type -> api.v1.ExportTimedMetadataRequest
-	4,  // 44: api.v1.APIService.GetPermissions:output_type -> api.v1.Permissions
-	43, // 45: api.v1.APIService.UpdatePermissions:output_type -> api.v1.Void
-	43, // 46: api.v1.APIService.DeletePermissions:output_type -> api.v1.Void
-	8,  // 47: api.v1.APIService.ListPermissions:output_type -> api.v1.PermissionsList
-	23, // 48: api.v1.APIService.GetTranscription:output_type -> api.v1.Transcription
-	27, // 49: api.v1.APIService.GetPreview:output_type -> api.v1.Preview
-	43, // 50: api.v1.APIService.SubmitTranscription:output_type -> api.v1.Void
-	10, // 51: api.v1.APIService.GetYears:output_type -> api.v1.GetYearsResponse
-	14, // 52: api.v1.APIService.GetAlbums:output_type -> api.v1.AlbumsList
-	19, // 53: api.v1.APIService.GetAlbumTracks:output_type -> api.v1.TracksList
-	19, // 54: api.v1.APIService.GetPodcastTracks:output_type -> api.v1.TracksList
-	20, // 55: api.v1.APIService.GetLanguages:output_type -> api.v1.LanguageList
-	23, // 56: api.v1.APIService.GetBMMTranscription:output_type -> api.v1.Transcription
-	43, // 57: api.v1.APIService.SubmitShort:output_type -> api.v1.Void
-	35, // 58: api.v1.APIService.GetExportConfig:output_type -> api.v1.GetExportConfigResponse
-	38, // 59: api.v1.APIService.StartExport:output_type -> api.v1.StartExportResponse
-	43, // 60: api.v1.APIService.ExportTimedMetadata:output_type -> api.v1.Void
-	44, // [44:61] is the sub-list for method output_type
-	27, // [27:44] is the sub-list for method input_type
-	27, // [27:27] is the sub-list for extension type_name
-	27, // [27:27] is the sub-list for extension extendee
-	0,  // [0:27] is the sub-list for field type_name
+	4,  // 3: api.v1.Permissions.vb_export:type_name -> api.v1.VBExportPermission
+	5,  // 4: api.v1.SetPermissionsRequest.permissions:type_name -> api.v1.Permissions
+	45, // 5: api.v1.PermissionsList.permissions:type_name -> api.v1.PermissionsList.PermissionsEntry
+	46, // 6: api.v1.GetYearsResponse.data:type_name -> api.v1.GetYearsResponse.DataEntry
+	0,  // 7: api.v1.GetYearsRequest.environment:type_name -> api.v1.BmmEnvironment
+	0,  // 8: api.v1.GetAlbumsRequest.environment:type_name -> api.v1.BmmEnvironment
+	14, // 9: api.v1.AlbumsList.albums:type_name -> api.v1.Album
+	0,  // 10: api.v1.GetAlbumTracksRequest.environment:type_name -> api.v1.BmmEnvironment
+	0,  // 11: api.v1.GetPodcastTracksRequest.environment:type_name -> api.v1.BmmEnvironment
+	0,  // 12: api.v1.GetAvailableLanguagesRequest.environment:type_name -> api.v1.BmmEnvironment
+	47, // 13: api.v1.BMMTrack.publishedAt:type_name -> google.protobuf.Timestamp
+	21, // 14: api.v1.BMMTrack.languages:type_name -> api.v1.LanguageList
+	21, // 15: api.v1.BMMTrack.transcriptions:type_name -> api.v1.LanguageList
+	19, // 16: api.v1.TracksList.tracks:type_name -> api.v1.BMMTrack
+	22, // 17: api.v1.LanguageList.Languages:type_name -> api.v1.Language
+	25, // 18: api.v1.Transcription.segments:type_name -> api.v1.Segments
+	26, // 19: api.v1.Segments.words:type_name -> api.v1.Words
+	0,  // 20: api.v1.GetBMMTranscriptionRequest.environment:type_name -> api.v1.BmmEnvironment
+	24, // 21: api.v1.SubmitTranscriptionRequest.transcription:type_name -> api.v1.Transcription
+	33, // 22: api.v1.GetExportConfigResponse.languages:type_name -> api.v1.ExportLanguage
+	32, // 23: api.v1.GetExportConfigResponse.resolutions:type_name -> api.v1.ExportResolution
+	34, // 24: api.v1.GetExportConfigResponse.subclips:type_name -> api.v1.ExportSubclip
+	37, // 25: api.v1.StartExportRequest.resolutions:type_name -> api.v1.ExportResolutionSelection
+	5,  // 26: api.v1.PermissionsList.PermissionsEntry.value:type_name -> api.v1.Permissions
+	10, // 27: api.v1.GetYearsResponse.DataEntry.value:type_name -> api.v1.BMMYear
+	48, // 28: api.v1.APIService.GetPermissions:input_type -> api.v1.Void
+	7,  // 29: api.v1.APIService.UpdatePermissions:input_type -> api.v1.SetPermissionsRequest
+	8,  // 30: api.v1.APIService.DeletePermissions:input_type -> api.v1.DeletePermissionsRequest
+	48, // 31: api.v1.APIService.ListPermissions:input_type -> api.v1.Void
+	23, // 32: api.v1.APIService.GetTranscription:input_type -> api.v1.GetTranscriptionReqest
+	27, // 33: api.v1.APIService.GetPreview:input_type -> api.v1.GetPreviewRequest
+	30, // 34: api.v1.APIService.SubmitTranscription:input_type -> api.v1.SubmitTranscriptionRequest
+	12, // 35: api.v1.APIService.GetYears:input_type -> api.v1.GetYearsRequest
+	13, // 36: api.v1.APIService.GetAlbums:input_type -> api.v1.GetAlbumsRequest
+	16, // 37: api.v1.APIService.GetAlbumTracks:input_type -> api.v1.GetAlbumTracksRequest
+	17, // 38: api.v1.APIService.GetPodcastTracks:input_type -> api.v1.GetPodcastTracksRequest
+	18, // 39: api.v1.APIService.GetLanguages:input_type -> api.v1.GetAvailableLanguagesRequest
+	29, // 40: api.v1.APIService.GetBMMTranscription:input_type -> api.v1.GetBMMTranscriptionRequest
+	31, // 41: api.v1.APIService.SubmitShort:input_type -> api.v1.SubmitShortRequest
+	35, // 42: api.v1.APIService.GetExportConfig:input_type -> api.v1.GetExportConfigRequest
+	38, // 43: api.v1.APIService.StartExport:input_type -> api.v1.StartExportRequest
+	40, // 44: api.v1.APIService.ExportTimedMetadata:input_type -> api.v1.ExportTimedMetadataRequest
+	41, // 45: api.v1.APIService.GetVBExportConfig:input_type -> api.v1.GetVBExportConfigRequest
+	43, // 46: api.v1.APIService.StartVBExport:input_type -> api.v1.StartVBExportRequest
+	5,  // 47: api.v1.APIService.GetPermissions:output_type -> api.v1.Permissions
+	48, // 48: api.v1.APIService.UpdatePermissions:output_type -> api.v1.Void
+	48, // 49: api.v1.APIService.DeletePermissions:output_type -> api.v1.Void
+	9,  // 50: api.v1.APIService.ListPermissions:output_type -> api.v1.PermissionsList
+	24, // 51: api.v1.APIService.GetTranscription:output_type -> api.v1.Transcription
+	28, // 52: api.v1.APIService.GetPreview:output_type -> api.v1.Preview
+	48, // 53: api.v1.APIService.SubmitTranscription:output_type -> api.v1.Void
+	11, // 54: api.v1.APIService.GetYears:output_type -> api.v1.GetYearsResponse
+	15, // 55: api.v1.APIService.GetAlbums:output_type -> api.v1.AlbumsList
+	20, // 56: api.v1.APIService.GetAlbumTracks:output_type -> api.v1.TracksList
+	20, // 57: api.v1.APIService.GetPodcastTracks:output_type -> api.v1.TracksList
+	21, // 58: api.v1.APIService.GetLanguages:output_type -> api.v1.LanguageList
+	24, // 59: api.v1.APIService.GetBMMTranscription:output_type -> api.v1.Transcription
+	48, // 60: api.v1.APIService.SubmitShort:output_type -> api.v1.Void
+	36, // 61: api.v1.APIService.GetExportConfig:output_type -> api.v1.GetExportConfigResponse
+	39, // 62: api.v1.APIService.StartExport:output_type -> api.v1.StartExportResponse
+	48, // 63: api.v1.APIService.ExportTimedMetadata:output_type -> api.v1.Void
+	42, // 64: api.v1.APIService.GetVBExportConfig:output_type -> api.v1.GetVBExportConfigResponse
+	44, // 65: api.v1.APIService.StartVBExport:output_type -> api.v1.StartVBExportResponse
+	47, // [47:66] is the sub-list for method output_type
+	28, // [28:47] is the sub-list for method input_type
+	28, // [28:28] is the sub-list for extension type_name
+	28, // [28:28] is the sub-list for extension extendee
+	0,  // [0:28] is the sub-list for field type_name
 }
 
 func init() { file_api_v1_api_proto_init() }
@@ -2671,7 +3022,7 @@ func file_api_v1_api_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_v1_api_proto_rawDesc), len(file_api_v1_api_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   41,
+			NumMessages:   46,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

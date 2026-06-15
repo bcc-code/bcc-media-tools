@@ -34,6 +34,14 @@ export function useTools() {
 			enabled: me.value?.admin || (me.value?.export && (me.value.export.destinations.length > 0 || me.value.export.admin)),
 		},
 		{
+			label: t("tools.vbExport.title"),
+			icon: "tabler:broadcast",
+			description: t("tools.vbExport.description"),
+			to: "/vb-export/",
+			// Not advertised in the menu generally; only shown while on the page.
+			enabled: route.path.startsWith("/vb-export"),
+		},
+		{
 			label: 'Shorts generation',
 			icon: "tabler:device-mobile",
 			description: 'Generate shorts from existing videos',

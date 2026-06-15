@@ -124,7 +124,11 @@ function startExport() {
 
         <div class="space-y-6">
             <!-- Alternative actions -->
-            <UCard variant="subtle" :ui="{ body: 'space-y-2' }">
+            <UCard
+                v-if="config.canExportTimedMetadata"
+                variant="subtle"
+                :ui="{ body: 'space-y-2' }"
+            >
                 <h3 class="text-highlighted text-sm font-semibold">
                     {{ $t("export.alternativeActions") }}
                 </h3>
@@ -156,7 +160,10 @@ function startExport() {
                         color="neutral"
                     >
                         <template #label>
-                            <span class="font-mono text-sm">{{ d }}</span>
+                            <span class="text-sm">{{ destinationName(d) }}</span>
+                            <span class="text-muted font-mono text-xs">
+                                {{ d }}</span
+                            >
                         </template>
                     </UCheckbox>
                     <p
