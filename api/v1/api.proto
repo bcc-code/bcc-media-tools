@@ -20,11 +20,19 @@ message TranscriptionPermission {
   bool mediabanken = 2;
 }
 
+message ExportPermission {
+  // destinations the user is allowed to export to (xdcam, vod, bmm, bmm-integration, isilon)
+  repeated string destinations = 1;
+  // admin can export to all destinations
+  bool admin = 2;
+}
+
 message Permissions {
 	bool admin = 1;
 	BMMPermission bmm = 2;
   string email = 3;
   TranscriptionPermission transcription = 4;
+  ExportPermission export = 5;
 }
 
 message GetPermissionsRequest {}
@@ -169,6 +177,73 @@ message SubmitShortRequest {
   double OutSeconds = 3;
 }
 
+// ---- Export ----
+
+message ExportResolution {
+  int32 width = 1;
+  int32 height = 2;
+}
+
+message ExportLanguage {
+  string code = 1; // value sent back in StartExportRequest.languages
+  string name = 2;
+  bool mu1 = 3;
+  bool mu2 = 4;
+}
+
+message ExportSubclip {
+  string title = 1;
+}
+
+message GetExportConfigRequest {
+  string VXID = 1;
+}
+
+message GetExportConfigResponse {
+  string VXID = 1;
+  string title = 2;
+  // destinations filtered to what this user is allowed to export to
+  repeated string destinations = 3;
+  // audio sources (embedded / related)
+  repeated string audio_sources = 4;
+  string selected_audio_source = 5;
+  repeated ExportLanguage languages = 6;
+  repeated string selected_languages = 7;
+  repeated ExportResolution resolutions = 8;
+  // overlay file names, including "None"
+  repeated string overlays = 9;
+  repeated ExportSubclip subclips = 10;
+}
+
+message ExportResolutionSelection {
+  int32 width = 1;
+  int32 height = 2;
+  bool downloadable = 3;
+}
+
+message StartExportRequest {
+  string VXID = 1;
+  repeated string destinations = 2;
+  string audio_source = 3;
+  repeated string languages = 4;
+  repeated ExportResolutionSelection resolutions = 5;
+  // overlay file name; "" or "None" means no watermark
+  string overlay = 6;
+  bool with_chapters = 7;
+  bool ignore_silence = 8;
+  bool export_ai_subs = 9;
+  // subclip titles to export; empty means export the whole asset
+  repeated string subclips = 10;
+}
+
+message StartExportResponse {
+  repeated string workflow_ids = 1;
+}
+
+message ExportTimedMetadataRequest {
+  string VXID = 1;
+}
+
 service APIService {
 	// Permissions
 	rpc GetPermissions (Void) returns (Permissions) {}
@@ -191,4 +266,9 @@ service APIService {
 
   // Shorts
   rpc SubmitShort(SubmitShortRequest) returns (Void) {}
+
+  // Export
+  rpc GetExportConfig(GetExportConfigRequest) returns (GetExportConfigResponse) {}
+  rpc StartExport(StartExportRequest) returns (StartExportResponse) {}
+  rpc ExportTimedMetadata(ExportTimedMetadataRequest) returns (Void) {}
 }

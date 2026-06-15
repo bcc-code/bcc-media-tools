@@ -83,7 +83,39 @@
             "durationWarning": "Shorts bør være mindre enn 1 minutt"
         }
     },
+    "export": {
+        "title": "Eksport",
+        "openFromMediabanken": "Åpne dette verktøyet fra et element i Mediabanken for å eksportere det",
+        "loadFailed": "Kunne ikke laste eksportoppsettet",
+        "alternativeActions": "Alternative handlinger",
+        "exportTimedMetadata": "Eksporter tidsbestemt metadata",
+        "exportTimedMetadataHint": "Klikk for å kun eksportere tidsbestemt metadata",
+        "destinations": "Destinasjoner",
+        "noDestinations": "Du har ikke tilgang til å eksportere til noen destinasjon",
+        "audioSource": "Lydkilde",
+        "subclips": "Underklipp å eksportere",
+        "subclipsHint": "La stå tom for å eksportere hele elementet",
+        "languageExports": "Språkeksport",
+        "nSelected": "{n} valgt",
+        "all": "Alle",
+        "none": "Ingen",
+        "resolutions": "Oppløsninger",
+        "downloadable": "nedlastbar",
+        "overlay": "Overlegg",
+        "withChapters": "Med kapitler",
+        "ignoreSilence": "Ignorer stillhet",
+        "exportAiSubs": "Eksporter AI-genererte undertekster (hvis andre undertekster ikke er tilgjengelige)",
+        "startExport": "Start eksport",
+        "exportStarted": "Eksport startet",
+        "exportStartedCount": "Startet {n} arbeidsflyt(er)",
+        "timedMetadataStarted": "Eksport av tidsbestemt metadata startet",
+        "exportFailed": "Eksport kunne ikke startes"
+    },
     "tools": {
+        "export": {
+            "title": "Eksport",
+            "description": "Utløs eksport-arbeidsflyter"
+        },
         "bmmUpload": {
             "title": "BMM opplasting",
             "description": "Last opp oversettede lydfiler til BMM"

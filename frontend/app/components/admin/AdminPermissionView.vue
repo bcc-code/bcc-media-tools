@@ -23,9 +23,18 @@ function withDefaultPermissions(p: Permissions): Permissions {
             languages: [],
         },
         transcription: p.transcription ?? { admin: false, mediabanken: false },
+        export: p.export ?? { admin: false, destinations: [] },
         email: p.email ?? "",
     };
 }
+
+const exportDestinations = [
+    { label: "XDCAM", value: "xdcam" },
+    { label: "VOD", value: "vod" },
+    { label: "BMM", value: "bmm" },
+    { label: "BMM Integration", value: "bmm-integration" },
+    { label: "Isilon", value: "isilon" },
+];
 
 const perms = reactive(withDefaultPermissions(props.permissions));
 const api = useAPI();
@@ -139,6 +148,24 @@ const isOpen = ref(false);
                             label="Mediabanken"
                             description="Can correct transcriptions shared from Mediabanken"
                         />
+                    </AdminPermissionViewSection>
+                    <AdminPermissionViewSection
+                        v-if="perms.export"
+                        title="Export"
+                    >
+                        <USwitch
+                            v-model="perms.export.admin"
+                            label="Export Admin"
+                            description="Can export to all destinations"
+                        />
+                        <UFormField label="Destinations">
+                            <USelect
+                                v-model="perms.export.destinations"
+                                multiple
+                                :items="exportDestinations"
+                                class="w-full max-w-prose"
+                            />
+                        </UFormField>
                     </AdminPermissionViewSection>
                 </motion.div>
             </AnimatePresence>

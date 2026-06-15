@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/api.proto.
  */
 export const file_api_v1_api: GenFile = /*@__PURE__*/
-  fileDesc("ChBhcGkvdjEvYXBpLnByb3RvEgZhcGkudjEiaAoNQk1NUGVybWlzc2lvbhIRCglsYW5ndWFnZXMYASADKAkSDgoGYWxidW1zGAIgAygJEhAKCHBvZGNhc3RzGAMgAygJEg0KBWFkbWluGAQgASgIEhMKC2ludGVncmF0aW9uGAUgASgIIj0KF1RyYW5zY3JpcHRpb25QZXJtaXNzaW9uEg0KBWFkbWluGAEgASgIEhMKC21lZGlhYmFua2VuGAIgASgIIocBCgtQZXJtaXNzaW9ucxINCgVhZG1pbhgBIAEoCBIiCgNibW0YAiABKAsyFS5hcGkudjEuQk1NUGVybWlzc2lvbhINCgVlbWFpbBgDIAEoCRI2Cg10cmFuc2NyaXB0aW9uGAQgASgLMh8uYXBpLnYxLlRyYW5zY3JpcHRpb25QZXJtaXNzaW9uIhcKFUdldFBlcm1pc3Npb25zUmVxdWVzdCJQChVTZXRQZXJtaXNzaW9uc1JlcXVlc3QSDQoFZW1haWwYASABKAkSKAoLcGVybWlzc2lvbnMYAiABKAsyEy5hcGkudjEuUGVybWlzc2lvbnMiKQoYRGVsZXRlUGVybWlzc2lvbnNSZXF1ZXN0Eg0KBWVtYWlsGAEgASgJIpkBCg9QZXJtaXNzaW9uc0xpc3QSPQoLcGVybWlzc2lvbnMYASADKAsyKC5hcGkudjEuUGVybWlzc2lvbnNMaXN0LlBlcm1pc3Npb25zRW50cnkaRwoQUGVybWlzc2lvbnNFbnRyeRILCgNrZXkYASABKAkSIgoFdmFsdWUYAiABKAsyEy5hcGkudjEuUGVybWlzc2lvbnM6AjgBIiYKB0JNTVllYXISDAoEeWVhchgBIAEoDRINCgVjb3VudBgCIAEoDSKCAQoQR2V0WWVhcnNSZXNwb25zZRIwCgRkYXRhGAEgAygLMiIuYXBpLnYxLkdldFllYXJzUmVzcG9uc2UuRGF0YUVudHJ5GjwKCURhdGFFbnRyeRILCgNrZXkYASABKA0SHgoFdmFsdWUYAiABKAsyDy5hcGkudjEuQk1NWWVhcjoCOAEiPgoPR2V0WWVhcnNSZXF1ZXN0EisKC2Vudmlyb25tZW50GAEgASgOMhYuYXBpLnYxLkJtbUVudmlyb25tZW50Ik0KEEdldEFsYnVtc1JlcXVlc3QSDAoEeWVhchgBIAEoDRIrCgtlbnZpcm9ubWVudBgCIAEoDjIWLmFwaS52MS5CbW1FbnZpcm9ubWVudCJECgVBbGJ1bRIKCgJpZBgBIAEoCRINCgV0aXRsZRgCIAEoCRINCgVjb3ZlchgEIAEoCRIRCglsYW5ndWFnZXMYBSADKAkiKwoKQWxidW1zTGlzdBIdCgZhbGJ1bXMYASADKAsyDS5hcGkudjEuQWxidW0iVgoVR2V0QWxidW1UcmFja3NSZXF1ZXN0EhAKCGFsYnVtX2lkGAEgASgJEisKC2Vudmlyb25tZW50GAIgASgOMhYuYXBpLnYxLkJtbUVudmlyb25tZW50ImoKF0dldFBvZGNhc3RUcmFja3NSZXF1ZXN0EhMKC3BvZGNhc3RfdGFnGAEgASgJEg0KBWxpbWl0GAIgASgNEisKC2Vudmlyb25tZW50GAMgASgOMhYuYXBpLnYxLkJtbUVudmlyb25tZW50IksKHEdldEF2YWlsYWJsZUxhbmd1YWdlc1JlcXVlc3QSKwoLZW52aXJvbm1lbnQYASABKA4yFi5hcGkudjEuQm1tRW52aXJvbm1lbnQiyAEKCEJNTVRyYWNrEgoKAmlkGAEgASgJEg0KBXRpdGxlGAIgASgJEi8KC3B1Ymxpc2hlZEF0GAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBInCglsYW5ndWFnZXMYBCABKAsyFC5hcGkudjEuTGFuZ3VhZ2VMaXN0EiwKDnRyYW5zY3JpcHRpb25zGAUgASgLMhQuYXBpLnYxLkxhbmd1YWdlTGlzdBIZChFoYXNUcmFuc2NyaXB0aW9ucxgGIAEoCCIuCgpUcmFja3NMaXN0EiAKBnRyYWNrcxgBIAMoCzIQLmFwaS52MS5CTU1UcmFjayIzCgxMYW5ndWFnZUxpc3QSIwoJTGFuZ3VhZ2VzGAEgAygLMhAuYXBpLnYxLkxhbmd1YWdlIisKCExhbmd1YWdlEgwKBGNvZGUYASABKAkSEQoJaWNvbl9maWxlGAMgASgJIiYKFkdldFRyYW5zY3JpcHRpb25SZXFlc3QSDAoEVlhJRBgBIAEoCSJBCg1UcmFuc2NyaXB0aW9uEgwKBHRleHQYASABKAkSIgoIc2VnbWVudHMYAiADKAsyEC5hcGkudjEuU2VnbWVudHMi7QEKCFNlZ21lbnRzEgoKAmlkGAEgASgBEgwKBHNlZWsYAiABKAUSDQoFc3RhcnQYAyABKAESCwoDZW5kGAQgASgBEgwKBHRleHQYBSABKAkSDgoGdG9rZW5zGAYgAygFEhMKC3RlbXBlcmF0dXJlGAcgASgBEhMKC2F2Z19sb2dwcm9iGAggASgBEhkKEWNvbXByZXNzaW9uX3JhdGlvGAkgASgBEhYKDm5vX3NwZWVjaF9wcm9iGAogASgBEhIKCmNvbmZpZGVuY2UYCyABKAESHAoFd29yZHMYDCADKAsyDS5hcGkudjEuV29yZHMiRQoFV29yZHMSDAoEdGV4dBgBIAEoCRINCgVzdGFydBgCIAEoARILCgNlbmQYAyABKAESEgoKY29uZmlkZW5jZRgEIAEoASIhChFHZXRQcmV2aWV3UmVxdWVzdBIMCgRWWElEGAEgASgJIhYKB1ByZXZpZXcSCwoDdXJsGAEgASgJImsKGkdldEJNTVRyYW5zY3JpcHRpb25SZXF1ZXN0Eg4KBmJtbV9pZBgBIAEoCRIQCghsYW5ndWFnZRgCIAEoCRIrCgtlbnZpcm9ubWVudBgDIAEoDjIWLmFwaS52MS5CbW1FbnZpcm9ubWVudCJYChpTdWJtaXRUcmFuc2NyaXB0aW9uUmVxdWVzdBIMCgRWWElEGAEgASgJEiwKDXRyYW5zY3JpcHRpb24YAiABKAsyFS5hcGkudjEuVHJhbnNjcmlwdGlvbiJJChJTdWJtaXRTaG9ydFJlcXVlc3QSDAoEVlhJRBgBIAEoCRIRCglJblNlY29uZHMYAiABKAESEgoKT3V0U2Vjb25kcxgDIAEoASoxCg5CbW1FbnZpcm9ubWVudBIOCgpQcm9kdWN0aW9uEAASDwoLSW50ZWdyYXRpb24QATLLBwoKQVBJU2VydmljZRI1Cg5HZXRQZXJtaXNzaW9ucxIMLmFwaS52MS5Wb2lkGhMuYXBpLnYxLlBlcm1pc3Npb25zIgASQgoRVXBkYXRlUGVybWlzc2lvbnMSHS5hcGkudjEuU2V0UGVybWlzc2lvbnNSZXF1ZXN0GgwuYXBpLnYxLlZvaWQiABJFChFEZWxldGVQZXJtaXNzaW9ucxIgLmFwaS52MS5EZWxldGVQZXJtaXNzaW9uc1JlcXVlc3QaDC5hcGkudjEuVm9pZCIAEjoKD0xpc3RQZXJtaXNzaW9ucxIMLmFwaS52MS5Wb2lkGhcuYXBpLnYxLlBlcm1pc3Npb25zTGlzdCIAEksKEEdldFRyYW5zY3JpcHRpb24SHi5hcGkudjEuR2V0VHJhbnNjcmlwdGlvblJlcWVzdBoVLmFwaS52MS5UcmFuc2NyaXB0aW9uIgASOgoKR2V0UHJldmlldxIZLmFwaS52MS5HZXRQcmV2aWV3UmVxdWVzdBoPLmFwaS52MS5QcmV2aWV3IgASSQoTU3VibWl0VHJhbnNjcmlwdGlvbhIiLmFwaS52MS5TdWJtaXRUcmFuc2NyaXB0aW9uUmVxdWVzdBoMLmFwaS52MS5Wb2lkIgASPwoIR2V0WWVhcnMSFy5hcGkudjEuR2V0WWVhcnNSZXF1ZXN0GhguYXBpLnYxLkdldFllYXJzUmVzcG9uc2UiABI7CglHZXRBbGJ1bXMSGC5hcGkudjEuR2V0QWxidW1zUmVxdWVzdBoSLmFwaS52MS5BbGJ1bXNMaXN0IgASRQoOR2V0QWxidW1UcmFja3MSHS5hcGkudjEuR2V0QWxidW1UcmFja3NSZXF1ZXN0GhIuYXBpLnYxLlRyYWNrc0xpc3QiABJJChBHZXRQb2RjYXN0VHJhY2tzEh8uYXBpLnYxLkdldFBvZGNhc3RUcmFja3NSZXF1ZXN0GhIuYXBpLnYxLlRyYWNrc0xpc3QiABJMCgxHZXRMYW5ndWFnZXMSJC5hcGkudjEuR2V0QXZhaWxhYmxlTGFuZ3VhZ2VzUmVxdWVzdBoULmFwaS52MS5MYW5ndWFnZUxpc3QiABJSChNHZXRCTU1UcmFuc2NyaXB0aW9uEiIuYXBpLnYxLkdldEJNTVRyYW5zY3JpcHRpb25SZXF1ZXN0GhUuYXBpLnYxLlRyYW5zY3JpcHRpb24iABI5CgtTdWJtaXRTaG9ydBIaLmFwaS52MS5TdWJtaXRTaG9ydFJlcXVlc3QaDC5hcGkudjEuVm9pZCIAQh5aHGJjYy1tZWRpYS10b29scy9hcGkvdjE7YXBpdjFiBnByb3RvMw", [file_google_protobuf_timestamp, file_api_v1_common]);
+  fileDesc("ChBhcGkvdjEvYXBpLnByb3RvEgZhcGkudjEiaAoNQk1NUGVybWlzc2lvbhIRCglsYW5ndWFnZXMYASADKAkSDgoGYWxidW1zGAIgAygJEhAKCHBvZGNhc3RzGAMgAygJEg0KBWFkbWluGAQgASgIEhMKC2ludGVncmF0aW9uGAUgASgIIj0KF1RyYW5zY3JpcHRpb25QZXJtaXNzaW9uEg0KBWFkbWluGAEgASgIEhMKC21lZGlhYmFua2VuGAIgASgIIjcKEEV4cG9ydFBlcm1pc3Npb24SFAoMZGVzdGluYXRpb25zGAEgAygJEg0KBWFkbWluGAIgASgIIrEBCgtQZXJtaXNzaW9ucxINCgVhZG1pbhgBIAEoCBIiCgNibW0YAiABKAsyFS5hcGkudjEuQk1NUGVybWlzc2lvbhINCgVlbWFpbBgDIAEoCRI2Cg10cmFuc2NyaXB0aW9uGAQgASgLMh8uYXBpLnYxLlRyYW5zY3JpcHRpb25QZXJtaXNzaW9uEigKBmV4cG9ydBgFIAEoCzIYLmFwaS52MS5FeHBvcnRQZXJtaXNzaW9uIhcKFUdldFBlcm1pc3Npb25zUmVxdWVzdCJQChVTZXRQZXJtaXNzaW9uc1JlcXVlc3QSDQoFZW1haWwYASABKAkSKAoLcGVybWlzc2lvbnMYAiABKAsyEy5hcGkudjEuUGVybWlzc2lvbnMiKQoYRGVsZXRlUGVybWlzc2lvbnNSZXF1ZXN0Eg0KBWVtYWlsGAEgASgJIpkBCg9QZXJtaXNzaW9uc0xpc3QSPQoLcGVybWlzc2lvbnMYASADKAsyKC5hcGkudjEuUGVybWlzc2lvbnNMaXN0LlBlcm1pc3Npb25zRW50cnkaRwoQUGVybWlzc2lvbnNFbnRyeRILCgNrZXkYASABKAkSIgoFdmFsdWUYAiABKAsyEy5hcGkudjEuUGVybWlzc2lvbnM6AjgBIiYKB0JNTVllYXISDAoEeWVhchgBIAEoDRINCgVjb3VudBgCIAEoDSKCAQoQR2V0WWVhcnNSZXNwb25zZRIwCgRkYXRhGAEgAygLMiIuYXBpLnYxLkdldFllYXJzUmVzcG9uc2UuRGF0YUVudHJ5GjwKCURhdGFFbnRyeRILCgNrZXkYASABKA0SHgoFdmFsdWUYAiABKAsyDy5hcGkudjEuQk1NWWVhcjoCOAEiPgoPR2V0WWVhcnNSZXF1ZXN0EisKC2Vudmlyb25tZW50GAEgASgOMhYuYXBpLnYxLkJtbUVudmlyb25tZW50Ik0KEEdldEFsYnVtc1JlcXVlc3QSDAoEeWVhchgBIAEoDRIrCgtlbnZpcm9ubWVudBgCIAEoDjIWLmFwaS52MS5CbW1FbnZpcm9ubWVudCJECgVBbGJ1bRIKCgJpZBgBIAEoCRINCgV0aXRsZRgCIAEoCRINCgVjb3ZlchgEIAEoCRIRCglsYW5ndWFnZXMYBSADKAkiKwoKQWxidW1zTGlzdBIdCgZhbGJ1bXMYASADKAsyDS5hcGkudjEuQWxidW0iVgoVR2V0QWxidW1UcmFja3NSZXF1ZXN0EhAKCGFsYnVtX2lkGAEgASgJEisKC2Vudmlyb25tZW50GAIgASgOMhYuYXBpLnYxLkJtbUVudmlyb25tZW50ImoKF0dldFBvZGNhc3RUcmFja3NSZXF1ZXN0EhMKC3BvZGNhc3RfdGFnGAEgASgJEg0KBWxpbWl0GAIgASgNEisKC2Vudmlyb25tZW50GAMgASgOMhYuYXBpLnYxLkJtbUVudmlyb25tZW50IksKHEdldEF2YWlsYWJsZUxhbmd1YWdlc1JlcXVlc3QSKwoLZW52aXJvbm1lbnQYASABKA4yFi5hcGkudjEuQm1tRW52aXJvbm1lbnQiyAEKCEJNTVRyYWNrEgoKAmlkGAEgASgJEg0KBXRpdGxlGAIgASgJEi8KC3B1Ymxpc2hlZEF0GAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBInCglsYW5ndWFnZXMYBCABKAsyFC5hcGkudjEuTGFuZ3VhZ2VMaXN0EiwKDnRyYW5zY3JpcHRpb25zGAUgASgLMhQuYXBpLnYxLkxhbmd1YWdlTGlzdBIZChFoYXNUcmFuc2NyaXB0aW9ucxgGIAEoCCIuCgpUcmFja3NMaXN0EiAKBnRyYWNrcxgBIAMoCzIQLmFwaS52MS5CTU1UcmFjayIzCgxMYW5ndWFnZUxpc3QSIwoJTGFuZ3VhZ2VzGAEgAygLMhAuYXBpLnYxLkxhbmd1YWdlIisKCExhbmd1YWdlEgwKBGNvZGUYASABKAkSEQoJaWNvbl9maWxlGAMgASgJIiYKFkdldFRyYW5zY3JpcHRpb25SZXFlc3QSDAoEVlhJRBgBIAEoCSJBCg1UcmFuc2NyaXB0aW9uEgwKBHRleHQYASABKAkSIgoIc2VnbWVudHMYAiADKAsyEC5hcGkudjEuU2VnbWVudHMi7QEKCFNlZ21lbnRzEgoKAmlkGAEgASgBEgwKBHNlZWsYAiABKAUSDQoFc3RhcnQYAyABKAESCwoDZW5kGAQgASgBEgwKBHRleHQYBSABKAkSDgoGdG9rZW5zGAYgAygFEhMKC3RlbXBlcmF0dXJlGAcgASgBEhMKC2F2Z19sb2dwcm9iGAggASgBEhkKEWNvbXByZXNzaW9uX3JhdGlvGAkgASgBEhYKDm5vX3NwZWVjaF9wcm9iGAogASgBEhIKCmNvbmZpZGVuY2UYCyABKAESHAoFd29yZHMYDCADKAsyDS5hcGkudjEuV29yZHMiRQoFV29yZHMSDAoEdGV4dBgBIAEoCRINCgVzdGFydBgCIAEoARILCgNlbmQYAyABKAESEgoKY29uZmlkZW5jZRgEIAEoASIhChFHZXRQcmV2aWV3UmVxdWVzdBIMCgRWWElEGAEgASgJIhYKB1ByZXZpZXcSCwoDdXJsGAEgASgJImsKGkdldEJNTVRyYW5zY3JpcHRpb25SZXF1ZXN0Eg4KBmJtbV9pZBgBIAEoCRIQCghsYW5ndWFnZRgCIAEoCRIrCgtlbnZpcm9ubWVudBgDIAEoDjIWLmFwaS52MS5CbW1FbnZpcm9ubWVudCJYChpTdWJtaXRUcmFuc2NyaXB0aW9uUmVxdWVzdBIMCgRWWElEGAEgASgJEiwKDXRyYW5zY3JpcHRpb24YAiABKAsyFS5hcGkudjEuVHJhbnNjcmlwdGlvbiJJChJTdWJtaXRTaG9ydFJlcXVlc3QSDAoEVlhJRBgBIAEoCRIRCglJblNlY29uZHMYAiABKAESEgoKT3V0U2Vjb25kcxgDIAEoASIxChBFeHBvcnRSZXNvbHV0aW9uEg0KBXdpZHRoGAEgASgFEg4KBmhlaWdodBgCIAEoBSJGCg5FeHBvcnRMYW5ndWFnZRIMCgRjb2RlGAEgASgJEgwKBG5hbWUYAiABKAkSCwoDbXUxGAMgASgIEgsKA211MhgEIAEoCCIeCg1FeHBvcnRTdWJjbGlwEg0KBXRpdGxlGAEgASgJIiYKFkdldEV4cG9ydENvbmZpZ1JlcXVlc3QSDAoEVlhJRBgBIAEoCSKzAgoXR2V0RXhwb3J0Q29uZmlnUmVzcG9uc2USDAoEVlhJRBgBIAEoCRINCgV0aXRsZRgCIAEoCRIUCgxkZXN0aW5hdGlvbnMYAyADKAkSFQoNYXVkaW9fc291cmNlcxgEIAMoCRIdChVzZWxlY3RlZF9hdWRpb19zb3VyY2UYBSABKAkSKQoJbGFuZ3VhZ2VzGAYgAygLMhYuYXBpLnYxLkV4cG9ydExhbmd1YWdlEhoKEnNlbGVjdGVkX2xhbmd1YWdlcxgHIAMoCRItCgtyZXNvbHV0aW9ucxgIIAMoCzIYLmFwaS52MS5FeHBvcnRSZXNvbHV0aW9uEhAKCG92ZXJsYXlzGAkgAygJEicKCHN1YmNsaXBzGAogAygLMhUuYXBpLnYxLkV4cG9ydFN1YmNsaXAiUAoZRXhwb3J0UmVzb2x1dGlvblNlbGVjdGlvbhINCgV3aWR0aBgBIAEoBRIOCgZoZWlnaHQYAiABKAUSFAoMZG93bmxvYWRhYmxlGAMgASgIIoMCChJTdGFydEV4cG9ydFJlcXVlc3QSDAoEVlhJRBgBIAEoCRIUCgxkZXN0aW5hdGlvbnMYAiADKAkSFAoMYXVkaW9fc291cmNlGAMgASgJEhEKCWxhbmd1YWdlcxgEIAMoCRI2CgtyZXNvbHV0aW9ucxgFIAMoCzIhLmFwaS52MS5FeHBvcnRSZXNvbHV0aW9uU2VsZWN0aW9uEg8KB292ZXJsYXkYBiABKAkSFQoNd2l0aF9jaGFwdGVycxgHIAEoCBIWCg5pZ25vcmVfc2lsZW5jZRgIIAEoCBIWCg5leHBvcnRfYWlfc3VicxgJIAEoCBIQCghzdWJjbGlwcxgKIAMoCSIrChNTdGFydEV4cG9ydFJlc3BvbnNlEhQKDHdvcmtmbG93X2lkcxgBIAMoCSIqChpFeHBvcnRUaW1lZE1ldGFkYXRhUmVxdWVzdBIMCgRWWElEGAEgASgJKjEKDkJtbUVudmlyb25tZW50Eg4KClByb2R1Y3Rpb24QABIPCgtJbnRlZ3JhdGlvbhABMrYJCgpBUElTZXJ2aWNlEjUKDkdldFBlcm1pc3Npb25zEgwuYXBpLnYxLlZvaWQaEy5hcGkudjEuUGVybWlzc2lvbnMiABJCChFVcGRhdGVQZXJtaXNzaW9ucxIdLmFwaS52MS5TZXRQZXJtaXNzaW9uc1JlcXVlc3QaDC5hcGkudjEuVm9pZCIAEkUKEURlbGV0ZVBlcm1pc3Npb25zEiAuYXBpLnYxLkRlbGV0ZVBlcm1pc3Npb25zUmVxdWVzdBoMLmFwaS52MS5Wb2lkIgASOgoPTGlzdFBlcm1pc3Npb25zEgwuYXBpLnYxLlZvaWQaFy5hcGkudjEuUGVybWlzc2lvbnNMaXN0IgASSwoQR2V0VHJhbnNjcmlwdGlvbhIeLmFwaS52MS5HZXRUcmFuc2NyaXB0aW9uUmVxZXN0GhUuYXBpLnYxLlRyYW5zY3JpcHRpb24iABI6CgpHZXRQcmV2aWV3EhkuYXBpLnYxLkdldFByZXZpZXdSZXF1ZXN0Gg8uYXBpLnYxLlByZXZpZXciABJJChNTdWJtaXRUcmFuc2NyaXB0aW9uEiIuYXBpLnYxLlN1Ym1pdFRyYW5zY3JpcHRpb25SZXF1ZXN0GgwuYXBpLnYxLlZvaWQiABI/CghHZXRZZWFycxIXLmFwaS52MS5HZXRZZWFyc1JlcXVlc3QaGC5hcGkudjEuR2V0WWVhcnNSZXNwb25zZSIAEjsKCUdldEFsYnVtcxIYLmFwaS52MS5HZXRBbGJ1bXNSZXF1ZXN0GhIuYXBpLnYxLkFsYnVtc0xpc3QiABJFCg5HZXRBbGJ1bVRyYWNrcxIdLmFwaS52MS5HZXRBbGJ1bVRyYWNrc1JlcXVlc3QaEi5hcGkudjEuVHJhY2tzTGlzdCIAEkkKEEdldFBvZGNhc3RUcmFja3MSHy5hcGkudjEuR2V0UG9kY2FzdFRyYWNrc1JlcXVlc3QaEi5hcGkudjEuVHJhY2tzTGlzdCIAEkwKDEdldExhbmd1YWdlcxIkLmFwaS52MS5HZXRBdmFpbGFibGVMYW5ndWFnZXNSZXF1ZXN0GhQuYXBpLnYxLkxhbmd1YWdlTGlzdCIAElIKE0dldEJNTVRyYW5zY3JpcHRpb24SIi5hcGkudjEuR2V0Qk1NVHJhbnNjcmlwdGlvblJlcXVlc3QaFS5hcGkudjEuVHJhbnNjcmlwdGlvbiIAEjkKC1N1Ym1pdFNob3J0EhouYXBpLnYxLlN1Ym1pdFNob3J0UmVxdWVzdBoMLmFwaS52MS5Wb2lkIgASVAoPR2V0RXhwb3J0Q29uZmlnEh4uYXBpLnYxLkdldEV4cG9ydENvbmZpZ1JlcXVlc3QaHy5hcGkudjEuR2V0RXhwb3J0Q29uZmlnUmVzcG9uc2UiABJICgtTdGFydEV4cG9ydBIaLmFwaS52MS5TdGFydEV4cG9ydFJlcXVlc3QaGy5hcGkudjEuU3RhcnRFeHBvcnRSZXNwb25zZSIAEkkKE0V4cG9ydFRpbWVkTWV0YWRhdGESIi5hcGkudjEuRXhwb3J0VGltZWRNZXRhZGF0YVJlcXVlc3QaDC5hcGkudjEuVm9pZCIAQh5aHGJjYy1tZWRpYS10b29scy9hcGkvdjE7YXBpdjFiBnByb3RvMw", [file_google_protobuf_timestamp, file_api_v1_common]);
 
 /**
  * @generated from message api.v1.BMMPermission
@@ -76,6 +76,32 @@ export const TranscriptionPermissionSchema: GenMessage<TranscriptionPermission> 
   messageDesc(file_api_v1_api, 1);
 
 /**
+ * @generated from message api.v1.ExportPermission
+ */
+export type ExportPermission = Message<"api.v1.ExportPermission"> & {
+  /**
+   * destinations the user is allowed to export to (xdcam, vod, bmm, bmm-integration, isilon)
+   *
+   * @generated from field: repeated string destinations = 1;
+   */
+  destinations: string[];
+
+  /**
+   * admin can export to all destinations
+   *
+   * @generated from field: bool admin = 2;
+   */
+  admin: boolean;
+};
+
+/**
+ * Describes the message api.v1.ExportPermission.
+ * Use `create(ExportPermissionSchema)` to create a new message.
+ */
+export const ExportPermissionSchema: GenMessage<ExportPermission> = /*@__PURE__*/
+  messageDesc(file_api_v1_api, 2);
+
+/**
  * @generated from message api.v1.Permissions
  */
 export type Permissions = Message<"api.v1.Permissions"> & {
@@ -98,6 +124,11 @@ export type Permissions = Message<"api.v1.Permissions"> & {
    * @generated from field: api.v1.TranscriptionPermission transcription = 4;
    */
   transcription?: TranscriptionPermission;
+
+  /**
+   * @generated from field: api.v1.ExportPermission export = 5;
+   */
+  export?: ExportPermission;
 };
 
 /**
@@ -105,7 +136,7 @@ export type Permissions = Message<"api.v1.Permissions"> & {
  * Use `create(PermissionsSchema)` to create a new message.
  */
 export const PermissionsSchema: GenMessage<Permissions> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 2);
+  messageDesc(file_api_v1_api, 3);
 
 /**
  * @generated from message api.v1.GetPermissionsRequest
@@ -118,7 +149,7 @@ export type GetPermissionsRequest = Message<"api.v1.GetPermissionsRequest"> & {
  * Use `create(GetPermissionsRequestSchema)` to create a new message.
  */
 export const GetPermissionsRequestSchema: GenMessage<GetPermissionsRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 3);
+  messageDesc(file_api_v1_api, 4);
 
 /**
  * @generated from message api.v1.SetPermissionsRequest
@@ -140,7 +171,7 @@ export type SetPermissionsRequest = Message<"api.v1.SetPermissionsRequest"> & {
  * Use `create(SetPermissionsRequestSchema)` to create a new message.
  */
 export const SetPermissionsRequestSchema: GenMessage<SetPermissionsRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 4);
+  messageDesc(file_api_v1_api, 5);
 
 /**
  * @generated from message api.v1.DeletePermissionsRequest
@@ -157,7 +188,7 @@ export type DeletePermissionsRequest = Message<"api.v1.DeletePermissionsRequest"
  * Use `create(DeletePermissionsRequestSchema)` to create a new message.
  */
 export const DeletePermissionsRequestSchema: GenMessage<DeletePermissionsRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 5);
+  messageDesc(file_api_v1_api, 6);
 
 /**
  * @generated from message api.v1.PermissionsList
@@ -174,7 +205,7 @@ export type PermissionsList = Message<"api.v1.PermissionsList"> & {
  * Use `create(PermissionsListSchema)` to create a new message.
  */
 export const PermissionsListSchema: GenMessage<PermissionsList> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 6);
+  messageDesc(file_api_v1_api, 7);
 
 /**
  * @generated from message api.v1.BMMYear
@@ -196,7 +227,7 @@ export type BMMYear = Message<"api.v1.BMMYear"> & {
  * Use `create(BMMYearSchema)` to create a new message.
  */
 export const BMMYearSchema: GenMessage<BMMYear> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 7);
+  messageDesc(file_api_v1_api, 8);
 
 /**
  * @generated from message api.v1.GetYearsResponse
@@ -213,7 +244,7 @@ export type GetYearsResponse = Message<"api.v1.GetYearsResponse"> & {
  * Use `create(GetYearsResponseSchema)` to create a new message.
  */
 export const GetYearsResponseSchema: GenMessage<GetYearsResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 8);
+  messageDesc(file_api_v1_api, 9);
 
 /**
  * @generated from message api.v1.GetYearsRequest
@@ -230,7 +261,7 @@ export type GetYearsRequest = Message<"api.v1.GetYearsRequest"> & {
  * Use `create(GetYearsRequestSchema)` to create a new message.
  */
 export const GetYearsRequestSchema: GenMessage<GetYearsRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 9);
+  messageDesc(file_api_v1_api, 10);
 
 /**
  * @generated from message api.v1.GetAlbumsRequest
@@ -252,7 +283,7 @@ export type GetAlbumsRequest = Message<"api.v1.GetAlbumsRequest"> & {
  * Use `create(GetAlbumsRequestSchema)` to create a new message.
  */
 export const GetAlbumsRequestSchema: GenMessage<GetAlbumsRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 10);
+  messageDesc(file_api_v1_api, 11);
 
 /**
  * @generated from message api.v1.Album
@@ -284,7 +315,7 @@ export type Album = Message<"api.v1.Album"> & {
  * Use `create(AlbumSchema)` to create a new message.
  */
 export const AlbumSchema: GenMessage<Album> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 11);
+  messageDesc(file_api_v1_api, 12);
 
 /**
  * @generated from message api.v1.AlbumsList
@@ -301,7 +332,7 @@ export type AlbumsList = Message<"api.v1.AlbumsList"> & {
  * Use `create(AlbumsListSchema)` to create a new message.
  */
 export const AlbumsListSchema: GenMessage<AlbumsList> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 12);
+  messageDesc(file_api_v1_api, 13);
 
 /**
  * @generated from message api.v1.GetAlbumTracksRequest
@@ -323,7 +354,7 @@ export type GetAlbumTracksRequest = Message<"api.v1.GetAlbumTracksRequest"> & {
  * Use `create(GetAlbumTracksRequestSchema)` to create a new message.
  */
 export const GetAlbumTracksRequestSchema: GenMessage<GetAlbumTracksRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 13);
+  messageDesc(file_api_v1_api, 14);
 
 /**
  * @generated from message api.v1.GetPodcastTracksRequest
@@ -350,7 +381,7 @@ export type GetPodcastTracksRequest = Message<"api.v1.GetPodcastTracksRequest"> 
  * Use `create(GetPodcastTracksRequestSchema)` to create a new message.
  */
 export const GetPodcastTracksRequestSchema: GenMessage<GetPodcastTracksRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 14);
+  messageDesc(file_api_v1_api, 15);
 
 /**
  * @generated from message api.v1.GetAvailableLanguagesRequest
@@ -367,7 +398,7 @@ export type GetAvailableLanguagesRequest = Message<"api.v1.GetAvailableLanguages
  * Use `create(GetAvailableLanguagesRequestSchema)` to create a new message.
  */
 export const GetAvailableLanguagesRequestSchema: GenMessage<GetAvailableLanguagesRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 15);
+  messageDesc(file_api_v1_api, 16);
 
 /**
  * @generated from message api.v1.BMMTrack
@@ -409,7 +440,7 @@ export type BMMTrack = Message<"api.v1.BMMTrack"> & {
  * Use `create(BMMTrackSchema)` to create a new message.
  */
 export const BMMTrackSchema: GenMessage<BMMTrack> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 16);
+  messageDesc(file_api_v1_api, 17);
 
 /**
  * @generated from message api.v1.TracksList
@@ -426,7 +457,7 @@ export type TracksList = Message<"api.v1.TracksList"> & {
  * Use `create(TracksListSchema)` to create a new message.
  */
 export const TracksListSchema: GenMessage<TracksList> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 17);
+  messageDesc(file_api_v1_api, 18);
 
 /**
  * @generated from message api.v1.LanguageList
@@ -443,7 +474,7 @@ export type LanguageList = Message<"api.v1.LanguageList"> & {
  * Use `create(LanguageListSchema)` to create a new message.
  */
 export const LanguageListSchema: GenMessage<LanguageList> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 18);
+  messageDesc(file_api_v1_api, 19);
 
 /**
  * @generated from message api.v1.Language
@@ -465,7 +496,7 @@ export type Language = Message<"api.v1.Language"> & {
  * Use `create(LanguageSchema)` to create a new message.
  */
 export const LanguageSchema: GenMessage<Language> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 19);
+  messageDesc(file_api_v1_api, 20);
 
 /**
  * @generated from message api.v1.GetTranscriptionReqest
@@ -482,7 +513,7 @@ export type GetTranscriptionReqest = Message<"api.v1.GetTranscriptionReqest"> & 
  * Use `create(GetTranscriptionReqestSchema)` to create a new message.
  */
 export const GetTranscriptionReqestSchema: GenMessage<GetTranscriptionReqest> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 20);
+  messageDesc(file_api_v1_api, 21);
 
 /**
  * @generated from message api.v1.Transcription
@@ -504,7 +535,7 @@ export type Transcription = Message<"api.v1.Transcription"> & {
  * Use `create(TranscriptionSchema)` to create a new message.
  */
 export const TranscriptionSchema: GenMessage<Transcription> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 21);
+  messageDesc(file_api_v1_api, 22);
 
 /**
  * @generated from message api.v1.Segments
@@ -576,7 +607,7 @@ export type Segments = Message<"api.v1.Segments"> & {
  * Use `create(SegmentsSchema)` to create a new message.
  */
 export const SegmentsSchema: GenMessage<Segments> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 22);
+  messageDesc(file_api_v1_api, 23);
 
 /**
  * @generated from message api.v1.Words
@@ -608,7 +639,7 @@ export type Words = Message<"api.v1.Words"> & {
  * Use `create(WordsSchema)` to create a new message.
  */
 export const WordsSchema: GenMessage<Words> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 23);
+  messageDesc(file_api_v1_api, 24);
 
 /**
  * @generated from message api.v1.GetPreviewRequest
@@ -625,7 +656,7 @@ export type GetPreviewRequest = Message<"api.v1.GetPreviewRequest"> & {
  * Use `create(GetPreviewRequestSchema)` to create a new message.
  */
 export const GetPreviewRequestSchema: GenMessage<GetPreviewRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 24);
+  messageDesc(file_api_v1_api, 25);
 
 /**
  * @generated from message api.v1.Preview
@@ -642,7 +673,7 @@ export type Preview = Message<"api.v1.Preview"> & {
  * Use `create(PreviewSchema)` to create a new message.
  */
 export const PreviewSchema: GenMessage<Preview> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 25);
+  messageDesc(file_api_v1_api, 26);
 
 /**
  * @generated from message api.v1.GetBMMTranscriptionRequest
@@ -669,7 +700,7 @@ export type GetBMMTranscriptionRequest = Message<"api.v1.GetBMMTranscriptionRequ
  * Use `create(GetBMMTranscriptionRequestSchema)` to create a new message.
  */
 export const GetBMMTranscriptionRequestSchema: GenMessage<GetBMMTranscriptionRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 26);
+  messageDesc(file_api_v1_api, 27);
 
 /**
  * @generated from message api.v1.SubmitTranscriptionRequest
@@ -691,7 +722,7 @@ export type SubmitTranscriptionRequest = Message<"api.v1.SubmitTranscriptionRequ
  * Use `create(SubmitTranscriptionRequestSchema)` to create a new message.
  */
 export const SubmitTranscriptionRequestSchema: GenMessage<SubmitTranscriptionRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 27);
+  messageDesc(file_api_v1_api, 28);
 
 /**
  * @generated from message api.v1.SubmitShortRequest
@@ -718,7 +749,292 @@ export type SubmitShortRequest = Message<"api.v1.SubmitShortRequest"> & {
  * Use `create(SubmitShortRequestSchema)` to create a new message.
  */
 export const SubmitShortRequestSchema: GenMessage<SubmitShortRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 28);
+  messageDesc(file_api_v1_api, 29);
+
+/**
+ * @generated from message api.v1.ExportResolution
+ */
+export type ExportResolution = Message<"api.v1.ExportResolution"> & {
+  /**
+   * @generated from field: int32 width = 1;
+   */
+  width: number;
+
+  /**
+   * @generated from field: int32 height = 2;
+   */
+  height: number;
+};
+
+/**
+ * Describes the message api.v1.ExportResolution.
+ * Use `create(ExportResolutionSchema)` to create a new message.
+ */
+export const ExportResolutionSchema: GenMessage<ExportResolution> = /*@__PURE__*/
+  messageDesc(file_api_v1_api, 30);
+
+/**
+ * @generated from message api.v1.ExportLanguage
+ */
+export type ExportLanguage = Message<"api.v1.ExportLanguage"> & {
+  /**
+   * value sent back in StartExportRequest.languages
+   *
+   * @generated from field: string code = 1;
+   */
+  code: string;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: bool mu1 = 3;
+   */
+  mu1: boolean;
+
+  /**
+   * @generated from field: bool mu2 = 4;
+   */
+  mu2: boolean;
+};
+
+/**
+ * Describes the message api.v1.ExportLanguage.
+ * Use `create(ExportLanguageSchema)` to create a new message.
+ */
+export const ExportLanguageSchema: GenMessage<ExportLanguage> = /*@__PURE__*/
+  messageDesc(file_api_v1_api, 31);
+
+/**
+ * @generated from message api.v1.ExportSubclip
+ */
+export type ExportSubclip = Message<"api.v1.ExportSubclip"> & {
+  /**
+   * @generated from field: string title = 1;
+   */
+  title: string;
+};
+
+/**
+ * Describes the message api.v1.ExportSubclip.
+ * Use `create(ExportSubclipSchema)` to create a new message.
+ */
+export const ExportSubclipSchema: GenMessage<ExportSubclip> = /*@__PURE__*/
+  messageDesc(file_api_v1_api, 32);
+
+/**
+ * @generated from message api.v1.GetExportConfigRequest
+ */
+export type GetExportConfigRequest = Message<"api.v1.GetExportConfigRequest"> & {
+  /**
+   * @generated from field: string VXID = 1;
+   */
+  VXID: string;
+};
+
+/**
+ * Describes the message api.v1.GetExportConfigRequest.
+ * Use `create(GetExportConfigRequestSchema)` to create a new message.
+ */
+export const GetExportConfigRequestSchema: GenMessage<GetExportConfigRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_api, 33);
+
+/**
+ * @generated from message api.v1.GetExportConfigResponse
+ */
+export type GetExportConfigResponse = Message<"api.v1.GetExportConfigResponse"> & {
+  /**
+   * @generated from field: string VXID = 1;
+   */
+  VXID: string;
+
+  /**
+   * @generated from field: string title = 2;
+   */
+  title: string;
+
+  /**
+   * destinations filtered to what this user is allowed to export to
+   *
+   * @generated from field: repeated string destinations = 3;
+   */
+  destinations: string[];
+
+  /**
+   * audio sources (embedded / related)
+   *
+   * @generated from field: repeated string audio_sources = 4;
+   */
+  audioSources: string[];
+
+  /**
+   * @generated from field: string selected_audio_source = 5;
+   */
+  selectedAudioSource: string;
+
+  /**
+   * @generated from field: repeated api.v1.ExportLanguage languages = 6;
+   */
+  languages: ExportLanguage[];
+
+  /**
+   * @generated from field: repeated string selected_languages = 7;
+   */
+  selectedLanguages: string[];
+
+  /**
+   * @generated from field: repeated api.v1.ExportResolution resolutions = 8;
+   */
+  resolutions: ExportResolution[];
+
+  /**
+   * overlay file names, including "None"
+   *
+   * @generated from field: repeated string overlays = 9;
+   */
+  overlays: string[];
+
+  /**
+   * @generated from field: repeated api.v1.ExportSubclip subclips = 10;
+   */
+  subclips: ExportSubclip[];
+};
+
+/**
+ * Describes the message api.v1.GetExportConfigResponse.
+ * Use `create(GetExportConfigResponseSchema)` to create a new message.
+ */
+export const GetExportConfigResponseSchema: GenMessage<GetExportConfigResponse> = /*@__PURE__*/
+  messageDesc(file_api_v1_api, 34);
+
+/**
+ * @generated from message api.v1.ExportResolutionSelection
+ */
+export type ExportResolutionSelection = Message<"api.v1.ExportResolutionSelection"> & {
+  /**
+   * @generated from field: int32 width = 1;
+   */
+  width: number;
+
+  /**
+   * @generated from field: int32 height = 2;
+   */
+  height: number;
+
+  /**
+   * @generated from field: bool downloadable = 3;
+   */
+  downloadable: boolean;
+};
+
+/**
+ * Describes the message api.v1.ExportResolutionSelection.
+ * Use `create(ExportResolutionSelectionSchema)` to create a new message.
+ */
+export const ExportResolutionSelectionSchema: GenMessage<ExportResolutionSelection> = /*@__PURE__*/
+  messageDesc(file_api_v1_api, 35);
+
+/**
+ * @generated from message api.v1.StartExportRequest
+ */
+export type StartExportRequest = Message<"api.v1.StartExportRequest"> & {
+  /**
+   * @generated from field: string VXID = 1;
+   */
+  VXID: string;
+
+  /**
+   * @generated from field: repeated string destinations = 2;
+   */
+  destinations: string[];
+
+  /**
+   * @generated from field: string audio_source = 3;
+   */
+  audioSource: string;
+
+  /**
+   * @generated from field: repeated string languages = 4;
+   */
+  languages: string[];
+
+  /**
+   * @generated from field: repeated api.v1.ExportResolutionSelection resolutions = 5;
+   */
+  resolutions: ExportResolutionSelection[];
+
+  /**
+   * overlay file name; "" or "None" means no watermark
+   *
+   * @generated from field: string overlay = 6;
+   */
+  overlay: string;
+
+  /**
+   * @generated from field: bool with_chapters = 7;
+   */
+  withChapters: boolean;
+
+  /**
+   * @generated from field: bool ignore_silence = 8;
+   */
+  ignoreSilence: boolean;
+
+  /**
+   * @generated from field: bool export_ai_subs = 9;
+   */
+  exportAiSubs: boolean;
+
+  /**
+   * subclip titles to export; empty means export the whole asset
+   *
+   * @generated from field: repeated string subclips = 10;
+   */
+  subclips: string[];
+};
+
+/**
+ * Describes the message api.v1.StartExportRequest.
+ * Use `create(StartExportRequestSchema)` to create a new message.
+ */
+export const StartExportRequestSchema: GenMessage<StartExportRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_api, 36);
+
+/**
+ * @generated from message api.v1.StartExportResponse
+ */
+export type StartExportResponse = Message<"api.v1.StartExportResponse"> & {
+  /**
+   * @generated from field: repeated string workflow_ids = 1;
+   */
+  workflowIds: string[];
+};
+
+/**
+ * Describes the message api.v1.StartExportResponse.
+ * Use `create(StartExportResponseSchema)` to create a new message.
+ */
+export const StartExportResponseSchema: GenMessage<StartExportResponse> = /*@__PURE__*/
+  messageDesc(file_api_v1_api, 37);
+
+/**
+ * @generated from message api.v1.ExportTimedMetadataRequest
+ */
+export type ExportTimedMetadataRequest = Message<"api.v1.ExportTimedMetadataRequest"> & {
+  /**
+   * @generated from field: string VXID = 1;
+   */
+  VXID: string;
+};
+
+/**
+ * Describes the message api.v1.ExportTimedMetadataRequest.
+ * Use `create(ExportTimedMetadataRequestSchema)` to create a new message.
+ */
+export const ExportTimedMetadataRequestSchema: GenMessage<ExportTimedMetadataRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_api, 38);
 
 /**
  * @generated from enum api.v1.BmmEnvironment
@@ -863,6 +1179,32 @@ export const APIService: GenService<{
   submitShort: {
     methodKind: "unary";
     input: typeof SubmitShortRequestSchema;
+    output: typeof VoidSchema;
+  },
+  /**
+   * Export
+   *
+   * @generated from rpc api.v1.APIService.GetExportConfig
+   */
+  getExportConfig: {
+    methodKind: "unary";
+    input: typeof GetExportConfigRequestSchema;
+    output: typeof GetExportConfigResponseSchema;
+  },
+  /**
+   * @generated from rpc api.v1.APIService.StartExport
+   */
+  startExport: {
+    methodKind: "unary";
+    input: typeof StartExportRequestSchema;
+    output: typeof StartExportResponseSchema;
+  },
+  /**
+   * @generated from rpc api.v1.APIService.ExportTimedMetadata
+   */
+  exportTimedMetadata: {
+    methodKind: "unary";
+    input: typeof ExportTimedMetadataRequestSchema;
     output: typeof VoidSchema;
   },
 }> = /*@__PURE__*/

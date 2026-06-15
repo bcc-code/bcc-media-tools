@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/bcc-code/bcc-media-flows/services/vidispine/vsapi"
 	"github.com/bcc-code/mediabank-bridge/log"
 	"github.com/rs/zerolog"
 
@@ -51,6 +52,7 @@ type ApiServer struct {
 	BMMApi
 	TranscriptionAPI
 	ShortsAPI
+	ExportAPI
 }
 
 func withCORS(connectHandler http.Handler) http.Handler {
@@ -106,16 +108,24 @@ func main() {
 		log.L.Debug().Str("temp_path", tempPath).Msg("TEMP_PATH not set, using random path")
 	}
 
+	vidispineClient := vsapi.NewClient(
+		os.Getenv("VIDISPINE_BASE_URL"),
+		os.Getenv("VIDISPINE_USERNAME"),
+		os.Getenv("VIDISPINE_PASSWORD"),
+	)
+
 	permissionsApi := PermissionsAPI{}
 	bmmApi := NewBMMApi(os.Getenv("BMM_BASE_URL"), bmmToken)
 	transcriptionAPI := NewTranscriptionAPI(os.Getenv("CANTEMO_URL"), os.Getenv("CANTEMO_TOKEN"), temporalClient)
 	shortsAPI := NewShortsAPI(temporalClient)
+	exportAPI := NewExportAPI(vidispineClient, temporalClient)
 
 	api := &ApiServer{
 		PermissionsAPI:   permissionsApi,
 		BMMApi:           *bmmApi,
 		TranscriptionAPI: *transcriptionAPI,
 		ShortsAPI:        *shortsAPI,
+		ExportAPI:        *exportAPI,
 	}
 
 	if os.Getenv("STATIC_FILE_PATH") != "" {

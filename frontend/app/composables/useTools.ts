@@ -27,10 +27,11 @@ export function useTools() {
 			enabled: me.value?.transcription && (me.value.transcription.mediabanken || me.value.transcription.admin),
 		},
 		{
-			label: 'Export',
+			label: t("tools.export.title"),
 			icon: "tabler:file-export",
-			description: 'Trigger export workflows',
+			description: t("tools.export.description"),
 			to: "/export/",
+			enabled: me.value?.admin || (me.value?.export && (me.value.export.destinations.length > 0 || me.value.export.admin)),
 		},
 		{
 			label: 'Shorts generation',

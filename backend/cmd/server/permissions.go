@@ -140,6 +140,10 @@ func PermissionsForEmail(email string) *apiv1.Permissions {
 			Admin:      false,
 			Mediabanken: false,
 		},
+		Export: &apiv1.ExportPermission{
+			Destinations: make([]string, 0),
+			Admin:        false,
+		},
 	}
 }
 
