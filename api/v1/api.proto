@@ -285,6 +285,13 @@ message StartVBExportResponse {
   string workflow_id = 1;
 }
 
+// Canonical, full destination lists (every selectable value), used by the admin
+// permission editor so it never offers destinations the backend doesn't accept.
+message ExportDestinationsResponse {
+  repeated string vx = 1;
+  repeated string vb = 2;
+}
+
 service APIService {
 	// Permissions
 	rpc GetPermissions (Void) returns (Permissions) {}
@@ -316,4 +323,7 @@ service APIService {
   // VB Export
   rpc GetVBExportConfig(GetVBExportConfigRequest) returns (GetVBExportConfigResponse) {}
   rpc StartVBExport(StartVBExportRequest) returns (StartVBExportResponse) {}
+
+  // Full destination lists for the admin permission editor
+  rpc GetExportDestinations(Void) returns (ExportDestinationsResponse) {}
 }

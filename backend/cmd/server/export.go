@@ -485,3 +485,16 @@ func (e ExportAPI) StartVBExport(ctx context.Context, req *connect.Request[apiv1
 
 	return connect.NewResponse(&apiv1.StartVBExportResponse{WorkflowId: run.GetID()}), nil
 }
+
+// GetExportDestinations returns the full set of selectable destinations,
+// straight from the bcc-media-flows enums, so the admin UI is always in sync
+// with what the backend actually accepts.
+func (e ExportAPI) GetExportDestinations(ctx context.Context, req *connect.Request[apiv1.Void]) (*connect.Response[apiv1.ExportDestinationsResponse], error) {
+	if !IsAdmin(req) {
+		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("not authorized"))
+	}
+	return connect.NewResponse(&apiv1.ExportDestinationsResponse{
+		Vx: exportworkflows.AssetExportDestinations.Values(),
+		Vb: vbUIDestinations(),
+	}), nil
+}

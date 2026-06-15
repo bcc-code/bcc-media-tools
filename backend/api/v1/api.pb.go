@@ -2651,6 +2651,60 @@ func (x *StartVBExportResponse) GetWorkflowId() string {
 	return ""
 }
 
+// Canonical, full destination lists (every selectable value), used by the admin
+// permission editor so it never offers destinations the backend doesn't accept.
+type ExportDestinationsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Vx            []string               `protobuf:"bytes,1,rep,name=vx,proto3" json:"vx,omitempty"`
+	Vb            []string               `protobuf:"bytes,2,rep,name=vb,proto3" json:"vb,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ExportDestinationsResponse) Reset() {
+	*x = ExportDestinationsResponse{}
+	mi := &file_api_v1_api_proto_msgTypes[44]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExportDestinationsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExportDestinationsResponse) ProtoMessage() {}
+
+func (x *ExportDestinationsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_api_proto_msgTypes[44]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExportDestinationsResponse.ProtoReflect.Descriptor instead.
+func (*ExportDestinationsResponse) Descriptor() ([]byte, []int) {
+	return file_api_v1_api_proto_rawDescGZIP(), []int{44}
+}
+
+func (x *ExportDestinationsResponse) GetVx() []string {
+	if x != nil {
+		return x.Vx
+	}
+	return nil
+}
+
+func (x *ExportDestinationsResponse) GetVb() []string {
+	if x != nil {
+		return x.Vb
+	}
+	return nil
+}
+
 var File_api_v1_api_proto protoreflect.FileDescriptor
 
 const file_api_v1_api_proto_rawDesc = "" +
@@ -2842,12 +2896,14 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\x0esubtitle_style\x18\x04 \x01(\tR\rsubtitleStyle\"8\n" +
 	"\x15StartVBExportResponse\x12\x1f\n" +
 	"\vworkflow_id\x18\x01 \x01(\tR\n" +
-	"workflowId*1\n" +
+	"workflowId\"<\n" +
+	"\x1aExportDestinationsResponse\x12\x0e\n" +
+	"\x02vx\x18\x01 \x03(\tR\x02vx\x12\x0e\n" +
+	"\x02vb\x18\x02 \x03(\tR\x02vb*1\n" +
 	"\x0eBmmEnvironment\x12\x0e\n" +
 	"\n" +
 	"Production\x10\x00\x12\x0f\n" +
-	"\vIntegration\x10\x012\xe2\n" +
-	"\n" +
+	"\vIntegration\x10\x012\xaf\v\n" +
 	"\n" +
 	"APIService\x125\n" +
 	"\x0eGetPermissions\x12\f.api.v1.Void\x1a\x13.api.v1.Permissions\"\x00\x12B\n" +
@@ -2869,7 +2925,8 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\vStartExport\x12\x1a.api.v1.StartExportRequest\x1a\x1b.api.v1.StartExportResponse\"\x00\x12I\n" +
 	"\x13ExportTimedMetadata\x12\".api.v1.ExportTimedMetadataRequest\x1a\f.api.v1.Void\"\x00\x12Z\n" +
 	"\x11GetVBExportConfig\x12 .api.v1.GetVBExportConfigRequest\x1a!.api.v1.GetVBExportConfigResponse\"\x00\x12N\n" +
-	"\rStartVBExport\x12\x1c.api.v1.StartVBExportRequest\x1a\x1d.api.v1.StartVBExportResponse\"\x00B\x1eZ\x1cbcc-media-tools/api/v1;apiv1b\x06proto3"
+	"\rStartVBExport\x12\x1c.api.v1.StartVBExportRequest\x1a\x1d.api.v1.StartVBExportResponse\"\x00\x12K\n" +
+	"\x15GetExportDestinations\x12\f.api.v1.Void\x1a\".api.v1.ExportDestinationsResponse\"\x00B\x1eZ\x1cbcc-media-tools/api/v1;apiv1b\x06proto3"
 
 var (
 	file_api_v1_api_proto_rawDescOnce sync.Once
@@ -2884,7 +2941,7 @@ func file_api_v1_api_proto_rawDescGZIP() []byte {
 }
 
 var file_api_v1_api_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_api_v1_api_proto_msgTypes = make([]protoimpl.MessageInfo, 46)
+var file_api_v1_api_proto_msgTypes = make([]protoimpl.MessageInfo, 47)
 var file_api_v1_api_proto_goTypes = []any{
 	(BmmEnvironment)(0),                  // 0: api.v1.BmmEnvironment
 	(*BMMPermission)(nil),                // 1: api.v1.BMMPermission
@@ -2931,10 +2988,11 @@ var file_api_v1_api_proto_goTypes = []any{
 	(*GetVBExportConfigResponse)(nil),    // 42: api.v1.GetVBExportConfigResponse
 	(*StartVBExportRequest)(nil),         // 43: api.v1.StartVBExportRequest
 	(*StartVBExportResponse)(nil),        // 44: api.v1.StartVBExportResponse
-	nil,                                  // 45: api.v1.PermissionsList.PermissionsEntry
-	nil,                                  // 46: api.v1.GetYearsResponse.DataEntry
-	(*timestamppb.Timestamp)(nil),        // 47: google.protobuf.Timestamp
-	(*Void)(nil),                         // 48: api.v1.Void
+	(*ExportDestinationsResponse)(nil),   // 45: api.v1.ExportDestinationsResponse
+	nil,                                  // 46: api.v1.PermissionsList.PermissionsEntry
+	nil,                                  // 47: api.v1.GetYearsResponse.DataEntry
+	(*timestamppb.Timestamp)(nil),        // 48: google.protobuf.Timestamp
+	(*Void)(nil),                         // 49: api.v1.Void
 }
 var file_api_v1_api_proto_depIdxs = []int32{
 	1,  // 0: api.v1.Permissions.bmm:type_name -> api.v1.BMMPermission
@@ -2942,15 +3000,15 @@ var file_api_v1_api_proto_depIdxs = []int32{
 	3,  // 2: api.v1.Permissions.export:type_name -> api.v1.ExportPermission
 	4,  // 3: api.v1.Permissions.vb_export:type_name -> api.v1.VBExportPermission
 	5,  // 4: api.v1.SetPermissionsRequest.permissions:type_name -> api.v1.Permissions
-	45, // 5: api.v1.PermissionsList.permissions:type_name -> api.v1.PermissionsList.PermissionsEntry
-	46, // 6: api.v1.GetYearsResponse.data:type_name -> api.v1.GetYearsResponse.DataEntry
+	46, // 5: api.v1.PermissionsList.permissions:type_name -> api.v1.PermissionsList.PermissionsEntry
+	47, // 6: api.v1.GetYearsResponse.data:type_name -> api.v1.GetYearsResponse.DataEntry
 	0,  // 7: api.v1.GetYearsRequest.environment:type_name -> api.v1.BmmEnvironment
 	0,  // 8: api.v1.GetAlbumsRequest.environment:type_name -> api.v1.BmmEnvironment
 	14, // 9: api.v1.AlbumsList.albums:type_name -> api.v1.Album
 	0,  // 10: api.v1.GetAlbumTracksRequest.environment:type_name -> api.v1.BmmEnvironment
 	0,  // 11: api.v1.GetPodcastTracksRequest.environment:type_name -> api.v1.BmmEnvironment
 	0,  // 12: api.v1.GetAvailableLanguagesRequest.environment:type_name -> api.v1.BmmEnvironment
-	47, // 13: api.v1.BMMTrack.publishedAt:type_name -> google.protobuf.Timestamp
+	48, // 13: api.v1.BMMTrack.publishedAt:type_name -> google.protobuf.Timestamp
 	21, // 14: api.v1.BMMTrack.languages:type_name -> api.v1.LanguageList
 	21, // 15: api.v1.BMMTrack.transcriptions:type_name -> api.v1.LanguageList
 	19, // 16: api.v1.TracksList.tracks:type_name -> api.v1.BMMTrack
@@ -2965,10 +3023,10 @@ var file_api_v1_api_proto_depIdxs = []int32{
 	37, // 25: api.v1.StartExportRequest.resolutions:type_name -> api.v1.ExportResolutionSelection
 	5,  // 26: api.v1.PermissionsList.PermissionsEntry.value:type_name -> api.v1.Permissions
 	10, // 27: api.v1.GetYearsResponse.DataEntry.value:type_name -> api.v1.BMMYear
-	48, // 28: api.v1.APIService.GetPermissions:input_type -> api.v1.Void
+	49, // 28: api.v1.APIService.GetPermissions:input_type -> api.v1.Void
 	7,  // 29: api.v1.APIService.UpdatePermissions:input_type -> api.v1.SetPermissionsRequest
 	8,  // 30: api.v1.APIService.DeletePermissions:input_type -> api.v1.DeletePermissionsRequest
-	48, // 31: api.v1.APIService.ListPermissions:input_type -> api.v1.Void
+	49, // 31: api.v1.APIService.ListPermissions:input_type -> api.v1.Void
 	23, // 32: api.v1.APIService.GetTranscription:input_type -> api.v1.GetTranscriptionReqest
 	27, // 33: api.v1.APIService.GetPreview:input_type -> api.v1.GetPreviewRequest
 	30, // 34: api.v1.APIService.SubmitTranscription:input_type -> api.v1.SubmitTranscriptionRequest
@@ -2984,27 +3042,29 @@ var file_api_v1_api_proto_depIdxs = []int32{
 	40, // 44: api.v1.APIService.ExportTimedMetadata:input_type -> api.v1.ExportTimedMetadataRequest
 	41, // 45: api.v1.APIService.GetVBExportConfig:input_type -> api.v1.GetVBExportConfigRequest
 	43, // 46: api.v1.APIService.StartVBExport:input_type -> api.v1.StartVBExportRequest
-	5,  // 47: api.v1.APIService.GetPermissions:output_type -> api.v1.Permissions
-	48, // 48: api.v1.APIService.UpdatePermissions:output_type -> api.v1.Void
-	48, // 49: api.v1.APIService.DeletePermissions:output_type -> api.v1.Void
-	9,  // 50: api.v1.APIService.ListPermissions:output_type -> api.v1.PermissionsList
-	24, // 51: api.v1.APIService.GetTranscription:output_type -> api.v1.Transcription
-	28, // 52: api.v1.APIService.GetPreview:output_type -> api.v1.Preview
-	48, // 53: api.v1.APIService.SubmitTranscription:output_type -> api.v1.Void
-	11, // 54: api.v1.APIService.GetYears:output_type -> api.v1.GetYearsResponse
-	15, // 55: api.v1.APIService.GetAlbums:output_type -> api.v1.AlbumsList
-	20, // 56: api.v1.APIService.GetAlbumTracks:output_type -> api.v1.TracksList
-	20, // 57: api.v1.APIService.GetPodcastTracks:output_type -> api.v1.TracksList
-	21, // 58: api.v1.APIService.GetLanguages:output_type -> api.v1.LanguageList
-	24, // 59: api.v1.APIService.GetBMMTranscription:output_type -> api.v1.Transcription
-	48, // 60: api.v1.APIService.SubmitShort:output_type -> api.v1.Void
-	36, // 61: api.v1.APIService.GetExportConfig:output_type -> api.v1.GetExportConfigResponse
-	39, // 62: api.v1.APIService.StartExport:output_type -> api.v1.StartExportResponse
-	48, // 63: api.v1.APIService.ExportTimedMetadata:output_type -> api.v1.Void
-	42, // 64: api.v1.APIService.GetVBExportConfig:output_type -> api.v1.GetVBExportConfigResponse
-	44, // 65: api.v1.APIService.StartVBExport:output_type -> api.v1.StartVBExportResponse
-	47, // [47:66] is the sub-list for method output_type
-	28, // [28:47] is the sub-list for method input_type
+	49, // 47: api.v1.APIService.GetExportDestinations:input_type -> api.v1.Void
+	5,  // 48: api.v1.APIService.GetPermissions:output_type -> api.v1.Permissions
+	49, // 49: api.v1.APIService.UpdatePermissions:output_type -> api.v1.Void
+	49, // 50: api.v1.APIService.DeletePermissions:output_type -> api.v1.Void
+	9,  // 51: api.v1.APIService.ListPermissions:output_type -> api.v1.PermissionsList
+	24, // 52: api.v1.APIService.GetTranscription:output_type -> api.v1.Transcription
+	28, // 53: api.v1.APIService.GetPreview:output_type -> api.v1.Preview
+	49, // 54: api.v1.APIService.SubmitTranscription:output_type -> api.v1.Void
+	11, // 55: api.v1.APIService.GetYears:output_type -> api.v1.GetYearsResponse
+	15, // 56: api.v1.APIService.GetAlbums:output_type -> api.v1.AlbumsList
+	20, // 57: api.v1.APIService.GetAlbumTracks:output_type -> api.v1.TracksList
+	20, // 58: api.v1.APIService.GetPodcastTracks:output_type -> api.v1.TracksList
+	21, // 59: api.v1.APIService.GetLanguages:output_type -> api.v1.LanguageList
+	24, // 60: api.v1.APIService.GetBMMTranscription:output_type -> api.v1.Transcription
+	49, // 61: api.v1.APIService.SubmitShort:output_type -> api.v1.Void
+	36, // 62: api.v1.APIService.GetExportConfig:output_type -> api.v1.GetExportConfigResponse
+	39, // 63: api.v1.APIService.StartExport:output_type -> api.v1.StartExportResponse
+	49, // 64: api.v1.APIService.ExportTimedMetadata:output_type -> api.v1.Void
+	42, // 65: api.v1.APIService.GetVBExportConfig:output_type -> api.v1.GetVBExportConfigResponse
+	44, // 66: api.v1.APIService.StartVBExport:output_type -> api.v1.StartVBExportResponse
+	45, // 67: api.v1.APIService.GetExportDestinations:output_type -> api.v1.ExportDestinationsResponse
+	48, // [48:68] is the sub-list for method output_type
+	28, // [28:48] is the sub-list for method input_type
 	28, // [28:28] is the sub-list for extension type_name
 	28, // [28:28] is the sub-list for extension extendee
 	0,  // [0:28] is the sub-list for field type_name
@@ -3022,7 +3082,7 @@ func file_api_v1_api_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_v1_api_proto_rawDesc), len(file_api_v1_api_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   46,
+			NumMessages:   47,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -6,6 +6,8 @@ const props = defineProps<{
     email: string;
     permissions: Permissions;
     languages: string[];
+    vxDestinations: string[];
+    vbDestinations: string[];
 }>();
 
 defineEmits<{
@@ -33,8 +35,12 @@ function withDefaultPermissions(p: Permissions): Permissions {
     };
 }
 
-const exportDestinations = destinationOptions(VX_EXPORT_DESTINATIONS);
-const vbExportDestinations = destinationOptions(VB_EXPORT_DESTINATIONS);
+const exportDestinations = computed(() =>
+    destinationOptions(props.vxDestinations),
+);
+const vbExportDestinations = computed(() =>
+    destinationOptions(props.vbDestinations),
+);
 
 const perms = reactive(withDefaultPermissions(props.permissions));
 const api = useAPI();

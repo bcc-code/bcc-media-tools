@@ -28,32 +28,10 @@ export function destinationName(value: string): string {
     return DestinationNames.get(value) ?? value;
 }
 
-// Canonical full destination lists, used by the admin permission editor (which
-// must show every selectable destination, not just the ones the user already
-// has). Keep these in sync with the backend enums in bcc-media-flows.
-export const VX_EXPORT_DESTINATIONS = [
-    "xdcam",
-    "vod",
-    "bmm",
-    "bmm-integration",
-    "isilon",
-];
-
-export const VB_EXPORT_DESTINATIONS = [
-    "abekas",
-    "raw-abekas",
-    "b-stage",
-    "gfx",
-    "hippo_v2",
-    "hippo_hap",
-    "dubbing",
-    "hyperdeck",
-    "xdcam",
-    "caspar-cg",
-];
-
 // destinationOptions maps destination values to { label, value } items for
-// USelect multi-selects.
+// USelect multi-selects. The list of values is supplied by the backend
+// (GetExportDestinations) so the admin editor can never offer a destination the
+// backend doesn't accept.
 export function destinationOptions(values: string[]) {
     return values.map((value) => ({ label: destinationName(value), value }));
 }

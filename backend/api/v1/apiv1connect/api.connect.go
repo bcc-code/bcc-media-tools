@@ -84,6 +84,9 @@ const (
 	// APIServiceStartVBExportProcedure is the fully-qualified name of the APIService's StartVBExport
 	// RPC.
 	APIServiceStartVBExportProcedure = "/api.v1.APIService/StartVBExport"
+	// APIServiceGetExportDestinationsProcedure is the fully-qualified name of the APIService's
+	// GetExportDestinations RPC.
+	APIServiceGetExportDestinationsProcedure = "/api.v1.APIService/GetExportDestinations"
 )
 
 // APIServiceClient is a client for the api.v1.APIService service.
@@ -113,6 +116,8 @@ type APIServiceClient interface {
 	// VB Export
 	GetVBExportConfig(context.Context, *connect.Request[v1.GetVBExportConfigRequest]) (*connect.Response[v1.GetVBExportConfigResponse], error)
 	StartVBExport(context.Context, *connect.Request[v1.StartVBExportRequest]) (*connect.Response[v1.StartVBExportResponse], error)
+	// Full destination lists for the admin permission editor
+	GetExportDestinations(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.ExportDestinationsResponse], error)
 }
 
 // NewAPIServiceClient constructs a client for the api.v1.APIService service. By default, it uses
@@ -240,30 +245,37 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(aPIServiceMethods.ByName("StartVBExport")),
 			connect.WithClientOptions(opts...),
 		),
+		getExportDestinations: connect.NewClient[v1.Void, v1.ExportDestinationsResponse](
+			httpClient,
+			baseURL+APIServiceGetExportDestinationsProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("GetExportDestinations")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // aPIServiceClient implements APIServiceClient.
 type aPIServiceClient struct {
-	getPermissions      *connect.Client[v1.Void, v1.Permissions]
-	updatePermissions   *connect.Client[v1.SetPermissionsRequest, v1.Void]
-	deletePermissions   *connect.Client[v1.DeletePermissionsRequest, v1.Void]
-	listPermissions     *connect.Client[v1.Void, v1.PermissionsList]
-	getTranscription    *connect.Client[v1.GetTranscriptionReqest, v1.Transcription]
-	getPreview          *connect.Client[v1.GetPreviewRequest, v1.Preview]
-	submitTranscription *connect.Client[v1.SubmitTranscriptionRequest, v1.Void]
-	getYears            *connect.Client[v1.GetYearsRequest, v1.GetYearsResponse]
-	getAlbums           *connect.Client[v1.GetAlbumsRequest, v1.AlbumsList]
-	getAlbumTracks      *connect.Client[v1.GetAlbumTracksRequest, v1.TracksList]
-	getPodcastTracks    *connect.Client[v1.GetPodcastTracksRequest, v1.TracksList]
-	getLanguages        *connect.Client[v1.GetAvailableLanguagesRequest, v1.LanguageList]
-	getBMMTranscription *connect.Client[v1.GetBMMTranscriptionRequest, v1.Transcription]
-	submitShort         *connect.Client[v1.SubmitShortRequest, v1.Void]
-	getExportConfig     *connect.Client[v1.GetExportConfigRequest, v1.GetExportConfigResponse]
-	startExport         *connect.Client[v1.StartExportRequest, v1.StartExportResponse]
-	exportTimedMetadata *connect.Client[v1.ExportTimedMetadataRequest, v1.Void]
-	getVBExportConfig   *connect.Client[v1.GetVBExportConfigRequest, v1.GetVBExportConfigResponse]
-	startVBExport       *connect.Client[v1.StartVBExportRequest, v1.StartVBExportResponse]
+	getPermissions        *connect.Client[v1.Void, v1.Permissions]
+	updatePermissions     *connect.Client[v1.SetPermissionsRequest, v1.Void]
+	deletePermissions     *connect.Client[v1.DeletePermissionsRequest, v1.Void]
+	listPermissions       *connect.Client[v1.Void, v1.PermissionsList]
+	getTranscription      *connect.Client[v1.GetTranscriptionReqest, v1.Transcription]
+	getPreview            *connect.Client[v1.GetPreviewRequest, v1.Preview]
+	submitTranscription   *connect.Client[v1.SubmitTranscriptionRequest, v1.Void]
+	getYears              *connect.Client[v1.GetYearsRequest, v1.GetYearsResponse]
+	getAlbums             *connect.Client[v1.GetAlbumsRequest, v1.AlbumsList]
+	getAlbumTracks        *connect.Client[v1.GetAlbumTracksRequest, v1.TracksList]
+	getPodcastTracks      *connect.Client[v1.GetPodcastTracksRequest, v1.TracksList]
+	getLanguages          *connect.Client[v1.GetAvailableLanguagesRequest, v1.LanguageList]
+	getBMMTranscription   *connect.Client[v1.GetBMMTranscriptionRequest, v1.Transcription]
+	submitShort           *connect.Client[v1.SubmitShortRequest, v1.Void]
+	getExportConfig       *connect.Client[v1.GetExportConfigRequest, v1.GetExportConfigResponse]
+	startExport           *connect.Client[v1.StartExportRequest, v1.StartExportResponse]
+	exportTimedMetadata   *connect.Client[v1.ExportTimedMetadataRequest, v1.Void]
+	getVBExportConfig     *connect.Client[v1.GetVBExportConfigRequest, v1.GetVBExportConfigResponse]
+	startVBExport         *connect.Client[v1.StartVBExportRequest, v1.StartVBExportResponse]
+	getExportDestinations *connect.Client[v1.Void, v1.ExportDestinationsResponse]
 }
 
 // GetPermissions calls api.v1.APIService.GetPermissions.
@@ -361,6 +373,11 @@ func (c *aPIServiceClient) StartVBExport(ctx context.Context, req *connect.Reque
 	return c.startVBExport.CallUnary(ctx, req)
 }
 
+// GetExportDestinations calls api.v1.APIService.GetExportDestinations.
+func (c *aPIServiceClient) GetExportDestinations(ctx context.Context, req *connect.Request[v1.Void]) (*connect.Response[v1.ExportDestinationsResponse], error) {
+	return c.getExportDestinations.CallUnary(ctx, req)
+}
+
 // APIServiceHandler is an implementation of the api.v1.APIService service.
 type APIServiceHandler interface {
 	// Permissions
@@ -388,6 +405,8 @@ type APIServiceHandler interface {
 	// VB Export
 	GetVBExportConfig(context.Context, *connect.Request[v1.GetVBExportConfigRequest]) (*connect.Response[v1.GetVBExportConfigResponse], error)
 	StartVBExport(context.Context, *connect.Request[v1.StartVBExportRequest]) (*connect.Response[v1.StartVBExportResponse], error)
+	// Full destination lists for the admin permission editor
+	GetExportDestinations(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.ExportDestinationsResponse], error)
 }
 
 // NewAPIServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -511,6 +530,12 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(aPIServiceMethods.ByName("StartVBExport")),
 		connect.WithHandlerOptions(opts...),
 	)
+	aPIServiceGetExportDestinationsHandler := connect.NewUnaryHandler(
+		APIServiceGetExportDestinationsProcedure,
+		svc.GetExportDestinations,
+		connect.WithSchema(aPIServiceMethods.ByName("GetExportDestinations")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/api.v1.APIService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case APIServiceGetPermissionsProcedure:
@@ -551,6 +576,8 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceGetVBExportConfigHandler.ServeHTTP(w, r)
 		case APIServiceStartVBExportProcedure:
 			aPIServiceStartVBExportHandler.ServeHTTP(w, r)
+		case APIServiceGetExportDestinationsProcedure:
+			aPIServiceGetExportDestinationsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -634,4 +661,8 @@ func (UnimplementedAPIServiceHandler) GetVBExportConfig(context.Context, *connec
 
 func (UnimplementedAPIServiceHandler) StartVBExport(context.Context, *connect.Request[v1.StartVBExportRequest]) (*connect.Response[v1.StartVBExportResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.StartVBExport is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) GetExportDestinations(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.ExportDestinationsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetExportDestinations is not implemented"))
 }

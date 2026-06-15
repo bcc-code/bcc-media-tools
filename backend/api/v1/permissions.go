@@ -8,11 +8,14 @@ func (p *Permissions) CanUpload() bool {
 		(p.Bmm != nil && (p.Bmm.Admin || (p.Bmm.Languages != nil && len(p.Bmm.Languages) > 0)))
 }
 
-// CanExport reports whether the user may use the export tool at all (global
-// admin, export admin, or at least one allowed destination).
+// CanExport reports whether the user may reach the export tool at all (global
+// admin, export admin, at least one allowed destination, or the dedicated
+// timed-metadata permission). Note: this only gates access to the tool/config;
+// starting a destination export is still authorized per-destination via
+// CanExportTo, and timed metadata via CanExportTimedMetadata.
 func (p *Permissions) CanExport() bool {
 	return p.Admin ||
-		(p.Export != nil && (p.Export.Admin || len(p.Export.Destinations) > 0))
+		(p.Export != nil && (p.Export.Admin || len(p.Export.Destinations) > 0 || p.Export.TimedMetadata))
 }
 
 // CanExportTo reports whether the user may export to a specific destination.
