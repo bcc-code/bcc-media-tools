@@ -1,0 +1,11 @@
+# pnpm 11 requires an explicit build decision per dependency that ships an
+# install/build script. These were all ignored under pnpm 10 and the build works
+# without them, so they stay disabled (false). Set one to true if it ever needs
+# its native/postinstall step to run.
+allowBuilds:
+  '@bufbuild/buf': false
+  '@parcel/watcher': false
+  browser-tabs-lock: false
+  esbuild: false
+  rudder-sdk-js: false
+  vue-demi: false
