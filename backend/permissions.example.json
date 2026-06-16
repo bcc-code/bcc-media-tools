@@ -9,6 +9,21 @@
     "transcription": {
       "admin": true,
       "mediabanken": true
+    },
+    "export": {
+      "admin": true,
+      "destinations": [],
+      "timed_metadata": true
+    },
+    "vb_export": {
+      "admin": true,
+      "destinations": []
+    },
+    "cantemo": {
+      "preview": true,
+      "transcribe": true,
+      "subtitles": true,
+      "relations": true
     }
   }
 }

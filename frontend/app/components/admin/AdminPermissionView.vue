@@ -31,6 +31,12 @@ function withDefaultPermissions(p: Permissions): Permissions {
             timedMetadata: false,
         },
         vbExport: p.vbExport ?? { admin: false, destinations: [] },
+        cantemo: p.cantemo ?? {
+            preview: false,
+            transcribe: false,
+            subtitles: false,
+            relations: false,
+        },
         email: p.email ?? "",
     };
 }
@@ -195,6 +201,31 @@ const isOpen = ref(false);
                                 class="w-full max-w-prose"
                             />
                         </UFormField>
+                    </AdminPermissionViewSection>
+                    <AdminPermissionViewSection
+                        v-if="perms.cantemo"
+                        title="Cantemo"
+                    >
+                        <USwitch
+                            v-model="perms.cantemo.preview"
+                            label="Make preview"
+                            description="Can trigger preview generation"
+                        />
+                        <USwitch
+                            v-model="perms.cantemo.transcribe"
+                            label="Transcribe"
+                            description="Can trigger transcription"
+                        />
+                        <USwitch
+                            v-model="perms.cantemo.subtitles"
+                            label="Update subtitle from Subtrans"
+                            description="Can import subtitles from Subtrans"
+                        />
+                        <USwitch
+                            v-model="perms.cantemo.relations"
+                            label="Update asset relations"
+                            description="Can trigger the asset relations update flow"
+                        />
                     </AdminPermissionViewSection>
                 </motion.div>
             </AnimatePresence>

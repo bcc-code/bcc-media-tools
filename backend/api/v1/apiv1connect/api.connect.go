@@ -87,6 +87,9 @@ const (
 	// APIServiceGetExportDestinationsProcedure is the fully-qualified name of the APIService's
 	// GetExportDestinations RPC.
 	APIServiceGetExportDestinationsProcedure = "/api.v1.APIService/GetExportDestinations"
+	// APIServiceTriggerCantemoActionProcedure is the fully-qualified name of the APIService's
+	// TriggerCantemoAction RPC.
+	APIServiceTriggerCantemoActionProcedure = "/api.v1.APIService/TriggerCantemoAction"
 )
 
 // APIServiceClient is a client for the api.v1.APIService service.
@@ -118,6 +121,8 @@ type APIServiceClient interface {
 	StartVBExport(context.Context, *connect.Request[v1.StartVBExportRequest]) (*connect.Response[v1.StartVBExportResponse], error)
 	// Full destination lists for the admin permission editor
 	GetExportDestinations(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.ExportDestinationsResponse], error)
+	// Cantemo action panel
+	TriggerCantemoAction(context.Context, *connect.Request[v1.TriggerCantemoActionRequest]) (*connect.Response[v1.Void], error)
 }
 
 // NewAPIServiceClient constructs a client for the api.v1.APIService service. By default, it uses
@@ -251,6 +256,12 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(aPIServiceMethods.ByName("GetExportDestinations")),
 			connect.WithClientOptions(opts...),
 		),
+		triggerCantemoAction: connect.NewClient[v1.TriggerCantemoActionRequest, v1.Void](
+			httpClient,
+			baseURL+APIServiceTriggerCantemoActionProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("TriggerCantemoAction")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -276,6 +287,7 @@ type aPIServiceClient struct {
 	getVBExportConfig     *connect.Client[v1.GetVBExportConfigRequest, v1.GetVBExportConfigResponse]
 	startVBExport         *connect.Client[v1.StartVBExportRequest, v1.StartVBExportResponse]
 	getExportDestinations *connect.Client[v1.Void, v1.ExportDestinationsResponse]
+	triggerCantemoAction  *connect.Client[v1.TriggerCantemoActionRequest, v1.Void]
 }
 
 // GetPermissions calls api.v1.APIService.GetPermissions.
@@ -378,6 +390,11 @@ func (c *aPIServiceClient) GetExportDestinations(ctx context.Context, req *conne
 	return c.getExportDestinations.CallUnary(ctx, req)
 }
 
+// TriggerCantemoAction calls api.v1.APIService.TriggerCantemoAction.
+func (c *aPIServiceClient) TriggerCantemoAction(ctx context.Context, req *connect.Request[v1.TriggerCantemoActionRequest]) (*connect.Response[v1.Void], error) {
+	return c.triggerCantemoAction.CallUnary(ctx, req)
+}
+
 // APIServiceHandler is an implementation of the api.v1.APIService service.
 type APIServiceHandler interface {
 	// Permissions
@@ -407,6 +424,8 @@ type APIServiceHandler interface {
 	StartVBExport(context.Context, *connect.Request[v1.StartVBExportRequest]) (*connect.Response[v1.StartVBExportResponse], error)
 	// Full destination lists for the admin permission editor
 	GetExportDestinations(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.ExportDestinationsResponse], error)
+	// Cantemo action panel
+	TriggerCantemoAction(context.Context, *connect.Request[v1.TriggerCantemoActionRequest]) (*connect.Response[v1.Void], error)
 }
 
 // NewAPIServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -536,6 +555,12 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(aPIServiceMethods.ByName("GetExportDestinations")),
 		connect.WithHandlerOptions(opts...),
 	)
+	aPIServiceTriggerCantemoActionHandler := connect.NewUnaryHandler(
+		APIServiceTriggerCantemoActionProcedure,
+		svc.TriggerCantemoAction,
+		connect.WithSchema(aPIServiceMethods.ByName("TriggerCantemoAction")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/api.v1.APIService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case APIServiceGetPermissionsProcedure:
@@ -578,6 +603,8 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceStartVBExportHandler.ServeHTTP(w, r)
 		case APIServiceGetExportDestinationsProcedure:
 			aPIServiceGetExportDestinationsHandler.ServeHTTP(w, r)
+		case APIServiceTriggerCantemoActionProcedure:
+			aPIServiceTriggerCantemoActionHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -665,4 +692,8 @@ func (UnimplementedAPIServiceHandler) StartVBExport(context.Context, *connect.Re
 
 func (UnimplementedAPIServiceHandler) GetExportDestinations(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.ExportDestinationsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetExportDestinations is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) TriggerCantemoAction(context.Context, *connect.Request[v1.TriggerCantemoActionRequest]) (*connect.Response[v1.Void], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.TriggerCantemoAction is not implemented"))
 }

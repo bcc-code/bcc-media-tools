@@ -148,6 +148,7 @@ func PermissionsForEmail(email string) *apiv1.Permissions {
 			Destinations: make([]string, 0),
 			Admin:        false,
 		},
+		Cantemo: &apiv1.CantemoPermission{},
 	}
 }
 

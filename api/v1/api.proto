@@ -36,6 +36,19 @@ message VBExportPermission {
   bool admin = 2;
 }
 
+// Permissions for the Cantemo action panel (the workflow-trigger chips).
+// The two export chips reuse ExportPermission / VBExportPermission.
+message CantemoPermission {
+  // can trigger preview generation ("Make preview")
+  bool preview = 1;
+  // can trigger transcription ("Transcribe")
+  bool transcribe = 2;
+  // can update subtitles from Subtrans ("Update subtitle from Subtrans")
+  bool subtitles = 3;
+  // can update asset relations ("Update asset relations")
+  bool relations = 4;
+}
+
 message Permissions {
 	bool admin = 1;
 	BMMPermission bmm = 2;
@@ -43,6 +56,7 @@ message Permissions {
   TranscriptionPermission transcription = 4;
   ExportPermission export = 5;
   VBExportPermission vb_export = 6;
+  CantemoPermission cantemo = 7;
 }
 
 message GetPermissionsRequest {}
@@ -292,6 +306,21 @@ message ExportDestinationsResponse {
   repeated string vb = 2;
 }
 
+// ---- Cantemo action panel ----
+
+enum CantemoAction {
+  CANTEMO_ACTION_UNSPECIFIED = 0;
+  CANTEMO_ACTION_PREVIEW = 1;
+  CANTEMO_ACTION_TRANSCRIBE = 2;
+  CANTEMO_ACTION_SUBTITLE_FROM_SUBTRANS = 3;
+  CANTEMO_ACTION_UPDATE_RELATIONS = 4;
+}
+
+message TriggerCantemoActionRequest {
+  string VXID = 1;
+  CantemoAction action = 2;
+}
+
 service APIService {
 	// Permissions
 	rpc GetPermissions (Void) returns (Permissions) {}
@@ -326,4 +355,7 @@ service APIService {
 
   // Full destination lists for the admin permission editor
   rpc GetExportDestinations(Void) returns (ExportDestinationsResponse) {}
+
+  // Cantemo action panel
+  rpc TriggerCantemoAction(TriggerCantemoActionRequest) returns (Void) {}
 }

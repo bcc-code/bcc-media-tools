@@ -43,3 +43,23 @@ func (p *Permissions) CanVBExportTo(destination string) bool {
 	return p.Admin ||
 		(p.VbExport != nil && (p.VbExport.Admin || slices.Contains(p.VbExport.Destinations, destination)))
 }
+
+// CanCantemoPreview reports whether the user may trigger preview generation.
+func (p *Permissions) CanCantemoPreview() bool {
+	return p.Admin || (p.Cantemo != nil && p.Cantemo.Preview)
+}
+
+// CanCantemoTranscribe reports whether the user may trigger transcription.
+func (p *Permissions) CanCantemoTranscribe() bool {
+	return p.Admin || (p.Cantemo != nil && p.Cantemo.Transcribe)
+}
+
+// CanCantemoSubtitles reports whether the user may update subtitles from Subtrans.
+func (p *Permissions) CanCantemoSubtitles() bool {
+	return p.Admin || (p.Cantemo != nil && p.Cantemo.Subtitles)
+}
+
+// CanCantemoRelations reports whether the user may update asset relations.
+func (p *Permissions) CanCantemoRelations() bool {
+	return p.Admin || (p.Cantemo != nil && p.Cantemo.Relations)
+}

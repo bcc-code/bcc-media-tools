@@ -53,6 +53,7 @@ type ApiServer struct {
 	TranscriptionAPI
 	ShortsAPI
 	ExportAPI
+	CantemoAPI
 }
 
 func withCORS(connectHandler http.Handler) http.Handler {
@@ -119,6 +120,7 @@ func main() {
 	transcriptionAPI := NewTranscriptionAPI(os.Getenv("CANTEMO_URL"), os.Getenv("CANTEMO_TOKEN"), temporalClient)
 	shortsAPI := NewShortsAPI(temporalClient)
 	exportAPI := NewExportAPI(vidispineClient, temporalClient)
+	cantemoAPI := NewCantemoAPI(temporalClient)
 
 	api := &ApiServer{
 		PermissionsAPI:   permissionsApi,
@@ -126,6 +128,7 @@ func main() {
 		TranscriptionAPI: *transcriptionAPI,
 		ShortsAPI:        *shortsAPI,
 		ExportAPI:        *exportAPI,
+		CantemoAPI:       *cantemoAPI,
 	}
 
 	if os.Getenv("STATIC_FILE_PATH") != "" {
