@@ -28,24 +28,24 @@ const { t } = useI18n();
 
 const pasteText = ref("");
 const resolving = ref(false);
-const resolved = ref<AssetRef[]>(props.initialAssets ?? []);
-const removedIds = ref<Set<string>>(new Set());
+const assets = ref<AssetRef[]>(props.initialAssets ?? []);
 
-const parsedIds = computed(() => extractVXIDs(pasteText.value));
-
-// Resolve titles whenever the pasted set of ids changes (bulk mode only).
+// Absorb pasted text into the asset list: extract VX-ids, resolve the ones not
+// already listed, append them, then clear the box (so the next paste is a fresh
+// batch). Clearing re-fires the watcher with empty text, which is a no-op.
 watchDebounced(
-    parsedIds,
-    async (ids) => {
+    pasteText,
+    async (text) => {
         if (!props.bulkMode || !props.resolveTitles) return;
-        removedIds.value = new Set();
-        if (ids.length === 0) {
-            resolved.value = [];
-            return;
-        }
+        const ids = extractVXIDs(text);
+        if (ids.length === 0) return;
+        pasteText.value = "";
+        const existing = new Set(assets.value.map((a) => a.vxId));
+        const fresh = ids.filter((id) => !existing.has(id));
+        if (fresh.length === 0) return;
         resolving.value = true;
         try {
-            resolved.value = await props.resolveTitles(ids);
+            assets.value = [...assets.value, ...(await props.resolveTitles(fresh))];
         } finally {
             resolving.value = false;
         }
@@ -58,17 +58,12 @@ watch(
     () => props.initialAssets,
     (a) => {
         if (props.bulkMode) return;
-        resolved.value = a ?? [];
-        removedIds.value = new Set();
+        assets.value = a ?? [];
     },
 );
 
-const assets = computed(() =>
-    resolved.value.filter((a) => !removedIds.value.has(a.vxId)),
-);
-
 function removeAsset(vxId: string) {
-    removedIds.value = new Set(removedIds.value).add(vxId);
+    assets.value = assets.value.filter((a) => a.vxId !== vxId);
 }
 
 /* ------------------------------------------------------------------ state --- */
@@ -202,15 +197,8 @@ function startExport() {
                     {{ $t("export.bulkDetected", { n: assets.length }) }}
                 </span>
             </div>
-            <div v-if="resolving" class="space-y-2">
-                <USkeleton class="h-9 w-full" />
-                <USkeleton class="h-9 w-full" />
-            </div>
-            <p v-else-if="assets.length === 0" class="text-muted text-xs">
-                {{ $t("export.bulkNoIds") }}
-            </p>
             <ul
-                v-else
+                v-if="assets.length > 0"
                 class="border-default divide-default divide-y rounded-md border"
             >
                 <li
@@ -236,6 +224,15 @@ function startExport() {
                     />
                 </li>
             </ul>
+            <div v-if="resolving" class="space-y-2">
+                <USkeleton class="h-9 w-full" />
+            </div>
+            <p
+                v-else-if="bulkMode && assets.length === 0"
+                class="text-muted text-xs"
+            >
+                {{ $t("export.bulkNoIds") }}
+            </p>
         </section>
 
         <div class="space-y-6">
