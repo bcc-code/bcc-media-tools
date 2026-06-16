@@ -1,18 +1,75 @@
 <script setup lang="ts">
 import type { GetExportConfigResponse } from "~~/src/gen/api/v1/api_pb";
 import type { ExportSelection } from "~/components/export/types";
+import type { AssetRef } from "~/utils/vxids";
 
 const props = defineProps<{
     config: GetExportConfigResponse;
     submitting?: boolean;
+    // Bulk mode: no asset preselected; the user pastes text to detect VX-ids.
+    bulkMode?: boolean;
+    // Assets to export (single asset, or the resolved bulk list).
+    initialAssets?: AssetRef[];
+    // Resolves pasted VX-ids to titles (bulk mode only).
+    resolveTitles?: (ids: string[]) => Promise<AssetRef[]>;
 }>();
 
 const emit = defineEmits<{
-    (e: "start-export", payload: ExportSelection): void;
+    (
+        e: "start-export",
+        payload: { vxIds: string[]; selection: ExportSelection },
+    ): void;
     (e: "export-timed-metadata"): void;
 }>();
 
 const { t } = useI18n();
+
+/* ----------------------------------------------------------- asset list --- */
+
+const pasteText = ref("");
+const resolving = ref(false);
+const resolved = ref<AssetRef[]>(props.initialAssets ?? []);
+const removedIds = ref<Set<string>>(new Set());
+
+const parsedIds = computed(() => extractVXIDs(pasteText.value));
+
+// Resolve titles whenever the pasted set of ids changes (bulk mode only).
+watchDebounced(
+    parsedIds,
+    async (ids) => {
+        if (!props.bulkMode || !props.resolveTitles) return;
+        removedIds.value = new Set();
+        if (ids.length === 0) {
+            resolved.value = [];
+            return;
+        }
+        resolving.value = true;
+        try {
+            resolved.value = await props.resolveTitles(ids);
+        } finally {
+            resolving.value = false;
+        }
+    },
+    { debounce: 400 },
+);
+
+// Keep the list in sync when the selected asset changes (single mode).
+watch(
+    () => props.initialAssets,
+    (a) => {
+        if (props.bulkMode) return;
+        resolved.value = a ?? [];
+        removedIds.value = new Set();
+    },
+);
+
+const assets = computed(() =>
+    resolved.value.filter((a) => !removedIds.value.has(a.vxId)),
+);
+
+function removeAsset(vxId: string) {
+    removedIds.value = new Set(removedIds.value).add(vxId);
+}
 
 /* ------------------------------------------------------------------ state --- */
 
@@ -89,38 +146,97 @@ const selectMU2 = () =>
 
 function startExport() {
     emit("start-export", {
-        destinations: props.config.destinations.filter((d) => destChecked[d]),
-        audioSource: audioSource.value,
-        languages: props.config.languages
-            .filter((l) => langChecked[l.code])
-            .map((l) => l.code),
-        resolutions: resolutions
-            .filter((r) => r.enabled)
-            .map((r) => ({
-                width: r.width,
-                height: r.height,
-                downloadable: r.downloadable,
-            })),
-        overlay: overlay.value,
-        withChapters: withChapters.value,
-        ignoreSilence: ignoreSilence.value,
-        exportAiSubs: exportAiSubs.value,
-        subclips: props.config.subclips
-            .filter((s) => subclipChecked[s.title])
-            .map((s) => s.title),
+        vxIds: assets.value.map((a) => a.vxId),
+        selection: {
+            destinations: props.config.destinations.filter((d) => destChecked[d]),
+            audioSource: audioSource.value,
+            languages: props.config.languages
+                .filter((l) => langChecked[l.code])
+                .map((l) => l.code),
+            resolutions: resolutions
+                .filter((r) => r.enabled)
+                .map((r) => ({
+                    width: r.width,
+                    height: r.height,
+                    downloadable: r.downloadable,
+                })),
+            overlay: overlay.value,
+            withChapters: withChapters.value,
+            ignoreSilence: ignoreSilence.value,
+            exportAiSubs: exportAiSubs.value,
+            // Subclips are per-asset; not applicable to bulk export.
+            subclips: props.bulkMode
+                ? []
+                : props.config.subclips
+                      .filter((s) => subclipChecked[s.title])
+                      .map((s) => s.title),
+        },
     });
 }
 </script>
 
 <template>
     <div class="mx-auto w-full max-w-3xl px-6 py-8">
-        <!-- Title -->
-        <h1 class="text-highlighted mb-6 text-center text-2xl font-semibold tracking-tight">
-            <span class="font-mono">{{ config.VXID }}</span>
-            <span v-if="config.title" class="text-muted">
-                {{ config.title }}</span
+        <!-- Bulk paste: detect VX-ids from arbitrary text -->
+        <section v-if="bulkMode" class="mb-6 space-y-2">
+            <h3 class="text-highlighted text-sm font-semibold">
+                {{ $t("export.bulkTitle") }}
+            </h3>
+            <p class="text-muted text-xs">{{ $t("export.bulkHint") }}</p>
+            <UTextarea
+                v-model="pasteText"
+                :rows="4"
+                autoresize
+                :placeholder="$t('export.bulkPlaceholder')"
+                class="w-full"
+            />
+        </section>
+
+        <!-- Assets to export -->
+        <section class="mb-6 space-y-2">
+            <div class="flex items-center justify-between gap-2">
+                <h3 class="text-highlighted text-sm font-semibold">
+                    {{ $t("export.assets") }}
+                </h3>
+                <span class="text-muted text-xs">
+                    {{ $t("export.bulkDetected", { n: assets.length }) }}
+                </span>
+            </div>
+            <div v-if="resolving" class="space-y-2">
+                <USkeleton class="h-9 w-full" />
+                <USkeleton class="h-9 w-full" />
+            </div>
+            <p v-else-if="assets.length === 0" class="text-muted text-xs">
+                {{ $t("export.bulkNoIds") }}
+            </p>
+            <ul
+                v-else
+                class="border-default divide-default divide-y rounded-md border"
             >
-        </h1>
+                <li
+                    v-for="a in assets"
+                    :key="a.vxId"
+                    class="flex items-center gap-3 px-3 py-2"
+                >
+                    <span class="font-mono text-sm">{{ a.vxId }}</span>
+                    <span class="text-muted truncate text-sm">
+                        <template v-if="a.found === false">
+                            {{ $t("export.assetNotFound") }}
+                        </template>
+                        <template v-else>{{ a.title }}</template>
+                    </span>
+                    <UButton
+                        class="ml-auto"
+                        icon="tabler:x"
+                        color="neutral"
+                        variant="ghost"
+                        size="xs"
+                        :aria-label="$t('export.remove')"
+                        @click="removeAsset(a.vxId)"
+                    />
+                </li>
+            </ul>
+        </section>
 
         <div class="space-y-6">
             <!-- Alternative actions -->
@@ -184,8 +300,8 @@ function startExport() {
                 />
             </UFormField>
 
-            <!-- Subclips -->
-            <section class="space-y-2">
+            <!-- Subclips (per-asset; hidden in bulk mode) -->
+            <section v-if="!bulkMode" class="space-y-2">
                 <h3 class="text-highlighted text-sm font-semibold">
                     {{ $t("export.subclips") }}
                 </h3>
@@ -330,10 +446,10 @@ function startExport() {
                 size="lg"
                 icon="tabler:file-export"
                 :loading="submitting"
-                :disabled="selectedDestCount === 0"
+                :disabled="selectedDestCount === 0 || assets.length === 0"
                 @click="startExport"
             >
-                {{ $t("export.startExport") }}
+                {{ bulkMode ? $t("export.bulkStart") : $t("export.startExport") }}
             </UButton>
         </div>
     </div>

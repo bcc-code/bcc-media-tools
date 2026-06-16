@@ -78,6 +78,9 @@ const (
 	// APIServiceExportTimedMetadataProcedure is the fully-qualified name of the APIService's
 	// ExportTimedMetadata RPC.
 	APIServiceExportTimedMetadataProcedure = "/api.v1.APIService/ExportTimedMetadata"
+	// APIServiceResolveAssetsProcedure is the fully-qualified name of the APIService's ResolveAssets
+	// RPC.
+	APIServiceResolveAssetsProcedure = "/api.v1.APIService/ResolveAssets"
 	// APIServiceGetVBExportConfigProcedure is the fully-qualified name of the APIService's
 	// GetVBExportConfig RPC.
 	APIServiceGetVBExportConfigProcedure = "/api.v1.APIService/GetVBExportConfig"
@@ -116,6 +119,8 @@ type APIServiceClient interface {
 	GetExportConfig(context.Context, *connect.Request[v1.GetExportConfigRequest]) (*connect.Response[v1.GetExportConfigResponse], error)
 	StartExport(context.Context, *connect.Request[v1.StartExportRequest]) (*connect.Response[v1.StartExportResponse], error)
 	ExportTimedMetadata(context.Context, *connect.Request[v1.ExportTimedMetadataRequest]) (*connect.Response[v1.Void], error)
+	// Resolve VX-ids to titles for the bulk-export asset list
+	ResolveAssets(context.Context, *connect.Request[v1.ResolveAssetsRequest]) (*connect.Response[v1.ResolveAssetsResponse], error)
 	// VB Export
 	GetVBExportConfig(context.Context, *connect.Request[v1.GetVBExportConfigRequest]) (*connect.Response[v1.GetVBExportConfigResponse], error)
 	StartVBExport(context.Context, *connect.Request[v1.StartVBExportRequest]) (*connect.Response[v1.StartVBExportResponse], error)
@@ -238,6 +243,12 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(aPIServiceMethods.ByName("ExportTimedMetadata")),
 			connect.WithClientOptions(opts...),
 		),
+		resolveAssets: connect.NewClient[v1.ResolveAssetsRequest, v1.ResolveAssetsResponse](
+			httpClient,
+			baseURL+APIServiceResolveAssetsProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("ResolveAssets")),
+			connect.WithClientOptions(opts...),
+		),
 		getVBExportConfig: connect.NewClient[v1.GetVBExportConfigRequest, v1.GetVBExportConfigResponse](
 			httpClient,
 			baseURL+APIServiceGetVBExportConfigProcedure,
@@ -284,6 +295,7 @@ type aPIServiceClient struct {
 	getExportConfig       *connect.Client[v1.GetExportConfigRequest, v1.GetExportConfigResponse]
 	startExport           *connect.Client[v1.StartExportRequest, v1.StartExportResponse]
 	exportTimedMetadata   *connect.Client[v1.ExportTimedMetadataRequest, v1.Void]
+	resolveAssets         *connect.Client[v1.ResolveAssetsRequest, v1.ResolveAssetsResponse]
 	getVBExportConfig     *connect.Client[v1.GetVBExportConfigRequest, v1.GetVBExportConfigResponse]
 	startVBExport         *connect.Client[v1.StartVBExportRequest, v1.StartVBExportResponse]
 	getExportDestinations *connect.Client[v1.Void, v1.ExportDestinationsResponse]
@@ -375,6 +387,11 @@ func (c *aPIServiceClient) ExportTimedMetadata(ctx context.Context, req *connect
 	return c.exportTimedMetadata.CallUnary(ctx, req)
 }
 
+// ResolveAssets calls api.v1.APIService.ResolveAssets.
+func (c *aPIServiceClient) ResolveAssets(ctx context.Context, req *connect.Request[v1.ResolveAssetsRequest]) (*connect.Response[v1.ResolveAssetsResponse], error) {
+	return c.resolveAssets.CallUnary(ctx, req)
+}
+
 // GetVBExportConfig calls api.v1.APIService.GetVBExportConfig.
 func (c *aPIServiceClient) GetVBExportConfig(ctx context.Context, req *connect.Request[v1.GetVBExportConfigRequest]) (*connect.Response[v1.GetVBExportConfigResponse], error) {
 	return c.getVBExportConfig.CallUnary(ctx, req)
@@ -419,6 +436,8 @@ type APIServiceHandler interface {
 	GetExportConfig(context.Context, *connect.Request[v1.GetExportConfigRequest]) (*connect.Response[v1.GetExportConfigResponse], error)
 	StartExport(context.Context, *connect.Request[v1.StartExportRequest]) (*connect.Response[v1.StartExportResponse], error)
 	ExportTimedMetadata(context.Context, *connect.Request[v1.ExportTimedMetadataRequest]) (*connect.Response[v1.Void], error)
+	// Resolve VX-ids to titles for the bulk-export asset list
+	ResolveAssets(context.Context, *connect.Request[v1.ResolveAssetsRequest]) (*connect.Response[v1.ResolveAssetsResponse], error)
 	// VB Export
 	GetVBExportConfig(context.Context, *connect.Request[v1.GetVBExportConfigRequest]) (*connect.Response[v1.GetVBExportConfigResponse], error)
 	StartVBExport(context.Context, *connect.Request[v1.StartVBExportRequest]) (*connect.Response[v1.StartVBExportResponse], error)
@@ -537,6 +556,12 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(aPIServiceMethods.ByName("ExportTimedMetadata")),
 		connect.WithHandlerOptions(opts...),
 	)
+	aPIServiceResolveAssetsHandler := connect.NewUnaryHandler(
+		APIServiceResolveAssetsProcedure,
+		svc.ResolveAssets,
+		connect.WithSchema(aPIServiceMethods.ByName("ResolveAssets")),
+		connect.WithHandlerOptions(opts...),
+	)
 	aPIServiceGetVBExportConfigHandler := connect.NewUnaryHandler(
 		APIServiceGetVBExportConfigProcedure,
 		svc.GetVBExportConfig,
@@ -597,6 +622,8 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceStartExportHandler.ServeHTTP(w, r)
 		case APIServiceExportTimedMetadataProcedure:
 			aPIServiceExportTimedMetadataHandler.ServeHTTP(w, r)
+		case APIServiceResolveAssetsProcedure:
+			aPIServiceResolveAssetsHandler.ServeHTTP(w, r)
 		case APIServiceGetVBExportConfigProcedure:
 			aPIServiceGetVBExportConfigHandler.ServeHTTP(w, r)
 		case APIServiceStartVBExportProcedure:
@@ -680,6 +707,10 @@ func (UnimplementedAPIServiceHandler) StartExport(context.Context, *connect.Requ
 
 func (UnimplementedAPIServiceHandler) ExportTimedMetadata(context.Context, *connect.Request[v1.ExportTimedMetadataRequest]) (*connect.Response[v1.Void], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.ExportTimedMetadata is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) ResolveAssets(context.Context, *connect.Request[v1.ResolveAssetsRequest]) (*connect.Response[v1.ResolveAssetsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.ResolveAssets is not implemented"))
 }
 
 func (UnimplementedAPIServiceHandler) GetVBExportConfig(context.Context, *connect.Request[v1.GetVBExportConfigRequest]) (*connect.Response[v1.GetVBExportConfigResponse], error) {

@@ -32,10 +32,24 @@ func (p *Permissions) CanExportTimedMetadata() bool {
 		(p.Export != nil && (p.Export.Admin || p.Export.TimedMetadata))
 }
 
+// CanBulkExport reports whether the user may use the bulk export flow (paste a
+// list of VX-ids and export them all). This is a dedicated permission, not
+// implied by general export access.
+func (p *Permissions) CanBulkExport() bool {
+	return p.Admin ||
+		(p.Export != nil && p.Export.BulkExport)
+}
+
 // CanVBExport reports whether the user may use the VB export tool at all.
 func (p *Permissions) CanVBExport() bool {
 	return p.Admin ||
 		(p.VbExport != nil && (p.VbExport.Admin || len(p.VbExport.Destinations) > 0))
+}
+
+// CanBulkVBExport reports whether the user may use the bulk VB export flow.
+func (p *Permissions) CanBulkVBExport() bool {
+	return p.Admin ||
+		(p.VbExport != nil && p.VbExport.BulkExport)
 }
 
 // CanVBExportTo reports whether the user may VB-export to a specific destination.

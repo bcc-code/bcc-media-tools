@@ -29,8 +29,13 @@ function withDefaultPermissions(p: Permissions): Permissions {
             admin: false,
             destinations: [],
             timedMetadata: false,
+            bulkExport: false,
         },
-        vbExport: p.vbExport ?? { admin: false, destinations: [] },
+        vbExport: p.vbExport ?? {
+            admin: false,
+            destinations: [],
+            bulkExport: false,
+        },
         cantemo: p.cantemo ?? {
             preview: false,
             transcribe: false,
@@ -183,6 +188,11 @@ const isOpen = ref(false);
                             label="Timed metadata export"
                             description="Can trigger the timed metadata (VOD) export"
                         />
+                        <USwitch
+                            v-model="perms.export.bulkExport"
+                            label="Bulk export"
+                            description="Can paste a list of VX-ids and export them in bulk"
+                        />
                     </AdminPermissionViewSection>
                     <AdminPermissionViewSection
                         v-if="perms.vbExport"
@@ -201,6 +211,11 @@ const isOpen = ref(false);
                                 class="w-full max-w-prose"
                             />
                         </UFormField>
+                        <USwitch
+                            v-model="perms.vbExport.bulkExport"
+                            label="Bulk export"
+                            description="Can paste a list of VX-ids and VB-export them in bulk"
+                        />
                     </AdminPermissionViewSection>
                     <AdminPermissionViewSection
                         v-if="perms.cantemo"

@@ -38,8 +38,11 @@ export function useTools() {
 			icon: "tabler:broadcast",
 			description: t("tools.vbExport.description"),
 			to: "/vb-export/",
-			// Not advertised in the menu generally; only shown while on the page.
-			enabled: route.path.startsWith("/vb-export"),
+			// Shown when the user has access to any VB destination (or is on the page).
+			enabled:
+				me.value?.admin ||
+				(me.value?.vbExport && (me.value.vbExport.destinations.length > 0 || me.value.vbExport.admin)) ||
+				route.path.startsWith("/vb-export"),
 		},
 		{
 			label: 'Shorts generation',

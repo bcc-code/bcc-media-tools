@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ExportSelection } from "~/components/export/types";
+import type { AssetRef } from "~/utils/vxids";
 
 useHead({
     title: "Export",
@@ -11,6 +12,13 @@ const vxId = computed(() => route.query.id?.toString());
 const api = useAPI();
 const toast = useToast();
 const { t } = useI18n();
+const { me } = useMe();
+
+// Users with the bulkExport permission get the bulk paste form on the empty
+// (no-id) state.
+const canBulk = computed(
+    () => !!(me.value?.admin || me.value?.export?.bulkExport),
+);
 
 const {
     data: config,
@@ -22,39 +30,70 @@ const {
     { watch: [vxId], immediate: !!vxId.value },
 );
 
+// Asset-independent config for bulk export (loaded lazily when allowed).
+const {
+    data: bulkConfig,
+    status: bulkStatus,
+    error: bulkError,
+    execute: loadBulkConfig,
+} = useAsyncData("export-bulk-config", () => api.getExportConfig({ VXID: "" }), {
+    immediate: false,
+});
+
+watch(
+    [canBulk, vxId],
+    ([can, id]) => {
+        if (can && !id && !bulkConfig.value) loadBulkConfig();
+    },
+    { immediate: true },
+);
+
+// Resolve pasted VX-ids to titles for the bulk asset list.
+async function resolveTitles(ids: string[]): Promise<AssetRef[]> {
+    const res = await api.resolveAssets({ VXIDs: ids });
+    return res.assets.map((a) => ({
+        vxId: a.VXID,
+        title: a.title,
+        found: a.found,
+    }));
+}
+
 const submitting = ref(false);
 
-async function onStartExport(payload: ExportSelection) {
-    if (!vxId.value) return;
+async function onStartExport({
+    vxIds,
+    selection,
+}: {
+    vxIds: string[];
+    selection: ExportSelection;
+}) {
+    if (vxIds.length === 0) return;
     submitting.value = true;
+    const failed: string[] = [];
     try {
-        const res = await api.startExport({
-            VXID: vxId.value,
-            destinations: payload.destinations,
-            audioSource: payload.audioSource,
-            languages: payload.languages,
-            resolutions: payload.resolutions,
-            overlay: payload.overlay,
-            withChapters: payload.withChapters,
-            ignoreSilence: payload.ignoreSilence,
-            exportAiSubs: payload.exportAiSubs,
-            subclips: payload.subclips,
-        });
-        toast.add({
-            icon: "tabler:check",
-            title: t("export.exportStarted"),
-            description: t("export.exportStartedCount", {
-                n: res.workflowIds.length,
-            }),
-            color: "success",
-        });
-    } catch (err) {
-        toast.add({
-            icon: "tabler:alert-triangle",
-            title: t("export.exportFailed"),
-            description: (err as Error)?.message,
-            color: "error",
-        });
+        for (const id of vxIds) {
+            try {
+                await api.startExport({ VXID: id, ...selection });
+            } catch {
+                failed.push(id);
+            }
+        }
+        const started = vxIds.length - failed.length;
+        if (failed.length === 0) {
+            toast.add({
+                icon: "tabler:check",
+                title: t("export.exportStarted"),
+                description: t("export.bulkStartedCount", { n: started }),
+                color: "success",
+            });
+        } else {
+            toast.add({
+                icon: "tabler:alert-triangle",
+                title: t("export.exportStarted"),
+                description: `${t("export.bulkStartedCount", { n: started })} · ${t("export.bulkFailedCount", { n: failed.length })}`,
+                color: started === 0 ? "error" : "warning",
+            });
+        }
     } finally {
         submitting.value = false;
     }
@@ -117,6 +156,7 @@ const triggers: Trigger[] = [
         <ExportForm
             v-if="status === 'success' && config"
             :config="config"
+            :initial-assets="[{ vxId: config.VXID, title: config.title }]"
             :submitting="submitting"
             @start-export="onStartExport"
             @export-timed-metadata="onExportTimedMetadata"
@@ -143,29 +183,66 @@ const triggers: Trigger[] = [
         </div>
     </div>
 
-    <!-- No asset: explain how to open the tool + keep external trigger links -->
-    <div v-else class="mx-auto flex w-full max-w-2xl flex-col p-4">
-        <div class="my-8">
-            <h1 class="text-2xl font-bold">{{ $t("export.title") }}</h1>
-            <p class="text-muted">{{ $t("export.openFromMediabanken") }}</p>
-        </div>
-        <div class="flex flex-col gap-4">
-            <NuxtLink
-                v-for="trigger in triggers"
-                :key="trigger.id"
-                :to="trigger.url"
-                external
+    <!-- No asset: bulk export (if permitted) + how to open the tool + links -->
+    <div v-else>
+        <template v-if="canBulk">
+            <ExportForm
+                v-if="bulkStatus === 'success' && bulkConfig"
+                :config="bulkConfig"
+                bulk-mode
+                :resolve-titles="resolveTitles"
+                :submitting="submitting"
+                @start-export="onStartExport"
+            />
+            <div
+                v-else-if="bulkStatus === 'error'"
+                class="mx-auto flex w-full max-w-3xl flex-col items-center gap-4 p-8"
             >
-                <UCard>
-                    <div class="flex items-center justify-between gap-2">
-                        <p>{{ trigger.name }}</p>
-                        <Icon name="heroicons:arrow-right" class="text-muted" />
-                    </div>
-                    <p v-if="trigger.description" class="text-dimmed text-sm">
-                        {{ trigger.description }}
-                    </p>
-                </UCard>
-            </NuxtLink>
+                <UIcon
+                    name="tabler:alert-triangle"
+                    class="text-dimmed size-10"
+                />
+                <p class="text-muted text-center">
+                    {{ bulkError?.message ?? $t("export.loadFailed") }}
+                </p>
+            </div>
+            <div v-else class="mx-auto w-full max-w-3xl space-y-4 p-8">
+                <USkeleton class="h-24 w-full" />
+                <USkeleton class="h-40 w-full" />
+            </div>
+        </template>
+
+        <div class="mx-auto flex w-full max-w-2xl flex-col p-4">
+            <div class="my-8">
+                <h1 class="text-2xl font-bold">{{ $t("export.title") }}</h1>
+                <p class="text-muted">
+                    {{ $t("export.openFromMediabanken") }}
+                </p>
+            </div>
+            <div class="flex flex-col gap-4">
+                <NuxtLink
+                    v-for="trigger in triggers"
+                    :key="trigger.id"
+                    :to="trigger.url"
+                    external
+                >
+                    <UCard>
+                        <div class="flex items-center justify-between gap-2">
+                            <p>{{ trigger.name }}</p>
+                            <Icon
+                                name="heroicons:arrow-right"
+                                class="text-muted"
+                            />
+                        </div>
+                        <p
+                            v-if="trigger.description"
+                            class="text-dimmed text-sm"
+                        >
+                            {{ trigger.description }}
+                        </p>
+                    </UCard>
+                </NuxtLink>
+            </div>
         </div>
     </div>
 </template>

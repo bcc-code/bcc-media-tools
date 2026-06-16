@@ -27,6 +27,8 @@ message ExportPermission {
   bool admin = 2;
   // can trigger the (VOD-affecting) timed metadata export
   bool timed_metadata = 3;
+  // can paste a list of VX-ids and export them in bulk (without opening an asset)
+  bool bulk_export = 4;
 }
 
 message VBExportPermission {
@@ -34,6 +36,8 @@ message VBExportPermission {
   repeated string destinations = 1;
   // admin can export to all destinations
   bool admin = 2;
+  // can paste a list of VX-ids and VB-export them in bulk (without opening an asset)
+  bool bulk_export = 3;
 }
 
 // Permissions for the Cantemo action panel (the workflow-trigger chips).
@@ -306,6 +310,22 @@ message ExportDestinationsResponse {
   repeated string vb = 2;
 }
 
+// Resolve a list of VX-ids to their titles for the bulk-export asset list.
+message ResolveAssetsRequest {
+  repeated string VXIDs = 1;
+}
+
+message ResolvedAsset {
+  string VXID = 1;
+  string title = 2;
+  // false if the asset metadata could not be fetched (unknown / inaccessible id)
+  bool found = 3;
+}
+
+message ResolveAssetsResponse {
+  repeated ResolvedAsset assets = 1;
+}
+
 // ---- Cantemo action panel ----
 
 enum CantemoAction {
@@ -348,6 +368,8 @@ service APIService {
   rpc GetExportConfig(GetExportConfigRequest) returns (GetExportConfigResponse) {}
   rpc StartExport(StartExportRequest) returns (StartExportResponse) {}
   rpc ExportTimedMetadata(ExportTimedMetadataRequest) returns (Void) {}
+  // Resolve VX-ids to titles for the bulk-export asset list
+  rpc ResolveAssets(ResolveAssetsRequest) returns (ResolveAssetsResponse) {}
 
   // VB Export
   rpc GetVBExportConfig(GetVBExportConfigRequest) returns (GetVBExportConfigResponse) {}

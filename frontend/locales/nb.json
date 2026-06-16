@@ -109,7 +109,18 @@
         "exportStarted": "Eksport startet",
         "exportStartedCount": "Startet {n} arbeidsflyt(er)",
         "timedMetadataStarted": "Eksport av tidsbestemt metadata startet",
-        "exportFailed": "Eksport kunne ikke startes"
+        "exportFailed": "Eksport kunne ikke startes",
+        "assets": "Elementer å eksportere",
+        "remove": "Fjern",
+        "assetNotFound": "Ikke funnet",
+        "bulkTitle": "Masseeksport",
+        "bulkHint": "Lim inn tekst som inneholder VX-id-er — de oppdages automatisk.",
+        "bulkPlaceholder": "Lim inn tekst med VX-123456, VX-234567 …",
+        "bulkDetected": "{n} valgt",
+        "bulkNoIds": "Ingen VX-id-er oppdaget ennå",
+        "bulkStart": "Start masseeksport",
+        "bulkStartedCount": "Startet eksport for {n} element(er)",
+        "bulkFailedCount": "{n} feilet"
     },
     "vbExport": {
         "title": "VB-eksport",
@@ -121,7 +132,18 @@
         "subtitlesBurnInStyle": "Stil for innbrenning av undertekster",
         "startExport": "Start eksport",
         "exportStarted": "Eksport startet",
-        "exportFailed": "Eksport kunne ikke startes"
+        "exportFailed": "Eksport kunne ikke startes",
+        "assets": "Elementer å eksportere",
+        "remove": "Fjern",
+        "assetNotFound": "Ikke funnet",
+        "bulkTitle": "Masseeksport",
+        "bulkHint": "Lim inn tekst som inneholder VX-id-er — de oppdages automatisk.",
+        "bulkPlaceholder": "Lim inn tekst med VX-123456, VX-234567 …",
+        "bulkDetected": "{n} valgt",
+        "bulkNoIds": "Ingen VX-id-er oppdaget ennå",
+        "bulkStart": "Start masseeksport",
+        "bulkStartedCount": "Startet eksport for {n} element(er)",
+        "bulkFailedCount": "{n} feilet"
     },
     "tools": {
         "export": {

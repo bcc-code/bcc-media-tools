@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { VBExportSelection } from "~/components/vb-export/types";
+import type { AssetRef } from "~/utils/vxids";
 
 useHead({
     title: "VB Export",
@@ -11,6 +12,13 @@ const vxId = computed(() => route.query.id?.toString());
 const api = useAPI();
 const toast = useToast();
 const { t } = useI18n();
+const { me } = useMe();
+
+// Users with the bulkExport permission get the bulk paste form on the empty
+// (no-id) state.
+const canBulk = computed(
+    () => !!(me.value?.admin || me.value?.vbExport?.bulkExport),
+);
 
 const {
     data: config,
@@ -22,30 +30,72 @@ const {
     { watch: [vxId], immediate: !!vxId.value },
 );
 
+// Asset-independent config for bulk export (loaded lazily when allowed).
+const {
+    data: bulkConfig,
+    status: bulkStatus,
+    error: bulkError,
+    execute: loadBulkConfig,
+} = useAsyncData(
+    "vb-export-bulk-config",
+    () => api.getVBExportConfig({ VXID: "" }),
+    { immediate: false },
+);
+
+watch(
+    [canBulk, vxId],
+    ([can, id]) => {
+        if (can && !id && !bulkConfig.value) loadBulkConfig();
+    },
+    { immediate: true },
+);
+
+// Resolve pasted VX-ids to titles for the bulk asset list.
+async function resolveTitles(ids: string[]): Promise<AssetRef[]> {
+    const res = await api.resolveAssets({ VXIDs: ids });
+    return res.assets.map((a) => ({
+        vxId: a.VXID,
+        title: a.title,
+        found: a.found,
+    }));
+}
+
 const submitting = ref(false);
 
-async function onStartExport(payload: VBExportSelection) {
-    if (!vxId.value) return;
+async function onStartExport({
+    vxIds,
+    selection,
+}: {
+    vxIds: string[];
+    selection: VBExportSelection;
+}) {
+    if (vxIds.length === 0) return;
     submitting.value = true;
+    const failed: string[] = [];
     try {
-        await api.startVBExport({
-            VXID: vxId.value,
-            destinations: payload.destinations,
-            subtitleShape: payload.subtitleShape,
-            subtitleStyle: payload.subtitleStyle,
-        });
-        toast.add({
-            icon: "tabler:check",
-            title: t("vbExport.exportStarted"),
-            color: "success",
-        });
-    } catch (err) {
-        toast.add({
-            icon: "tabler:alert-triangle",
-            title: t("vbExport.exportFailed"),
-            description: (err as Error)?.message,
-            color: "error",
-        });
+        for (const id of vxIds) {
+            try {
+                await api.startVBExport({ VXID: id, ...selection });
+            } catch {
+                failed.push(id);
+            }
+        }
+        const started = vxIds.length - failed.length;
+        if (failed.length === 0) {
+            toast.add({
+                icon: "tabler:check",
+                title: t("vbExport.exportStarted"),
+                description: t("vbExport.bulkStartedCount", { n: started }),
+                color: "success",
+            });
+        } else {
+            toast.add({
+                icon: "tabler:alert-triangle",
+                title: t("vbExport.exportStarted"),
+                description: `${t("vbExport.bulkStartedCount", { n: started })} · ${t("vbExport.bulkFailedCount", { n: failed.length })}`,
+                color: started === 0 ? "error" : "warning",
+            });
+        }
     } finally {
         submitting.value = false;
     }
@@ -57,6 +107,7 @@ async function onStartExport(payload: VBExportSelection) {
         <VbExportForm
             v-if="status === 'success' && config"
             :config="config"
+            :initial-assets="[{ vxId: config.VXID, title: config.title }]"
             :submitting="submitting"
             @start-export="onStartExport"
         />
@@ -79,10 +130,41 @@ async function onStartExport(payload: VBExportSelection) {
         </div>
     </div>
 
-    <div v-else class="mx-auto flex w-full max-w-2xl flex-col p-4">
-        <div class="my-8">
-            <h1 class="text-2xl font-bold">{{ $t("vbExport.title") }}</h1>
-            <p class="text-muted">{{ $t("vbExport.openFromMediabanken") }}</p>
+    <div v-else>
+        <template v-if="canBulk">
+            <VbExportForm
+                v-if="bulkStatus === 'success' && bulkConfig"
+                :config="bulkConfig"
+                bulk-mode
+                :resolve-titles="resolveTitles"
+                :submitting="submitting"
+                @start-export="onStartExport"
+            />
+            <div
+                v-else-if="bulkStatus === 'error'"
+                class="mx-auto flex w-full max-w-3xl flex-col items-center gap-4 p-8"
+            >
+                <UIcon
+                    name="tabler:alert-triangle"
+                    class="text-dimmed size-10"
+                />
+                <p class="text-muted text-center">
+                    {{ bulkError?.message ?? $t("vbExport.loadFailed") }}
+                </p>
+            </div>
+            <div v-else class="mx-auto w-full max-w-3xl space-y-4 p-8">
+                <USkeleton class="h-24 w-full" />
+                <USkeleton class="h-40 w-full" />
+            </div>
+        </template>
+
+        <div class="mx-auto flex w-full max-w-2xl flex-col p-4">
+            <div class="my-8">
+                <h1 class="text-2xl font-bold">{{ $t("vbExport.title") }}</h1>
+                <p class="text-muted">
+                    {{ $t("vbExport.openFromMediabanken") }}
+                </p>
+            </div>
         </div>
     </div>
 </template>

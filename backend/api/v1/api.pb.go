@@ -259,6 +259,8 @@ type ExportPermission struct {
 	Admin bool `protobuf:"varint,2,opt,name=admin,proto3" json:"admin,omitempty"`
 	// can trigger the (VOD-affecting) timed metadata export
 	TimedMetadata bool `protobuf:"varint,3,opt,name=timed_metadata,json=timedMetadata,proto3" json:"timed_metadata,omitempty"`
+	// can paste a list of VX-ids and export them in bulk (without opening an asset)
+	BulkExport    bool `protobuf:"varint,4,opt,name=bulk_export,json=bulkExport,proto3" json:"bulk_export,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -314,12 +316,21 @@ func (x *ExportPermission) GetTimedMetadata() bool {
 	return false
 }
 
+func (x *ExportPermission) GetBulkExport() bool {
+	if x != nil {
+		return x.BulkExport
+	}
+	return false
+}
+
 type VBExportPermission struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// destinations the user is allowed to export to (abekas, raw-abekas, b-stage, gfx, hippo_v2, hippo_hap, dubbing, hyperdeck, xdcam, caspar-cg)
 	Destinations []string `protobuf:"bytes,1,rep,name=destinations,proto3" json:"destinations,omitempty"`
 	// admin can export to all destinations
-	Admin         bool `protobuf:"varint,2,opt,name=admin,proto3" json:"admin,omitempty"`
+	Admin bool `protobuf:"varint,2,opt,name=admin,proto3" json:"admin,omitempty"`
+	// can paste a list of VX-ids and VB-export them in bulk (without opening an asset)
+	BulkExport    bool `protobuf:"varint,3,opt,name=bulk_export,json=bulkExport,proto3" json:"bulk_export,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -364,6 +375,13 @@ func (x *VBExportPermission) GetDestinations() []string {
 func (x *VBExportPermission) GetAdmin() bool {
 	if x != nil {
 		return x.Admin
+	}
+	return false
+}
+
+func (x *VBExportPermission) GetBulkExport() bool {
+	if x != nil {
+		return x.BulkExport
 	}
 	return false
 }
@@ -2842,6 +2860,156 @@ func (x *ExportDestinationsResponse) GetVb() []string {
 	return nil
 }
 
+// Resolve a list of VX-ids to their titles for the bulk-export asset list.
+type ResolveAssetsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	VXIDs         []string               `protobuf:"bytes,1,rep,name=VXIDs,proto3" json:"VXIDs,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResolveAssetsRequest) Reset() {
+	*x = ResolveAssetsRequest{}
+	mi := &file_api_v1_api_proto_msgTypes[46]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResolveAssetsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResolveAssetsRequest) ProtoMessage() {}
+
+func (x *ResolveAssetsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_api_proto_msgTypes[46]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResolveAssetsRequest.ProtoReflect.Descriptor instead.
+func (*ResolveAssetsRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_api_proto_rawDescGZIP(), []int{46}
+}
+
+func (x *ResolveAssetsRequest) GetVXIDs() []string {
+	if x != nil {
+		return x.VXIDs
+	}
+	return nil
+}
+
+type ResolvedAsset struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	VXID  string                 `protobuf:"bytes,1,opt,name=VXID,proto3" json:"VXID,omitempty"`
+	Title string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	// false if the asset metadata could not be fetched (unknown / inaccessible id)
+	Found         bool `protobuf:"varint,3,opt,name=found,proto3" json:"found,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResolvedAsset) Reset() {
+	*x = ResolvedAsset{}
+	mi := &file_api_v1_api_proto_msgTypes[47]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResolvedAsset) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResolvedAsset) ProtoMessage() {}
+
+func (x *ResolvedAsset) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_api_proto_msgTypes[47]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResolvedAsset.ProtoReflect.Descriptor instead.
+func (*ResolvedAsset) Descriptor() ([]byte, []int) {
+	return file_api_v1_api_proto_rawDescGZIP(), []int{47}
+}
+
+func (x *ResolvedAsset) GetVXID() string {
+	if x != nil {
+		return x.VXID
+	}
+	return ""
+}
+
+func (x *ResolvedAsset) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *ResolvedAsset) GetFound() bool {
+	if x != nil {
+		return x.Found
+	}
+	return false
+}
+
+type ResolveAssetsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Assets        []*ResolvedAsset       `protobuf:"bytes,1,rep,name=assets,proto3" json:"assets,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResolveAssetsResponse) Reset() {
+	*x = ResolveAssetsResponse{}
+	mi := &file_api_v1_api_proto_msgTypes[48]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResolveAssetsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResolveAssetsResponse) ProtoMessage() {}
+
+func (x *ResolveAssetsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_api_proto_msgTypes[48]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResolveAssetsResponse.ProtoReflect.Descriptor instead.
+func (*ResolveAssetsResponse) Descriptor() ([]byte, []int) {
+	return file_api_v1_api_proto_rawDescGZIP(), []int{48}
+}
+
+func (x *ResolveAssetsResponse) GetAssets() []*ResolvedAsset {
+	if x != nil {
+		return x.Assets
+	}
+	return nil
+}
+
 type TriggerCantemoActionRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	VXID          string                 `protobuf:"bytes,1,opt,name=VXID,proto3" json:"VXID,omitempty"`
@@ -2852,7 +3020,7 @@ type TriggerCantemoActionRequest struct {
 
 func (x *TriggerCantemoActionRequest) Reset() {
 	*x = TriggerCantemoActionRequest{}
-	mi := &file_api_v1_api_proto_msgTypes[46]
+	mi := &file_api_v1_api_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2864,7 +3032,7 @@ func (x *TriggerCantemoActionRequest) String() string {
 func (*TriggerCantemoActionRequest) ProtoMessage() {}
 
 func (x *TriggerCantemoActionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[46]
+	mi := &file_api_v1_api_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2877,7 +3045,7 @@ func (x *TriggerCantemoActionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TriggerCantemoActionRequest.ProtoReflect.Descriptor instead.
 func (*TriggerCantemoActionRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{46}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *TriggerCantemoActionRequest) GetVXID() string {
@@ -2907,14 +3075,18 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\vintegration\x18\x05 \x01(\bR\vintegration\"Q\n" +
 	"\x17TranscriptionPermission\x12\x14\n" +
 	"\x05admin\x18\x01 \x01(\bR\x05admin\x12 \n" +
-	"\vmediabanken\x18\x02 \x01(\bR\vmediabanken\"s\n" +
+	"\vmediabanken\x18\x02 \x01(\bR\vmediabanken\"\x94\x01\n" +
 	"\x10ExportPermission\x12\"\n" +
 	"\fdestinations\x18\x01 \x03(\tR\fdestinations\x12\x14\n" +
 	"\x05admin\x18\x02 \x01(\bR\x05admin\x12%\n" +
-	"\x0etimed_metadata\x18\x03 \x01(\bR\rtimedMetadata\"N\n" +
+	"\x0etimed_metadata\x18\x03 \x01(\bR\rtimedMetadata\x12\x1f\n" +
+	"\vbulk_export\x18\x04 \x01(\bR\n" +
+	"bulkExport\"o\n" +
 	"\x12VBExportPermission\x12\"\n" +
 	"\fdestinations\x18\x01 \x03(\tR\fdestinations\x12\x14\n" +
-	"\x05admin\x18\x02 \x01(\bR\x05admin\"\x89\x01\n" +
+	"\x05admin\x18\x02 \x01(\bR\x05admin\x12\x1f\n" +
+	"\vbulk_export\x18\x03 \x01(\bR\n" +
+	"bulkExport\"\x89\x01\n" +
 	"\x11CantemoPermission\x12\x18\n" +
 	"\apreview\x18\x01 \x01(\bR\apreview\x12\x1e\n" +
 	"\n" +
@@ -3096,7 +3268,15 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"workflowId\"<\n" +
 	"\x1aExportDestinationsResponse\x12\x0e\n" +
 	"\x02vx\x18\x01 \x03(\tR\x02vx\x12\x0e\n" +
-	"\x02vb\x18\x02 \x03(\tR\x02vb\"`\n" +
+	"\x02vb\x18\x02 \x03(\tR\x02vb\",\n" +
+	"\x14ResolveAssetsRequest\x12\x14\n" +
+	"\x05VXIDs\x18\x01 \x03(\tR\x05VXIDs\"O\n" +
+	"\rResolvedAsset\x12\x12\n" +
+	"\x04VXID\x18\x01 \x01(\tR\x04VXID\x12\x14\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\x12\x14\n" +
+	"\x05found\x18\x03 \x01(\bR\x05found\"F\n" +
+	"\x15ResolveAssetsResponse\x12-\n" +
+	"\x06assets\x18\x01 \x03(\v2\x15.api.v1.ResolvedAssetR\x06assets\"`\n" +
 	"\x1bTriggerCantemoActionRequest\x12\x12\n" +
 	"\x04VXID\x18\x01 \x01(\tR\x04VXID\x12-\n" +
 	"\x06action\x18\x02 \x01(\x0e2\x15.api.v1.CantemoActionR\x06action*1\n" +
@@ -3109,7 +3289,7 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\x16CANTEMO_ACTION_PREVIEW\x10\x01\x12\x1d\n" +
 	"\x19CANTEMO_ACTION_TRANSCRIBE\x10\x02\x12)\n" +
 	"%CANTEMO_ACTION_SUBTITLE_FROM_SUBTRANS\x10\x03\x12#\n" +
-	"\x1fCANTEMO_ACTION_UPDATE_RELATIONS\x10\x042\xfc\v\n" +
+	"\x1fCANTEMO_ACTION_UPDATE_RELATIONS\x10\x042\xcc\f\n" +
 	"\n" +
 	"APIService\x125\n" +
 	"\x0eGetPermissions\x12\f.api.v1.Void\x1a\x13.api.v1.Permissions\"\x00\x12B\n" +
@@ -3129,7 +3309,8 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\vSubmitShort\x12\x1a.api.v1.SubmitShortRequest\x1a\f.api.v1.Void\"\x00\x12T\n" +
 	"\x0fGetExportConfig\x12\x1e.api.v1.GetExportConfigRequest\x1a\x1f.api.v1.GetExportConfigResponse\"\x00\x12H\n" +
 	"\vStartExport\x12\x1a.api.v1.StartExportRequest\x1a\x1b.api.v1.StartExportResponse\"\x00\x12I\n" +
-	"\x13ExportTimedMetadata\x12\".api.v1.ExportTimedMetadataRequest\x1a\f.api.v1.Void\"\x00\x12Z\n" +
+	"\x13ExportTimedMetadata\x12\".api.v1.ExportTimedMetadataRequest\x1a\f.api.v1.Void\"\x00\x12N\n" +
+	"\rResolveAssets\x12\x1c.api.v1.ResolveAssetsRequest\x1a\x1d.api.v1.ResolveAssetsResponse\"\x00\x12Z\n" +
 	"\x11GetVBExportConfig\x12 .api.v1.GetVBExportConfigRequest\x1a!.api.v1.GetVBExportConfigResponse\"\x00\x12N\n" +
 	"\rStartVBExport\x12\x1c.api.v1.StartVBExportRequest\x1a\x1d.api.v1.StartVBExportResponse\"\x00\x12K\n" +
 	"\x15GetExportDestinations\x12\f.api.v1.Void\x1a\".api.v1.ExportDestinationsResponse\"\x00\x12K\n" +
@@ -3148,7 +3329,7 @@ func file_api_v1_api_proto_rawDescGZIP() []byte {
 }
 
 var file_api_v1_api_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_api_v1_api_proto_msgTypes = make([]protoimpl.MessageInfo, 49)
+var file_api_v1_api_proto_msgTypes = make([]protoimpl.MessageInfo, 52)
 var file_api_v1_api_proto_goTypes = []any{
 	(BmmEnvironment)(0),                  // 0: api.v1.BmmEnvironment
 	(CantemoAction)(0),                   // 1: api.v1.CantemoAction
@@ -3198,11 +3379,14 @@ var file_api_v1_api_proto_goTypes = []any{
 	(*StartVBExportRequest)(nil),         // 45: api.v1.StartVBExportRequest
 	(*StartVBExportResponse)(nil),        // 46: api.v1.StartVBExportResponse
 	(*ExportDestinationsResponse)(nil),   // 47: api.v1.ExportDestinationsResponse
-	(*TriggerCantemoActionRequest)(nil),  // 48: api.v1.TriggerCantemoActionRequest
-	nil,                                  // 49: api.v1.PermissionsList.PermissionsEntry
-	nil,                                  // 50: api.v1.GetYearsResponse.DataEntry
-	(*timestamppb.Timestamp)(nil),        // 51: google.protobuf.Timestamp
-	(*Void)(nil),                         // 52: api.v1.Void
+	(*ResolveAssetsRequest)(nil),         // 48: api.v1.ResolveAssetsRequest
+	(*ResolvedAsset)(nil),                // 49: api.v1.ResolvedAsset
+	(*ResolveAssetsResponse)(nil),        // 50: api.v1.ResolveAssetsResponse
+	(*TriggerCantemoActionRequest)(nil),  // 51: api.v1.TriggerCantemoActionRequest
+	nil,                                  // 52: api.v1.PermissionsList.PermissionsEntry
+	nil,                                  // 53: api.v1.GetYearsResponse.DataEntry
+	(*timestamppb.Timestamp)(nil),        // 54: google.protobuf.Timestamp
+	(*Void)(nil),                         // 55: api.v1.Void
 }
 var file_api_v1_api_proto_depIdxs = []int32{
 	2,  // 0: api.v1.Permissions.bmm:type_name -> api.v1.BMMPermission
@@ -3211,15 +3395,15 @@ var file_api_v1_api_proto_depIdxs = []int32{
 	5,  // 3: api.v1.Permissions.vb_export:type_name -> api.v1.VBExportPermission
 	6,  // 4: api.v1.Permissions.cantemo:type_name -> api.v1.CantemoPermission
 	7,  // 5: api.v1.SetPermissionsRequest.permissions:type_name -> api.v1.Permissions
-	49, // 6: api.v1.PermissionsList.permissions:type_name -> api.v1.PermissionsList.PermissionsEntry
-	50, // 7: api.v1.GetYearsResponse.data:type_name -> api.v1.GetYearsResponse.DataEntry
+	52, // 6: api.v1.PermissionsList.permissions:type_name -> api.v1.PermissionsList.PermissionsEntry
+	53, // 7: api.v1.GetYearsResponse.data:type_name -> api.v1.GetYearsResponse.DataEntry
 	0,  // 8: api.v1.GetYearsRequest.environment:type_name -> api.v1.BmmEnvironment
 	0,  // 9: api.v1.GetAlbumsRequest.environment:type_name -> api.v1.BmmEnvironment
 	16, // 10: api.v1.AlbumsList.albums:type_name -> api.v1.Album
 	0,  // 11: api.v1.GetAlbumTracksRequest.environment:type_name -> api.v1.BmmEnvironment
 	0,  // 12: api.v1.GetPodcastTracksRequest.environment:type_name -> api.v1.BmmEnvironment
 	0,  // 13: api.v1.GetAvailableLanguagesRequest.environment:type_name -> api.v1.BmmEnvironment
-	51, // 14: api.v1.BMMTrack.publishedAt:type_name -> google.protobuf.Timestamp
+	54, // 14: api.v1.BMMTrack.publishedAt:type_name -> google.protobuf.Timestamp
 	23, // 15: api.v1.BMMTrack.languages:type_name -> api.v1.LanguageList
 	23, // 16: api.v1.BMMTrack.transcriptions:type_name -> api.v1.LanguageList
 	21, // 17: api.v1.TracksList.tracks:type_name -> api.v1.BMMTrack
@@ -3232,56 +3416,59 @@ var file_api_v1_api_proto_depIdxs = []int32{
 	34, // 24: api.v1.GetExportConfigResponse.resolutions:type_name -> api.v1.ExportResolution
 	36, // 25: api.v1.GetExportConfigResponse.subclips:type_name -> api.v1.ExportSubclip
 	39, // 26: api.v1.StartExportRequest.resolutions:type_name -> api.v1.ExportResolutionSelection
-	1,  // 27: api.v1.TriggerCantemoActionRequest.action:type_name -> api.v1.CantemoAction
-	7,  // 28: api.v1.PermissionsList.PermissionsEntry.value:type_name -> api.v1.Permissions
-	12, // 29: api.v1.GetYearsResponse.DataEntry.value:type_name -> api.v1.BMMYear
-	52, // 30: api.v1.APIService.GetPermissions:input_type -> api.v1.Void
-	9,  // 31: api.v1.APIService.UpdatePermissions:input_type -> api.v1.SetPermissionsRequest
-	10, // 32: api.v1.APIService.DeletePermissions:input_type -> api.v1.DeletePermissionsRequest
-	52, // 33: api.v1.APIService.ListPermissions:input_type -> api.v1.Void
-	25, // 34: api.v1.APIService.GetTranscription:input_type -> api.v1.GetTranscriptionReqest
-	29, // 35: api.v1.APIService.GetPreview:input_type -> api.v1.GetPreviewRequest
-	32, // 36: api.v1.APIService.SubmitTranscription:input_type -> api.v1.SubmitTranscriptionRequest
-	14, // 37: api.v1.APIService.GetYears:input_type -> api.v1.GetYearsRequest
-	15, // 38: api.v1.APIService.GetAlbums:input_type -> api.v1.GetAlbumsRequest
-	18, // 39: api.v1.APIService.GetAlbumTracks:input_type -> api.v1.GetAlbumTracksRequest
-	19, // 40: api.v1.APIService.GetPodcastTracks:input_type -> api.v1.GetPodcastTracksRequest
-	20, // 41: api.v1.APIService.GetLanguages:input_type -> api.v1.GetAvailableLanguagesRequest
-	31, // 42: api.v1.APIService.GetBMMTranscription:input_type -> api.v1.GetBMMTranscriptionRequest
-	33, // 43: api.v1.APIService.SubmitShort:input_type -> api.v1.SubmitShortRequest
-	37, // 44: api.v1.APIService.GetExportConfig:input_type -> api.v1.GetExportConfigRequest
-	40, // 45: api.v1.APIService.StartExport:input_type -> api.v1.StartExportRequest
-	42, // 46: api.v1.APIService.ExportTimedMetadata:input_type -> api.v1.ExportTimedMetadataRequest
-	43, // 47: api.v1.APIService.GetVBExportConfig:input_type -> api.v1.GetVBExportConfigRequest
-	45, // 48: api.v1.APIService.StartVBExport:input_type -> api.v1.StartVBExportRequest
-	52, // 49: api.v1.APIService.GetExportDestinations:input_type -> api.v1.Void
-	48, // 50: api.v1.APIService.TriggerCantemoAction:input_type -> api.v1.TriggerCantemoActionRequest
-	7,  // 51: api.v1.APIService.GetPermissions:output_type -> api.v1.Permissions
-	52, // 52: api.v1.APIService.UpdatePermissions:output_type -> api.v1.Void
-	52, // 53: api.v1.APIService.DeletePermissions:output_type -> api.v1.Void
-	11, // 54: api.v1.APIService.ListPermissions:output_type -> api.v1.PermissionsList
-	26, // 55: api.v1.APIService.GetTranscription:output_type -> api.v1.Transcription
-	30, // 56: api.v1.APIService.GetPreview:output_type -> api.v1.Preview
-	52, // 57: api.v1.APIService.SubmitTranscription:output_type -> api.v1.Void
-	13, // 58: api.v1.APIService.GetYears:output_type -> api.v1.GetYearsResponse
-	17, // 59: api.v1.APIService.GetAlbums:output_type -> api.v1.AlbumsList
-	22, // 60: api.v1.APIService.GetAlbumTracks:output_type -> api.v1.TracksList
-	22, // 61: api.v1.APIService.GetPodcastTracks:output_type -> api.v1.TracksList
-	23, // 62: api.v1.APIService.GetLanguages:output_type -> api.v1.LanguageList
-	26, // 63: api.v1.APIService.GetBMMTranscription:output_type -> api.v1.Transcription
-	52, // 64: api.v1.APIService.SubmitShort:output_type -> api.v1.Void
-	38, // 65: api.v1.APIService.GetExportConfig:output_type -> api.v1.GetExportConfigResponse
-	41, // 66: api.v1.APIService.StartExport:output_type -> api.v1.StartExportResponse
-	52, // 67: api.v1.APIService.ExportTimedMetadata:output_type -> api.v1.Void
-	44, // 68: api.v1.APIService.GetVBExportConfig:output_type -> api.v1.GetVBExportConfigResponse
-	46, // 69: api.v1.APIService.StartVBExport:output_type -> api.v1.StartVBExportResponse
-	47, // 70: api.v1.APIService.GetExportDestinations:output_type -> api.v1.ExportDestinationsResponse
-	52, // 71: api.v1.APIService.TriggerCantemoAction:output_type -> api.v1.Void
-	51, // [51:72] is the sub-list for method output_type
-	30, // [30:51] is the sub-list for method input_type
-	30, // [30:30] is the sub-list for extension type_name
-	30, // [30:30] is the sub-list for extension extendee
-	0,  // [0:30] is the sub-list for field type_name
+	49, // 27: api.v1.ResolveAssetsResponse.assets:type_name -> api.v1.ResolvedAsset
+	1,  // 28: api.v1.TriggerCantemoActionRequest.action:type_name -> api.v1.CantemoAction
+	7,  // 29: api.v1.PermissionsList.PermissionsEntry.value:type_name -> api.v1.Permissions
+	12, // 30: api.v1.GetYearsResponse.DataEntry.value:type_name -> api.v1.BMMYear
+	55, // 31: api.v1.APIService.GetPermissions:input_type -> api.v1.Void
+	9,  // 32: api.v1.APIService.UpdatePermissions:input_type -> api.v1.SetPermissionsRequest
+	10, // 33: api.v1.APIService.DeletePermissions:input_type -> api.v1.DeletePermissionsRequest
+	55, // 34: api.v1.APIService.ListPermissions:input_type -> api.v1.Void
+	25, // 35: api.v1.APIService.GetTranscription:input_type -> api.v1.GetTranscriptionReqest
+	29, // 36: api.v1.APIService.GetPreview:input_type -> api.v1.GetPreviewRequest
+	32, // 37: api.v1.APIService.SubmitTranscription:input_type -> api.v1.SubmitTranscriptionRequest
+	14, // 38: api.v1.APIService.GetYears:input_type -> api.v1.GetYearsRequest
+	15, // 39: api.v1.APIService.GetAlbums:input_type -> api.v1.GetAlbumsRequest
+	18, // 40: api.v1.APIService.GetAlbumTracks:input_type -> api.v1.GetAlbumTracksRequest
+	19, // 41: api.v1.APIService.GetPodcastTracks:input_type -> api.v1.GetPodcastTracksRequest
+	20, // 42: api.v1.APIService.GetLanguages:input_type -> api.v1.GetAvailableLanguagesRequest
+	31, // 43: api.v1.APIService.GetBMMTranscription:input_type -> api.v1.GetBMMTranscriptionRequest
+	33, // 44: api.v1.APIService.SubmitShort:input_type -> api.v1.SubmitShortRequest
+	37, // 45: api.v1.APIService.GetExportConfig:input_type -> api.v1.GetExportConfigRequest
+	40, // 46: api.v1.APIService.StartExport:input_type -> api.v1.StartExportRequest
+	42, // 47: api.v1.APIService.ExportTimedMetadata:input_type -> api.v1.ExportTimedMetadataRequest
+	48, // 48: api.v1.APIService.ResolveAssets:input_type -> api.v1.ResolveAssetsRequest
+	43, // 49: api.v1.APIService.GetVBExportConfig:input_type -> api.v1.GetVBExportConfigRequest
+	45, // 50: api.v1.APIService.StartVBExport:input_type -> api.v1.StartVBExportRequest
+	55, // 51: api.v1.APIService.GetExportDestinations:input_type -> api.v1.Void
+	51, // 52: api.v1.APIService.TriggerCantemoAction:input_type -> api.v1.TriggerCantemoActionRequest
+	7,  // 53: api.v1.APIService.GetPermissions:output_type -> api.v1.Permissions
+	55, // 54: api.v1.APIService.UpdatePermissions:output_type -> api.v1.Void
+	55, // 55: api.v1.APIService.DeletePermissions:output_type -> api.v1.Void
+	11, // 56: api.v1.APIService.ListPermissions:output_type -> api.v1.PermissionsList
+	26, // 57: api.v1.APIService.GetTranscription:output_type -> api.v1.Transcription
+	30, // 58: api.v1.APIService.GetPreview:output_type -> api.v1.Preview
+	55, // 59: api.v1.APIService.SubmitTranscription:output_type -> api.v1.Void
+	13, // 60: api.v1.APIService.GetYears:output_type -> api.v1.GetYearsResponse
+	17, // 61: api.v1.APIService.GetAlbums:output_type -> api.v1.AlbumsList
+	22, // 62: api.v1.APIService.GetAlbumTracks:output_type -> api.v1.TracksList
+	22, // 63: api.v1.APIService.GetPodcastTracks:output_type -> api.v1.TracksList
+	23, // 64: api.v1.APIService.GetLanguages:output_type -> api.v1.LanguageList
+	26, // 65: api.v1.APIService.GetBMMTranscription:output_type -> api.v1.Transcription
+	55, // 66: api.v1.APIService.SubmitShort:output_type -> api.v1.Void
+	38, // 67: api.v1.APIService.GetExportConfig:output_type -> api.v1.GetExportConfigResponse
+	41, // 68: api.v1.APIService.StartExport:output_type -> api.v1.StartExportResponse
+	55, // 69: api.v1.APIService.ExportTimedMetadata:output_type -> api.v1.Void
+	50, // 70: api.v1.APIService.ResolveAssets:output_type -> api.v1.ResolveAssetsResponse
+	44, // 71: api.v1.APIService.GetVBExportConfig:output_type -> api.v1.GetVBExportConfigResponse
+	46, // 72: api.v1.APIService.StartVBExport:output_type -> api.v1.StartVBExportResponse
+	47, // 73: api.v1.APIService.GetExportDestinations:output_type -> api.v1.ExportDestinationsResponse
+	55, // 74: api.v1.APIService.TriggerCantemoAction:output_type -> api.v1.Void
+	53, // [53:75] is the sub-list for method output_type
+	31, // [31:53] is the sub-list for method input_type
+	31, // [31:31] is the sub-list for extension type_name
+	31, // [31:31] is the sub-list for extension extendee
+	0,  // [0:31] is the sub-list for field type_name
 }
 
 func init() { file_api_v1_api_proto_init() }
@@ -3296,7 +3483,7 @@ func file_api_v1_api_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_v1_api_proto_rawDesc), len(file_api_v1_api_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   49,
+			NumMessages:   52,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -18,6 +18,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	go.temporal.io/sdk v1.34.0
 	golang.org/x/net v0.48.0
+	golang.org/x/sync v0.19.0
 	google.golang.org/protobuf v1.36.10
 )
 
@@ -151,7 +152,6 @@ require (
 	golang.org/x/crypto v0.46.0 // indirect
 	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6 // indirect
 	golang.org/x/oauth2 v0.34.0 // indirect
-	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/sys v0.40.0 // indirect
 	golang.org/x/text v0.32.0 // indirect
 	golang.org/x/time v0.12.0 // indirect

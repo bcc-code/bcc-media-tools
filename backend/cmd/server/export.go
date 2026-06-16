@@ -21,6 +21,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"go.temporal.io/sdk/client"
+	"golang.org/x/sync/errgroup"
 )
 
 type ExportAPI struct {
@@ -132,6 +133,19 @@ func allowedVBDestinations(perms *apiv1.Permissions) []string {
 	})
 }
 
+// assetTitle extracts the display title from asset metadata, preferring the
+// original clip's title and falling back to the item title.
+func assetTitle(meta *vsapi.MetadataResult) string {
+	title := ""
+	if oc, ok := meta.SplitByClips()[vsapi.OriginalClip]; ok {
+		title = oc.Get(vscommon.FieldTitle, "")
+	}
+	if title == "" {
+		title = meta.Get(vscommon.FieldTitle, "")
+	}
+	return title
+}
+
 func (e ExportAPI) GetExportConfig(ctx context.Context, req *connect.Request[apiv1.GetExportConfigRequest]) (*connect.Response[apiv1.GetExportConfigResponse], error) {
 	email := getEmail(req)
 	if email == "" {
@@ -144,7 +158,21 @@ func (e ExportAPI) GetExportConfig(ctx context.Context, req *connect.Request[api
 
 	vxID := req.Msg.GetVXID()
 	if vxID == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("missing VXID"))
+		// Bulk export: no asset selected. Return only the asset-independent
+		// config (the settings the user applies to every pasted VX-id), gated
+		// by the dedicated bulk permission. No Vidispine lookups.
+		if !perms.CanBulkExport() {
+			return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("not authorized for bulk export"))
+		}
+		return connect.NewResponse(&apiv1.GetExportConfigResponse{
+			Destinations: allowedDestinations(perms),
+			AudioSources: vidispine.ExportAudioSources.Values(),
+			Languages:    exportLanguages(),
+			Resolutions: lo.Map(defaultResolutions(), func(r vsapi.Resolution, _ int) *apiv1.ExportResolution {
+				return &apiv1.ExportResolution{Width: int32(r.Width), Height: int32(r.Height)}
+			}),
+			Overlays: overlayFilenames(),
+		}), nil
 	}
 
 	meta, err := e.vidispine.GetMetadata(vxID)
@@ -152,14 +180,7 @@ func (e ExportAPI) GetExportConfig(ctx context.Context, req *connect.Request[api
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
-	clips := meta.SplitByClips()
-	title := ""
-	if oc, ok := clips[vsapi.OriginalClip]; ok {
-		title = oc.Get(vscommon.FieldTitle, "")
-	}
-	if title == "" {
-		title = meta.Get(vscommon.FieldTitle, "")
-	}
+	title := assetTitle(meta)
 
 	resolutions, err := e.vidispine.GetResolutions(vxID)
 	if err != nil {
@@ -377,6 +398,48 @@ func (e ExportAPI) ExportTimedMetadata(ctx context.Context, req *connect.Request
 	return connect.NewResponse(&apiv1.Void{}), nil
 }
 
+// ResolveAssets resolves a list of VX-ids to their titles for the bulk-export
+// asset list. Unknown / inaccessible ids are returned with found=false rather
+// than failing the whole request.
+func (e ExportAPI) ResolveAssets(ctx context.Context, req *connect.Request[apiv1.ResolveAssetsRequest]) (*connect.Response[apiv1.ResolveAssetsResponse], error) {
+	email := getEmail(req)
+	if email == "" {
+		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("missing email header"))
+	}
+	perms := PermissionsForEmail(email)
+	if !perms.CanBulkExport() && !perms.CanBulkVBExport() {
+		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("not authorized for bulk export"))
+	}
+
+	// Resolve metadata concurrently (bounded), keeping input order. Unknown ids
+	// are recorded with Found=false rather than failing the whole request.
+	vxIDs := req.Msg.GetVXIDs()
+	results := make([]*apiv1.ResolvedAsset, len(vxIDs))
+	g, _ := errgroup.WithContext(ctx)
+	g.SetLimit(8)
+	for i, vxID := range vxIDs {
+		if vxID == "" {
+			continue
+		}
+		g.Go(func() error {
+			meta, err := e.vidispine.GetMetadata(vxID)
+			if err != nil {
+				log.L.Warn().Err(err).Str("vxid", vxID).Msg("could not resolve asset for bulk export")
+				results[i] = &apiv1.ResolvedAsset{VXID: vxID, Found: false}
+				return nil
+			}
+			results[i] = &apiv1.ResolvedAsset{VXID: vxID, Title: assetTitle(meta), Found: true}
+			return nil
+		})
+	}
+	_ = g.Wait()
+
+	// Drop the gaps left by empty ids.
+	assets := lo.Filter(results, func(a *apiv1.ResolvedAsset, _ int) bool { return a != nil })
+
+	return connect.NewResponse(&apiv1.ResolveAssetsResponse{Assets: assets}), nil
+}
+
 func (e ExportAPI) GetVBExportConfig(ctx context.Context, req *connect.Request[apiv1.GetVBExportConfigRequest]) (*connect.Response[apiv1.GetVBExportConfigResponse], error) {
 	email := getEmail(req)
 	if email == "" {
@@ -389,7 +452,17 @@ func (e ExportAPI) GetVBExportConfig(ctx context.Context, req *connect.Request[a
 
 	vxID := req.Msg.GetVXID()
 	if vxID == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("missing VXID"))
+		// Bulk export: no asset selected. Return only the asset-independent
+		// config, gated by the dedicated bulk permission. Subtitle shapes are
+		// per-asset, so only "None" is offered for bulk burn-in.
+		if !perms.CanBulkVBExport() {
+			return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("not authorized for bulk export"))
+		}
+		return connect.NewResponse(&apiv1.GetVBExportConfigResponse{
+			Destinations:   allowedVBDestinations(perms),
+			SubtitleShapes: []string{"None"},
+			SubtitleStyles: dirFilenames(os.Getenv("SUBTITLE_STYLES_DIR")),
+		}), nil
 	}
 
 	meta, err := e.vidispine.GetMetadata(vxID)
@@ -397,14 +470,7 @@ func (e ExportAPI) GetVBExportConfig(ctx context.Context, req *connect.Request[a
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
-	clips := meta.SplitByClips()
-	title := ""
-	if oc, ok := clips[vsapi.OriginalClip]; ok {
-		title = oc.Get(vscommon.FieldTitle, "")
-	}
-	if title == "" {
-		title = meta.Get(vscommon.FieldTitle, "")
-	}
+	title := assetTitle(meta)
 
 	// Subtitle shapes available for burn-in: tags like "sub_xxx_srt".
 	subtitleShapes := []string{"None"}

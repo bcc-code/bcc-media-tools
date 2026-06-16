@@ -1,14 +1,24 @@
 <script setup lang="ts">
 import type { GetVBExportConfigResponse } from "~~/src/gen/api/v1/api_pb";
 import type { VBExportSelection } from "~/components/vb-export/types";
+import type { AssetRef } from "~/utils/vxids";
 
 const props = defineProps<{
     config: GetVBExportConfigResponse;
     submitting?: boolean;
+    // Bulk mode: no asset preselected; the user pastes text to detect VX-ids.
+    bulkMode?: boolean;
+    // Assets to export (single asset, or the resolved bulk list).
+    initialAssets?: AssetRef[];
+    // Resolves pasted VX-ids to titles (bulk mode only).
+    resolveTitles?: (ids: string[]) => Promise<AssetRef[]>;
 }>();
 
 const emit = defineEmits<{
-    (e: "start-export", payload: VBExportSelection): void;
+    (
+        e: "start-export",
+        payload: { vxIds: string[]; selection: VBExportSelection },
+    ): void;
 }>();
 
 /* ------------------------------------------------------------------ state --- */
@@ -20,6 +30,51 @@ const destChecked = reactive<Record<string, boolean>>(
 const subtitleShape = ref(props.config.subtitleShapes[0] ?? "None");
 const subtitleStyle = ref(props.config.subtitleStyles[0] ?? "");
 
+/* ----------------------------------------------------------- asset list --- */
+
+const pasteText = ref("");
+const resolving = ref(false);
+const resolved = ref<AssetRef[]>(props.initialAssets ?? []);
+const removedIds = ref<Set<string>>(new Set());
+
+const parsedIds = computed(() => extractVXIDs(pasteText.value));
+
+watchDebounced(
+    parsedIds,
+    async (ids) => {
+        if (!props.bulkMode || !props.resolveTitles) return;
+        removedIds.value = new Set();
+        if (ids.length === 0) {
+            resolved.value = [];
+            return;
+        }
+        resolving.value = true;
+        try {
+            resolved.value = await props.resolveTitles(ids);
+        } finally {
+            resolving.value = false;
+        }
+    },
+    { debounce: 400 },
+);
+
+watch(
+    () => props.initialAssets,
+    (a) => {
+        if (props.bulkMode) return;
+        resolved.value = a ?? [];
+        removedIds.value = new Set();
+    },
+);
+
+const assets = computed(() =>
+    resolved.value.filter((a) => !removedIds.value.has(a.vxId)),
+);
+
+function removeAsset(vxId: string) {
+    removedIds.value = new Set(removedIds.value).add(vxId);
+}
+
 /* --------------------------------------------------------------- computed --- */
 
 const selectedDestCount = computed(
@@ -30,22 +85,80 @@ const selectedDestCount = computed(
 
 function startExport() {
     emit("start-export", {
-        destinations: props.config.destinations.filter((d) => destChecked[d]),
-        subtitleShape: subtitleShape.value,
-        subtitleStyle: subtitleStyle.value,
+        vxIds: assets.value.map((a) => a.vxId),
+        selection: {
+            destinations: props.config.destinations.filter(
+                (d) => destChecked[d],
+            ),
+            subtitleShape: subtitleShape.value,
+            subtitleStyle: subtitleStyle.value,
+        },
     });
 }
 </script>
 
 <template>
     <div class="mx-auto w-full max-w-3xl px-6 py-8">
-        <!-- Title -->
-        <h1 class="text-highlighted mb-6 text-center text-2xl font-semibold tracking-tight">
-            <span class="font-mono">{{ config.VXID }}</span>
-            <span v-if="config.title" class="text-muted">
-                {{ config.title }}</span
+        <!-- Bulk paste: detect VX-ids from arbitrary text -->
+        <section v-if="bulkMode" class="mb-6 space-y-2">
+            <h3 class="text-highlighted text-sm font-semibold">
+                {{ $t("vbExport.bulkTitle") }}
+            </h3>
+            <p class="text-muted text-xs">{{ $t("vbExport.bulkHint") }}</p>
+            <UTextarea
+                v-model="pasteText"
+                :rows="4"
+                autoresize
+                :placeholder="$t('vbExport.bulkPlaceholder')"
+                class="w-full"
+            />
+        </section>
+
+        <!-- Assets to export -->
+        <section class="mb-6 space-y-2">
+            <div class="flex items-center justify-between gap-2">
+                <h3 class="text-highlighted text-sm font-semibold">
+                    {{ $t("vbExport.assets") }}
+                </h3>
+                <span class="text-muted text-xs">
+                    {{ $t("vbExport.bulkDetected", { n: assets.length }) }}
+                </span>
+            </div>
+            <div v-if="resolving" class="space-y-2">
+                <USkeleton class="h-9 w-full" />
+                <USkeleton class="h-9 w-full" />
+            </div>
+            <p v-else-if="assets.length === 0" class="text-muted text-xs">
+                {{ $t("vbExport.bulkNoIds") }}
+            </p>
+            <ul
+                v-else
+                class="border-default divide-default divide-y rounded-md border"
             >
-        </h1>
+                <li
+                    v-for="a in assets"
+                    :key="a.vxId"
+                    class="flex items-center gap-3 px-3 py-2"
+                >
+                    <span class="font-mono text-sm">{{ a.vxId }}</span>
+                    <span class="text-muted truncate text-sm">
+                        <template v-if="a.found === false">
+                            {{ $t("vbExport.assetNotFound") }}
+                        </template>
+                        <template v-else>{{ a.title }}</template>
+                    </span>
+                    <UButton
+                        class="ml-auto"
+                        icon="tabler:x"
+                        color="neutral"
+                        variant="ghost"
+                        size="xs"
+                        :aria-label="$t('vbExport.remove')"
+                        @click="removeAsset(a.vxId)"
+                    />
+                </li>
+            </ul>
+        </section>
 
         <div class="space-y-6">
             <!-- Destinations -->
@@ -100,10 +213,14 @@ function startExport() {
                 size="lg"
                 icon="tabler:file-export"
                 :loading="submitting"
-                :disabled="selectedDestCount === 0"
+                :disabled="selectedDestCount === 0 || assets.length === 0"
                 @click="startExport"
             >
-                {{ $t("vbExport.startExport") }}
+                {{
+                    bulkMode
+                        ? $t("vbExport.bulkStart")
+                        : $t("vbExport.startExport")
+                }}
             </UButton>
         </div>
     </div>

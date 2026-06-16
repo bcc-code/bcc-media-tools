@@ -109,7 +109,18 @@
         "exportStarted": "Export started",
         "exportStartedCount": "Started {n} workflow(s)",
         "timedMetadataStarted": "Timed metadata export started",
-        "exportFailed": "Export could not be started"
+        "exportFailed": "Export could not be started",
+        "assets": "Assets to export",
+        "remove": "Remove",
+        "assetNotFound": "Not found",
+        "bulkTitle": "Bulk export",
+        "bulkHint": "Paste any text containing VX-ids — they'll be detected automatically.",
+        "bulkPlaceholder": "Paste text with VX-123456, VX-234567 …",
+        "bulkDetected": "{n} selected",
+        "bulkNoIds": "No VX-ids detected yet",
+        "bulkStart": "Start bulk export",
+        "bulkStartedCount": "Started export for {n} asset(s)",
+        "bulkFailedCount": "{n} failed"
     },
     "vbExport": {
         "title": "VB Export",
@@ -121,7 +132,18 @@
         "subtitlesBurnInStyle": "Subtitles burn in style",
         "startExport": "Start export",
         "exportStarted": "Export started",
-        "exportFailed": "Export could not be started"
+        "exportFailed": "Export could not be started",
+        "assets": "Assets to export",
+        "remove": "Remove",
+        "assetNotFound": "Not found",
+        "bulkTitle": "Bulk export",
+        "bulkHint": "Paste any text containing VX-ids — they'll be detected automatically.",
+        "bulkPlaceholder": "Paste text with VX-123456, VX-234567 …",
+        "bulkDetected": "{n} selected",
+        "bulkNoIds": "No VX-ids detected yet",
+        "bulkStart": "Start bulk export",
+        "bulkStartedCount": "Started export for {n} asset(s)",
+        "bulkFailedCount": "{n} failed"
     },
     "tools": {
         "export": {
