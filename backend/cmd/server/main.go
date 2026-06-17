@@ -182,10 +182,17 @@ func main() {
 }
 
 func serveFiles(w http.ResponseWriter, r *http.Request) {
-	localPath := filepath.Join(staticFilePath, r.URL.Path)
+	localPath := filepath.Join(staticFilePath, filepath.Clean(r.URL.Path))
 
-	if r.URL.Path[len(r.URL.Path)-1] == '/' {
-		localPath = filepath.Join(staticFilePath, "/index.html")
+	// SPA fallback: when the requested file doesn't exist (or is a directory),
+	// serve index.html for client-side routes — paths without a file extension
+	// such as /vault, /vault/, or /vault/123 — so they resolve instead of
+	// 404ing. Real assets (.js/.css/images) are still served as-is and 404 when
+	// genuinely missing.
+	if info, err := os.Stat(localPath); err != nil || info.IsDir() {
+		if filepath.Ext(localPath) == "" {
+			localPath = filepath.Join(staticFilePath, "index.html")
+		}
 	}
 
 	http.ServeFile(w, r, localPath)
