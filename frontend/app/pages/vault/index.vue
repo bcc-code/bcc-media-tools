@@ -14,10 +14,18 @@ onMounted(() => {
 });
 
 const MEDIA_CATEGORIES = ["video", "audio", "image", "other"] as const;
+type MediaCategory = (typeof MEDIA_CATEGORIES)[number];
 
 const query = ref("");
-const selectedTypes = ref<string[]>([]);
+const selectedTypes = ref<MediaCategory[]>([]);
 const page = ref(1);
+
+const categoryItems = computed(() =>
+    MEDIA_CATEGORIES.map((value) => ({
+        value,
+        label: t(`vault.type.${value}`),
+    })),
+);
 
 const items = ref<VaultItem[]>([]);
 const facets = ref<VaultFacet[]>([]);
@@ -56,18 +64,12 @@ watchDebounced(
 watch(selectedTypes, () => {
     page.value = 1;
     load();
-}, { deep: true });
+});
 watch(page, load);
 onMounted(load);
 
 function facetCount(type: string): number {
     return facets.value.find((f) => f.mediaType === type)?.count ?? 0;
-}
-
-function toggleType(type: string) {
-    const i = selectedTypes.value.indexOf(type);
-    if (i === -1) selectedTypes.value = [...selectedTypes.value, type];
-    else selectedTypes.value = selectedTypes.value.filter((x) => x !== type);
 }
 
 const hasFilter = computed(() => selectedTypes.value.length > 0);
@@ -92,7 +94,7 @@ const rangeTo = computed(() =>
         <div class="border-default border-b px-6 py-5">
             <UInput
                 v-model="query"
-                icon="i-lucide-search"
+                icon="tabler:search"
                 size="lg"
                 :loading="loading"
                 :placeholder="t('vault.searchPlaceholder')"
@@ -102,9 +104,13 @@ const rangeTo = computed(() =>
 
         <div class="flex items-start">
             <!-- Filter sidebar -->
-            <aside class="border-default w-64 shrink-0 self-stretch border-r p-6">
+            <aside
+                class="border-default w-64 shrink-0 self-stretch border-r p-6"
+            >
                 <div class="mb-5 flex items-center justify-between">
-                    <h2 class="text-lg font-semibold">{{ t("vault.filters") }}</h2>
+                    <h2 class="text-lg font-semibold">
+                        {{ t("vault.filters") }}
+                    </h2>
                     <button
                         v-if="hasFilter"
                         class="text-muted hover:text-default text-xs"
@@ -113,47 +119,36 @@ const rangeTo = computed(() =>
                         {{ t("vault.clear") }}
                     </button>
                 </div>
-                <h3
-                    class="text-muted mb-3 text-[11px] font-semibold uppercase tracking-wide"
+                <UCheckboxGroup
+                    v-model="selectedTypes"
+                    :items="categoryItems"
+                    :legend="t('vault.mediaType')"
+                    size="lg"
+                    :ui="{
+                        legend: 'text-muted mb-3 text-[11px] font-semibold tracking-wide uppercase',
+                        fieldset: 'gap-y-2',
+                    }"
                 >
-                    {{ t("vault.mediaType") }}
-                </h3>
-                <div class="flex flex-col gap-0.5">
-                    <button
-                        v-for="cat in MEDIA_CATEGORIES"
-                        :key="cat"
-                        class="hover:bg-muted -mx-2 flex h-[34px] items-center gap-2.5 rounded-md px-2 text-sm"
-                        @click="toggleType(cat)"
-                    >
+                    <template #label="{ item }">
                         <span
-                            class="flex size-[18px] shrink-0 items-center justify-center rounded"
-                            :class="
-                                selectedTypes.includes(cat)
-                                    ? 'bg-primary'
-                                    : 'border-accented border'
-                            "
+                            class="flex w-full items-center justify-between gap-2"
                         >
-                            <UIcon
-                                v-if="selectedTypes.includes(cat)"
-                                name="i-lucide-check"
-                                class="text-inverted size-3"
-                            />
+                            <span>{{ item.label }}</span>
+                            <span class="text-muted font-mono text-xs">
+                                {{ facetCount(item.value) }}
+                            </span>
                         </span>
-                        <span class="flex-1 text-left">{{
-                            t(`vault.type.${cat}`)
-                        }}</span>
-                        <span class="text-muted font-mono text-xs">{{
-                            facetCount(cat)
-                        }}</span>
-                    </button>
-                </div>
+                    </template>
+                </UCheckboxGroup>
             </aside>
 
             <!-- Results -->
             <main class="min-w-0 flex-1 p-6">
                 <div class="mb-4 flex items-baseline justify-between">
-                    <h2 class="text-sm font-semibold">{{ t("vault.results") }}</h2>
-                    <span class="text-muted text-xs">
+                    <h2 class="text-sm font-semibold">
+                        {{ t("vault.results") }}
+                    </h2>
+                    <span class="text-muted">
                         {{
                             t("vault.resultsRange", {
                                 from: rangeFrom,
@@ -165,16 +160,13 @@ const rangeTo = computed(() =>
                 </div>
 
                 <!-- Searching state -->
-                <div
-                    v-if="loading"
-                    class="grid grid-cols-5 gap-4"
-                >
+                <div v-if="loading" class="grid grid-cols-5 gap-4">
                     <div
                         v-for="n in 10"
                         :key="n"
                         class="border-default overflow-hidden rounded-[14px] border"
                     >
-                        <USkeleton class="aspect-[16/10] w-full rounded-none" />
+                        <USkeleton class="aspect-16/10 w-full rounded-none" />
                         <div class="space-y-2 p-3">
                             <USkeleton class="h-3 w-3/4" />
                             <USkeleton class="h-2 w-1/2" />
@@ -182,10 +174,7 @@ const rangeTo = computed(() =>
                     </div>
                 </div>
 
-                <div
-                    v-else-if="items.length"
-                    class="grid grid-cols-5 gap-4"
-                >
+                <div v-else-if="items.length" class="grid grid-cols-5 gap-4">
                     <VaultCard
                         v-for="item in items"
                         :key="item.VXID"
@@ -194,44 +183,22 @@ const rangeTo = computed(() =>
                     />
                 </div>
 
-                <div
-                    v-else-if="loaded"
-                    class="text-muted py-20 text-center"
-                >
-                    <UIcon
-                        name="i-lucide-search"
-                        class="size-10 opacity-50"
-                    />
+                <div v-else-if="loaded" class="text-muted py-20 text-center">
+                    <UIcon name="i-lucide-search" class="size-10 opacity-50" />
                     <p class="mt-3 text-sm">{{ t("vault.noResults") }}</p>
                 </div>
 
                 <!-- Pagination -->
-                <div
+                <UPagination
                     v-if="totalPages > 1"
-                    class="mt-6 flex items-center justify-center gap-3"
-                >
-                    <UButton
-                        icon="i-lucide-chevron-left"
-                        color="neutral"
-                        variant="outline"
-                        :disabled="page <= 1 || loading"
-                        @click="page--"
-                    >
-                        {{ t("vault.previous") }}
-                    </UButton>
-                    <span class="text-muted font-mono text-sm">
-                        {{ page }} / {{ totalPages }}
-                    </span>
-                    <UButton
-                        trailing-icon="i-lucide-chevron-right"
-                        color="neutral"
-                        variant="outline"
-                        :disabled="page >= totalPages || loading"
-                        @click="page++"
-                    >
-                        {{ t("vault.next") }}
-                    </UButton>
-                </div>
+                    v-model:page="page"
+                    :total="totalHits"
+                    :items-per-page="pageSize"
+                    :sibling-count="1"
+                    show-edges
+                    :disabled="loading"
+                    class="mt-6 flex justify-center"
+                />
             </main>
         </div>
     </div>
