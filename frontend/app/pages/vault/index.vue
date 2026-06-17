@@ -166,14 +166,15 @@ const rangeTo = computed(() =>
                     class="grid grid-cols-[repeat(auto-fit,minmax(400px,1fr))] gap-4"
                 >
                     <div
-                        v-for="n in 10"
+                        v-for="n in 15"
                         :key="n"
                         class="border-default overflow-hidden rounded-[14px] border"
                     >
                         <USkeleton class="aspect-16/10 w-full rounded-none" />
-                        <div class="space-y-2 p-3">
-                            <USkeleton class="h-3 w-3/4" />
-                            <USkeleton class="h-2 w-1/2" />
+                        <div class="flex flex-col gap-2 p-3">
+                            <USkeleton class="mb-1 h-4 w-3/4" />
+                            <USkeleton class="h-3 w-1/2" />
+                            <USkeleton class="h-3 w-1/2" />
                         </div>
                     </div>
                 </div>
