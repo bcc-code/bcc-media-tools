@@ -22,13 +22,13 @@ const thumbSrc = computed(() => {
 const typeIcon = computed(() => {
     switch (props.item.mediaType) {
         case "video":
-            return "i-lucide-video";
+            return "tabler:video";
         case "audio":
-            return "i-lucide-volume-2";
+            return "tabler:volume";
         case "image":
-            return "i-lucide-image";
+            return "tabler:photo";
         default:
-            return "i-lucide-file";
+            return "tabler:file";
     }
 });
 
@@ -79,7 +79,7 @@ function onLeave() {
             <UIcon v-else :name="typeIcon" class="size-10 opacity-40" />
             <span
                 v-if="durationLabel"
-                class="bg-default/70 text-default absolute left-2 top-2 rounded-md px-1.5 py-0.5 font-mono text-[11px]"
+                class="bg-default/70 text-default absolute top-2 left-2 rounded-md px-1.5 py-0.5 font-mono text-[11px]"
             >
                 {{ durationLabel }}
             </span>

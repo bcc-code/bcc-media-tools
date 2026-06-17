@@ -72,7 +72,7 @@ const isOpen = ref(false);
                     <div class="flex items-center gap-2">
                         <h3>{{ email }}</h3>
                         <Icon
-                            name="heroicons:chevron-down"
+                            name="tabler:chevron-down"
                             :class="[
                                 'transition duration-200',
                                 { '-rotate-180': isOpen },
@@ -83,7 +83,7 @@ const isOpen = ref(false);
                         size="sm"
                         variant="ghost"
                         color="error"
-                        icon="heroicons:trash"
+                        icon="tabler:trash"
                         @click.stop="$emit('remove')"
                     >
                         Remove

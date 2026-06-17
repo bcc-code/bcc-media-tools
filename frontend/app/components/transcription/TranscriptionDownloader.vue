@@ -21,7 +21,7 @@ const download = () => {
     }
 
     toast.add({
-        icon: "heroicons:check",
+        icon: "tabler:check",
         title: "Transcript downloaded successfully",
         color: "success",
     });

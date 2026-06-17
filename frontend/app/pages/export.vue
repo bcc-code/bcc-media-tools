@@ -36,9 +36,13 @@ const {
     status: bulkStatus,
     error: bulkError,
     execute: loadBulkConfig,
-} = useAsyncData("export-bulk-config", () => api.getExportConfig({ VXID: "" }), {
-    immediate: false,
-});
+} = useAsyncData(
+    "export-bulk-config",
+    () => api.getExportConfig({ VXID: "" }),
+    {
+        immediate: false,
+    },
+);
 
 watch(
     [canBulk, vxId],
@@ -166,10 +170,7 @@ const triggers: Trigger[] = [
             v-else-if="status === 'error'"
             class="mx-auto flex w-full max-w-3xl flex-col items-center gap-4 p-8"
         >
-            <UIcon
-                name="tabler:alert-triangle"
-                class="text-dimmed size-10"
-            />
+            <UIcon name="tabler:alert-triangle" class="text-dimmed size-10" />
             <p class="text-muted text-center">
                 {{ error?.message ?? $t("export.loadFailed") }}
             </p>
@@ -230,7 +231,7 @@ const triggers: Trigger[] = [
                         <div class="flex items-center justify-between gap-2">
                             <p>{{ trigger.name }}</p>
                             <Icon
-                                name="heroicons:arrow-right"
+                                name="tabler:arrow-right"
                                 class="text-muted"
                             />
                         </div>

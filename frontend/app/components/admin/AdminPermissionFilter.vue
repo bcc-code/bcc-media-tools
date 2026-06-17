@@ -136,7 +136,7 @@ function clear() {
             v-model="searchQuery"
             clearable
             placeholder="Search email..."
-            leading-icon="heroicons:magnifying-glass"
+            leading-icon="tabler:search"
             class="ml-auto"
         >
             <template #trailing>

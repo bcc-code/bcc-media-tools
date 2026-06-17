@@ -5,7 +5,7 @@ const toast = useToast();
 const clearLocalStorage = () => {
     localStorage.clear();
     toast.add({
-        icon: "heroicons:check",
+        icon: "tabler:check",
         title: "Cleared local storage",
         description:
             "All relevant data has been cleared from the local storage",

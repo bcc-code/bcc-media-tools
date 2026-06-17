@@ -156,7 +156,7 @@ const { list, wrapperProps, containerProps } = useVirtualList(
                         :title="$t('transcription.addSegment')"
                         @click="addNewSegmentAt(s.index + 1)"
                     >
-                        <Icon name="heroicons:plus-16-solid" />
+                        <Icon name="tabler:plus" />
                     </button>
                 </div>
             </template>

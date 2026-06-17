@@ -76,7 +76,7 @@ function copyToClipboard() {
     const text = transcription.value.segments.map((s) => s.text).join(" ");
     navigator.clipboard.writeText(text);
     toast.add({
-        icon: "heroicons:check",
+        icon: "tabler:check",
         title: t("bmmUpload.copiedToClipboard"),
         color: "success",
     });

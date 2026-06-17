@@ -184,7 +184,7 @@ const rangeTo = computed(() =>
                 </div>
 
                 <div v-else-if="loaded" class="text-muted py-20 text-center">
-                    <UIcon name="i-lucide-search" class="size-10 opacity-50" />
+                    <UIcon name="tabler:search" class="size-10 opacity-50" />
                     <p class="mt-3 text-sm">{{ t("vault.noResults") }}</p>
                 </div>
 

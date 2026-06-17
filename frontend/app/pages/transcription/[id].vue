@@ -59,7 +59,7 @@ const reset = async (notify: boolean = true) => {
         localStorage[key.value] = JSON.stringify(result);
         if (notify) {
             toast.add({
-                icon: "heroicons:check",
+                icon: "tabler:check",
                 title: t("transcription.resetSuccess"),
                 color: "success",
             });
@@ -90,14 +90,14 @@ const submitToMediabanken = async () => {
         });
         localStorage.removeItem(key.value);
         toast.add({
-            icon: "heroicons:check",
+            icon: "tabler:check",
             title: t("transcription.submitSuccess"),
             color: "success",
         });
         navigateTo("/transcription");
     } catch (err) {
         toast.add({
-            icon: "heroicons:exclamation",
+            icon: "tabler:exclamation-mark",
             title: t("transcription.submitError"),
             color: "error",
         });
@@ -302,10 +302,7 @@ const splitterApi = computed(() =>
                     class="-mx-3 aspect-square p-3"
                     @click="showManual = true"
                 >
-                    <Icon
-                        name="heroicons:question-mark-circle"
-                        class="text-xl"
-                    />
+                    <Icon name="tabler:help-circle" class="text-xl" />
                 </button>
             </div>
         </div>

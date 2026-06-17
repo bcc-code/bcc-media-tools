@@ -44,13 +44,13 @@ const isImage = computed(() => item.value?.mediaType === "image");
 const bigIcon = computed(() => {
     switch (item.value?.mediaType) {
         case "video":
-            return "i-lucide-video";
+            return "tabler:video";
         case "audio":
-            return "i-lucide-volume-2";
+            return "tabler:volume";
         case "image":
-            return "i-lucide-image";
+            return "tabler:photo";
         default:
-            return "i-lucide-file";
+            return "tabler:file";
     }
 });
 
@@ -71,7 +71,7 @@ const lengthLabel = computed(() => {
             <!-- header -->
             <div class="mb-6 flex items-center gap-4">
                 <UButton
-                    icon="i-lucide-arrow-left"
+                    icon="tabler:arrow-left"
                     color="neutral"
                     variant="outline"
                     @click="navigateTo('/vault/')"

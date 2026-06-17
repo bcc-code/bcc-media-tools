@@ -87,7 +87,7 @@ const { deleteMode } = useDeleteMode();
                     square
                     @click="$emit('toggleDelete')"
                 >
-                    <Icon name="heroicons:trash" />
+                    <Icon name="tabler:trash" />
                 </UButton>
             </UTooltip>
             <UTooltip v-else :text="$t('transcription.undeleteSegment')">
@@ -97,7 +97,7 @@ const { deleteMode } = useDeleteMode();
                     square
                     @click="$emit('toggleDelete')"
                 >
-                    <Icon name="heroicons:arrow-path" />
+                    <Icon name="tabler:refresh" />
                 </UButton>
             </UTooltip>
         </div>

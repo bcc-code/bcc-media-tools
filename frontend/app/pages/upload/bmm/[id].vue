@@ -91,10 +91,7 @@ const uploaded = ref(false);
         >
             <UAlert v-if="!routeParamsAreValid" variant="subtle" color="error">
                 <div class="flex items-center gap-2">
-                    <Icon
-                        name="heroicons:exclamation-triangle"
-                        class="text-lg"
-                    />
+                    <Icon name="tabler:alert-triangle" class="text-lg" />
                     Invalid route parameters
                 </div>
             </UAlert>
@@ -138,7 +135,7 @@ const uploaded = ref(false);
                             color="success"
                             variant="subtle"
                             :title="$t('uploaded')"
-                            icon="heroicons:check"
+                            icon="tabler:check"
                         />
                         <p>You can now close this tab.</p>
                     </template>

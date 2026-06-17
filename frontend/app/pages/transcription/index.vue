@@ -78,7 +78,7 @@ function setSegments(s: Segment[]) {
                     <UFileUpload
                         v-if="!transcription"
                         accept="application/json"
-                        icon="heroicons:document-text"
+                        icon="tabler:file-text"
                         :label="$t('transcription.uploadJsonFileTitle')"
                         :description="
                             $t('transcription.uploadJsonFileDescription')
@@ -90,7 +90,7 @@ function setSegments(s: Segment[]) {
                         <template #actions="{ open }">
                             <UButton
                                 :label="$t('transcription.selectFile')"
-                                icon="i-lucide-upload"
+                                icon="tabler:upload"
                                 color="neutral"
                                 variant="outline"
                                 @click="open()"

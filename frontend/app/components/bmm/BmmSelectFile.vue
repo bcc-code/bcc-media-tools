@@ -45,7 +45,7 @@ const { me } = useMe();
                     label=""
                 />
                 <UButton
-                    icon="heroicons:x-mark"
+                    icon="tabler:x"
                     variant="ghost"
                     color="error"
                     square
