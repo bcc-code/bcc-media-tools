@@ -200,9 +200,10 @@ func (v VaultAPI) mediaTypeCounts(text string) []*apiv1.VaultFacet {
 // --- Thumbnails ---
 
 // fetchThumbnail returns raw thumbnail bytes for an item. The thumbnailresource
-// URI Vidispine returns is either the image itself or a URIListDocument of frame
-// URIs; this handles both. timeSpec selects a frame for trick-play when set.
-func (v VaultAPI) fetchThumbnail(vxID, timeSpec string) ([]byte, string, error) {
+// URI is either the image itself or a URIListDocument of available frames; this
+// handles both. frac (0..1) selects a frame along the asset for trick-play;
+// empty/invalid picks a representative middle frame.
+func (v VaultAPI) fetchThumbnail(vxID, frac string) ([]byte, string, error) {
 	var list struct {
 		URI []string `json:"uri"`
 	}
@@ -220,9 +221,6 @@ func (v VaultAPI) fetchThumbnail(vxID, timeSpec string) ([]byte, string, error) 
 	}
 
 	resource := v.absolutize(list.URI[0])
-	if timeSpec != "" {
-		return v.fetchImage(resource + "/" + timeSpec)
-	}
 
 	// Fetch the resource: it is either the image directly, or a frame list.
 	r, err := v.rest.R().Get(resource)
@@ -238,13 +236,12 @@ func (v VaultAPI) fetchThumbnail(vxID, timeSpec string) ([]byte, string, error) 
 		return r.Body(), ct, nil
 	}
 
-	// Not an image: treat the body as a URIListDocument of frame URIs and grab a
-	// representative (middle) frame.
+	// Not an image: treat the body as a URIListDocument of frame entries. Each
+	// entry is a timecode (or path ending in one) to append to the resource.
 	var frames struct {
 		URI []string `json:"uri"`
 	}
 	_ = json.Unmarshal(r.Body(), &frames)
-	log.L.Debug().Str("resource", resource).Str("contentType", ct).Int("frames", len(frames.URI)).Msg("vault: thumbnail resource listing")
 	if len(frames.URI) == 0 {
 		raw := r.Body()
 		if len(raw) > 600 {
@@ -252,7 +249,33 @@ func (v VaultAPI) fetchThumbnail(vxID, timeSpec string) ([]byte, string, error) 
 		}
 		return nil, "", fmt.Errorf("no thumbnail frames for %s (content-type %s): %s", vxID, ct, string(raw))
 	}
-	return v.fetchImage(v.absolutize(frames.URI[len(frames.URI)/2]))
+
+	idx := len(frames.URI) / 2
+	if frac != "" {
+		if f, perr := strconv.ParseFloat(frac, 64); perr == nil {
+			if f < 0 {
+				f = 0
+			} else if f > 1 {
+				f = 1
+			}
+			idx = int(f*float64(len(frames.URI)-1) + 0.5)
+		}
+	}
+
+	return v.fetchImage(frameURL(resource, frames.URI[idx]))
+}
+
+// frameURL builds the URL for a single thumbnail frame. A frame entry is either
+// an absolute URL, or a timecode/path whose last segment is appended to the
+// resource URL (e.g. resource + "/50").
+func frameURL(resource, entry string) string {
+	if strings.HasPrefix(entry, "http") {
+		return entry
+	}
+	if i := strings.LastIndex(entry, "/"); i >= 0 {
+		entry = entry[i+1:]
+	}
+	return resource + "/" + entry
 }
 
 func (v VaultAPI) fetchImage(u string) ([]byte, string, error) {

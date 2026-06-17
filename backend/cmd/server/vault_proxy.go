@@ -27,8 +27,8 @@ func (h vaultThumbnailHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Optional time spec for trick-play (e.g. seconds); empty = default frame.
-	data, contentType, err := h.vault.fetchThumbnail(vxID, r.URL.Query().Get("t"))
+	// Optional fraction (0..1) along the asset for trick-play; empty = poster.
+	data, contentType, err := h.vault.fetchThumbnail(vxID, r.URL.Query().Get("f"))
 	if err != nil {
 		log.L.Debug().Err(err).Str("vxid", vxID).Msg("vault: thumbnail not available")
 		http.Error(w, "no thumbnail", http.StatusNotFound)

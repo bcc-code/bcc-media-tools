@@ -9,13 +9,13 @@ const props = defineProps<{
 
 const { t } = useI18n();
 
-// Optional trick-play frame (seconds into the asset) while hovering a video.
-const frame = ref<number | null>(null);
+// Optional trick-play fraction (0..1 along the asset) while hovering a video.
+const frac = ref<number | null>(null);
 const imgFailed = ref(false);
 
 const thumbSrc = computed(() => {
     let url = `${props.base}/vault/thumbnail?vxid=${encodeURIComponent(props.item.VXID)}`;
-    if (frame.value != null) url += `&t=${frame.value}`;
+    if (frac.value != null) url += `&f=${frac.value}`;
     return url;
 });
 
@@ -41,18 +41,19 @@ const durationLabel = computed(() => {
 });
 
 // Scrub through thumbnail frames based on the cursor position (trick-play).
+// Quantize to a handful of steps to limit thumbnail requests while hovering.
 function onMove(e: MouseEvent) {
-    if (props.item.mediaType !== "video" || !props.item.durationSeconds) return;
+    if (props.item.mediaType !== "video") return;
     if (imgFailed.value) return;
     const el = e.currentTarget as HTMLElement;
     const rect = el.getBoundingClientRect();
-    const frac = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
-    const sec = Math.floor(frac * props.item.durationSeconds);
-    if (sec !== frame.value) frame.value = sec;
+    const f = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
+    const step = Math.round(f * 12) / 12;
+    if (step !== frac.value) frac.value = step;
 }
 
 function onLeave() {
-    frame.value = null;
+    frac.value = null;
 }
 </script>
 
@@ -72,7 +73,7 @@ function onLeave() {
                 :src="thumbSrc"
                 :alt="item.title"
                 loading="lazy"
-                class="h-full w-full object-cover"
+                class="h-full w-full object-contain"
                 @error="imgFailed = true"
             />
             <UIcon v-else :name="typeIcon" class="size-10 opacity-40" />
