@@ -53,6 +53,14 @@ export function useCantemoActions(vxId: MaybeRefOrGetter<string | undefined>) {
         window.open(`${path}?id=${id}`, "_blank");
     }
 
+    // Like openTool, but for tools that take the item id as a path segment
+    // (e.g. the transcription editor at /transcription/<vxid>) rather than ?id=.
+    function openToolWithIdPath(path: string) {
+        const id = toValue(vxId);
+        if (!id) return;
+        window.open(`${path}/${id}`, "_blank");
+    }
+
     const chips = computed<CantemoChip[]>(() => {
         const m = me.value;
         return [
@@ -104,6 +112,18 @@ export function useCantemoActions(vxId: MaybeRefOrGetter<string | undefined>) {
                         CantemoAction.TRANSCRIBE,
                         "Transcription started",
                     ),
+            },
+            {
+                name: "Correct transcription",
+                action: "Open the transcription editor",
+                color: "#8b5cf6",
+                enabled: !!(
+                    m?.admin ||
+                    (m?.transcription &&
+                        (m.transcription.admin ||
+                            m.transcription.mediabanken))
+                ),
+                run: () => openToolWithIdPath("/transcription"),
             },
             {
                 name: "Update subtitle from Subtrans",
