@@ -288,6 +288,30 @@ func (v VaultAPI) fetchImage(u string) ([]byte, string, error) {
 	return resp.Body(), ct, nil
 }
 
+// fetchWaveform returns Vidispine's pre-rendered waveform PNG for an audio
+// item. See https://apidoc.vidispine.com/4.17/ref/item/analyze.html — the
+// endpoint requires that shape analysis has run on the item.
+func (v VaultAPI) fetchWaveform(vxID string, width, height int, bgColor, fgColor string) ([]byte, error) {
+	req := v.rest.R().SetQueryParams(map[string]string{
+		"width":  strconv.Itoa(width),
+		"height": strconv.Itoa(height),
+	})
+	if bgColor != "" {
+		req.SetQueryParam("bgcolor", bgColor)
+	}
+	if fgColor != "" {
+		req.SetQueryParam("fgcolor", fgColor)
+	}
+	resp, err := req.Get("/item/" + url.PathEscape(vxID) + "/waveform/image")
+	if err != nil {
+		return nil, err
+	}
+	if resp.IsError() {
+		return nil, fmt.Errorf("waveform fetch failed (status %d): %s", resp.StatusCode(), string(resp.Body()))
+	}
+	return resp.Body(), nil
+}
+
 // absolutize resolves an API-relative URI against the Vidispine host. Vidispine
 // usually returns absolute URIs already, in which case this is a no-op.
 func (v VaultAPI) absolutize(u string) string {

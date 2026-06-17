@@ -33,9 +33,19 @@ const previewSrc = computed(
         `${props.base}/vault/image?vxid=${encodeURIComponent(props.item.VXID)}&width=400`,
 );
 
-const imgSrc = computed(() =>
-    imgStage.value === "thumbnail" ? thumbSrc.value : previewSrc.value,
+// /vault/waveform proxies Vidispine's pre-rendered waveform PNG. Black bg +
+// white fg renders as a transparent waveform when combined with
+// `mix-blend-mode: lighten` on a darker card background.
+const waveformSrc = computed(
+    () =>
+        `${props.base}/vault/waveform?vxid=${encodeURIComponent(props.item.VXID)}&width=400&height=160&bgcolor=000000&fgcolor=ffffff`,
 );
+
+const imgSrc = computed(() => {
+    if (imgStage.value === "failed") return undefined;
+    if (props.item.mediaType === "audio") return waveformSrc.value;
+    return imgStage.value === "thumbnail" ? thumbSrc.value : previewSrc.value;
+});
 
 function onImgError() {
     if (imgStage.value === "thumbnail" && props.item.mediaType === "image") {
@@ -99,7 +109,10 @@ function onLeave() {
                 :src="imgSrc"
                 :alt="item.title"
                 loading="lazy"
-                class="h-full w-full object-contain"
+                :class="[
+                    'h-full w-full object-contain',
+                    item.mediaType === 'audio' && 'mix-blend-lighten',
+                ]"
                 @error="onImgError"
             />
             <UIcon v-else :name="typeIcon" class="size-10 opacity-40" />
