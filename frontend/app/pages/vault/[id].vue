@@ -35,11 +35,16 @@ const thumbSrc = computed(
     () => `${base}/vault/thumbnail?vxid=${encodeURIComponent(vxId.value)}`,
 );
 
-const isPlayable = computed(
-    () =>
-        item.value?.mediaType === "video" || item.value?.mediaType === "audio",
-);
+const isVideo = computed(() => item.value?.mediaType === "video");
+const isAudio = computed(() => item.value?.mediaType === "audio");
 const isImage = computed(() => item.value?.mediaType === "image");
+
+// Try the higher-res preview first; if it 404s (no preview shape on
+// Cantemo for this item), fall back to the static thumbnail.
+const imageFailed = ref(false);
+const imageSrc = computed(() =>
+    imageFailed.value ? thumbSrc.value : previewSrc.value,
+);
 
 const bigIcon = computed(() => {
     switch (item.value?.mediaType) {
@@ -91,16 +96,28 @@ const lengthLabel = computed(() => {
                     class="bg-default border-default overflow-hidden rounded-[14px] border"
                 >
                     <video
-                        v-if="isPlayable"
+                        v-if="isVideo"
                         :src="previewSrc"
                         controls
                         class="aspect-video w-full bg-black"
                     />
+                    <div
+                        v-else-if="isAudio"
+                        class="bg-muted text-muted flex aspect-video w-full flex-col items-center justify-center gap-6 p-6"
+                    >
+                        <UIcon :name="bigIcon" class="size-14 opacity-40" />
+                        <audio
+                            :src="previewSrc"
+                            controls
+                            class="w-full max-w-md"
+                        />
+                    </div>
                     <img
                         v-else-if="isImage"
-                        :src="thumbSrc"
+                        :src="imageSrc"
                         :alt="item?.title"
                         class="bg-muted aspect-video w-full object-contain"
+                        @error="imageFailed = true"
                     />
                     <div
                         v-else
