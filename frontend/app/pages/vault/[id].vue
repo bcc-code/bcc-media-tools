@@ -34,10 +34,6 @@ const previewSrc = computed(
 const thumbSrc = computed(
     () => `${base}/vault/thumbnail?vxid=${encodeURIComponent(vxId.value)}`,
 );
-const waveformSrc = computed(
-    () =>
-        `${base}/vault/waveform?vxid=${encodeURIComponent(vxId.value)}&width=1200&height=200`,
-);
 
 const isVideo = computed(() => item.value?.mediaType === "video");
 const isAudio = computed(() => item.value?.mediaType === "audio");
@@ -49,9 +45,6 @@ const imageFailed = ref(false);
 const imageSrc = computed(() =>
     imageFailed.value ? thumbSrc.value : previewSrc.value,
 );
-
-// Waveform may fail to render (e.g. non-MP3 audio); fall back to the icon.
-const waveformFailed = ref(false);
 
 const bigIcon = computed(() => {
     switch (item.value?.mediaType) {
@@ -112,18 +105,7 @@ const lengthLabel = computed(() => {
                         v-else-if="isAudio"
                         class="bg-muted text-muted flex aspect-video w-full flex-col items-center justify-center gap-6 p-6"
                     >
-                        <img
-                            v-if="!waveformFailed"
-                            :src="waveformSrc"
-                            alt=""
-                            class="w-full max-w-2xl"
-                            @error="waveformFailed = true"
-                        />
-                        <UIcon
-                            v-else
-                            :name="bigIcon"
-                            class="size-14 opacity-40"
-                        />
+                        <UIcon :name="bigIcon" class="size-14 opacity-40" />
                         <audio
                             :src="previewSrc"
                             controls

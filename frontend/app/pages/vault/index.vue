@@ -95,6 +95,7 @@ const rangeTo = computed(() =>
             <UInput
                 v-model="query"
                 icon="tabler:search"
+                loading-icon="lucide:loader-circle"
                 size="lg"
                 :loading="loading"
                 :placeholder="t('vault.searchPlaceholder')"

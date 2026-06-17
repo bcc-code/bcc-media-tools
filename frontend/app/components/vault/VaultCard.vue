@@ -33,19 +33,9 @@ const previewSrc = computed(
         `${props.base}/vault/image?vxid=${encodeURIComponent(props.item.VXID)}&width=400`,
 );
 
-// /vault/waveform renders a PNG peak-waveform of the audio preview, used
-// directly in place of a thumbnail for audio items (Cantemo doesn't
-// auto-generate /thumbnailresource for audio either).
-const waveformSrc = computed(
-    () =>
-        `${props.base}/vault/waveform?vxid=${encodeURIComponent(props.item.VXID)}&width=400&height=120`,
+const imgSrc = computed(() =>
+    imgStage.value === "thumbnail" ? thumbSrc.value : previewSrc.value,
 );
-
-const imgSrc = computed(() => {
-    if (imgStage.value === "failed") return undefined;
-    if (props.item.mediaType === "audio") return waveformSrc.value;
-    return imgStage.value === "thumbnail" ? thumbSrc.value : previewSrc.value;
-});
 
 function onImgError() {
     if (imgStage.value === "thumbnail" && props.item.mediaType === "image") {
