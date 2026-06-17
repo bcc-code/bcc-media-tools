@@ -25,9 +25,12 @@ const thumbSrc = computed(() => {
     return url;
 });
 
+// /vault/image is a backend-resized JPEG version of the preview shape,
+// suitable for grid thumbnails. Detail page still uses /vault/preview for
+// full resolution.
 const previewSrc = computed(
     () =>
-        `${props.base}/vault/preview?vxid=${encodeURIComponent(props.item.VXID)}`,
+        `${props.base}/vault/image?vxid=${encodeURIComponent(props.item.VXID)}&width=400`,
 );
 
 const imgSrc = computed(() =>

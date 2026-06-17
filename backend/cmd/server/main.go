@@ -165,6 +165,7 @@ func main() {
 		cantemo:      cantemoClient,
 		cantemoToken: os.Getenv("CANTEMO_TOKEN"),
 	})
+	mux.Handle("/vault/image", newVaultImageHandler(cantemoClient, os.Getenv("CANTEMO_TOKEN")))
 
 	mux.Handle("/", http.HandlerFunc(serveFiles))
 
