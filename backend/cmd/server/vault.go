@@ -3,11 +3,13 @@ package main
 import (
 	apiv1 "bcc-media-tools/api/v1"
 	"context"
+	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"connectrpc.com/connect"
@@ -20,8 +22,7 @@ import (
 // VaultPageSize is the fixed number of items returned per search page.
 const VaultPageSize = 50
 
-// Vidispine mediaType values we surface as filter categories. Anything that is
-// not one of the first three is bucketed into "other".
+// Media-type filter categories we surface in the UI.
 const (
 	mediaTypeVideo = "video"
 	mediaTypeAudio = "audio"
@@ -31,10 +32,10 @@ const (
 
 var vaultMediaCategories = []string{mediaTypeVideo, mediaTypeAudio, mediaTypeImage, mediaTypeOther}
 
-// Vidispine terse-metadata field names that are not in vscommon's constant set.
+// Vidispine terse-metadata field names not present in vscommon's constant set.
 var (
-	fieldMediaType        = vscommon.FieldType{Value: "mediaType"}
 	fieldCreated          = vscommon.FieldType{Value: "created"}
+	fieldMimeType         = vscommon.FieldType{Value: "mimeType"}
 	fieldOriginalFormat   = vscommon.FieldType{Value: "originalFormat"}
 	fieldOriginalFilename = vscommon.FieldType{Value: "originalFilename"}
 )
@@ -42,9 +43,9 @@ var (
 type VaultAPI struct {
 	// vidispine is the shared library client, used for per-item metadata/shapes.
 	vidispine *vsapi.Client
-	// rest is a dedicated basic-auth client for the search + thumbnail calls
-	// (kept here so the request/response shapes can be tuned against the live
-	// Vidispine instance without a library release cycle).
+	// rest is a dedicated basic-auth client for the search + thumbnail calls,
+	// kept here so the request/response shapes can be tuned against the live
+	// Vidispine instance without a library release cycle.
 	baseURL string
 	rest    *resty.Client
 }
@@ -60,57 +61,32 @@ func NewVaultAPI(vidispine *vsapi.Client, baseURL, username, password string) *V
 
 // --- Vidispine item search (PUT /item with an ItemSearchDocument) ---
 
-type vsFacetCount struct {
-	FieldValue string `json:"fieldValue"`
-	// Vidispine has historically reported the count under different keys; accept
-	// both and read whichever is populated via count().
-	Count int `json:"count"`
-	Value int `json:"value"`
-}
-
-func (c vsFacetCount) count() int {
-	if c.Count != 0 {
-		return c.Count
-	}
-	return c.Value
-}
-
-type vsFacet struct {
-	Field string         `json:"field"`
-	Count []vsFacetCount `json:"count"`
-}
-
 type vaultSearchResult struct {
 	Hits  int                     `json:"hits"`
 	Items []*vsapi.MetadataResult `json:"item"`
-	Facet []vsFacet               `json:"facet"`
 }
 
-// buildItemSearchXML builds the ItemSearchDocument body: a free-text query, an
-// optional multi-value mediaType filter, and a mediaType facet request.
+// buildItemSearchXML builds the ItemSearchDocument body: a free-text query plus
+// an optional multi-value mediaType filter.
 func buildItemSearchXML(text string, mediaTypes []string) ([]byte, error) {
 	type field struct {
 		Name   string   `xml:"name"`
 		Values []string `xml:"value"`
-	}
-	type facet struct {
-		Field string `xml:"field"`
 	}
 	type doc struct {
 		XMLName xml.Name `xml:"ItemSearchDocument"`
 		Xmlns   string   `xml:"xmlns,attr"`
 		Text    string   `xml:"text,omitempty"`
 		Fields  []field  `xml:"field,omitempty"`
-		Facets  []facet  `xml:"facet,omitempty"`
 	}
 	d := doc{Xmlns: "http://xml.vidispine.com/schema/vidispine", Text: text}
 	if len(mediaTypes) > 0 {
 		d.Fields = append(d.Fields, field{Name: "mediaType", Values: mediaTypes})
 	}
-	d.Facets = append(d.Facets, facet{Field: "mediaType"})
 	return xml.Marshal(d)
 }
 
+// searchVidispine runs a paginated item search returning terse metadata.
 func (v VaultAPI) searchVidispine(text string, mediaTypes []string, first, number int) (*vaultSearchResult, error) {
 	body, err := buildItemSearchXML(text, mediaTypes)
 	if err != nil {
@@ -135,33 +111,97 @@ func (v VaultAPI) searchVidispine(text string, mediaTypes []string, first, numbe
 	if resp.IsError() {
 		return nil, fmt.Errorf("vidispine search failed (status %d): %s", resp.StatusCode(), string(resp.Body()))
 	}
-
-	// While the facet shape is being confirmed against the live instance, log a
-	// body snippet when we get hits but no facet counts came through.
-	if result.Hits > 0 && facetTotal(result.Facet) == 0 {
-		raw := resp.Body()
-		if len(raw) > 1500 {
-			raw = raw[:1500]
-		}
-		log.L.Debug().Str("body", string(raw)).Msg("vault: search returned hits but zero facet counts")
-	}
-
 	return result, nil
 }
 
-func facetTotal(facets []vsFacet) int {
-	total := 0
-	for _, f := range facets {
-		for _, c := range f.Count {
-			total += c.count()
-		}
+// countItems returns just the hit count for a query (number=0, no metadata).
+func (v VaultAPI) countItems(text string, mediaTypes []string) (int32, error) {
+	body, err := buildItemSearchXML(text, mediaTypes)
+	if err != nil {
+		return 0, err
 	}
-	return total
+	result := &vaultSearchResult{}
+	resp, err := v.rest.R().
+		SetHeader("Content-Type", "application/xml").
+		SetResult(result).
+		SetQueryParams(map[string]string{"number": "0"}).
+		SetBody(body).
+		Put("/item")
+	if err != nil {
+		return 0, err
+	}
+	if resp.IsError() {
+		return 0, fmt.Errorf("vidispine count failed (status %d)", resp.StatusCode())
+	}
+	return int32(result.Hits), nil
 }
 
-// fetchThumbnail lists the item's thumbnail resource and fetches a frame as raw
-// image bytes. The resource URI Vidispine returns is absolute, so it is used
-// as-is (only resolved against the host if it ever comes back API-relative).
+// mediaTypeCounts produces the filter-sidebar counts. Vidispine faceting did not
+// return usable values for this instance, so counts are derived from cheap
+// number=0 count queries (run concurrently): one per media type plus a total,
+// with "other" = total - (video + audio + image).
+func (v VaultAPI) mediaTypeCounts(text string) []*apiv1.VaultFacet {
+	type result struct {
+		key string
+		n   int32
+	}
+	keys := []string{mediaTypeVideo, mediaTypeAudio, mediaTypeImage}
+	ch := make(chan result, len(keys)+1)
+
+	var wg sync.WaitGroup
+	for _, k := range keys {
+		wg.Add(1)
+		go func(k string) {
+			defer wg.Done()
+			n, err := v.countItems(text, []string{k})
+			if err != nil {
+				log.L.Debug().Err(err).Str("mediaType", k).Msg("vault: count query failed")
+			}
+			ch <- result{k, n}
+		}(k)
+	}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		n, _ := v.countItems(text, nil)
+		ch <- result{"__total", n}
+	}()
+	wg.Wait()
+	close(ch)
+
+	counts := map[string]int32{}
+	var total int32
+	for r := range ch {
+		if r.key == "__total" {
+			total = r.n
+		} else {
+			counts[r.key] = r.n
+		}
+	}
+	other := total - counts[mediaTypeVideo] - counts[mediaTypeAudio] - counts[mediaTypeImage]
+	if other < 0 {
+		other = 0
+	}
+	counts[mediaTypeOther] = other
+
+	log.L.Debug().Int("total", int(total)).
+		Int("video", int(counts[mediaTypeVideo])).
+		Int("audio", int(counts[mediaTypeAudio])).
+		Int("image", int(counts[mediaTypeImage])).
+		Msg("vault: media-type counts")
+
+	out := make([]*apiv1.VaultFacet, 0, len(vaultMediaCategories))
+	for _, cat := range vaultMediaCategories {
+		out = append(out, &apiv1.VaultFacet{MediaType: cat, Count: counts[cat]})
+	}
+	return out
+}
+
+// --- Thumbnails ---
+
+// fetchThumbnail returns raw thumbnail bytes for an item. The thumbnailresource
+// URI Vidispine returns is either the image itself or a URIListDocument of frame
+// URIs; this handles both. timeSpec selects a frame for trick-play when set.
 func (v VaultAPI) fetchThumbnail(vxID, timeSpec string) ([]byte, string, error) {
 	var list struct {
 		URI []string `json:"uri"`
@@ -172,49 +212,80 @@ func (v VaultAPI) fetchThumbnail(vxID, timeSpec string) ([]byte, string, error) 
 	if err != nil {
 		return nil, "", err
 	}
-	if resp.IsError() || len(list.URI) == 0 {
-		return nil, "", fmt.Errorf("no thumbnail resources for %s (status %d)", vxID, resp.StatusCode())
+	if resp.IsError() {
+		return nil, "", fmt.Errorf("listing thumbnail resources for %s failed (status %d)", vxID, resp.StatusCode())
+	}
+	if len(list.URI) == 0 {
+		return nil, "", fmt.Errorf("no thumbnails for %s", vxID)
 	}
 
-	full := list.URI[0]
-	if !strings.HasPrefix(full, "http") {
-		if b, perr := url.Parse(v.baseURL); perr == nil {
-			full = b.Scheme + "://" + b.Host + full
-		}
+	resource := v.absolutize(list.URI[0])
+	if timeSpec != "" {
+		return v.fetchImage(resource + "/" + timeSpec)
 	}
-	// The resource URI ("…/thumbnail/{res}/{item};version=N") needs a frame
-	// appended to yield an actual image; default to the first frame.
-	if timeSpec == "" {
-		timeSpec = "0"
-	}
-	full += "/" + timeSpec
 
-	img, err := v.rest.R().SetHeader("Accept", "image/jpeg").Get(full)
+	// Fetch the resource: it is either the image directly, or a frame list.
+	r, err := v.rest.R().Get(resource)
 	if err != nil {
 		return nil, "", err
 	}
-	if img.IsError() {
-		return nil, "", fmt.Errorf("thumbnail fetch failed (status %d) for %s: %s", img.StatusCode(), vxID, full)
+	if r.IsError() {
+		return nil, "", fmt.Errorf("thumbnail resource fetch failed (status %d) for %s: %s", r.StatusCode(), vxID, resource)
 	}
 
-	contentType := img.Header().Get("Content-Type")
-	log.L.Debug().Str("url", full).Str("contentType", contentType).Int("bytes", len(img.Body())).Msg("vault: fetched thumbnail")
+	ct := r.Header().Get("Content-Type")
+	if strings.HasPrefix(ct, "image/") {
+		return r.Body(), ct, nil
+	}
 
-	// If Vidispine handed back a document instead of an image, surface it so the
-	// card falls back to a type icon and the body shape is visible in the logs.
-	if !strings.HasPrefix(contentType, "image/") {
-		raw := img.Body()
-		if len(raw) > 800 {
-			raw = raw[:800]
+	// Not an image: treat the body as a URIListDocument of frame URIs and grab a
+	// representative (middle) frame.
+	var frames struct {
+		URI []string `json:"uri"`
+	}
+	_ = json.Unmarshal(r.Body(), &frames)
+	log.L.Debug().Str("resource", resource).Str("contentType", ct).Int("frames", len(frames.URI)).Msg("vault: thumbnail resource listing")
+	if len(frames.URI) == 0 {
+		raw := r.Body()
+		if len(raw) > 600 {
+			raw = raw[:600]
 		}
-		return nil, "", fmt.Errorf("unexpected thumbnail content-type %q for %s: %s", contentType, vxID, string(raw))
+		return nil, "", fmt.Errorf("no thumbnail frames for %s (content-type %s): %s", vxID, ct, string(raw))
 	}
-
-	return img.Body(), contentType, nil
+	return v.fetchImage(v.absolutize(frames.URI[len(frames.URI)/2]))
 }
 
+func (v VaultAPI) fetchImage(u string) ([]byte, string, error) {
+	resp, err := v.rest.R().SetHeader("Accept", "image/jpeg").Get(u)
+	if err != nil {
+		return nil, "", err
+	}
+	if resp.IsError() {
+		return nil, "", fmt.Errorf("thumbnail image fetch failed (status %d): %s", resp.StatusCode(), u)
+	}
+	ct := resp.Header().Get("Content-Type")
+	if ct == "" {
+		ct = "image/jpeg"
+	}
+	return resp.Body(), ct, nil
+}
+
+// absolutize resolves an API-relative URI against the Vidispine host. Vidispine
+// usually returns absolute URIs already, in which case this is a no-op.
+func (v VaultAPI) absolutize(u string) string {
+	if strings.HasPrefix(u, "http") {
+		return u
+	}
+	if b, err := url.Parse(v.baseURL); err == nil {
+		return b.Scheme + "://" + b.Host + u
+	}
+	return u
+}
+
+// --- RPC handlers ---
+
 // VaultSearch runs a full-text item search against Vidispine, paginated to
-// VaultPageSize, optionally filtered by media type, with per-type facet counts.
+// VaultPageSize, optionally filtered by media type, with per-type counts.
 func (v VaultAPI) VaultSearch(_ context.Context, req *connect.Request[apiv1.VaultSearchRequest]) (*connect.Response[apiv1.VaultSearchResponse], error) {
 	email := getEmail(req)
 	if email == "" {
@@ -228,9 +299,10 @@ func (v VaultAPI) VaultSearch(_ context.Context, req *connect.Request[apiv1.Vaul
 	if page < 1 {
 		page = 1
 	}
+	text := strings.TrimSpace(req.Msg.GetQuery())
 
 	res, err := v.searchVidispine(
-		strings.TrimSpace(req.Msg.GetQuery()),
+		text,
 		vidispineMediaTypes(req.Msg.GetMediaTypes()),
 		int(page-1)*VaultPageSize+1,
 		VaultPageSize,
@@ -249,7 +321,7 @@ func (v VaultAPI) VaultSearch(_ context.Context, req *connect.Request[apiv1.Vaul
 		TotalHits: int32(res.Hits),
 		Page:      page,
 		PageSize:  VaultPageSize,
-		Facets:    mediaTypeFacets(res.Facet),
+		Facets:    v.mediaTypeCounts(text),
 	}), nil
 }
 
@@ -314,8 +386,10 @@ func (v VaultAPI) originalShapeSize(vxID string) int64 {
 	return 0
 }
 
+// --- metadata mapping ---
+
 func metadataToVaultItem(m *vsapi.MetadataResult) *apiv1.VaultItem {
-	mediaType := normalizeMediaType(m.Get(fieldMediaType, ""))
+	mediaType := deriveMediaType(m)
 
 	title := m.Get(vscommon.FieldTitle, "")
 	if title == "" {
@@ -340,29 +414,44 @@ func metadataToVaultItem(m *vsapi.MetadataResult) *apiv1.VaultItem {
 	}
 }
 
+// deriveMediaType classifies an item. The Vidispine "mediaType" field is not in
+// the terse metadata for this instance, so we derive it from the mimeType
+// (e.g. "video/quicktime" -> video).
+func deriveMediaType(m *vsapi.MetadataResult) string {
+	mime := strings.ToLower(m.Get(fieldMimeType, ""))
+	switch {
+	case strings.HasPrefix(mime, "video/"):
+		return mediaTypeVideo
+	case strings.HasPrefix(mime, "audio/"):
+		return mediaTypeAudio
+	case strings.HasPrefix(mime, "image/"):
+		return mediaTypeImage
+	}
+	return mediaTypeOther
+}
+
 // itemFormat derives a short, human format string: the original file extension
-// when available (e.g. "mov", "wav"), falling back to Vidispine's originalFormat.
+// when available (e.g. "mov", "wav"), then the mimeType subtype, then the first
+// token of Vidispine's (often comma-joined) originalFormat.
 func itemFormat(m *vsapi.MetadataResult) string {
-	if name := m.Get(fieldOriginalFilename, ""); name != "" {
-		if i := strings.LastIndex(name, "."); i >= 0 && i < len(name)-1 {
+	for _, name := range []string{m.Get(fieldOriginalFilename, ""), m.Get(vscommon.FieldTitle, "")} {
+		if i := strings.LastIndex(name, "."); i >= 0 && i < len(name)-1 && len(name)-i <= 6 {
 			return strings.ToLower(name[i+1:])
 		}
 	}
-	return m.Get(fieldOriginalFormat, "")
-}
-
-func normalizeMediaType(mt string) string {
-	switch strings.ToLower(mt) {
-	case mediaTypeVideo, mediaTypeAudio, mediaTypeImage:
-		return strings.ToLower(mt)
-	default:
-		return mediaTypeOther
+	if mime := m.Get(fieldMimeType, ""); strings.Contains(mime, "/") {
+		return strings.ToLower(strings.SplitN(mime, "/", 2)[1])
 	}
+	format := m.Get(fieldOriginalFormat, "")
+	if i := strings.IndexByte(format, ','); i > 0 {
+		return format[:i]
+	}
+	return format
 }
 
 // vidispineMediaTypes maps the UI filter categories to the mediaType values
-// Vidispine understands. "other" cannot be expressed as a positive mediaType
-// criterion, so it is dropped from the server-side filter.
+// Vidispine understands. "other" cannot be expressed as a positive criterion,
+// so it is dropped from the server-side filter.
 func vidispineMediaTypes(categories []string) []string {
 	out := make([]string, 0, len(categories))
 	for _, c := range categories {
@@ -370,26 +459,6 @@ func vidispineMediaTypes(categories []string) []string {
 		case mediaTypeVideo, mediaTypeAudio, mediaTypeImage:
 			out = append(out, strings.ToLower(c))
 		}
-	}
-	return out
-}
-
-// mediaTypeFacets folds Vidispine's mediaType facet counts into our four
-// categories (video / audio / image / other), always returning all four.
-func mediaTypeFacets(facets []vsFacet) []*apiv1.VaultFacet {
-	counts := map[string]int32{}
-	for _, f := range facets {
-		if f.Field != "mediaType" {
-			continue
-		}
-		for _, c := range f.Count {
-			counts[normalizeMediaType(c.FieldValue)] += int32(c.count())
-		}
-	}
-
-	out := make([]*apiv1.VaultFacet, 0, len(vaultMediaCategories))
-	for _, cat := range vaultMediaCategories {
-		out = append(out, &apiv1.VaultFacet{MediaType: cat, Count: counts[cat]})
 	}
 	return out
 }

@@ -9,15 +9,18 @@ const base = config.public.grpcUrl;
 
 const vxId = computed(() => route.params.id?.toString() ?? "");
 
-useHead({ title: () => item.value?.title || "Vault" });
-
 const item = ref<VaultItem>();
 const loading = ref(true);
+
+const pageTitle = computed(() => item.value?.title || "Vault");
+useHead({ title: pageTitle });
 
 onMounted(async () => {
     try {
         const res = await api.getVaultItem({ VXID: vxId.value });
         item.value = res.item;
+    } catch {
+        // ignore — the summary simply shows placeholders
     } finally {
         loading.value = false;
     }
