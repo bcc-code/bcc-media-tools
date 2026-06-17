@@ -66,6 +66,21 @@ type vaultSearchResult struct {
 	Items []*vsapi.MetadataResult `json:"item"`
 }
 
+// wildcardText wraps each whitespace-separated word in the query with '*' so
+// Vidispine does substring matching (e.g. "safari interview" ->
+// "*safari* *interview*"). Empty input is returned unchanged so an empty search
+// still matches everything.
+func wildcardText(text string) string {
+	words := strings.Fields(text)
+	if len(words) == 0 {
+		return ""
+	}
+	for i, w := range words {
+		words[i] = "*" + w + "*"
+	}
+	return strings.Join(words, " ")
+}
+
 // buildItemSearchXML builds the ItemSearchDocument body: a free-text query plus
 // an optional multi-value mediaType filter.
 func buildItemSearchXML(text string, mediaTypes []string) ([]byte, error) {
@@ -322,7 +337,7 @@ func (v VaultAPI) VaultSearch(_ context.Context, req *connect.Request[apiv1.Vaul
 	if page < 1 {
 		page = 1
 	}
-	text := strings.TrimSpace(req.Msg.GetQuery())
+	text := wildcardText(req.Msg.GetQuery())
 
 	res, err := v.searchVidispine(
 		text,
