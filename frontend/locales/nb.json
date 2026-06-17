@@ -166,6 +166,35 @@
             "title": "Admin",
             "description": "Administrer brukere og tilganger",
             "badge": "Kun for admin"
+        },
+        "vault": {
+            "title": "Vault",
+            "description": "Søk i Mediabanken og forhåndsvis elementer"
+        }
+    },
+    "vault": {
+        "searchPlaceholder": "Søk i vault",
+        "filters": "Filtre",
+        "clear": "Nullstill",
+        "mediaType": "Medietype",
+        "results": "Søk",
+        "resultsRange": "Resultater: {from} til {to} av {total}",
+        "noResults": "Ingen elementer samsvarer med søket.",
+        "added": "Lagt til",
+        "format": "Format",
+        "back": "Tilbake til resultater",
+        "itemSummary": "Elementoversikt",
+        "title": "Tittel",
+        "uploadDate": "Opplastingsdato",
+        "size": "Størrelse",
+        "length": "Lengde",
+        "previous": "Forrige",
+        "next": "Neste",
+        "type": {
+            "video": "Video",
+            "audio": "Lyd",
+            "image": "Bilde",
+            "other": "Annet"
         }
     }
 }

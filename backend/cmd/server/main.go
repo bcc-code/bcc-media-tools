@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/bcc-code/bcc-media-flows/services/cantemo"
 	"github.com/bcc-code/bcc-media-flows/services/vidispine/vsapi"
 	"github.com/bcc-code/mediabank-bridge/log"
 	"github.com/rs/zerolog"
@@ -54,6 +55,7 @@ type ApiServer struct {
 	ShortsAPI
 	ExportAPI
 	CantemoAPI
+	VaultAPI
 }
 
 func withCORS(connectHandler http.Handler) http.Handler {
@@ -121,6 +123,11 @@ func main() {
 	shortsAPI := NewShortsAPI(temporalClient)
 	exportAPI := NewExportAPI(vidispineClient, temporalClient)
 	cantemoAPI := NewCantemoAPI(temporalClient)
+	vaultAPI := NewVaultAPI(vidispineClient)
+
+	// Dedicated Cantemo client for the VAULT preview proxy (same creds as the
+	// transcription tool).
+	cantemoClient := cantemo.NewClient(os.Getenv("CANTEMO_URL"), os.Getenv("CANTEMO_TOKEN"))
 
 	api := &ApiServer{
 		PermissionsAPI:   permissionsApi,
@@ -129,6 +136,7 @@ func main() {
 		ShortsAPI:        *shortsAPI,
 		ExportAPI:        *exportAPI,
 		CantemoAPI:       *cantemoAPI,
+		VaultAPI:         *vaultAPI,
 	}
 
 	if os.Getenv("STATIC_FILE_PATH") != "" {
@@ -144,6 +152,13 @@ func main() {
 	mux.Handle("/upload", uploadHandler{
 		TemporalClient: temporalClient,
 		TempPath:       tempPath,
+	})
+
+	// VAULT media proxies (auth'd, server-side fetch — never expose upstream URLs).
+	mux.Handle("/vault/thumbnail", vaultThumbnailHandler{vidispine: vidispineClient})
+	mux.Handle("/vault/preview", vaultPreviewHandler{
+		cantemo:      cantemoClient,
+		cantemoToken: os.Getenv("CANTEMO_TOKEN"),
 	})
 
 	mux.Handle("/", http.HandlerFunc(serveFiles))

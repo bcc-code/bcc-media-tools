@@ -166,6 +166,35 @@
             "title": "Admin",
             "description": "Manage users and permissions",
             "badge": "Only for Admins"
+        },
+        "vault": {
+            "title": "Vault",
+            "description": "Search Mediabanken and preview items"
+        }
+    },
+    "vault": {
+        "searchPlaceholder": "Search the vault",
+        "filters": "Filters",
+        "clear": "Clear",
+        "mediaType": "Media type",
+        "results": "Search",
+        "resultsRange": "Results: {from} to {to} of {total}",
+        "noResults": "No items match your search.",
+        "added": "Added",
+        "format": "Format",
+        "back": "Back to results",
+        "itemSummary": "Item summary",
+        "title": "Title",
+        "uploadDate": "Upload date",
+        "size": "Size",
+        "length": "Length",
+        "previous": "Previous",
+        "next": "Next",
+        "type": {
+            "video": "Video",
+            "audio": "Audio",
+            "image": "Image",
+            "other": "Other"
         }
     }
 }

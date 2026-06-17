@@ -51,6 +51,13 @@ export function useTools() {
 			to: "/shorts/",
 		},
 		{
+			label: t("tools.vault.title"),
+			icon: "tabler:building-warehouse",
+			description: t("tools.vault.description"),
+			to: "/vault/",
+			enabled: me.value?.admin || me.value?.vault?.enabled,
+		},
+		{
 			label: t("tools.admin.title"),
 			icon: "tabler:settings",
 			description: t("tools.admin.description"),

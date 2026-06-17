@@ -149,6 +149,7 @@ func PermissionsForEmail(email string) *apiv1.Permissions {
 			Admin:        false,
 		},
 		Cantemo: &apiv1.CantemoPermission{},
+		Vault:   &apiv1.VaultPermission{},
 	}
 }
 

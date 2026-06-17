@@ -93,6 +93,10 @@ const (
 	// APIServiceTriggerCantemoActionProcedure is the fully-qualified name of the APIService's
 	// TriggerCantemoAction RPC.
 	APIServiceTriggerCantemoActionProcedure = "/api.v1.APIService/TriggerCantemoAction"
+	// APIServiceVaultSearchProcedure is the fully-qualified name of the APIService's VaultSearch RPC.
+	APIServiceVaultSearchProcedure = "/api.v1.APIService/VaultSearch"
+	// APIServiceGetVaultItemProcedure is the fully-qualified name of the APIService's GetVaultItem RPC.
+	APIServiceGetVaultItemProcedure = "/api.v1.APIService/GetVaultItem"
 )
 
 // APIServiceClient is a client for the api.v1.APIService service.
@@ -128,6 +132,9 @@ type APIServiceClient interface {
 	GetExportDestinations(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.ExportDestinationsResponse], error)
 	// Cantemo action panel
 	TriggerCantemoAction(context.Context, *connect.Request[v1.TriggerCantemoActionRequest]) (*connect.Response[v1.Void], error)
+	// VAULT (Vidispine search)
+	VaultSearch(context.Context, *connect.Request[v1.VaultSearchRequest]) (*connect.Response[v1.VaultSearchResponse], error)
+	GetVaultItem(context.Context, *connect.Request[v1.GetVaultItemRequest]) (*connect.Response[v1.GetVaultItemResponse], error)
 }
 
 // NewAPIServiceClient constructs a client for the api.v1.APIService service. By default, it uses
@@ -273,6 +280,18 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(aPIServiceMethods.ByName("TriggerCantemoAction")),
 			connect.WithClientOptions(opts...),
 		),
+		vaultSearch: connect.NewClient[v1.VaultSearchRequest, v1.VaultSearchResponse](
+			httpClient,
+			baseURL+APIServiceVaultSearchProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("VaultSearch")),
+			connect.WithClientOptions(opts...),
+		),
+		getVaultItem: connect.NewClient[v1.GetVaultItemRequest, v1.GetVaultItemResponse](
+			httpClient,
+			baseURL+APIServiceGetVaultItemProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("GetVaultItem")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -300,6 +319,8 @@ type aPIServiceClient struct {
 	startVBExport         *connect.Client[v1.StartVBExportRequest, v1.StartVBExportResponse]
 	getExportDestinations *connect.Client[v1.Void, v1.ExportDestinationsResponse]
 	triggerCantemoAction  *connect.Client[v1.TriggerCantemoActionRequest, v1.Void]
+	vaultSearch           *connect.Client[v1.VaultSearchRequest, v1.VaultSearchResponse]
+	getVaultItem          *connect.Client[v1.GetVaultItemRequest, v1.GetVaultItemResponse]
 }
 
 // GetPermissions calls api.v1.APIService.GetPermissions.
@@ -412,6 +433,16 @@ func (c *aPIServiceClient) TriggerCantemoAction(ctx context.Context, req *connec
 	return c.triggerCantemoAction.CallUnary(ctx, req)
 }
 
+// VaultSearch calls api.v1.APIService.VaultSearch.
+func (c *aPIServiceClient) VaultSearch(ctx context.Context, req *connect.Request[v1.VaultSearchRequest]) (*connect.Response[v1.VaultSearchResponse], error) {
+	return c.vaultSearch.CallUnary(ctx, req)
+}
+
+// GetVaultItem calls api.v1.APIService.GetVaultItem.
+func (c *aPIServiceClient) GetVaultItem(ctx context.Context, req *connect.Request[v1.GetVaultItemRequest]) (*connect.Response[v1.GetVaultItemResponse], error) {
+	return c.getVaultItem.CallUnary(ctx, req)
+}
+
 // APIServiceHandler is an implementation of the api.v1.APIService service.
 type APIServiceHandler interface {
 	// Permissions
@@ -445,6 +476,9 @@ type APIServiceHandler interface {
 	GetExportDestinations(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.ExportDestinationsResponse], error)
 	// Cantemo action panel
 	TriggerCantemoAction(context.Context, *connect.Request[v1.TriggerCantemoActionRequest]) (*connect.Response[v1.Void], error)
+	// VAULT (Vidispine search)
+	VaultSearch(context.Context, *connect.Request[v1.VaultSearchRequest]) (*connect.Response[v1.VaultSearchResponse], error)
+	GetVaultItem(context.Context, *connect.Request[v1.GetVaultItemRequest]) (*connect.Response[v1.GetVaultItemResponse], error)
 }
 
 // NewAPIServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -586,6 +620,18 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(aPIServiceMethods.ByName("TriggerCantemoAction")),
 		connect.WithHandlerOptions(opts...),
 	)
+	aPIServiceVaultSearchHandler := connect.NewUnaryHandler(
+		APIServiceVaultSearchProcedure,
+		svc.VaultSearch,
+		connect.WithSchema(aPIServiceMethods.ByName("VaultSearch")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aPIServiceGetVaultItemHandler := connect.NewUnaryHandler(
+		APIServiceGetVaultItemProcedure,
+		svc.GetVaultItem,
+		connect.WithSchema(aPIServiceMethods.ByName("GetVaultItem")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/api.v1.APIService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case APIServiceGetPermissionsProcedure:
@@ -632,6 +678,10 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceGetExportDestinationsHandler.ServeHTTP(w, r)
 		case APIServiceTriggerCantemoActionProcedure:
 			aPIServiceTriggerCantemoActionHandler.ServeHTTP(w, r)
+		case APIServiceVaultSearchProcedure:
+			aPIServiceVaultSearchHandler.ServeHTTP(w, r)
+		case APIServiceGetVaultItemProcedure:
+			aPIServiceGetVaultItemHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -727,4 +777,12 @@ func (UnimplementedAPIServiceHandler) GetExportDestinations(context.Context, *co
 
 func (UnimplementedAPIServiceHandler) TriggerCantemoAction(context.Context, *connect.Request[v1.TriggerCantemoActionRequest]) (*connect.Response[v1.Void], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.TriggerCantemoAction is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) VaultSearch(context.Context, *connect.Request[v1.VaultSearchRequest]) (*connect.Response[v1.VaultSearchResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.VaultSearch is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) GetVaultItem(context.Context, *connect.Request[v1.GetVaultItemRequest]) (*connect.Response[v1.GetVaultItemResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetVaultItem is not implemented"))
 }

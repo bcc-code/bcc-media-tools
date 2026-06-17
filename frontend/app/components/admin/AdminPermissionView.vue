@@ -42,6 +42,9 @@ function withDefaultPermissions(p: Permissions): Permissions {
             subtitles: false,
             relations: false,
         },
+        vault: p.vault ?? {
+            enabled: false,
+        },
         email: p.email ?? "",
     };
 }
@@ -240,6 +243,16 @@ const isOpen = ref(false);
                             v-model="perms.cantemo.relations"
                             label="Update asset relations"
                             description="Can trigger the asset relations update flow"
+                        />
+                    </AdminPermissionViewSection>
+                    <AdminPermissionViewSection
+                        v-if="perms.vault"
+                        title="Vault"
+                    >
+                        <USwitch
+                            v-model="perms.vault.enabled"
+                            label="Vault search"
+                            description="Can search Mediabanken and view item previews"
                         />
                     </AdminPermissionViewSection>
                 </motion.div>

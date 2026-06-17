@@ -53,6 +53,12 @@ message CantemoPermission {
   bool relations = 4;
 }
 
+// Permission for the VAULT search view.
+message VaultPermission {
+  // can search the vault and view items
+  bool enabled = 1;
+}
+
 message Permissions {
 	bool admin = 1;
 	BMMPermission bmm = 2;
@@ -61,6 +67,7 @@ message Permissions {
   ExportPermission export = 5;
   VBExportPermission vb_export = 6;
   CantemoPermission cantemo = 7;
+  VaultPermission vault = 8;
 }
 
 message GetPermissionsRequest {}
@@ -341,6 +348,56 @@ message TriggerCantemoActionRequest {
   CantemoAction action = 2;
 }
 
+// ---- VAULT (Vidispine search) ----
+
+message VaultSearchRequest {
+  // free-text query, matched against item titles
+  string query = 1;
+  // optional media-type filter (video / audio / image / other)
+  repeated string media_types = 2;
+  // 1-based page number; the page size is fixed server-side (~50)
+  int32 page = 3;
+}
+
+message VaultItem {
+  string VXID = 1;
+  string title = 2;
+  // video / audio / image / other
+  string media_type = 3;
+  // human-readable upload/created date
+  string added = 4;
+  // original file format / container (e.g. mov, wav, jpg)
+  string format = 5;
+  // human-readable file size (only populated for the detail view)
+  string size = 6;
+  // duration in seconds (0 for stills / documents)
+  int32 duration_seconds = 7;
+  // whether a playable preview shape exists
+  bool has_preview = 8;
+}
+
+message VaultFacet {
+  string media_type = 1;
+  int32 count = 2;
+}
+
+message VaultSearchResponse {
+  repeated VaultItem items = 1;
+  int32 total_hits = 2;
+  int32 page = 3;
+  int32 page_size = 4;
+  // per-media-type counts for the current query (for the filter sidebar)
+  repeated VaultFacet facets = 5;
+}
+
+message GetVaultItemRequest {
+  string VXID = 1;
+}
+
+message GetVaultItemResponse {
+  VaultItem item = 1;
+}
+
 service APIService {
 	// Permissions
 	rpc GetPermissions (Void) returns (Permissions) {}
@@ -380,4 +437,8 @@ service APIService {
 
   // Cantemo action panel
   rpc TriggerCantemoAction(TriggerCantemoActionRequest) returns (Void) {}
+
+  // VAULT (Vidispine search)
+  rpc VaultSearch(VaultSearchRequest) returns (VaultSearchResponse) {}
+  rpc GetVaultItem(GetVaultItemRequest) returns (GetVaultItemResponse) {}
 }

@@ -77,3 +77,8 @@ func (p *Permissions) CanCantemoSubtitles() bool {
 func (p *Permissions) CanCantemoRelations() bool {
 	return p.Admin || (p.Cantemo != nil && p.Cantemo.Relations)
 }
+
+// CanVault reports whether the user may use the VAULT search view.
+func (p *Permissions) CanVault() bool {
+	return p.Admin || (p.Vault != nil && p.Vault.Enabled)
+}
