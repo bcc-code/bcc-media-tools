@@ -9,6 +9,8 @@ const base = config.public.grpcUrl;
 
 const vxId = computed(() => route.params.id?.toString() ?? "");
 
+const { chips, loading: actionLoading } = useCantemoActions(vxId);
+
 const item = ref<VaultItem>();
 const loading = ref(true);
 
@@ -64,7 +66,7 @@ const lengthLabel = computed(() => {
 </script>
 
 <template>
-    <div class="px-6 pb-16 pt-8">
+    <div class="px-6 pt-8 pb-16">
         <div class="mx-auto max-w-[920px]">
             <!-- header -->
             <div class="mb-6 flex items-center gap-4">
@@ -122,7 +124,7 @@ const lengthLabel = computed(() => {
                             <dt class="text-muted text-[13px]">
                                 {{ t("vault.title") }}
                             </dt>
-                            <dd class="break-all text-right text-[13px]">
+                            <dd class="text-right text-[13px] break-all">
                                 {{ item?.title || "—" }}
                             </dd>
                         </div>
@@ -157,6 +159,30 @@ const lengthLabel = computed(() => {
                             </dd>
                         </div>
                     </dl>
+
+                    <div
+                        v-if="chips.length"
+                        class="border-default mt-4 border-t pt-4"
+                    >
+                        <h3 class="mb-3 text-sm font-semibold">
+                            {{ t("vault.actions") }}
+                        </h3>
+                        <div class="flex flex-wrap gap-2">
+                            <UButton
+                                v-for="chip in chips"
+                                :key="chip.name"
+                                size="sm"
+                                color="neutral"
+                                variant="outline"
+                                :title="chip.action"
+                                :loading="actionLoading === chip.name"
+                                :disabled="!!actionLoading"
+                                @click="chip.run()"
+                            >
+                                {{ chip.name }}
+                            </UButton>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
