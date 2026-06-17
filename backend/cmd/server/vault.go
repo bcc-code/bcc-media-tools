@@ -27,10 +27,14 @@ const (
 	mediaTypeVideo = "video"
 	mediaTypeAudio = "audio"
 	mediaTypeImage = "image"
+	// mediaTypeOther is still used internally by deriveMediaType for items
+	// whose mimeType doesn't match the three surfaced categories, but it is
+	// not exposed as a UI filter — Vidispine has no stable way to express
+	// "everything except video/audio/image" as a search criterion.
 	mediaTypeOther = "other"
 )
 
-var vaultMediaCategories = []string{mediaTypeVideo, mediaTypeAudio, mediaTypeImage, mediaTypeOther}
+var vaultMediaCategories = []string{mediaTypeVideo, mediaTypeAudio, mediaTypeImage}
 
 // Vidispine terse-metadata field names not present in vscommon's constant set.
 var (
@@ -81,8 +85,8 @@ func wildcardText(text string) string {
 	return strings.Join(words, " ")
 }
 
-// buildItemSearchXML builds the ItemSearchDocument body: a free-text query plus
-// an optional multi-value mediaType filter.
+// buildItemSearchXML builds the ItemSearchDocument body: a free-text query
+// plus an optional multi-value mediaType filter.
 func buildItemSearchXML(text string, mediaTypes []string) ([]byte, error) {
 	type field struct {
 		Name   string   `xml:"name"`
@@ -151,20 +155,18 @@ func (v VaultAPI) countItems(text string, mediaTypes []string) (int32, error) {
 	return int32(result.Hits), nil
 }
 
-// mediaTypeCounts produces the filter-sidebar counts. Vidispine faceting did not
-// return usable values for this instance, so counts are derived from cheap
-// number=0 count queries (run concurrently): one per media type plus a total,
-// with "other" = total - (video + audio + image).
+// mediaTypeCounts produces the filter-sidebar counts. Vidispine faceting did
+// not return usable values for this instance, so counts are derived from
+// cheap concurrent number=0 count queries — one per media type.
 func (v VaultAPI) mediaTypeCounts(text string) []*apiv1.VaultFacet {
 	type result struct {
 		key string
 		n   int32
 	}
-	keys := []string{mediaTypeVideo, mediaTypeAudio, mediaTypeImage}
-	ch := make(chan result, len(keys)+1)
+	ch := make(chan result, len(vaultMediaCategories))
 
 	var wg sync.WaitGroup
-	for _, k := range keys {
+	for _, k := range vaultMediaCategories {
 		wg.Add(1)
 		go func(k string) {
 			defer wg.Done()
@@ -175,35 +177,13 @@ func (v VaultAPI) mediaTypeCounts(text string) []*apiv1.VaultFacet {
 			ch <- result{k, n}
 		}(k)
 	}
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		n, _ := v.countItems(text, nil)
-		ch <- result{"__total", n}
-	}()
 	wg.Wait()
 	close(ch)
 
 	counts := map[string]int32{}
-	var total int32
 	for r := range ch {
-		if r.key == "__total" {
-			total = r.n
-		} else {
-			counts[r.key] = r.n
-		}
+		counts[r.key] = r.n
 	}
-	other := total - counts[mediaTypeVideo] - counts[mediaTypeAudio] - counts[mediaTypeImage]
-	if other < 0 {
-		other = 0
-	}
-	counts[mediaTypeOther] = other
-
-	log.L.Debug().Int("total", int(total)).
-		Int("video", int(counts[mediaTypeVideo])).
-		Int("audio", int(counts[mediaTypeAudio])).
-		Int("image", int(counts[mediaTypeImage])).
-		Msg("vault: media-type counts")
 
 	out := make([]*apiv1.VaultFacet, 0, len(vaultMediaCategories))
 	for _, cat := range vaultMediaCategories {
@@ -488,8 +468,8 @@ func itemFormat(m *vsapi.MetadataResult) string {
 }
 
 // vidispineMediaTypes maps the UI filter categories to the mediaType values
-// Vidispine understands. "other" cannot be expressed as a positive criterion,
-// so it is dropped from the server-side filter.
+// Vidispine understands. Only the three "standard" categories are surfaced
+// in the UI; any other category is silently dropped.
 func vidispineMediaTypes(categories []string) []string {
 	out := make([]string, 0, len(categories))
 	for _, c := range categories {

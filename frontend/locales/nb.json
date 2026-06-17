@@ -194,8 +194,7 @@
         "type": {
             "video": "Video",
             "audio": "Lyd",
-            "image": "Bilde",
-            "other": "Annet"
+            "image": "Bilde"
         }
     }
 }

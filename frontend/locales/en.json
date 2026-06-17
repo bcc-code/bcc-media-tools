@@ -194,8 +194,7 @@
         "type": {
             "video": "Video",
             "audio": "Audio",
-            "image": "Image",
-            "other": "Other"
+            "image": "Image"
         }
     }
 }

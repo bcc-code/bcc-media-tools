@@ -13,7 +13,7 @@ onMounted(() => {
     analytics.page({ id: "vault", title: "vault" });
 });
 
-const MEDIA_CATEGORIES = ["video", "audio", "image", "other"] as const;
+const MEDIA_CATEGORIES = ["video", "audio", "image"] as const;
 type MediaCategory = (typeof MEDIA_CATEGORIES)[number];
 
 const query = useQueryRef("q", "");
