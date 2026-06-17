@@ -5,7 +5,7 @@ go 1.25.8
 require (
 	connectrpc.com/connect v1.18.1
 	connectrpc.com/cors v0.1.0
-	github.com/bcc-code/bcc-media-flows v0.0.0-20260109104036-78c8298c7de2
+	github.com/bcc-code/bcc-media-flows v0.0.0-20260617075230-7951732442cb
 	github.com/bcc-code/mediabank-bridge v1.1.1
 	github.com/go-resty/resty/v2 v2.16.5
 	github.com/google/uuid v1.6.0
@@ -162,5 +162,3 @@ require (
 	gopkg.in/telebot.v3 v3.2.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-replace github.com/bcc-code/bcc-media-flows => /Users/mdebelak/prog/bcc.media/bccm-flows
