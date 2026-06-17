@@ -85,7 +85,7 @@ function copyToClipboard() {
 
 <template>
     <UModal
-        class="h-full w-full max-w-[800px]"
+        class="h-full w-full max-w-200"
         dismissible
         v-model:open="showTranscription"
     >

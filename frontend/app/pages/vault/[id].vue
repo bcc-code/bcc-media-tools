@@ -72,7 +72,7 @@ const lengthLabel = computed(() => {
 
 <template>
     <div class="px-6 pt-8 pb-16">
-        <div class="mx-auto max-w-[920px]">
+        <div class="mx-auto max-w-230">
             <!-- header -->
             <div class="mb-6 flex items-center gap-4">
                 <UButton
