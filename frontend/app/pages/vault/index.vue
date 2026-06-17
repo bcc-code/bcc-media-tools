@@ -94,6 +94,7 @@ const rangeTo = computed(() =>
                 v-model="query"
                 icon="i-lucide-search"
                 size="lg"
+                :loading="loading"
                 :placeholder="t('vault.searchPlaceholder')"
                 class="w-full max-w-xl"
             />
@@ -163,8 +164,26 @@ const rangeTo = computed(() =>
                     </span>
                 </div>
 
+                <!-- Searching state -->
                 <div
-                    v-if="items.length"
+                    v-if="loading"
+                    class="grid grid-cols-5 gap-4"
+                >
+                    <div
+                        v-for="n in 10"
+                        :key="n"
+                        class="border-default overflow-hidden rounded-[14px] border"
+                    >
+                        <USkeleton class="aspect-[16/10] w-full rounded-none" />
+                        <div class="space-y-2 p-3">
+                            <USkeleton class="h-3 w-3/4" />
+                            <USkeleton class="h-2 w-1/2" />
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    v-else-if="items.length"
                     class="grid grid-cols-5 gap-4"
                 >
                     <VaultCard
@@ -176,7 +195,7 @@ const rangeTo = computed(() =>
                 </div>
 
                 <div
-                    v-else-if="loaded && !loading"
+                    v-else-if="loaded"
                     class="text-muted py-20 text-center"
                 >
                     <UIcon

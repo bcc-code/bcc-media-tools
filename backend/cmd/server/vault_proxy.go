@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/bcc-code/bcc-media-flows/services/cantemo"
-	"github.com/bcc-code/bcc-media-flows/services/vidispine/vsapi"
 	"github.com/bcc-code/mediabank-bridge/log"
 )
 
@@ -13,7 +12,7 @@ import (
 // Vidispine thumbnail endpoints require basic auth, so they cannot be loaded
 // directly by the browser). GET /vault/thumbnail?vxid=VX-123[&t=<time>].
 type vaultThumbnailHandler struct {
-	vidispine *vsapi.Client
+	vault *VaultAPI
 }
 
 func (h vaultThumbnailHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -29,7 +28,7 @@ func (h vaultThumbnailHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Optional time spec for trick-play (e.g. seconds); empty = default frame.
-	data, contentType, err := h.vidispine.GetThumbnail(vxID, r.URL.Query().Get("t"))
+	data, contentType, err := h.vault.fetchThumbnail(vxID, r.URL.Query().Get("t"))
 	if err != nil {
 		log.L.Debug().Err(err).Str("vxid", vxID).Msg("vault: thumbnail not available")
 		http.Error(w, "no thumbnail", http.StatusNotFound)

@@ -123,7 +123,12 @@ func main() {
 	shortsAPI := NewShortsAPI(temporalClient)
 	exportAPI := NewExportAPI(vidispineClient, temporalClient)
 	cantemoAPI := NewCantemoAPI(temporalClient)
-	vaultAPI := NewVaultAPI(vidispineClient)
+	vaultAPI := NewVaultAPI(
+		vidispineClient,
+		os.Getenv("VIDISPINE_BASE_URL"),
+		os.Getenv("VIDISPINE_USERNAME"),
+		os.Getenv("VIDISPINE_PASSWORD"),
+	)
 
 	// Dedicated Cantemo client for the VAULT preview proxy (same creds as the
 	// transcription tool).
@@ -155,7 +160,7 @@ func main() {
 	})
 
 	// VAULT media proxies (auth'd, server-side fetch — never expose upstream URLs).
-	mux.Handle("/vault/thumbnail", vaultThumbnailHandler{vidispine: vidispineClient})
+	mux.Handle("/vault/thumbnail", vaultThumbnailHandler{vault: vaultAPI})
 	mux.Handle("/vault/preview", vaultPreviewHandler{
 		cantemo:      cantemoClient,
 		cantemoToken: os.Getenv("CANTEMO_TOKEN"),
