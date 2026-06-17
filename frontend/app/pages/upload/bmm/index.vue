@@ -101,7 +101,6 @@ const dateString = (date: Date) => {
                 "
             >
                 <template v-if="step != 'done'">
-                    <!-- @vue-expect-error The component's `v-model` expects a form with the type `BMMSingleForm` -->
                     <BmmSingleMetadata
                         v-if="step == 'metadata'"
                         v-model="form"
@@ -120,7 +119,9 @@ const dateString = (date: Date) => {
                                     $t("bmmUpload.uploadFilesFor", {
                                         title: form.track.title,
                                         date: dateString(
-                                            timestampDate(form.track.publishedAt!),
+                                            timestampDate(
+                                                form.track.publishedAt!,
+                                            ),
                                         ),
                                     })
                                 }}

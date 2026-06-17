@@ -1,4 +1,14 @@
 <script lang="ts" setup>
+import { create } from "@bufbuild/protobuf";
+import {
+    BMMPermissionSchema,
+    CantemoPermissionSchema,
+    ExportPermissionSchema,
+    PermissionsSchema,
+    TranscriptionPermissionSchema,
+    VaultPermissionSchema,
+    VBExportPermissionSchema,
+} from "~~/src/gen/api/v1/api_pb";
 import type { Permissions } from "~~/src/gen/api/v1/api_pb";
 import { motion } from "motion-v";
 
@@ -16,37 +26,16 @@ defineEmits<{
 
 // Ensure all permission fields exist to avoid undefined errors
 function withDefaultPermissions(p: Permissions): Permissions {
-    return {
+    return create(PermissionsSchema, {
         admin: p.admin ?? false,
-        bmm: p.bmm ?? {
-            admin: false,
-            integration: false,
-            podcasts: [],
-            languages: [],
-        },
-        transcription: p.transcription ?? { admin: false, mediabanken: false },
-        export: p.export ?? {
-            admin: false,
-            destinations: [],
-            timedMetadata: false,
-            bulkExport: false,
-        },
-        vbExport: p.vbExport ?? {
-            admin: false,
-            destinations: [],
-            bulkExport: false,
-        },
-        cantemo: p.cantemo ?? {
-            preview: false,
-            transcribe: false,
-            subtitles: false,
-            relations: false,
-        },
-        vault: p.vault ?? {
-            enabled: false,
-        },
+        bmm: p.bmm ?? create(BMMPermissionSchema),
+        transcription: p.transcription ?? create(TranscriptionPermissionSchema),
+        export: p.export ?? create(ExportPermissionSchema),
+        vbExport: p.vbExport ?? create(VBExportPermissionSchema),
+        cantemo: p.cantemo ?? create(CantemoPermissionSchema),
+        vault: p.vault ?? create(VaultPermissionSchema),
         email: p.email ?? "",
-    };
+    });
 }
 
 const exportDestinations = computed(() =>
