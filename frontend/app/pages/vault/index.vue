@@ -160,7 +160,10 @@ const rangeTo = computed(() =>
                 </div>
 
                 <!-- Searching state -->
-                <div v-if="loading" class="grid grid-cols-5 gap-4">
+                <div
+                    v-if="loading"
+                    class="grid grid-cols-[repeat(auto-fit,minmax(400px,1fr))] gap-4"
+                >
                     <div
                         v-for="n in 10"
                         :key="n"
@@ -174,7 +177,10 @@ const rangeTo = computed(() =>
                     </div>
                 </div>
 
-                <div v-else-if="items.length" class="grid grid-cols-5 gap-4">
+                <div
+                    v-else-if="items.length"
+                    class="grid grid-cols-[repeat(auto-fit,minmax(400px,1fr))] gap-4"
+                >
                     <VaultCard
                         v-for="item in items"
                         :key="item.VXID"
