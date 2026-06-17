@@ -16,9 +16,9 @@ onMounted(() => {
 const MEDIA_CATEGORIES = ["video", "audio", "image", "other"] as const;
 type MediaCategory = (typeof MEDIA_CATEGORIES)[number];
 
-const query = ref("");
-const selectedTypes = ref<MediaCategory[]>([]);
-const page = ref(1);
+const query = useQueryRef("q", "");
+const selectedTypes = useQueryRef<MediaCategory[]>("types", []);
+const page = useQueryRef("page", 1);
 
 const categoryItems = computed(() =>
     MEDIA_CATEGORIES.map((value) => ({

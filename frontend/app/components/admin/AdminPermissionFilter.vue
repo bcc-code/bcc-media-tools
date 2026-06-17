@@ -10,7 +10,7 @@ const emit = defineEmits<{
     "update:filteredPermissions": [permissions: Record<string, Permissions>];
 }>();
 
-const searchQuery = defineModel("search", { default: "" });
+const searchQuery = useQueryRef("q", "");
 
 const api = useAPI();
 
@@ -28,10 +28,10 @@ const roles = ref([
         value: "transcription.admin",
     },
 ]);
-const selectedRoles = defineModel<string[]>("roles", { default: [] });
+const selectedRoles = useQueryRef<string[]>("roles", []);
 
 const languages = ref<Language[]>();
-const selectedLanguages = defineModel<string[]>("languages", { default: [] });
+const selectedLanguages = useQueryRef<string[]>("languages", []);
 const languageItems = computed(() => {
     return (
         languages.value?.map((l) => ({
