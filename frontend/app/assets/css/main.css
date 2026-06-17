@@ -6,8 +6,8 @@
 }
 
 :root {
-    --font-sans: "Archivo", sans-serif;
-    --ui-primary: black;
+    --font-sans: "Archivo", ui-sans-serif, system-ui, sans-serif;
+    --ui-primary: #004e48;
 }
 
 .dark {

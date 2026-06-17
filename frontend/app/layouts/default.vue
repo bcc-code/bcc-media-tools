@@ -19,14 +19,8 @@ const { enabledTools } = useTools();
             ref="header"
             class="border-accented bg-default sticky top-0 z-10 flex items-center gap-4 border-b px-4"
         >
-            <NuxtLink to="/" class="flex items-center gap-2 text-sm font-bold">
-                <img
-                    src="/images/logo.png"
-                    width="24"
-                    height="24"
-                    class="rounded-full"
-                />
-                <p>BCC Media Tools</p>
+            <NuxtLink to="/" class="flex items-center">
+                <AppLogo class="h-5 w-max" />
             </NuxtLink>
             <UNavigationMenu
                 orientation="horizontal"
