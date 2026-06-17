@@ -11,13 +11,36 @@ const { t } = useI18n();
 
 // Optional trick-play fraction (0..1 along the asset) while hovering a video.
 const frac = ref<number | null>(null);
-const imgFailed = ref(false);
+
+// Cantemo doesn't auto-generate `/thumbnailresource` for static images, so the
+// thumbnail endpoint 404s for them. Fall back to the preview shape (the actual
+// image bytes) for image items only — for video/audio the preview is media,
+// not an image, so loading it into <img> would just waste bandwidth.
+type ImgStage = "thumbnail" | "preview" | "failed";
+const imgStage = ref<ImgStage>("thumbnail");
 
 const thumbSrc = computed(() => {
     let url = `${props.base}/vault/thumbnail?vxid=${encodeURIComponent(props.item.VXID)}`;
     if (frac.value != null) url += `&f=${frac.value}`;
     return url;
 });
+
+const previewSrc = computed(
+    () =>
+        `${props.base}/vault/preview?vxid=${encodeURIComponent(props.item.VXID)}`,
+);
+
+const imgSrc = computed(() =>
+    imgStage.value === "thumbnail" ? thumbSrc.value : previewSrc.value,
+);
+
+function onImgError() {
+    if (imgStage.value === "thumbnail" && props.item.mediaType === "image") {
+        imgStage.value = "preview";
+    } else {
+        imgStage.value = "failed";
+    }
+}
 
 const typeIcon = computed(() => {
     switch (props.item.mediaType) {
@@ -44,7 +67,7 @@ const durationLabel = computed(() => {
 // Quantize to a handful of steps to limit thumbnail requests while hovering.
 function onMove(e: MouseEvent) {
     if (props.item.mediaType !== "video") return;
-    if (imgFailed.value) return;
+    if (imgStage.value === "failed") return;
     const el = e.currentTarget as HTMLElement;
     const rect = el.getBoundingClientRect();
     const f = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
@@ -69,12 +92,12 @@ function onLeave() {
             @mouseleave="onLeave"
         >
             <img
-                v-if="!imgFailed"
-                :src="thumbSrc"
+                v-if="imgStage !== 'failed'"
+                :src="imgSrc"
                 :alt="item.title"
                 loading="lazy"
                 class="h-full w-full object-contain"
-                @error="imgFailed = true"
+                @error="onImgError"
             />
             <UIcon v-else :name="typeIcon" class="size-10 opacity-40" />
             <span
