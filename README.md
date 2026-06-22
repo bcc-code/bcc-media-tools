@@ -4,26 +4,51 @@ Contains several tools used for various internal/backoffice tasks.
 
 Current tools:
 
-- Transcription editor
-- BMM Uploader
+- BMM Upload
+- Transcription Editor
+- Export
+- VB Export
+- Shorts generation
+- Vault
+- Admin
+
+Access to each tool is controlled per-user via permissions (see `permissions.json`).
 
 ## Tools
 
-### Transcription Editor
+### BMM Upload
 
-Allows editing word level timestamped trascriptions in json format.
-It is possible to syncronize the transcription with the preview from Mediabanken.
-
-#### Usage
-
-TODO
-
-### BMM Uploader
-
-Allows uploading files, with direct link to BMM.
-The files are ingested using a temporal workflow after upload.
+Allows uploading localized audio files, with a direct link to BMM.
+The files are ingested using a Temporal workflow after upload.
 
 The main functionality is the ability to select a track from BMM and upload a file to it.
+
+### Transcription Editor
+
+Allows editing word level timestamped transcriptions of video files in JSON format,
+and downloading them.
+It is possible to synchronize the transcription with the preview from Mediabanken.
+
+### Export
+
+Trigger export workflows for media items. Supports mass-export to configured
+destinations as well as timed metadata.
+
+### VB Export
+
+Trigger VB (playout) export workflows to configured destinations.
+
+### Shorts generation
+
+Generate shorts (short-form vertical videos) from existing videos.
+
+### Vault
+
+Search Mediabanken and preview items.
+
+### Admin
+
+Manage users and permissions. Only available to admins.
 
 ## Development
 
@@ -115,7 +140,7 @@ buf generate
 
 #### Working with the API
 
-The api is defined in `api/api.proto`.
+The api is defined in `api/v1/api.proto` (with shared types in `api/v1/common.proto`).
 The definitions are written in protobuf, and the code is generated using `buf` and `protoc-gen-connect-go`.
 
 More information can be found at:
