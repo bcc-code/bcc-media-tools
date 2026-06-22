@@ -24,6 +24,7 @@
         "vue-tsc": "^3.3.5"
     },
     "dependencies": {
+        "@ark-ui/vue": "^5.37.2",
         "@bufbuild/protobuf": "^2.12.0",
         "@connectrpc/connect": "^2.1.2",
         "@connectrpc/connect-web": "^2.1.2",
@@ -32,6 +33,7 @@
         "@vueuse/nuxt": "^14.3.0",
         "@zag-js/splitter": "^1.41.2",
         "@zag-js/vue": "^1.41.2",
+        "cva": "1.0.0-beta.4",
         "dayjs": "^1.11.21",
         "motion-v": "^2.3.0",
         "nuxt": "^4.4.8",

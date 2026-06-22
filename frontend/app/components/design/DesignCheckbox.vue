@@ -1,0 +1,47 @@
+<script setup lang="ts">
+import { Checkbox } from "@ark-ui/vue";
+
+/*
+ * No checkbox exists in the admin-web design system (it models on/off via
+ * DesignSwitch). The export form is checkbox-heavy and checkboxes are the
+ * semantically correct control for its multi-select lists, so this is a
+ * deliberate, minimal extension built on Ark UI's Checkbox primitive and
+ * styled with the shared design tokens.
+ */
+interface Props {
+    label?: string;
+    disabled?: boolean;
+    ariaLabel?: string;
+}
+
+withDefaults(defineProps<Props>(), {
+    label: undefined,
+    ariaLabel: undefined,
+});
+
+const model = defineModel<boolean>({ default: false });
+</script>
+
+<template>
+    <Checkbox.Root
+        v-model:checked="model"
+        :disabled="disabled"
+        :aria-label="ariaLabel"
+        class="inline-flex cursor-pointer items-center gap-2.5 disabled:cursor-not-allowed disabled:opacity-50"
+    >
+        <Checkbox.Control
+            class="border-border-1 data-[state=checked]:bg-primary-default data-[state=checked]:border-primary-default ds-focus-ring flex size-5 shrink-0 items-center justify-center rounded-md border"
+        >
+            <Checkbox.Indicator class="flex items-center justify-center">
+                <Icon name="tabler:check" class="text-on-primary size-3.5" />
+            </Checkbox.Indicator>
+        </Checkbox.Control>
+        <Checkbox.Label
+            v-if="label || $slots.label"
+            class="text-body-3 text-text-default select-none"
+        >
+            <slot name="label">{{ label }}</slot>
+        </Checkbox.Label>
+        <Checkbox.HiddenInput />
+    </Checkbox.Root>
+</template>

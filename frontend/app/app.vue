@@ -21,5 +21,6 @@ function getLocale(l: string) {
                 <DevTools />
             </DevOnly>
         </NuxtLayout>
+        <DesignToastProvider />
     </UApp>
 </template>

@@ -59,11 +59,15 @@ export default defineNuxtConfig({
     vite: {
         optimizeDeps: {
             include: [
+                "@ark-ui/vue",
                 "@bufbuild/protobuf",
                 "@bufbuild/protobuf/codegenv2",
                 "@bufbuild/protobuf/wkt",
                 "@connectrpc/connect",
                 "@connectrpc/connect-web",
+                "@zag-js/splitter",
+                "@zag-js/vue",
+                "cva",
                 "dayjs",
                 "rudder-sdk-js",
                 "zod",

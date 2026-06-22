@@ -10,7 +10,7 @@ const route = useRoute();
 const vxId = computed(() => route.query.id?.toString());
 
 const api = useAPI();
-const toast = useToast();
+const toaster = useDesignToaster();
 const { t } = useI18n();
 const { me } = useMe();
 
@@ -84,18 +84,16 @@ async function onStartExport({
         }
         const started = vxIds.length - failed.length;
         if (failed.length === 0) {
-            toast.add({
-                icon: "tabler:check",
+            toaster.create({
                 title: t("export.exportStarted"),
                 description: t("export.bulkStartedCount", { n: started }),
-                color: "success",
+                type: "success",
             });
         } else {
-            toast.add({
-                icon: "tabler:alert-triangle",
+            toaster.create({
                 title: t("export.exportStarted"),
                 description: `${t("export.bulkStartedCount", { n: started })} · ${t("export.bulkFailedCount", { n: failed.length })}`,
-                color: started === 0 ? "error" : "warning",
+                type: started === 0 ? "error" : "warning",
             });
         }
     } finally {
@@ -108,17 +106,15 @@ async function onExportTimedMetadata() {
     submitting.value = true;
     try {
         await api.exportTimedMetadata({ VXID: vxId.value });
-        toast.add({
-            icon: "tabler:check",
+        toaster.create({
             title: t("export.timedMetadataStarted"),
-            color: "success",
+            type: "success",
         });
     } catch (err) {
-        toast.add({
-            icon: "tabler:alert-triangle",
+        toaster.create({
             title: t("export.exportFailed"),
             description: (err as Error)?.message,
-            color: "error",
+            type: "error",
         });
     } finally {
         submitting.value = false;
@@ -170,8 +166,8 @@ const triggers: Trigger[] = [
             v-else-if="status === 'error'"
             class="mx-auto flex w-full max-w-3xl flex-col items-center gap-4 p-8"
         >
-            <UIcon name="tabler:alert-triangle" class="text-dimmed size-10" />
-            <p class="text-muted text-center">
+            <Icon name="tabler:alert-triangle" class="text-text-hint size-10" />
+            <p class="text-text-muted text-center">
                 {{ error?.message ?? $t("export.loadFailed") }}
             </p>
         </div>
@@ -199,11 +195,11 @@ const triggers: Trigger[] = [
                 v-else-if="bulkStatus === 'error'"
                 class="mx-auto flex w-full max-w-3xl flex-col items-center gap-4 p-8"
             >
-                <UIcon
+                <Icon
                     name="tabler:alert-triangle"
-                    class="text-dimmed size-10"
+                    class="text-text-hint size-10"
                 />
-                <p class="text-muted text-center">
+                <p class="text-text-muted text-center">
                     {{ bulkError?.message ?? $t("export.loadFailed") }}
                 </p>
             </div>
@@ -215,8 +211,10 @@ const triggers: Trigger[] = [
 
         <div class="mx-auto flex w-full max-w-2xl flex-col p-4">
             <div class="my-8">
-                <h1 class="text-2xl font-bold">{{ $t("export.title") }}</h1>
-                <p class="text-muted">
+                <h1 class="text-heading-3 text-text-default">
+                    {{ $t("export.title") }}
+                </h1>
+                <p class="text-text-muted">
                     {{ $t("export.openFromMediabanken") }}
                 </p>
             </div>
@@ -227,21 +225,23 @@ const triggers: Trigger[] = [
                     :to="trigger.url"
                     external
                 >
-                    <UCard>
+                    <div
+                        class="gradient-border bg-surface-raise shadow-resting hover:bg-surface-indent space-y-1 rounded-2xl p-4"
+                    >
                         <div class="flex items-center justify-between gap-2">
-                            <p>{{ trigger.name }}</p>
+                            <p class="text-text-default">{{ trigger.name }}</p>
                             <Icon
                                 name="tabler:arrow-right"
-                                class="text-muted"
+                                class="text-text-muted"
                             />
                         </div>
                         <p
                             v-if="trigger.description"
-                            class="text-dimmed text-sm"
+                            class="text-text-hint text-sm"
                         >
                             {{ trigger.description }}
                         </p>
-                    </UCard>
+                    </div>
                 </NuxtLink>
             </div>
         </div>
