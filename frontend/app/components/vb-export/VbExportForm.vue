@@ -51,7 +51,10 @@ watchDebounced(
         if (fresh.length === 0) return;
         resolving.value = true;
         try {
-            assets.value = [...assets.value, ...(await props.resolveTitles(fresh))];
+            assets.value = [
+                ...assets.value,
+                ...(await props.resolveTitles(fresh)),
+            ];
         } finally {
             resolving.value = false;
         }
@@ -169,11 +172,12 @@ function startExport() {
                         v-for="d in config.destinations"
                         :key="d"
                         v-model="destChecked[d]"
-                        color="neutral"
                     >
                         <template #label>
-                            <span class="text-sm">{{ destinationName(d) }}</span>
-                            <span class="text-muted font-mono text-xs ml-2">
+                            <span class="text-sm">{{
+                                destinationName(d)
+                            }}</span>
+                            <span class="text-muted ml-2 font-mono text-xs">
                                 {{ d }}</span
                             >
                         </template>

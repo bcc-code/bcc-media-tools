@@ -45,7 +45,10 @@ watchDebounced(
         if (fresh.length === 0) return;
         resolving.value = true;
         try {
-            assets.value = [...assets.value, ...(await props.resolveTitles(fresh))];
+            assets.value = [
+                ...assets.value,
+                ...(await props.resolveTitles(fresh)),
+            ];
         } finally {
             resolving.value = false;
         }
@@ -143,7 +146,9 @@ function startExport() {
     emit("start-export", {
         vxIds: assets.value.map((a) => a.vxId),
         selection: {
-            destinations: props.config.destinations.filter((d) => destChecked[d]),
+            destinations: props.config.destinations.filter(
+                (d) => destChecked[d],
+            ),
             audioSource: audioSource.value,
             languages: props.config.languages
                 .filter((l) => langChecked[l.code])
@@ -270,11 +275,12 @@ function startExport() {
                         v-for="d in config.destinations"
                         :key="d"
                         v-model="destChecked[d]"
-                        color="neutral"
                     >
                         <template #label>
-                            <span class="text-sm">{{ destinationName(d) }}</span>
-                            <span class="text-muted font-mono text-xs ml-2">
+                            <span class="text-sm">{{
+                                destinationName(d)
+                            }}</span>
+                            <span class="text-muted ml-2 font-mono text-xs">
                                 {{ d }}</span
                             >
                         </template>
@@ -302,7 +308,9 @@ function startExport() {
                 <h3 class="text-highlighted text-sm font-semibold">
                     {{ $t("export.subclips") }}
                 </h3>
-                <p class="text-muted text-xs">{{ $t("export.subclipsHint") }}</p>
+                <p class="text-muted text-xs">
+                    {{ $t("export.subclipsHint") }}
+                </p>
                 <div
                     v-if="config.subclips.length > 0"
                     class="flex flex-col gap-2"
@@ -311,7 +319,6 @@ function startExport() {
                         v-for="s in config.subclips"
                         :key="s.title"
                         v-model="subclipChecked[s.title]"
-                        color="neutral"
                         :label="s.title"
                     />
                 </div>
@@ -325,7 +332,9 @@ function startExport() {
                     </h3>
                     <div class="flex items-center gap-2">
                         <span class="text-muted text-xs">
-                            {{ $t("export.nSelected", { n: selectedLangCount }) }}
+                            {{
+                                $t("export.nSelected", { n: selectedLangCount })
+                            }}
                         </span>
                         <UButton
                             color="neutral"
@@ -366,7 +375,6 @@ function startExport() {
                         v-for="l in config.languages"
                         :key="l.code"
                         v-model="langChecked[l.code]"
-                        color="neutral"
                     >
                         <template #label>
                             <span class="font-mono text-sm">{{ l.code }}</span>
@@ -388,11 +396,7 @@ function startExport() {
                         :key="`${r.width}x${r.height}`"
                         class="flex items-center gap-6"
                     >
-                        <UCheckbox
-                            v-model="r.enabled"
-                            color="neutral"
-                            :ui="{ root: 'w-28' }"
-                        >
+                        <UCheckbox v-model="r.enabled" :ui="{ root: 'w-28' }">
                             <template #label>
                                 <span class="font-mono text-sm">
                                     {{ r.width }}x{{ r.height }}
@@ -401,7 +405,6 @@ function startExport() {
                         </UCheckbox>
                         <UCheckbox
                             v-model="r.downloadable"
-                            color="neutral"
                             :label="$t('export.downloadable')"
                             :disabled="!r.enabled"
                         />
@@ -422,17 +425,14 @@ function startExport() {
             <div class="space-y-3">
                 <UCheckbox
                     v-model="withChapters"
-                    color="neutral"
                     :label="$t('export.withChapters')"
                 />
                 <UCheckbox
                     v-model="ignoreSilence"
-                    color="neutral"
                     :label="$t('export.ignoreSilence')"
                 />
                 <UCheckbox
                     v-model="exportAiSubs"
-                    color="neutral"
                     :label="$t('export.exportAiSubs')"
                 />
             </div>
@@ -446,7 +446,9 @@ function startExport() {
                 :disabled="selectedDestCount === 0 || assets.length === 0"
                 @click="startExport"
             >
-                {{ bulkMode ? $t("export.bulkStart") : $t("export.startExport") }}
+                {{
+                    bulkMode ? $t("export.bulkStart") : $t("export.startExport")
+                }}
             </UButton>
         </div>
     </div>
