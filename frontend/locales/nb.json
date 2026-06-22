@@ -127,6 +127,9 @@
         "bulkDetected": "{n} valgt",
         "bulkNoIds": "Ingen VX-id-er oppdaget ennå",
         "bulkStart": "Start masseeksport",
+        "bulkConfirmTitle": "Starte masseeksport?",
+        "bulkConfirmMessage": "Dette starter eksport for {n} element(er) til {d} destinasjon(er).",
+        "cancel": "Avbryt",
         "bulkStartedCount": "Startet eksport for {n} element(er)",
         "bulkFailedCount": "{n} feilet"
     },
@@ -154,6 +157,9 @@
         "bulkDetected": "{n} valgt",
         "bulkNoIds": "Ingen VX-id-er oppdaget ennå",
         "bulkStart": "Start masseeksport",
+        "bulkConfirmTitle": "Starte masseeksport?",
+        "bulkConfirmMessage": "Dette starter eksport for {n} element(er) til {d} destinasjon(er).",
+        "cancel": "Avbryt",
         "bulkStartedCount": "Startet eksport for {n} element(er)",
         "bulkFailedCount": "{n} feilet"
     },

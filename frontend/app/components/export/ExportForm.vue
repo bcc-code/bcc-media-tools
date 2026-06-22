@@ -122,16 +122,22 @@ const selectedResCount = computed(
     () => resolutions.filter((r) => r.enabled).length,
 );
 
+// Assets that actually resolved; "not found" pastes are excluded from export.
+const exportableAssets = computed(() =>
+    assets.value.filter((a) => a.found !== false),
+);
+
 // Footer: reason the export is blocked, or a summary of the selection.
 const disabledReason = computed(() => {
-    if (assets.value.length === 0) return t("export.selectAssetsHint");
+    if (exportableAssets.value.length === 0)
+        return t("export.selectAssetsHint");
     if (selectedDestCount.value === 0) return t("export.selectDestinationHint");
     return "";
 });
 
 const selectionSummary = computed(() =>
     [
-        t("export.summaryAssets", { n: assets.value.length }),
+        t("export.summaryAssets", { n: exportableAssets.value.length }),
         t("export.summaryDestinations", { n: selectedDestCount.value }),
         t("export.summaryLanguages", { n: selectedLangCount.value }),
         t("export.summaryResolutions", { n: selectedResCount.value }),
@@ -162,9 +168,32 @@ const selectMU1 = () =>
 const selectMU2 = () =>
     setLangs(props.config.languages.filter((l) => l.mu2).map((l) => l.code));
 
+// Bulk runs can launch many workflows at once, so confirm first.
+const confirmOpen = ref(false);
+
+const confirmMessage = computed(() =>
+    t("export.bulkConfirmMessage", {
+        n: exportableAssets.value.length,
+        d: selectedDestCount.value,
+    }),
+);
+
+function attemptExport() {
+    if (props.bulkMode) {
+        confirmOpen.value = true;
+        return;
+    }
+    startExport();
+}
+
+function confirmExport() {
+    confirmOpen.value = false;
+    startExport();
+}
+
 function startExport() {
     emit("start-export", {
-        vxIds: assets.value.map((a) => a.vxId),
+        vxIds: exportableAssets.value.map((a) => a.vxId),
         selection: {
             destinations: props.config.destinations.filter(
                 (d) => destChecked[d],
@@ -232,7 +261,10 @@ function startExport() {
                     class="flex items-center gap-3 px-3 py-2"
                 >
                     <span class="font-mono text-sm">{{ a.vxId }}</span>
-                    <span class="text-muted truncate text-sm">
+                    <span
+                        class="truncate text-sm"
+                        :class="a.found === false ? 'text-error' : 'text-muted'"
+                    >
                         <template v-if="a.found === false">
                             {{ $t("export.assetNotFound") }}
                         </template>
@@ -483,7 +515,7 @@ function startExport() {
                     icon="tabler:file-export"
                     :loading="submitting"
                     :disabled="!!disabledReason"
-                    @click="startExport"
+                    @click="attemptExport"
                 >
                     {{
                         bulkMode
@@ -493,5 +525,27 @@ function startExport() {
                 </UButton>
             </div>
         </div>
+
+        <!-- Bulk export confirmation -->
+        <UModal
+            v-model:open="confirmOpen"
+            :title="$t('export.bulkConfirmTitle')"
+            :description="confirmMessage"
+        >
+            <template #footer>
+                <div class="flex w-full justify-end gap-2">
+                    <UButton
+                        variant="ghost"
+                        color="neutral"
+                        @click="confirmOpen = false"
+                    >
+                        {{ $t("export.cancel") }}
+                    </UButton>
+                    <UButton icon="tabler:file-export" @click="confirmExport">
+                        {{ $t("export.bulkStart") }}
+                    </UButton>
+                </div>
+            </template>
+        </UModal>
     </div>
 </template>
