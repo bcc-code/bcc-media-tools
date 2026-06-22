@@ -118,6 +118,26 @@ const selectedDestCount = computed(
     () => props.config.destinations.filter((d) => destChecked[d]).length,
 );
 
+const selectedResCount = computed(
+    () => resolutions.filter((r) => r.enabled).length,
+);
+
+// Footer: reason the export is blocked, or a summary of the selection.
+const disabledReason = computed(() => {
+    if (assets.value.length === 0) return t("export.selectAssetsHint");
+    if (selectedDestCount.value === 0) return t("export.selectDestinationHint");
+    return "";
+});
+
+const selectionSummary = computed(() =>
+    [
+        t("export.summaryAssets", { n: assets.value.length }),
+        t("export.summaryDestinations", { n: selectedDestCount.value }),
+        t("export.summaryLanguages", { n: selectedLangCount.value }),
+        t("export.summaryResolutions", { n: selectedResCount.value }),
+    ].join(" · "),
+);
+
 // Aspect ratio of the first resolution, e.g. "16:9".
 const aspectRatio = computed(() => {
     const first = resolutions[0];
@@ -390,13 +410,19 @@ function startExport() {
                     {{ $t("export.resolutions")
                     }}<span v-if="aspectRatio"> — {{ aspectRatio }}</span>
                 </h3>
-                <div class="flex flex-col gap-2">
+                <div class="space-y-2">
+                    <div
+                        class="text-muted grid grid-cols-[7rem_1fr] gap-6 text-xs"
+                    >
+                        <span></span>
+                        <span>{{ $t("export.downloadableHeader") }}</span>
+                    </div>
                     <div
                         v-for="r in resolutions"
                         :key="`${r.width}x${r.height}`"
-                        class="flex items-center gap-6"
+                        class="grid grid-cols-[7rem_1fr] items-center gap-6"
                     >
-                        <UCheckbox v-model="r.enabled" :ui="{ root: 'w-28' }">
+                        <UCheckbox v-model="r.enabled">
                             <template #label>
                                 <span class="font-mono text-sm">
                                     {{ r.width }}x{{ r.height }}
@@ -405,8 +431,8 @@ function startExport() {
                         </UCheckbox>
                         <UCheckbox
                             v-model="r.downloadable"
-                            :label="$t('export.downloadable')"
                             :disabled="!r.enabled"
+                            :aria-label="$t('export.downloadable')"
                         />
                     </div>
                 </div>
@@ -421,8 +447,11 @@ function startExport() {
                 />
             </UFormField>
 
-            <!-- Toggles -->
-            <div class="space-y-3">
+            <!-- Options -->
+            <section class="space-y-3">
+                <h3 class="text-highlighted text-sm font-semibold">
+                    {{ $t("export.options") }}
+                </h3>
                 <UCheckbox
                     v-model="withChapters"
                     :label="$t('export.withChapters')"
@@ -435,21 +464,34 @@ function startExport() {
                     v-model="exportAiSubs"
                     :label="$t('export.exportAiSubs')"
                 />
-            </div>
+            </section>
+        </div>
 
-            <!-- Submit -->
-            <UButton
-                block
-                size="lg"
-                icon="tabler:file-export"
-                :loading="submitting"
-                :disabled="selectedDestCount === 0 || assets.length === 0"
-                @click="startExport"
-            >
-                {{
-                    bulkMode ? $t("export.bulkStart") : $t("export.startExport")
-                }}
-            </UButton>
+        <!-- Sticky action bar -->
+        <div
+            class="bg-default border-default sticky bottom-6 -mx-6 mt-6 rounded-2xl border px-6 py-4"
+        >
+            <div class="flex items-center justify-between gap-4">
+                <p
+                    class="text-xs"
+                    :class="disabledReason ? 'text-warning' : 'text-muted'"
+                >
+                    {{ disabledReason || selectionSummary }}
+                </p>
+                <UButton
+                    size="lg"
+                    icon="tabler:file-export"
+                    :loading="submitting"
+                    :disabled="!!disabledReason"
+                    @click="startExport"
+                >
+                    {{
+                        bulkMode
+                            ? $t("export.bulkStart")
+                            : $t("export.startExport")
+                    }}
+                </UButton>
+            </div>
         </div>
     </div>
 </template>

@@ -80,6 +80,23 @@ const selectedDestCount = computed(
     () => props.config.destinations.filter((d) => destChecked[d]).length,
 );
 
+const { t } = useI18n();
+
+// Footer: reason the export is blocked, or a summary of the selection.
+const disabledReason = computed(() => {
+    if (assets.value.length === 0) return t("vbExport.selectAssetsHint");
+    if (selectedDestCount.value === 0)
+        return t("vbExport.selectDestinationHint");
+    return "";
+});
+
+const selectionSummary = computed(() =>
+    [
+        t("vbExport.summaryAssets", { n: assets.value.length }),
+        t("vbExport.summaryDestinations", { n: selectedDestCount.value }),
+    ].join(" · "),
+);
+
 /* ---------------------------------------------------------------- actions --- */
 
 function startExport() {
@@ -208,22 +225,33 @@ function startExport() {
                     class="w-full"
                 />
             </UFormField>
+        </div>
 
-            <!-- Submit -->
-            <UButton
-                block
-                size="lg"
-                icon="tabler:file-export"
-                :loading="submitting"
-                :disabled="selectedDestCount === 0 || assets.length === 0"
-                @click="startExport"
-            >
-                {{
-                    bulkMode
-                        ? $t("vbExport.bulkStart")
-                        : $t("vbExport.startExport")
-                }}
-            </UButton>
+        <!-- Sticky action bar -->
+        <div
+            class="bg-default border-default sticky bottom-0 -mx-6 mt-6 rounded-2xl border px-6 py-4"
+        >
+            <div class="flex items-center justify-between gap-4">
+                <p
+                    class="text-xs"
+                    :class="disabledReason ? 'text-warning' : 'text-muted'"
+                >
+                    {{ disabledReason || selectionSummary }}
+                </p>
+                <UButton
+                    size="lg"
+                    icon="tabler:file-export"
+                    :loading="submitting"
+                    :disabled="!!disabledReason"
+                    @click="startExport"
+                >
+                    {{
+                        bulkMode
+                            ? $t("vbExport.bulkStart")
+                            : $t("vbExport.startExport")
+                    }}
+                </UButton>
+            </div>
         </div>
     </div>
 </template>
