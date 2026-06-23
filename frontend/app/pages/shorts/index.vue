@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { z } from "zod";
-import type { FormSubmitEvent } from "@nuxt/ui";
 
 const analytics = useAnalytics();
 onMounted(() => {
@@ -15,7 +14,7 @@ useHead({
 });
 
 const schema = z.object({
-    vxId: z.string().regex(/^VX-[a-zA-Z0-9]+$/),
+    vxId: z.string().regex(/^VX-[a-zA-Z0-9]+$/, "Must look like VX-123456"),
 });
 
 type Schema = z.output<typeof schema>;
@@ -24,11 +23,19 @@ const state = reactive<Partial<Schema>>({
     vxId: undefined,
 });
 
-function onSubmit(event: FormSubmitEvent<Schema>) {
+const error = ref<string>();
+
+function onSubmit() {
+    const result = schema.safeParse(state);
+    if (!result.success) {
+        error.value = result.error.issues[0]?.message ?? "Invalid";
+        return;
+    }
+    error.value = undefined;
     navigateTo({
         name: "shorts-generate",
         query: {
-            id: event.data.vxId,
+            id: result.data.vxId,
         },
     });
 }
@@ -36,22 +43,20 @@ function onSubmit(event: FormSubmitEvent<Schema>) {
 
 <template>
     <div class="flex justify-center py-8">
-        <UForm
-            :state
-            :schema
-            @submit="onSubmit"
+        <form
             class="flex w-full max-w-xs flex-col gap-2"
+            @submit.prevent="onSubmit"
         >
-            <UFormField label="VX ID" name="vxId" size="lg">
-                <UInput
-                    v-model="state.vxId"
-                    class="w-full"
-                    placeholder="VX-123456"
-                />
-            </UFormField>
-            <UButton type="submit" block>
+            <DesignInput
+                v-model="state.vxId"
+                label="VX ID"
+                placeholder="VX-123456"
+                :invalid="!!error"
+                :error-text="error"
+            />
+            <DesignButton type="submit" class="w-full">
                 {{ $t("shorts.generation.loadFromMediabanken") }}
-            </UButton>
-        </UForm>
+            </DesignButton>
+        </form>
     </div>
 </template>

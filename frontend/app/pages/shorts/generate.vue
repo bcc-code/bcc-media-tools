@@ -101,7 +101,7 @@ watch([duration, scrubberWidth], ([d, s]) => {
     zoom.value = s / d;
 });
 
-const toast = useToast();
+const toaster = useDesignToaster();
 const confirmSubmit = ref(false);
 async function submit() {
     try {
@@ -110,10 +110,9 @@ async function submit() {
             InSeconds: startTime.value,
             OutSeconds: endTime.value,
         });
-        toast.add({
-            icon: "tabler:check",
+        toaster.create({
             title: "Short submitted successfully",
-            color: "success",
+            type: "success",
         });
         navigateTo("/shorts");
         confirmSubmit.value = false;
@@ -151,44 +150,40 @@ useVideoKeyboardControls({
     <div class="mx-auto flex w-full max-w-7xl flex-col gap-4 p-8">
         <header class="mb-4 flex items-center justify-between">
             <div>
-                <h1 class="text-2xl font-bold">
+                <h1 class="text-heading-3 text-text-default">
                     {{ $t("shorts.generation.title") }}
                 </h1>
-                <p class="text-muted text-sm">
+                <p class="text-text-muted text-sm">
                     {{ $t("shorts.generation.description") }}
                 </p>
             </div>
-            <UButton @click="confirmSubmit = true">
-                <UIcon name="tabler:send" class="text-dimmed" />
+            <DesignButton icon="tabler:send" @click="confirmSubmit = true">
                 {{ $t("shorts.generation.submit") }}
-            </UButton>
-            <UModal
+            </DesignButton>
+            <DesignDialog
                 v-model:open="confirmSubmit"
                 :title="$t('shorts.generation.submitConfirmationTitle')"
                 :description="$t('shorts.generation.submitConfirmationMessage')"
             >
-                <template #footer>
-                    <div class="flex w-full justify-end gap-2">
-                        <UButton @click="confirmSubmit = false" variant="ghost">
-                            {{
-                                $t("shorts.generation.submitConfirmationCancel")
-                            }}
-                        </UButton>
-                        <UButton @click="submit">
-                            {{
-                                $t("shorts.generation.submitConfirmationSubmit")
-                            }}
-                        </UButton>
-                    </div>
-                </template>
-            </UModal>
+                <div class="flex w-full justify-end gap-2">
+                    <DesignButton
+                        variant="tertiary"
+                        @click="confirmSubmit = false"
+                    >
+                        {{ $t("shorts.generation.submitConfirmationCancel") }}
+                    </DesignButton>
+                    <DesignButton variant="primary" @click="submit">
+                        {{ $t("shorts.generation.submitConfirmationSubmit") }}
+                    </DesignButton>
+                </div>
+            </DesignDialog>
         </header>
         <template v-if="status == 'success'">
             <video
                 ref="videoElement"
                 :src="videoUrl"
                 controls
-                class="bg-default aspect-video w-full shadow-xl"
+                class="bg-surface-default aspect-video w-full shadow-xl"
             />
             <div class="flex items-center gap-2">
                 <div class="tabular-nums">
@@ -211,24 +206,32 @@ useVideoKeyboardControls({
                     </p>
                     <p
                         v-if="startTime != undefined && endTime != undefined"
-                        class="text-dimmed text-sm"
+                        class="text-text-hint text-sm"
                     >
                         {{ formatTime(startTime) }} - {{ formatTime(endTime) }}
                     </p>
                 </div>
-                <UButton
-                    class="ml-auto"
-                    variant="soft"
+                <DesignButton
+                    class="border-border-1 ml-auto border"
+                    variant="secondary"
                     @click="startTime = currentTime"
                 >
                     {{ $t("shorts.generation.setStartPoint") }}
-                </UButton>
-                <UButton variant="soft" @click="endTime = currentTime">
+                </DesignButton>
+                <DesignButton
+                    class="border-border-1 border"
+                    variant="secondary"
+                    @click="endTime = currentTime"
+                >
                     {{ $t("shorts.generation.setEndPoint") }}
-                </UButton>
-                <UButton variant="soft" @click="previewShort">
+                </DesignButton>
+                <DesignButton
+                    class="border-border-1 border"
+                    variant="secondary"
+                    @click="previewShort"
+                >
                     {{ $t("shorts.generation.previewShort") }}
-                </UButton>
+                </DesignButton>
             </div>
             <ShortsTimelineScrubber
                 v-if="
@@ -244,7 +247,7 @@ useVideoKeyboardControls({
                 v-model:start="startTime"
                 v-model:end="endTime"
             />
-            <USlider v-model="zoom" :min="0.1" :max="10" :step="0.01" />
+            <DesignSlider v-model="zoom" :min="0.1" :max="10" :step="0.01" />
         </template>
         <template v-if="status != 'success'">
             <USkeleton class="aspect-video w-full" />
@@ -261,10 +264,8 @@ useVideoKeyboardControls({
             <USkeleton class="h-2 w-full" />
         </template>
 
-        <UModal v-model:open="showManual">
-            <template #body>
-                <img :src="manualGif" />
-            </template>
-        </UModal>
+        <DesignDialog v-model:open="showManual">
+            <img :src="manualGif" class="w-full rounded-lg" />
+        </DesignDialog>
     </div>
 </template>

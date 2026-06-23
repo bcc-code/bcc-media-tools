@@ -281,6 +281,29 @@ self-closing); `UFormField`→`<label>`+control; utilities → tokens (`bg-defau
 (comma display + truncation in the narrow `w-24`/`w-32` filter selects), the 15 switches with
 descriptions, the filter search input (leading icon + trailing Clear button), and dark mode.
 
+### 2026-06-23 — shorts/index migrated (UForm → native form + zod)
+
+`app/pages/shorts/index.vue`: replaced `UForm` (Nuxt UI form + schema) with a native
+`<form @submit.prevent>` that runs the same zod schema via `safeParse` on submit; errors surface
+through `DesignInput`'s `:invalid` + `:error-text` (no `UFormField`). `UButton block` → `class="w-full"`.
+No new components. Removed the `@nuxt/ui` `FormSubmitEvent` import. `pnpm typecheck` ✅.
+
+**Pattern for `UForm` elsewhere:** there's no Design form component — use a native `<form>`, validate
+with the existing schema (`safeParse`) on submit, and feed the first issue message into the field's
+`error-text`. Reuse this for other `UForm` pages.
+
+### 2026-06-23 — shorts/generate migrated (+ DesignSlider)
+
+`app/pages/shorts/generate.vue` (the biggest page, 18 `U*`): `useToast`→`useDesignToaster`;
+6 `UButton`→`DesignButton` (`soft`→`secondary`, header submit uses `icon="tabler:send"` so the
+inline `UIcon` is dropped); 2 `UModal`→`DesignDialog` (the manual popup used `#body` → now plain
+default-slot `<img>`); `USlider`→new `DesignSlider`; utilities→tokens (`bg-default`→
+`bg-surface-default`, `text-muted`/`text-dimmed`→tokens). `USkeleton` kept (8×). Build + typecheck ✅.
+
+**New component:** `DesignSlider.vue` — Ark UI `Slider`, single-value `number` model (Ark uses a
+`number[]` internally, bridged), `min`/`max`/`step`/`disabled`, `ds-focus-ring` on the thumb. Anatomy
+matches Ark docs (Root › Control › Track › Range, Thumb[:index=0] › HiddenInput). Not in admin-web.
+
 ### Next steps (pick up here)
 
 1. **Human visual review** of `/export` (with and without `?id=`) in light + dark. Compare against
