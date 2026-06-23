@@ -129,6 +129,8 @@
         "bulkStart": "Start masseeksport",
         "bulkConfirmTitle": "Starte masseeksport?",
         "bulkConfirmMessage": "Dette starter eksport for {n} element(er) til {d} destinasjon(er).",
+        "confirmTitle": "Starte eksport?",
+        "confirmMessage": "Dette starter eksporten til {d} destinasjon(er).",
         "cancel": "Avbryt",
         "bulkStartedCount": "Startet eksport for {n} element(er)",
         "bulkFailedCount": "{n} feilet"
@@ -159,6 +161,8 @@
         "bulkStart": "Start masseeksport",
         "bulkConfirmTitle": "Starte masseeksport?",
         "bulkConfirmMessage": "Dette starter eksport for {n} element(er) til {d} destinasjon(er).",
+        "confirmTitle": "Starte eksport?",
+        "confirmMessage": "Dette starter eksporten til {d} destinasjon(er).",
         "cancel": "Avbryt",
         "bulkStartedCount": "Startet eksport for {n} element(er)",
         "bulkFailedCount": "{n} feilet"

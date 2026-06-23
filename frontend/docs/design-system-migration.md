@@ -234,6 +234,20 @@ files. Pending human visual review.
   changing the `DesignButton` variant.
 - Focus ring: every interactive `Design*` element carries `ds-focus-ring` (see prior entry).
 
+### 2026-06-23 — confirm single-asset exports too (behavior change, not migration)
+
+Investigated a report of "export started without a confirmation dialog." Root cause: the
+export-trigger logic (`attemptExport`) was **unchanged by the migration** (git diff of the script
+is empty) — confirmation only ever gated *bulk* mode; single-asset exports have always fired
+immediately. Verified `DesignDialog` opens correctly via `v-model:open` in isolation, so not a
+dialog regression.
+
+Per user decision, single-asset exports now also confirm. Both `ExportForm.vue` and
+`VbExportForm.vue`: `attemptExport()` now always opens the dialog; added `confirmTitle` +
+branched `confirmMessage` computeds (bulk vs single); dialog confirm-button label is bulk/single
+aware. New i18n keys `export.confirmTitle`/`confirmMessage` and `vbExport.confirmTitle`/
+`confirmMessage` in `en.json` + `nb.json`. `pnpm typecheck` ✅.
+
 ### Next steps (pick up here)
 
 1. **Human visual review** of `/export` (with and without `?id=`) in light + dark. Compare against

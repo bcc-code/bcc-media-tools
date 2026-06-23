@@ -168,22 +168,25 @@ const selectMU1 = () =>
 const selectMU2 = () =>
     setLangs(props.config.languages.filter((l) => l.mu2).map((l) => l.code));
 
-// Bulk runs can launch many workflows at once, so confirm first.
+// Every export is confirmed first — bulk runs can launch many workflows at
+// once, and single-asset runs are still irreversible.
 const confirmOpen = ref(false);
 
+const confirmTitle = computed(() =>
+    props.bulkMode ? t("export.bulkConfirmTitle") : t("export.confirmTitle"),
+);
+
 const confirmMessage = computed(() =>
-    t("export.bulkConfirmMessage", {
-        n: exportableAssets.value.length,
-        d: selectedDestCount.value,
-    }),
+    props.bulkMode
+        ? t("export.bulkConfirmMessage", {
+              n: exportableAssets.value.length,
+              d: selectedDestCount.value,
+          })
+        : t("export.confirmMessage", { d: selectedDestCount.value }),
 );
 
 function attemptExport() {
-    if (props.bulkMode) {
-        confirmOpen.value = true;
-        return;
-    }
-    startExport();
+    confirmOpen.value = true;
 }
 
 function confirmExport() {
@@ -534,10 +537,10 @@ function startExport() {
             </div>
         </div>
 
-        <!-- Bulk export confirmation -->
+        <!-- Export confirmation (both single-asset and bulk) -->
         <DesignDialog
             v-model:open="confirmOpen"
-            :title="$t('export.bulkConfirmTitle')"
+            :title="confirmTitle"
             :description="confirmMessage"
         >
             <div class="flex w-full justify-end gap-2">
@@ -549,7 +552,11 @@ function startExport() {
                     icon="tabler:file-export"
                     @click="confirmExport"
                 >
-                    {{ $t("export.bulkStart") }}
+                    {{
+                        bulkMode
+                            ? $t("export.bulkStart")
+                            : $t("export.startExport")
+                    }}
                 </DesignButton>
             </div>
         </DesignDialog>

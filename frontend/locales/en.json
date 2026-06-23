@@ -129,6 +129,8 @@
         "bulkStart": "Start bulk export",
         "bulkConfirmTitle": "Start bulk export?",
         "bulkConfirmMessage": "This will start export for {n} asset(s) to {d} destination(s).",
+        "confirmTitle": "Start export?",
+        "confirmMessage": "This will start the export to {d} destination(s).",
         "cancel": "Cancel",
         "bulkStartedCount": "Started export for {n} asset(s)",
         "bulkFailedCount": "{n} failed"
@@ -159,6 +161,8 @@
         "bulkStart": "Start bulk export",
         "bulkConfirmTitle": "Start bulk export?",
         "bulkConfirmMessage": "This will start export for {n} asset(s) to {d} destination(s).",
+        "confirmTitle": "Start export?",
+        "confirmMessage": "This will start the export to {d} destination(s).",
         "cancel": "Cancel",
         "bulkStartedCount": "Started export for {n} asset(s)",
         "bulkFailedCount": "{n} failed"
