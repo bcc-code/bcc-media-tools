@@ -77,6 +77,12 @@ function clearFilters() {
     selectedTypes.value = [];
 }
 
+function toggleType(value: MediaCategory, checked: boolean) {
+    selectedTypes.value = checked
+        ? [...selectedTypes.value, value]
+        : selectedTypes.value.filter((v) => v !== value);
+}
+
 const totalPages = computed(() =>
     Math.max(1, Math.ceil(totalHits.value / pageSize.value)),
 );
@@ -91,65 +97,76 @@ const rangeTo = computed(() =>
 <template>
     <div>
         <!-- Search bar -->
-        <div class="border-default border-b px-6 py-5">
-            <UInput
+        <div class="border-border-1 border-b px-6 py-5">
+            <DesignInput
                 v-model="query"
-                icon="tabler:search"
-                loading-icon="lucide:loader-circle"
-                size="lg"
-                :loading="loading"
+                leading-icon="tabler:search"
                 :placeholder="t('vault.searchPlaceholder')"
                 class="w-full max-w-xl"
-            />
+            >
+                <template #trailing>
+                    <Icon
+                        v-if="loading"
+                        name="svg-spinners:ring-resize"
+                        class="text-text-hint size-4"
+                    />
+                </template>
+            </DesignInput>
         </div>
 
         <div class="flex items-start">
             <!-- Filter sidebar -->
             <aside
-                class="border-default w-64 shrink-0 self-stretch border-r p-6"
+                class="border-border-1 w-64 shrink-0 self-stretch border-r p-6"
             >
                 <div class="mb-5 flex items-center justify-between">
-                    <h2 class="text-lg font-semibold">
+                    <h2 class="text-title-1 text-text-default font-semibold">
                         {{ t("vault.filters") }}
                     </h2>
                     <button
                         v-if="hasFilter"
-                        class="text-muted hover:text-default text-xs"
+                        class="text-text-muted hover:text-text-default text-xs"
                         @click="clearFilters"
                     >
                         {{ t("vault.clear") }}
                     </button>
                 </div>
-                <UCheckboxGroup
-                    v-model="selectedTypes"
-                    :items="categoryItems"
-                    :legend="t('vault.mediaType')"
-                    size="lg"
-                    :ui="{
-                        legend: 'text-muted mb-3 text-[11px] font-semibold tracking-wide uppercase',
-                        fieldset: 'gap-y-2',
-                    }"
-                >
-                    <template #label="{ item }">
-                        <span
+                <fieldset>
+                    <legend
+                        class="text-text-muted mb-3 text-[11px] font-semibold tracking-wide uppercase"
+                    >
+                        {{ t("vault.mediaType") }}
+                    </legend>
+                    <div class="flex flex-col gap-y-2">
+                        <div
+                            v-for="item in categoryItems"
+                            :key="item.value"
                             class="flex w-full items-center justify-between gap-2"
                         >
-                            <span>{{ item.label }}</span>
-                            <span class="text-muted font-mono text-xs">
+                            <DesignCheckbox
+                                :model-value="
+                                    selectedTypes.includes(item.value)
+                                "
+                                :label="item.label"
+                                @update:model-value="
+                                    toggleType(item.value, $event)
+                                "
+                            />
+                            <span class="text-text-muted font-mono text-xs">
                                 {{ facetCount(item.value) }}
                             </span>
-                        </span>
-                    </template>
-                </UCheckboxGroup>
+                        </div>
+                    </div>
+                </fieldset>
             </aside>
 
             <!-- Results -->
             <main class="min-w-0 flex-1 p-6">
                 <div class="mb-4 flex items-baseline justify-between">
-                    <h2 class="text-sm font-semibold">
+                    <h2 class="text-text-default text-sm font-semibold">
                         {{ t("vault.results") }}
                     </h2>
-                    <span class="text-muted">
+                    <span class="text-text-muted">
                         {{
                             t("vault.resultsRange", {
                                 from: rangeFrom,
@@ -168,7 +185,7 @@ const rangeTo = computed(() =>
                     <div
                         v-for="n in 15"
                         :key="n"
-                        class="border-default overflow-hidden rounded-[14px] border"
+                        class="border-border-1 overflow-hidden rounded-[14px] border"
                     >
                         <USkeleton class="aspect-16/10 w-full rounded-none" />
                         <div class="flex flex-col gap-2 p-3">
@@ -191,22 +208,25 @@ const rangeTo = computed(() =>
                     />
                 </div>
 
-                <div v-else-if="loaded" class="text-muted py-20 text-center">
-                    <UIcon name="tabler:search" class="size-10 opacity-50" />
+                <div
+                    v-else-if="loaded"
+                    class="text-text-muted py-20 text-center"
+                >
+                    <Icon name="tabler:search" class="size-10 opacity-50" />
                     <p class="mt-3 text-sm">{{ t("vault.noResults") }}</p>
                 </div>
 
                 <!-- Pagination -->
-                <UPagination
-                    v-if="totalPages > 1"
-                    v-model:page="page"
-                    :total="totalHits"
-                    :items-per-page="pageSize"
-                    :sibling-count="1"
-                    show-edges
-                    :disabled="loading"
-                    class="mt-6 flex justify-center"
-                />
+                <div v-if="totalPages > 1" class="mt-6 flex justify-center">
+                    <DesignPagination
+                        v-model:page="page"
+                        :total="totalHits"
+                        :page-size="pageSize"
+                        :sibling-count="1"
+                        show-edges
+                        :disabled="loading"
+                    />
+                </div>
             </main>
         </div>
     </div>

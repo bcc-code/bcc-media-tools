@@ -414,6 +414,18 @@ Transcription is now fully migrated (editor + index).
 **New component:** `DesignBadge.vue` — port of admin-web (cva, variants success/warning/info/error/
 neutral, `label` prop + slot). Same palette as `DesignBanner`.
 
+### 2026-06-23 — vault/index migrated + DesignPagination → vault feature complete
+
+`vault/index.vue`: search `UInput`→`DesignInput` (leading search icon; loading spinner via
+`#trailing`), `UCheckboxGroup`→manual `DesignCheckbox` list (added a `toggleType(value, checked)`
+helper to add/remove from the `string[]` query ref; facet count sits beside each row via
+`justify-between`), `UPagination`→new `DesignPagination`, `UIcon`→`Icon`, utilities→tokens.
+`USkeleton` kept (×4). Build + typecheck ✅. Vault is now fully migrated (index + detail + card).
+
+**New component:** `DesignPagination.vue` — Ark `Pagination`. `v-model:page` + `total`/`pageSize`/
+`siblingCount`/`showEdges`/`disabled`. Renders prev/next (+ first/last when `showEdges`) and page
+items via `Pagination.Context` v-slot; selected page uses `data-[selected]:bg-primary-default`.
+
 1. **Human visual review** of `/export` (with and without `?id=`) in light + dark. Compare against
    admin-web. Watch the gaps: checkbox styling, select trigger/menu, dialog, toast.
 2. If good, **continue Stage 3 sweep** in leverage order. Likely next: a `USkeleton` decision
