@@ -426,13 +426,34 @@ helper to add/remove from the `string[]` query ref; facet count sits beside each
 `siblingCount`/`showEdges`/`disabled`. Renders prev/next (+ first/last when `showEdges`) and page
 items via `Pagination.Context` v-slot; selected page uses `data-[selected]:bg-primary-default`.
 
-1. **Human visual review** of `/export` (with and without `?id=`) in light + dark. Compare against
+### 2026-06-23 — app header migrated → component sweep COMPLETE
+
+`layouts/default.vue`: `UNavigationMenu`→explicit `NuxtLink` nav with a local `isActive(to)` helper
+(normalizes trailing slash; prefix match — none of the tool routes is `/`, so no over-match). Active
+link uses `text-text-default bg-surface-indent`; header utilities→tokens. No `U*` left. Build +
+typecheck ✅.
+
+**MILESTONE:** app-wide the only remaining `U*` are `USkeleton` (×26) and `UApp` (×1). Every other
+Nuxt UI component has been replaced with a `Design*` component or token markup.
+
+**Stage 4 (remove Nuxt UI) — remaining:**
+
+1. `USkeleton` ×26 — build a tiny `DesignSkeleton` (an animated `bg-surface-indent` block) and swap,
+   OR keep a minimal skeleton util. (They're token-bridged so they look fine today.)
+2. `UApp` in `app.vue` — Nuxt UI's root provider (also provides the `#teleports` target? No — Nuxt
+   provides `#teleports`; `UApp` provides Nuxt UI toasts/overlays/tooltips which nothing uses anymore
+   except `UApp` itself). Replace with a plain wrapper.
+3. Remove `@import "@nuxt/ui"` + the `--ui-*` bridge from `main.css`, drop `@nuxt/ui` from
+   `nuxt.config.ts` + `package.json`. Re-test (the `--ui-*` bridge + Nuxt UI locale import in
+   `app.vue` go away).
+
+4. **Human visual review** of `/export` (with and without `?id=`) in light + dark. Compare against
    admin-web. Watch the gaps: checkbox styling, select trigger/menu, dialog, toast.
-2. If good, **continue Stage 3 sweep** in leverage order. Likely next: a `USkeleton` decision
+5. If good, **continue Stage 3 sweep** in leverage order. Likely next: a `USkeleton` decision
    (keep vs. build `DesignSkeleton`) since it's the #2 most-used component (26×), and `USwitch`
    (18×) → `DesignSwitch` (already exists in admin-web, not yet ported here).
-3. Port remaining admin-web components on demand as pages need them.
-4. **Stage 4** (remove `@nuxt/ui`) only once `grep -rE '<U[A-Z]' app/` is empty.
+6. Port remaining admin-web components on demand as pages need them.
+7. **Stage 4** (remove `@nuxt/ui`) only once `grep -rE '<U[A-Z]' app/` is empty.
 
 **Components still NOT ported** (port on demand): Switch, Badge, Tooltip, Avatar, Banner,
 EmptyState, ErrorState, LoadingState, ViewState, ProgressCircle, DatePicker, RadioGroup,
