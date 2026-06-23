@@ -405,6 +405,15 @@ button), `USeparator` (labelled "or") → inline token divider, `UFormField`+`UI
 
 Transcription is now fully migrated (editor + index).
 
+### 2026-06-23 — home page (index.vue) migrated + DesignBadge
+
+`app/pages/index.vue`: `UContainer`→`<div class="mx-auto max-w-7xl px-4">`, `UCard`→token card
+(`gradient-border bg-surface-raise shadow-resting` + hover lift to `shadow-floating`), `UBadge`→new
+`DesignBadge`. `text-neutral-400`→`text-text-hint`. No `U*` left. Build + typecheck ✅.
+
+**New component:** `DesignBadge.vue` — port of admin-web (cva, variants success/warning/info/error/
+neutral, `label` prop + slot). Same palette as `DesignBanner`.
+
 1. **Human visual review** of `/export` (with and without `?id=`) in light + dark. Compare against
    admin-web. Watch the gaps: checkbox styling, select trigger/menu, dialog, toast.
 2. If good, **continue Stage 3 sweep** in leverage order. Likely next: a `USkeleton` decision

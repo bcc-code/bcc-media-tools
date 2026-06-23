@@ -15,7 +15,7 @@ const { enabledTools } = useTools();
 </script>
 
 <template>
-    <UContainer>
+    <div class="mx-auto max-w-7xl px-4">
         <div class="mt-8 grid min-w-1/2 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <NuxtLink
                 v-for="tool in enabledTools"
@@ -23,26 +23,25 @@ const { enabledTools } = useTools();
                 :to="tool.to"
                 class="aspect-video"
             >
-                <UCard
-                    :ui="{ body: 'flex flex-col h-full items-start' }"
-                    class="ease-out-expo relative size-full shadow-xs transition duration-300 hover:-translate-y-1 hover:shadow-md"
+                <div
+                    class="gradient-border bg-surface-raise shadow-resting ease-out-expo hover:shadow-floating relative flex size-full flex-col items-start rounded-2xl p-6 transition duration-300 hover:-translate-y-1"
                 >
-                    <Icon :name="tool.icon" class="mb-2 text-lg" />
-                    <p>{{ tool.label }}</p>
-                    <p class="text-sm text-neutral-400">
+                    <Icon
+                        :name="tool.icon"
+                        class="text-text-default mb-2 text-lg"
+                    />
+                    <p class="text-text-default">{{ tool.label }}</p>
+                    <p class="text-text-hint text-sm">
                         {{ tool.description }}
                     </p>
-                    <UBadge
+                    <DesignBadge
                         v-if="tool.to.startsWith('/admin')"
-                        size="sm"
-                        variant="outline"
-                        color="neutral"
                         class="mt-auto"
                     >
                         {{ $t("tools.admin.badge") }}
-                    </UBadge>
-                </UCard>
+                    </DesignBadge>
+                </div>
             </NuxtLink>
         </div>
-    </UContainer>
+    </div>
 </template>
