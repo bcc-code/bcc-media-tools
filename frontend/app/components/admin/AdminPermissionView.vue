@@ -60,12 +60,12 @@ const isOpen = ref(false);
 
 <template>
     <div
-        class="border-border-1 bg-surface-default flex flex-col overflow-hidden rounded-xl border"
+        class="gradient-border bg-surface-default shadow-resting flex flex-col overflow-hidden rounded-xl"
     >
         <LayoutGroup>
             <AnimatePresence>
                 <motion.button
-                    class="bg-surface-indent flex items-center justify-between p-4"
+                    class="bg-surface-raise flex items-center justify-between p-4"
                     layout
                     @click="isOpen = !isOpen"
                 >
