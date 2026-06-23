@@ -215,6 +215,25 @@ solid var(--color-focus-ring); outline-offset: 2px`. Covers native `:focus-visib
   (close), ToastProvider (close).
 - `DesignCheckbox` indicator centering + checkbox alignment fixed by the user.
 
+### 2026-06-23 — vb-export page migrated
+
+`app/pages/vb-export.vue` + `app/components/vb-export/VbExportForm.vue` converted, mirroring the
+export page (it's structurally a subset — same component set, no quick-action buttons):
+`useToast`→`useDesignToaster`, `UIcon`→`Icon`, `UTextarea`→`DesignTextarea`, `UButton`→`DesignButton`,
+`UCheckbox`→`DesignCheckbox`, `USelect`→`DesignSelect`, `UFormField`→`<label>`+control,
+`UModal`→`DesignDialog`; Nuxt UI semantic utilities → tokens. `USkeleton` kept. No new components
+needed (all reused from the export pilot). `pnpm typecheck` ✅; only `<USkeleton>` remains in these
+files. Pending human visual review.
+
+**Pilot-era select/button tweaks that landed (apply to future pages too):**
+
+- `DesignSelect`: dropdown `min-w-[var(--reference-width)]` (≥ trigger width); removed the trigger
+  hover state entirely (BCC dark `surface-indent` is translucent black → looked wrong).
+- Quick-action "secondary" buttons that sit on a plain surface can disappear in dark mode (secondary
+  fill is `surface-indent`); fix per-button with `class="border border-border-1"` rather than
+  changing the `DesignButton` variant.
+- Focus ring: every interactive `Design*` element carries `ds-focus-ring` (see prior entry).
+
 ### Next steps (pick up here)
 
 1. **Human visual review** of `/export` (with and without `?id=`) in light + dark. Compare against

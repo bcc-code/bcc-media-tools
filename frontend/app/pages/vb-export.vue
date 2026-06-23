@@ -10,7 +10,7 @@ const route = useRoute();
 const vxId = computed(() => route.query.id?.toString());
 
 const api = useAPI();
-const toast = useToast();
+const toaster = useDesignToaster();
 const { t } = useI18n();
 const { me } = useMe();
 
@@ -82,18 +82,16 @@ async function onStartExport({
         }
         const started = vxIds.length - failed.length;
         if (failed.length === 0) {
-            toast.add({
-                icon: "tabler:check",
+            toaster.create({
                 title: t("vbExport.exportStarted"),
                 description: t("vbExport.bulkStartedCount", { n: started }),
-                color: "success",
+                type: "success",
             });
         } else {
-            toast.add({
-                icon: "tabler:alert-triangle",
+            toaster.create({
                 title: t("vbExport.exportStarted"),
                 description: `${t("vbExport.bulkStartedCount", { n: started })} · ${t("vbExport.bulkFailedCount", { n: failed.length })}`,
-                color: started === 0 ? "error" : "warning",
+                type: started === 0 ? "error" : "warning",
             });
         }
     } finally {
@@ -116,8 +114,8 @@ async function onStartExport({
             v-else-if="status === 'error'"
             class="mx-auto flex w-full max-w-3xl flex-col items-center gap-4 p-8"
         >
-            <UIcon name="tabler:alert-triangle" class="text-dimmed size-10" />
-            <p class="text-muted text-center">
+            <Icon name="tabler:alert-triangle" class="text-text-hint size-10" />
+            <p class="text-text-muted text-center">
                 {{ error?.message ?? $t("vbExport.loadFailed") }}
             </p>
         </div>
@@ -144,11 +142,11 @@ async function onStartExport({
                 v-else-if="bulkStatus === 'error'"
                 class="mx-auto flex w-full max-w-3xl flex-col items-center gap-4 p-8"
             >
-                <UIcon
+                <Icon
                     name="tabler:alert-triangle"
-                    class="text-dimmed size-10"
+                    class="text-text-hint size-10"
                 />
-                <p class="text-muted text-center">
+                <p class="text-text-muted text-center">
                     {{ bulkError?.message ?? $t("vbExport.loadFailed") }}
                 </p>
             </div>
@@ -160,8 +158,10 @@ async function onStartExport({
 
         <div class="mx-auto flex w-full max-w-2xl flex-col p-4">
             <div class="my-8">
-                <h1 class="text-2xl font-bold">{{ $t("vbExport.title") }}</h1>
-                <p class="text-muted">
+                <h1 class="text-heading-3 text-text-default">
+                    {{ $t("vbExport.title") }}
+                </h1>
+                <p class="text-text-muted">
                     {{ $t("vbExport.openFromMediabanken") }}
                 </p>
             </div>

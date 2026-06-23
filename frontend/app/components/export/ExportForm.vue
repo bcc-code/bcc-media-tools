@@ -251,7 +251,7 @@ function startExport() {
             </div>
             <ul
                 v-if="assets.length > 0"
-                class="border-border-1 divide-border-1 divide-y rounded-md border"
+                class="border-border-1 divide-border-1 divide-y rounded-xl border"
             >
                 <li
                     v-for="a in assets"
@@ -276,6 +276,7 @@ function startExport() {
                         class="ml-auto"
                         icon="tabler:x"
                         variant="tertiary"
+                        intent="danger"
                         size="small"
                         :aria-label="$t('export.remove')"
                         @click="removeAsset(a.vxId)"

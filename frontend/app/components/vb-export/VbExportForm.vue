@@ -146,32 +146,30 @@ function startExport() {
     <div class="mx-auto w-full max-w-3xl px-6 py-8">
         <!-- Bulk paste: detect VX-ids from arbitrary text -->
         <section v-if="bulkMode" class="mb-6 space-y-2">
-            <h3 class="text-highlighted text-sm font-semibold">
+            <h3 class="text-title-3 text-text-default font-semibold">
                 {{ $t("vbExport.bulkTitle") }}
             </h3>
-            <p class="text-muted text-xs">{{ $t("vbExport.bulkHint") }}</p>
-            <UTextarea
+            <p class="text-text-muted text-xs">{{ $t("vbExport.bulkHint") }}</p>
+            <DesignTextarea
                 v-model="pasteText"
                 :rows="4"
-                autoresize
                 :placeholder="$t('vbExport.bulkPlaceholder')"
-                class="w-full"
             />
         </section>
 
         <!-- Assets to export -->
         <section class="mb-6 space-y-2">
             <div class="flex items-center justify-between gap-2">
-                <h3 class="text-highlighted text-sm font-semibold">
+                <h3 class="text-title-3 text-text-default font-semibold">
                     {{ $t("vbExport.assets") }}
                 </h3>
-                <span class="text-muted text-xs">
+                <span class="text-text-muted text-xs">
                     {{ $t("vbExport.bulkDetected", { n: assets.length }) }}
                 </span>
             </div>
             <ul
                 v-if="assets.length > 0"
-                class="border-default divide-default divide-y rounded-md border"
+                class="border-border-1 divide-border-1 divide-y rounded-xl border"
             >
                 <li
                     v-for="a in assets"
@@ -181,19 +179,23 @@ function startExport() {
                     <span class="font-mono text-sm">{{ a.vxId }}</span>
                     <span
                         class="truncate text-sm"
-                        :class="a.found === false ? 'text-error' : 'text-muted'"
+                        :class="
+                            a.found === false
+                                ? 'text-semantic-error'
+                                : 'text-text-muted'
+                        "
                     >
                         <template v-if="a.found === false">
                             {{ $t("vbExport.assetNotFound") }}
                         </template>
                         <template v-else>{{ a.title }}</template>
                     </span>
-                    <UButton
+                    <DesignButton
                         class="ml-auto"
                         icon="tabler:x"
-                        color="neutral"
-                        variant="ghost"
-                        size="xs"
+                        variant="tertiary"
+                        intent="danger"
+                        size="small"
                         :aria-label="$t('vbExport.remove')"
                         @click="removeAsset(a.vxId)"
                     />
@@ -204,7 +206,7 @@ function startExport() {
             </div>
             <p
                 v-else-if="bulkMode && assets.length === 0"
-                class="text-muted text-xs"
+                class="text-text-muted text-xs"
             >
                 {{ $t("vbExport.bulkNoIds") }}
             </p>
@@ -213,27 +215,29 @@ function startExport() {
         <div class="space-y-6">
             <!-- Destinations -->
             <section class="space-y-2">
-                <h3 class="text-highlighted text-sm font-semibold">
+                <h3 class="text-title-3 text-text-default font-semibold">
                     {{ $t("vbExport.destinations") }}
                 </h3>
                 <div class="flex flex-col gap-2">
-                    <UCheckbox
+                    <DesignCheckbox
                         v-for="d in config.destinations"
                         :key="d"
                         v-model="destChecked[d]"
                     >
                         <template #label>
-                            <span class="text-sm">{{
-                                destinationName(d)
-                            }}</span>
-                            <span class="text-muted ml-2 font-mono text-xs">
-                                {{ d }}</span
+                            <span class="text-sm">
+                                {{ destinationName(d) }}
+                            </span>
+                            <span
+                                class="text-text-muted ml-2 font-mono text-xs"
                             >
+                                {{ d }}
+                            </span>
                         </template>
-                    </UCheckbox>
+                    </DesignCheckbox>
                     <p
                         v-if="config.destinations.length === 0"
-                        class="text-muted text-xs"
+                        class="text-text-muted text-xs"
                     >
                         {{ $t("vbExport.noDestinations") }}
                     </p>
@@ -241,37 +245,46 @@ function startExport() {
             </section>
 
             <!-- Subtitles (burn-in) -->
-            <UFormField :label="$t('vbExport.subtitlesBurnIn')">
-                <USelect
+            <div class="space-y-1">
+                <label class="text-body-3 text-text-muted block">
+                    {{ $t("vbExport.subtitlesBurnIn") }}
+                </label>
+                <DesignSelect
                     v-model="subtitleShape"
                     :items="config.subtitleShapes"
-                    class="w-full"
                 />
-            </UFormField>
+            </div>
 
             <!-- Subtitles burn in style -->
-            <UFormField :label="$t('vbExport.subtitlesBurnInStyle')">
-                <USelect
+            <div class="space-y-1">
+                <label class="text-body-3 text-text-muted block">
+                    {{ $t("vbExport.subtitlesBurnInStyle") }}
+                </label>
+                <DesignSelect
                     v-model="subtitleStyle"
                     :items="config.subtitleStyles"
-                    class="w-full"
                 />
-            </UFormField>
+            </div>
         </div>
 
         <!-- Sticky action bar -->
         <div
-            class="bg-default border-default sticky bottom-0 -mx-6 mt-6 rounded-2xl border px-6 py-4"
+            class="bg-surface-default border-border-1 sticky bottom-0 -mx-6 mt-6 rounded-2xl border px-6 py-4"
         >
             <div class="flex items-center justify-between gap-4">
                 <p
                     class="text-xs"
-                    :class="disabledReason ? 'text-warning' : 'text-muted'"
+                    :class="
+                        disabledReason
+                            ? 'text-semantic-warning'
+                            : 'text-text-muted'
+                    "
                 >
                     {{ disabledReason || selectionSummary }}
                 </p>
-                <UButton
-                    size="lg"
+                <DesignButton
+                    variant="primary"
+                    size="large"
                     icon="tabler:file-export"
                     :loading="submitting"
                     :disabled="!!disabledReason"
@@ -282,30 +295,28 @@ function startExport() {
                             ? $t("vbExport.bulkStart")
                             : $t("vbExport.startExport")
                     }}
-                </UButton>
+                </DesignButton>
             </div>
         </div>
 
         <!-- Bulk export confirmation -->
-        <UModal
+        <DesignDialog
             v-model:open="confirmOpen"
             :title="$t('vbExport.bulkConfirmTitle')"
             :description="confirmMessage"
         >
-            <template #footer>
-                <div class="flex w-full justify-end gap-2">
-                    <UButton
-                        variant="ghost"
-                        color="neutral"
-                        @click="confirmOpen = false"
-                    >
-                        {{ $t("vbExport.cancel") }}
-                    </UButton>
-                    <UButton icon="tabler:file-export" @click="confirmExport">
-                        {{ $t("vbExport.bulkStart") }}
-                    </UButton>
-                </div>
-            </template>
-        </UModal>
+            <div class="flex w-full justify-end gap-2">
+                <DesignButton variant="tertiary" @click="confirmOpen = false">
+                    {{ $t("vbExport.cancel") }}
+                </DesignButton>
+                <DesignButton
+                    variant="primary"
+                    icon="tabler:file-export"
+                    @click="confirmExport"
+                >
+                    {{ $t("vbExport.bulkStart") }}
+                </DesignButton>
+            </div>
+        </DesignDialog>
     </div>
 </template>
