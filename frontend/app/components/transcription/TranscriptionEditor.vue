@@ -113,7 +113,7 @@ const { list, wrapperProps, containerProps } = useVirtualList(
         <TransitionGroup
             v-if="list"
             tag="div"
-            class="divide-default flex flex-col divide-y"
+            class="divide-border-1 flex flex-col divide-y"
             enter-active-class="transition duration-300 ease-out"
             enter-from-class="opacity-0 scale-95"
             enter-to-class="opacity-100 scale-100"

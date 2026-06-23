@@ -20,7 +20,7 @@ const model = defineModel<boolean>({ default: false });
     <Switch.Root
         v-model:checked="model"
         :disabled="disabled"
-        class="inline-flex cursor-pointer items-start gap-2.5 disabled:cursor-not-allowed disabled:opacity-50"
+        class="inline-flex cursor-pointer items-center gap-2.5 disabled:cursor-not-allowed disabled:opacity-50"
     >
         <Switch.Control
             class="bg-text-default/15 data-[state=checked]:bg-primary-contrast ease-out-expo ds-focus-ring mt-0.5 inline-flex h-6 w-10 shrink-0 items-center rounded-full p-0.5 transition-colors duration-200"

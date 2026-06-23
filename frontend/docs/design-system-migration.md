@@ -312,6 +312,21 @@ bg-surface-raise shadow-floating` card), `ThemeSwitch.vue` (icon button → tert
 tokens), `VaultCard.vue` (3 UIcon→Icon; utilities→tokens). No `U*` left in any of the four; build +
 typecheck ✅. No new components.
 
+### 2026-06-23 — transcription editor migrated (+ DesignTooltip)
+
+Ported `DesignTooltip.vue` (faithful admin-web copy; Ark `Tooltip`, `content` prop + default slot
+trigger via `as-child`, teleported). Migrated: `transcription/[id].vue` (toast→useDesignToaster ×3;
+3 USwitch→DesignSwitch — dropped a stray `was-toggled` attr; save button + submit-confirm UModal→
+DesignDialog; panel/header/video utilities→tokens), `TranscriptionManual.vue` (UModal `#body`→
+DesignDialog default slot), `TranscriptionSegmentEditor.vue` (2 UTooltip→DesignTooltip wrapping
+DesignButton icon-buttons; `inverted`/`muted`/`dimmed` utilities→`text-default`/`surface-indent`/
+`text-hint` tokens), `TranscriptionDownloader.vue` (toast + utilities), `TranscriptionEditor.vue`
+(`divide-default`→token). No `U*` left in the transcription tree. Build + typecheck ✅.
+
+Note: `UModal :close="false"` (no X) has no DesignDialog equivalent — DesignDialog always shows the
+close X. Acceptable here (X = cancel). Splitter handle `<style>` still uses `--ui-color-neutral-*`
+(Nuxt UI palette) — left for Stage 4.
+
 ### Next steps (pick up here)
 
 1. **Human visual review** of `/export` (with and without `?id=`) in light + dark. Compare against

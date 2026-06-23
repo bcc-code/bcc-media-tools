@@ -6,7 +6,7 @@ const props = defineProps<{
 
 const format = ref<"json" | "srt" | "srt-words">("json");
 
-const toast = useToast();
+const toaster = useDesignToaster();
 const download = () => {
     switch (format.value) {
         case "json":
@@ -20,10 +20,9 @@ const download = () => {
             break;
     }
 
-    toast.add({
-        icon: "tabler:check",
+    toaster.create({
         title: "Transcript downloaded successfully",
-        color: "success",
+        type: "success",
     });
 };
 
@@ -36,17 +35,17 @@ const widths = {
 
 <template>
     <div
-        class="divide-accented border-accented flex divide-x rounded-lg border shadow-sm"
+        class="divide-border-1 border-border-1 flex divide-x rounded-lg border shadow-sm"
     >
         <button
-            class="bg-default flex-1 rounded-l-lg px-3 py-1.5 text-sm"
+            class="bg-surface-default flex-1 rounded-l-lg px-3 py-1.5 text-sm"
             @click="download"
         >
             {{ $t("transcription.download") }}
         </button>
         <select
             v-model="format"
-            class="bg-default text-muted flex-1 rounded-r-lg px-3 py-1.5 text-sm transition-all duration-200 ease-out"
+            class="bg-surface-default text-text-muted flex-1 rounded-r-lg px-3 py-1.5 text-sm transition-all duration-200 ease-out"
             :style="{ maxWidth: widths[format] }"
         >
             <option value="json">JSON</option>

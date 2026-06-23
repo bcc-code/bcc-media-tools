@@ -49,7 +49,7 @@ function formatErrorMessage(msg: string | null): string | null {
 }
 
 const { t } = useI18n();
-const toast = useToast();
+const toaster = useDesignToaster();
 const reset = async (notify: boolean = true) => {
     loading.value = true;
     error.value = null;
@@ -58,10 +58,9 @@ const reset = async (notify: boolean = true) => {
         setTranscription(result);
         localStorage[key.value] = JSON.stringify(result);
         if (notify) {
-            toast.add({
-                icon: "tabler:check",
+            toaster.create({
                 title: t("transcription.resetSuccess"),
-                color: "success",
+                type: "success",
             });
         }
         return result;
@@ -89,17 +88,15 @@ const submitToMediabanken = async () => {
             transcription: transcription.value,
         });
         localStorage.removeItem(key.value);
-        toast.add({
-            icon: "tabler:check",
+        toaster.create({
             title: t("transcription.submitSuccess"),
-            color: "success",
+            type: "success",
         });
         navigateTo("/transcription");
     } catch (err) {
-        toast.add({
-            icon: "tabler:exclamation-mark",
+        toaster.create({
             title: t("transcription.submitError"),
-            color: "error",
+            type: "error",
         });
         loadingSubmit.value = false;
     }
@@ -248,7 +245,7 @@ const splitterApi = computed(() =>
 <template>
     <div class="flex h-[calc(100dvh-var(--header-height))] flex-col">
         <div
-            class="border-default bg-default flex items-center justify-between gap-4 border-b px-6 py-3"
+            class="border-border-1 bg-surface-default flex items-center justify-between gap-4 border-b px-6 py-3"
         >
             <div
                 class="flex flex-col"
@@ -278,16 +275,15 @@ const splitterApi = computed(() =>
                 </div>
             </div>
             <div class="flex items-center gap-4">
-                <USwitch
+                <DesignSwitch
                     v-model="previewSubtitles"
                     :label="$t('transcription.previewSubtitles')"
                 />
-                <USwitch
+                <DesignSwitch
                     v-model="seekOnFocus"
-                    was-toggled
                     :label="$t('transcription.seekOnFocus')"
                 />
-                <USwitch
+                <DesignSwitch
                     v-model="deleteMode"
                     :label="$t('transcription.deleteMode')"
                 />
@@ -295,9 +291,9 @@ const splitterApi = computed(() =>
                     :segments="segments"
                     :filename="fileName"
                 />
-                <UButton @click="showSubmitConfirmationModal = true">
+                <DesignButton @click="showSubmitConfirmationModal = true">
                     {{ $t("transcription.save") }}
-                </UButton>
+                </DesignButton>
                 <button
                     class="-mx-3 aspect-square p-3"
                     @click="showManual = true"
@@ -312,7 +308,7 @@ const splitterApi = computed(() =>
         >
             <div
                 v-bind="splitterApi.getPanelProps({ id: 'left' })"
-                class="bg-default border-default flex flex-col border-r"
+                class="bg-surface-default border-border-1 flex flex-col border-r"
             >
                 <Icon
                     v-if="loading"
@@ -359,7 +355,7 @@ const splitterApi = computed(() =>
                             ref="videoelement"
                             :src="video"
                             controls
-                            class="bg-default shadow-xl"
+                            class="bg-surface-default shadow-xl"
                         />
                         <p
                             v-if="previewSubtitles && focusedSegment"
@@ -376,30 +372,28 @@ const splitterApi = computed(() =>
             </div>
         </div>
         <TranscriptionManual v-model:open="showManual" />
-        <UModal
+        <DesignDialog
             v-model:open="showSubmitConfirmationModal"
-            :close="false"
             :title="$t('transcription.submitConfirmationTitle')"
             :description="$t('transcription.submitConfirmationMessage')"
         >
-            <template #footer>
-                <UButton
-                    variant="link"
-                    autofocus
-                    class="ml-auto"
+            <div class="flex w-full justify-end gap-2">
+                <DesignButton
+                    variant="tertiary"
                     @click="showSubmitConfirmationModal = false"
                 >
                     {{ $t("transcription.submitConfirmationCancel") }}
-                </UButton>
-                <UButton :disabled="loadingSubmit" @click="submitToMediabanken">
-                    <Icon
-                        v-if="loadingSubmit"
-                        name="svg-spinners:bars-rotate-fade"
-                    />
+                </DesignButton>
+                <DesignButton
+                    variant="primary"
+                    :loading="loadingSubmit"
+                    :disabled="loadingSubmit"
+                    @click="submitToMediabanken"
+                >
                     {{ $t("transcription.submitConfirmationSubmit") }}
-                </UButton>
-            </template>
-        </UModal>
+                </DesignButton>
+            </div>
+        </DesignDialog>
     </div>
 </template>
 

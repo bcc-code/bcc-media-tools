@@ -42,8 +42,8 @@ const { deleteMode } = useDeleteMode();
         class="flex items-center px-6 py-4 transition-all ease-out"
         :class="{
             'cursor-pointer hover:bg-red-200 hover:text-red-700': deleteMode,
-            'bg-elevated opacity-50': deleted,
-            'ring-inverted bg-muted ring-2 ring-inset': focused,
+            'bg-surface-raise opacity-50': deleted,
+            'ring-text-default bg-surface-indent ring-2 ring-inset': focused,
         }"
         :tabindex="deleteMode ? 0 : -1"
         @click="deleteMode ? $emit('toggleDelete') : undefined"
@@ -53,7 +53,7 @@ const { deleteMode } = useDeleteMode();
         @mouseleave="hovering = false"
     >
         <div class="grow">
-            <div class="text-dimmed flex gap-2 text-sm tabular-nums">
+            <div class="text-text-hint flex gap-2 text-sm tabular-nums">
                 <p>{{ formatTime(segment.start) }}</p>
                 -
                 <p>{{ formatTime(segment.end) }}</p>
@@ -69,7 +69,7 @@ const { deleteMode } = useDeleteMode();
                     :key="`segment:${segment.id}:${segment.start}:${segment.end}:word:${w.start}:${w.end}`"
                     contenteditable
                     :tabindex="deleteMode ? -1 : 0"
-                    class="focus:border-inverted focus:bg-muted rounded-md border border-transparent px-2 leading-tight focus:outline-none"
+                    class="focus:border-text-default focus:bg-surface-indent rounded-md border border-transparent px-2 leading-tight focus:outline-none"
                     @input="handleTextUpdate(index, $event)"
                     @focus="$emit('wordFocus', w, segment)"
                     @keydown.down="$emit('focusNext')"
@@ -80,26 +80,27 @@ const { deleteMode } = useDeleteMode();
             </div>
         </div>
         <div v-if="!deleteMode" class="ml-auto">
-            <UTooltip v-if="!deleted" :text="$t('transcription.deleteSegment')">
-                <UButton
-                    color="error"
-                    variant="ghost"
-                    square
+            <DesignTooltip
+                v-if="!deleted"
+                :content="$t('transcription.deleteSegment')"
+            >
+                <DesignButton
+                    variant="tertiary"
+                    intent="danger"
+                    icon="tabler:trash"
                     @click="$emit('toggleDelete')"
-                >
-                    <Icon name="tabler:trash" />
-                </UButton>
-            </UTooltip>
-            <UTooltip v-else :text="$t('transcription.undeleteSegment')">
-                <UButton
-                    variant="ghost"
-                    color="neutral"
-                    square
+                />
+            </DesignTooltip>
+            <DesignTooltip
+                v-else
+                :content="$t('transcription.undeleteSegment')"
+            >
+                <DesignButton
+                    variant="tertiary"
+                    icon="tabler:refresh"
                     @click="$emit('toggleDelete')"
-                >
-                    <Icon name="tabler:refresh" />
-                </UButton>
-            </UTooltip>
+                />
+            </DesignTooltip>
         </div>
     </div>
 </template>
