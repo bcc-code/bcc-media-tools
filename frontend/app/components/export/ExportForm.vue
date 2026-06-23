@@ -287,7 +287,7 @@ function startExport() {
                 </li>
             </ul>
             <div v-if="resolving" class="space-y-2">
-                <USkeleton class="h-9 w-full" />
+                <DesignSkeleton class="h-9 w-full" />
             </div>
             <p
                 v-else-if="bulkMode && assets.length === 0"

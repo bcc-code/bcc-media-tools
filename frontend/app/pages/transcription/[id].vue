@@ -402,18 +402,11 @@ const splitterApi = computed(() =>
     height: calc(var(--spacing) * 16);
     width: calc(var(--spacing) * 2);
     border-radius: calc(infinity * 1px);
-    background-color: var(--ui-color-neutral-300);
+    background-color: var(--color-text-hint);
+    transition: background-color 150ms;
 
     &:hover {
-        background-color: var(--ui-color-neutral-400);
-    }
-
-    &:where(.dark, .dark *) {
-        background-color: var(--ui-color-neutral-700);
-
-        &:hover {
-            background-color: var(--ui-color-neutral-600);
-        }
+        background-color: var(--color-text-muted);
     }
 }
 </style>

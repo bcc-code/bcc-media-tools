@@ -152,7 +152,7 @@ const { list, wrapperProps, containerProps } = useVirtualList(
                     class="relative w-full"
                 >
                     <button
-                        class="bg-accented absolute right-1/2 z-10 grid aspect-square size-6 -translate-y-1/2 place-items-center rounded-full p-0.5 text-sm hover:scale-110"
+                        class="bg-surface-raise border-border-1 absolute right-1/2 z-10 grid aspect-square size-6 -translate-y-1/2 place-items-center rounded-full border p-0.5 text-sm hover:scale-110"
                         :title="$t('transcription.addSegment')"
                         @click="addNewSegmentAt(s.index + 1)"
                     >

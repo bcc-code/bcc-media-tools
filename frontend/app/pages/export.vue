@@ -173,10 +173,10 @@ const triggers: Trigger[] = [
         </div>
 
         <div v-else class="mx-auto w-full max-w-3xl space-y-4 p-8">
-            <USkeleton class="mx-auto h-8 w-80" />
-            <USkeleton class="h-24 w-full" />
-            <USkeleton class="h-40 w-full" />
-            <USkeleton class="h-64 w-full" />
+            <DesignSkeleton class="mx-auto h-8 w-80" />
+            <DesignSkeleton class="h-24 w-full" />
+            <DesignSkeleton class="h-40 w-full" />
+            <DesignSkeleton class="h-64 w-full" />
         </div>
     </div>
 
@@ -204,8 +204,8 @@ const triggers: Trigger[] = [
                 </p>
             </div>
             <div v-else class="mx-auto w-full max-w-3xl space-y-4 p-8">
-                <USkeleton class="h-24 w-full" />
-                <USkeleton class="h-40 w-full" />
+                <DesignSkeleton class="h-24 w-full" />
+                <DesignSkeleton class="h-40 w-full" />
             </div>
         </template>
 

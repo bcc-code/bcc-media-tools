@@ -13,7 +13,7 @@ export type CantemoChip = {
 export function useCantemoActions(vxId: MaybeRefOrGetter<string | undefined>) {
     const { me } = useMe();
     const api = useAPI();
-    const toast = useToast();
+    const toaster = useDesignToaster();
 
     // Name of the chip whose workflow is currently being triggered (disables it).
     const loading = ref<string | null>(null);
@@ -28,17 +28,15 @@ export function useCantemoActions(vxId: MaybeRefOrGetter<string | undefined>) {
         loading.value = name;
         try {
             await api.triggerCantemoAction({ VXID: id, action });
-            toast.add({
-                icon: "tabler:check",
+            toaster.create({
                 title: started,
-                color: "success",
+                type: "success",
             });
         } catch (err) {
-            toast.add({
-                icon: "tabler:alert-triangle",
+            toaster.create({
                 title: "Failed to start",
                 description: (err as Error)?.message,
-                color: "error",
+                type: "error",
             });
         } finally {
             loading.value = null;

@@ -461,3 +461,56 @@ SegmentGroup, StatusIndicator, TagsInput, Table, Tour, AgeRating, ConfirmProvide
 equivalent yet for: `UInput` (text input — admin-web has `DesignInput`, not yet ported),
 `USkeleton`, `UCard`, `UFormField`, `UAlert`, `UStepper`, `USlider`, `UPagination`,
 `UNavigationMenu` (used in the layout header), `UContainer`.
+
+> The lists above are historical (from early planning) — most are now done. See the dated log
+> entries below for actual status. **As of the Stage 4 entry, the migration is complete.**
+
+---
+
+### 2026-06-23 — Stage 4 COMPLETE — Nuxt UI removed 🎉
+
+The migration is done. Nuxt UI is fully gone; the app runs purely on the design system.
+`pnpm build` + `pnpm typecheck` ✅; no `@nuxt/ui` references, no `<U*>` components anywhere.
+
+- **`USkeleton` ×26 → `DesignSkeleton`** (new: animated `bg-surface-indent rounded-md` block). The
+  one full-bleed vault skeleton uses `!rounded-none` to beat the default radius.
+- **`UApp` removed** from `app.vue` (+ the `@nuxt/ui/locale` import + locale machinery). app.vue is
+  now a fragment: `<NuxtLayout>…</NuxtLayout>` + `<DesignToastProvider/>`. `#teleports` is provided
+  by **Nuxt core** (`appTeleportAttrs.id = "teleports"`), NOT `UApp` — verified — so
+  dialogs/selects/tooltips/toasts keep working.
+- **Straggler utilities → tokens** (these used the now-gone `--ui-*` bridge): transcription splitter
+  handle `<style>` (`--ui-color-neutral-*` → `--color-text-hint`/`-muted`), `ShortsTimelineScrubber`
+  (`border-inverted`/`bg-inverted`/`bg-default` → `border-text-default`/`bg-text-default`/
+  `bg-surface-default`), `TranscriptionEditor` add-button (`bg-accented` → `bg-surface-raise
+  border-border-1`). Last `useToast` (`useCantemoActions.ts`) → `useDesignToaster`.
+- **`main.css`:** removed `@import "@nuxt/ui"` + the entire `--ui-*` bridge; added
+  `color: var(--color-text-default)` to base `html,body` (Nuxt UI's base had set body text color via
+  the bridge). Body background still from `nuxt.config` `bodyAttrs` (`bg-neutral-100 dark:bg-neutral-950`).
+- **`nuxt.config.ts`:** removed `"@nuxt/ui"` module. **`app.config.ts`:** dropped the `ui:` block.
+  **`package.json`:** `pnpm remove @nuxt/ui`.
+
+**Design components (17):** Badge, Banner, Button, Checkbox, Dialog, FileUpload, Input, Pagination,
+Progress, Select, Skeleton, Slider, Stepper, Switch, Textarea, ToastProvider, Tooltip. Plus
+`useDesignToaster` + `types/design.ts`.
+
+**Optional follow-up:** body bg in `bodyAttrs` still uses raw `neutral-100/950` rather than
+`surface-default` tokens — could align for full token consistency. Otherwise: done.
+
+### 2026-06-23 — post-removal fallout: re-add Nuxt UI's bundled deps
+
+Removing `@nuxt/ui` also removed three things it had bundled/registered. Re-added as direct deps:
+
+1. **`@tailwindcss/vite`** (user added) — Nuxt UI provided the Tailwind v4 build integration; without
+   it `@import "tailwindcss"` doesn't compile. Now wired via `vite.plugins: [tailwindcss()]` in
+   `nuxt.config.ts`.
+2. **`@nuxtjs/color-mode`** — Nuxt UI registered this; it's what toggles the `.dark`/`.light` class on
+   `<html>` that `ThemeSwitch` (`useColorMode`) and all token-flipping depend on. Re-added as a module
+   with `colorMode: { classSuffix: "" }` (default suffix is `-mode` → we need the bare `.dark` class).
+   This fixed "can't switch dark/light".
+3. **`@nuxt/fonts`** — loads the Archivo webfont from the `--font-sans` declaration; without it Archivo
+   fell back to system fonts. Re-added as a module.
+
+Also added **`@custom-variant dark (&:where(.dark, .dark *));`** to `main.css` — Nuxt UI had configured
+Tailwind's `dark:` variant to key off the `.dark` class; without it `dark:` utilities silently revert
+to the `prefers-color-scheme` media query. (Token flipping via the plain `.dark {}` selector was
+unaffected, but `dark:` utility classes needed this.) Build + typecheck ✅.

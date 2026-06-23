@@ -1,5 +1,9 @@
 @import "tailwindcss";
-@import "@nuxt/ui";
+
+/* Drive Tailwind's `dark:` variant off the `.dark` class (toggled by
+   @nuxtjs/color-mode) instead of the default prefers-color-scheme media query,
+   matching the `.dark` selector the design tokens flip on. */
+@custom-variant dark (&:where(.dark, .dark *));
 
 /*
  * Design system tokens ported from bcc-media-platform/admin-web
@@ -180,39 +184,8 @@
     html,
     body {
         font-family: var(--font-sans);
+        color: var(--color-text-default);
     }
-}
-
-/*
- * Bridge: rebind Nuxt UI's `--ui-*` variables onto the design tokens so every
- * existing <U*> component and Nuxt UI utility (text-muted, bg-default,
- * border-default, …) inherits the admin-web look with no component changes.
- * Defined after `@import "@nuxt/ui"` so these win at equal specificity, in both
- * themes (the underlying --color-* tokens flip via .dark on their own).
- */
-:root,
-.dark {
-    --ui-primary: var(--color-primary-default);
-    --ui-secondary: var(--color-primary-contrast);
-    --ui-success: var(--color-semantic-success);
-    --ui-info: var(--color-semantic-info);
-    --ui-warning: var(--color-semantic-warning);
-    --ui-error: var(--color-semantic-error);
-
-    --ui-text-dimmed: var(--color-text-hint);
-    --ui-text-muted: var(--color-text-muted);
-    --ui-text-toned: var(--color-text-muted);
-    --ui-text: var(--color-text-default);
-    --ui-text-highlighted: var(--color-text-default);
-
-    --ui-bg: var(--color-surface-default);
-    --ui-bg-muted: var(--color-surface-indent);
-    --ui-bg-elevated: var(--color-surface-indent);
-    --ui-bg-accented: var(--color-surface-indent);
-
-    --ui-border: var(--color-border-1);
-    --ui-border-muted: var(--color-border-1);
-    --ui-border-accented: var(--color-border-1);
 }
 
 /* Gradient border using mask-composite on rounded elements */

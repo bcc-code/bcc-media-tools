@@ -1,11 +1,19 @@
+import tailwindcss from "@tailwindcss/vite";
+
 export default defineNuxtConfig({
     modules: [
         "@nuxt/icon",
+        "@nuxt/fonts",
+        "@nuxtjs/color-mode",
         "@nuxtjs/i18n",
         "motion-v/nuxt",
         "@vueuse/nuxt",
-        "@nuxt/ui",
     ],
+    colorMode: {
+        // No suffix → toggles the `dark` / `light` class on <html> (matches the
+        // `.dark` selector the design tokens flip on). Default suffix is `-mode`.
+        classSuffix: "",
+    },
     typescript: {
         shim: false,
     },
@@ -58,6 +66,7 @@ export default defineNuxtConfig({
     },
     compatibilityDate: "2025-07-12",
     vite: {
+        plugins: [tailwindcss()],
         optimizeDeps: {
             include: [
                 "@ark-ui/vue",

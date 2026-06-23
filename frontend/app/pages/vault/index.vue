@@ -187,11 +187,11 @@ const rangeTo = computed(() =>
                         :key="n"
                         class="border-border-1 overflow-hidden rounded-[14px] border"
                     >
-                        <USkeleton class="aspect-16/10 w-full rounded-none" />
+                        <DesignSkeleton class="aspect-16/10 w-full !rounded-none" />
                         <div class="flex flex-col gap-2 p-3">
-                            <USkeleton class="mb-1 h-4 w-3/4" />
-                            <USkeleton class="h-3 w-1/2" />
-                            <USkeleton class="h-3 w-1/2" />
+                            <DesignSkeleton class="mb-1 h-4 w-3/4" />
+                            <DesignSkeleton class="h-3 w-1/2" />
+                            <DesignSkeleton class="h-3 w-1/2" />
                         </div>
                     </div>
                 </div>

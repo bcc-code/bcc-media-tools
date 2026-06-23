@@ -74,22 +74,22 @@ watch([start, end], ([s, e]) => {
 </script>
 
 <template>
-    <div class="border-inverted h-32 w-full overflow-hidden border">
+    <div class="border-text-default h-32 w-full overflow-hidden border">
         <div
             class="relative h-full"
             :style="{ width: `${props.max * props.zoom}px` }"
         >
             <div
-                class="bg-default text-inverted absolute h-full cursor-grab active:cursor-grabbing"
+                class="bg-surface-default absolute h-full cursor-grab active:cursor-grabbing"
                 :style
                 @mousedown.stop="setDragging('move')"
             >
                 <div
-                    class="bg-inverted absolute left-0 h-full w-1 cursor-w-resize"
+                    class="bg-text-default absolute left-0 h-full w-1 cursor-w-resize"
                     @mousedown.stop="setDragging('start')"
                 />
                 <div
-                    class="bg-inverted absolute right-0 h-full w-1 cursor-e-resize"
+                    class="bg-text-default absolute right-0 h-full w-1 cursor-e-resize"
                     @mousedown.stop="setDragging('end')"
                 />
             </div>

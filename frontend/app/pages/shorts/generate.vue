@@ -250,18 +250,18 @@ useVideoKeyboardControls({
             <DesignSlider v-model="zoom" :min="0.1" :max="10" :step="0.01" />
         </template>
         <template v-if="status != 'success'">
-            <USkeleton class="aspect-video w-full" />
+            <DesignSkeleton class="aspect-video w-full" />
             <div class="flex items-center gap-2">
                 <div class="space-y-2">
-                    <USkeleton class="h-5 w-16" />
-                    <USkeleton class="h-4 w-48" />
+                    <DesignSkeleton class="h-5 w-16" />
+                    <DesignSkeleton class="h-4 w-48" />
                 </div>
-                <USkeleton class="ml-auto h-8 w-28" />
-                <USkeleton class="h-8 w-28" />
-                <USkeleton class="h-8 w-28" />
+                <DesignSkeleton class="ml-auto h-8 w-28" />
+                <DesignSkeleton class="h-8 w-28" />
+                <DesignSkeleton class="h-8 w-28" />
             </div>
-            <USkeleton class="h-32 w-full" />
-            <USkeleton class="h-2 w-full" />
+            <DesignSkeleton class="h-32 w-full" />
+            <DesignSkeleton class="h-2 w-full" />
         </template>
 
         <DesignDialog v-model:open="showManual">
