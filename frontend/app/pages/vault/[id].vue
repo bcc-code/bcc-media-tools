@@ -83,14 +83,14 @@ const lengthLabel = computed(() => {
         <div class="mx-auto max-w-7xl">
             <!-- header -->
             <div class="mb-6 flex items-center gap-4">
-                <UButton
+                <DesignButton
                     icon="tabler:arrow-left"
-                    color="neutral"
-                    variant="outline"
+                    variant="secondary"
+                    class="border-border-1 border"
                     @click="navigateTo('/vault/')"
                 >
                     {{ t("vault.back") }}
-                </UButton>
+                </DesignButton>
                 <h1
                     class="truncate font-mono text-2xl font-semibold tracking-tight"
                 >
@@ -101,7 +101,7 @@ const lengthLabel = computed(() => {
             <div class="grid grid-cols-[1.4fr_1fr] items-start gap-6">
                 <!-- preview -->
                 <div
-                    class="bg-default border-default overflow-hidden rounded-[14px] border"
+                    class="bg-surface-default border-border-1 overflow-hidden rounded-[14px] border"
                 >
                     <video
                         v-if="isVideo"
@@ -111,7 +111,7 @@ const lengthLabel = computed(() => {
                     />
                     <div
                         v-else-if="isAudio"
-                        class="bg-muted text-muted flex aspect-video w-full flex-col items-center justify-center gap-6 p-6"
+                        class="bg-surface-indent text-text-muted flex aspect-video w-full flex-col items-center justify-center gap-6 p-6"
                     >
                         <img
                             v-if="!waveformFailed"
@@ -120,7 +120,7 @@ const lengthLabel = computed(() => {
                             class="w-full max-w-3xl mix-blend-lighten"
                             @error="waveformFailed = true"
                         />
-                        <UIcon
+                        <Icon
                             v-else
                             :name="bigIcon"
                             class="size-14 opacity-40"
@@ -135,29 +135,29 @@ const lengthLabel = computed(() => {
                         v-else-if="isImage"
                         :src="imageSrc"
                         :alt="item?.title"
-                        class="bg-muted aspect-video w-full object-contain"
+                        class="bg-surface-indent aspect-video w-full object-contain"
                         @error="imageFailed = true"
                     />
                     <div
                         v-else
-                        class="bg-muted text-muted flex aspect-video items-center justify-center"
+                        class="bg-surface-indent text-text-muted flex aspect-video items-center justify-center"
                     >
-                        <UIcon :name="bigIcon" class="size-14 opacity-40" />
+                        <Icon :name="bigIcon" class="size-14 opacity-40" />
                     </div>
                 </div>
 
                 <!-- summary -->
                 <div
-                    class="bg-elevated border-default rounded-[14px] border p-5"
+                    class="bg-surface-raise gradient-border shadow-resting rounded-2xl p-5"
                 >
                     <h3 class="mb-4 text-sm font-semibold">
                         {{ t("vault.itemSummary") }}
                     </h3>
                     <dl class="flex flex-col">
                         <div
-                            class="border-default flex items-center justify-between gap-4 border-b py-3"
+                            class="border-border-1 flex items-center justify-between gap-4 border-b py-3"
                         >
-                            <dt class="text-muted text-[13px]">
+                            <dt class="text-text-muted text-[13px]">
                                 {{ t("vault.title") }}
                             </dt>
                             <dd class="text-right text-[13px] break-all">
@@ -165,9 +165,9 @@ const lengthLabel = computed(() => {
                             </dd>
                         </div>
                         <div
-                            class="border-default flex items-center justify-between gap-4 border-b py-3"
+                            class="border-border-1 flex items-center justify-between gap-4 border-b py-3"
                         >
-                            <dt class="text-muted text-[13px]">
+                            <dt class="text-text-muted text-[13px]">
                                 {{ t("vault.uploadDate") }}
                             </dt>
                             <dd class="text-right text-[13px]">
@@ -175,9 +175,9 @@ const lengthLabel = computed(() => {
                             </dd>
                         </div>
                         <div
-                            class="border-default flex items-center justify-between gap-4 border-b py-3"
+                            class="border-border-1 flex items-center justify-between gap-4 border-b py-3"
                         >
-                            <dt class="text-muted text-[13px]">
+                            <dt class="text-text-muted text-[13px]">
                                 {{ t("vault.size") }}
                             </dt>
                             <dd class="text-right font-mono text-[13px]">
@@ -187,7 +187,7 @@ const lengthLabel = computed(() => {
                         <div
                             class="flex items-center justify-between gap-4 py-3"
                         >
-                            <dt class="text-muted text-[13px]">
+                            <dt class="text-text-muted text-[13px]">
                                 {{ t("vault.length") }}
                             </dt>
                             <dd class="text-right font-mono text-[13px]">
@@ -198,25 +198,28 @@ const lengthLabel = computed(() => {
 
                     <div
                         v-if="chips.length"
-                        class="border-default mt-4 border-t pt-4"
+                        class="border-border-1 mt-4 border-t pt-4"
                     >
                         <h3 class="mb-3 text-sm font-semibold">
                             {{ t("vault.actions") }}
                         </h3>
                         <div class="flex flex-wrap gap-2">
-                            <UButton
+                            <DesignButton
                                 v-for="chip in chips"
                                 :key="chip.name"
-                                size="sm"
-                                color="neutral"
-                                variant="outline"
+                                size="small"
+                                variant="secondary"
                                 :title="chip.action"
                                 :loading="actionLoading === chip.name"
                                 :disabled="!!actionLoading"
                                 @click="chip.run()"
                             >
+                                <span
+                                    class="mr-1 inline-block size-1.5 rounded-full"
+                                    :style="{ backgroundColor: chip.color }"
+                                />
                                 {{ chip.name }}
-                            </UButton>
+                            </DesignButton>
                         </div>
                     </div>
                 </div>

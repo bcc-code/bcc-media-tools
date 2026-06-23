@@ -13,10 +13,9 @@ const isDark = computed({
 
 <template>
     <ClientOnly v-if="!colorMode?.forced">
-        <UButton
+        <DesignButton
             :icon="isDark ? 'tabler:moon' : 'tabler:sun'"
-            color="neutral"
-            variant="ghost"
+            variant="tertiary"
             @click="isDark = !isDark"
         />
 

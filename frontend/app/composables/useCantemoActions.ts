@@ -120,8 +120,7 @@ export function useCantemoActions(vxId: MaybeRefOrGetter<string | undefined>) {
                 enabled: !!(
                     m?.admin ||
                     (m?.transcription &&
-                        (m.transcription.admin ||
-                            m.transcription.mediabanken))
+                        (m.transcription.admin || m.transcription.mediabanken))
                 ),
                 run: () => openToolWithIdPath("/transcription"),
             },

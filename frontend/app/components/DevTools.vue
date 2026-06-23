@@ -1,15 +1,14 @@
 <script setup lang="ts">
 const show = ref(false);
 
-const toast = useToast();
+const toaster = useDesignToaster();
 const clearLocalStorage = () => {
     localStorage.clear();
-    toast.add({
-        icon: "tabler:check",
+    toaster.create({
         title: "Cleared local storage",
         description:
             "All relevant data has been cleared from the local storage",
-        color: "success",
+        type: "success",
     });
 };
 </script>
@@ -24,21 +23,19 @@ const clearLocalStorage = () => {
         >
             <div
                 v-if="show"
-                class="border-default bg-default flex min-w-64 flex-col gap-2 rounded-lg border p-4 shadow-lg"
+                class="gradient-border bg-surface-raise shadow-floating flex min-w-64 flex-col gap-2 rounded-xl p-4"
             >
-                <h4 class="font-bold">Developer tools</h4>
-                <UButton
-                    size="sm"
-                    variant="soft"
-                    block
+                <h4 class="text-text-default font-bold">Developer tools</h4>
+                <DesignButton
+                    variant="secondary"
+                    size="small"
+                    class="w-full"
                     @click="clearLocalStorage"
                 >
                     Clear local storage
-                </UButton>
+                </DesignButton>
             </div>
         </transition>
-        <UButton size="xl" variant="solid" square @click="show = !show">
-            <Icon name="tabler:tool" />
-        </UButton>
+        <DesignButton size="large" icon="tabler:tool" @click="show = !show" />
     </div>
 </template>

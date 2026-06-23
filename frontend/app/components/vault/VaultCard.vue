@@ -96,11 +96,11 @@ function onLeave() {
 <template>
     <NuxtLink
         :to="`/vault/${item.VXID}`"
-        class="bg-default border-default hover:border-accented hover:bg-elevated block overflow-hidden rounded-[14px] border transition-colors"
+        class="bg-surface-raise gradient-border hover:shadow-floating shadow-resting ds-focus-ring block overflow-hidden rounded-xl"
     >
         <!-- thumbnail -->
         <div
-            class="bg-muted text-muted relative flex aspect-16/10 items-center justify-center"
+            class="bg-surface-indent text-text-muted relative flex aspect-16/10 items-center justify-center"
             @mousemove="onMove"
             @mouseleave="onLeave"
         >
@@ -115,10 +115,10 @@ function onLeave() {
                 ]"
                 @error="onImgError"
             />
-            <UIcon v-else :name="typeIcon" class="size-10 opacity-40" />
+            <Icon v-else :name="typeIcon" class="size-10 opacity-40" />
             <span
                 v-if="durationLabel"
-                class="bg-default/70 text-default absolute top-2 left-2 rounded-md px-1.5 py-0.5 font-mono text-[11px]"
+                class="bg-surface-default/70 text-text-default absolute top-2 left-2 rounded-md px-1.5 py-0.5 font-mono text-[11px]"
             >
                 {{ durationLabel }}
             </span>
@@ -126,12 +126,15 @@ function onLeave() {
         <!-- meta -->
         <div class="p-3">
             <div class="flex min-w-0 items-center gap-1.5">
-                <UIcon :name="typeIcon" class="text-muted size-3.5 shrink-0" />
+                <Icon
+                    :name="typeIcon"
+                    class="text-text-muted size-3.5 shrink-0"
+                />
                 <span class="truncate text-[13px] font-medium">{{
                     item.title
                 }}</span>
             </div>
-            <div class="text-muted mt-2 text-[11px] leading-relaxed">
+            <div class="text-text-muted mt-2 text-[11px] leading-relaxed">
                 <div>{{ t("vault.added") }}: {{ item.added || "—" }}</div>
                 <div>
                     {{ t("vault.format") }}:

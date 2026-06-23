@@ -304,6 +304,14 @@ default-slot `<img>`); `USlider`→new `DesignSlider`; utilities→tokens (`bg-d
 `number[]` internally, bridged), `min`/`max`/`step`/`disabled`, `ds-focus-ring` on the thumb. Anatomy
 matches Ark docs (Root › Control › Track › Range, Thumb[:index=0] › HiddenInput). Not in admin-web.
 
+### 2026-06-23 — quick one-offs migrated
+
+`DevTools.vue` (toast→useDesignToaster, 2 buttons; the popover is now a `gradient-border
+bg-surface-raise shadow-floating` card), `ThemeSwitch.vue` (icon button → tertiary), `vault/[id].vue`
+(back button + action chips → DesignButton with `border-border-1 border`; 3 UIcon→Icon; utilities→
+tokens), `VaultCard.vue` (3 UIcon→Icon; utilities→tokens). No `U*` left in any of the four; build +
+typecheck ✅. No new components.
+
 ### Next steps (pick up here)
 
 1. **Human visual review** of `/export` (with and without `?id=`) in light + dark. Compare against
