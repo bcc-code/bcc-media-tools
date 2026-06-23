@@ -115,41 +115,44 @@ function clear() {
 
 <template>
     <div class="relative flex w-full items-center gap-2">
-        <USelect
+        <DesignSelect
             v-model="selectedLanguages"
             :items="languageItems"
             placeholder="Languages"
             multiple
             class="w-32"
         />
-        <USelect
-            placeholder="Roles"
-            :items="roles"
+        <DesignSelect
             v-model="selectedRoles"
+            :items="roles"
+            placeholder="Roles"
             multiple
             class="w-24"
         />
-        <UButton v-if="isShowingClearButton" variant="ghost" @click="clear">
+        <DesignButton
+            v-if="isShowingClearButton"
+            variant="tertiary"
+            size="small"
+            @click="clear"
+        >
             Clear
-        </UButton>
-        <UInput
+        </DesignButton>
+        <DesignInput
             v-model="searchQuery"
-            clearable
             placeholder="Search email..."
             leading-icon="tabler:search"
-            class="ml-auto"
+            class="ml-auto w-64"
         >
             <template #trailing>
-                <UButton
+                <DesignButton
                     v-if="searchQuery"
-                    size="xs"
-                    color="neutral"
-                    variant="outline"
+                    size="small"
+                    variant="tertiary"
                     @click="searchQuery = ''"
                 >
                     Clear
-                </UButton>
+                </DesignButton>
             </template>
-        </UInput>
+        </DesignInput>
     </div>
 </template>

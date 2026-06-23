@@ -238,7 +238,7 @@ files. Pending human visual review.
 
 Investigated a report of "export started without a confirmation dialog." Root cause: the
 export-trigger logic (`attemptExport`) was **unchanged by the migration** (git diff of the script
-is empty) — confirmation only ever gated *bulk* mode; single-asset exports have always fired
+is empty) — confirmation only ever gated _bulk_ mode; single-asset exports have always fired
 immediately. Verified `DesignDialog` opens correctly via `v-model:open` in isolation, so not a
 dialog regression.
 
@@ -247,6 +247,39 @@ Per user decision, single-asset exports now also confirm. Both `ExportForm.vue` 
 branched `confirmMessage` computeds (bulk vs single); dialog confirm-button label is bulk/single
 aware. New i18n keys `export.confirmTitle`/`confirmMessage` and `vbExport.confirmTitle`/
 `confirmMessage` in `en.json` + `nb.json`. `pnpm typecheck` ✅.
+
+### 2026-06-23 — /admin page migrated (the previously-reverted page)
+
+Migrated `app/pages/admin.vue` + `app/components/admin/{AdminPermissionView,AdminPermissionFilter,AdminPermissionViewSection}.vue`. No `U*` left in the admin tree; `pnpm build` + `typecheck` ✅.
+
+**New components ported (from admin-web):**
+
+- `DesignInput.vue` — Ark `Field`. Extensions: `leadingIcon` prop + `#trailing` slot (the filter
+  search box uses both); `ds-focus-ring`. Single-line input; supports text/email/url/date/time/
+  search/password.
+- `DesignSwitch.vue` — Ark `Switch`. Extension: `description` prop (label + muted description
+  stacked; switch top-aligned via `items-start`/`mt-0.5`); `ds-focus-ring`.
+
+**`DesignSelect.vue` extended for multi-select** (was single-value only):
+
+- New `multiple` prop. Model is `string | string[]` — single binds a string, multi binds a
+  `string[]`. Ark always works arrays internally; bridged via an `arrayModel` computed.
+- **Display decision (user-chosen): comma-separated labels, truncated with ellipsis** on overflow
+  (single line, fixed height). NOT chips, NOT "N selected" (the prior reverted attempt used the
+  count — that's what looked wrong). Placeholder shows in `text-text-hint` when empty.
+- Width: pass width via `class` on `<DesignSelect>` — it falls through to Ark `Select.Root` (a real
+  `<div>`); the trigger is `w-full` and fills it. Used `w-32`/`w-24` (filter) and `w-full
+max-w-prose` (permissions).
+
+**Mapping notes for admin:** `UButton variant="ghost"`→`tertiary`, `color="error"`→`intent="danger"`,
+`variant="soft"`→`secondary`, `block`→`class="w-full"`; `USwitch`→`DesignSwitch` (1:1, all
+self-closing); `UFormField`→`<label>`+control; utilities → tokens (`bg-default`→`bg-surface-default`,
+`bg-muted`→`bg-surface-indent`, `border-accented`→`border-border-1`, `divide-default`→
+`divide-border-1`). Kept the `motion-v` animations and grid layout untouched.
+
+**Needs human review (esp. the bits that caused the last revert):** the 6 multi-selects
+(comma display + truncation in the narrow `w-24`/`w-32` filter selects), the 15 switches with
+descriptions, the filter search input (leading icon + trailing Clear button), and dark mode.
 
 ### Next steps (pick up here)
 

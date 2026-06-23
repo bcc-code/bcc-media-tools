@@ -69,10 +69,10 @@ const { data: exportDestinations } = useAsyncData(
     <div class="flex h-screen w-screen" v-if="me?.admin">
         <div class="mx-auto w-full max-w-3xl p-8">
             <div class="flex items-center justify-between gap-2">
-                <h2 class="text-2xl font-bold">Admin</h2>
-                <UButton @click="showNewEmailForm = true">
+                <h2 class="text-heading-3 text-text-default">Admin</h2>
+                <DesignButton @click="showNewEmailForm = true">
                     Add new email
-                </UButton>
+                </DesignButton>
             </div>
             <AdminPermissionFilter
                 v-if="permissions"
@@ -94,15 +94,18 @@ const { data: exportDestinations } = useAsyncData(
             >
                 <form
                     v-if="showNewEmailForm"
-                    class="border-default flex items-center gap-2 rounded-2xl border-2 border-dashed p-4"
+                    class="border-border-1 flex items-center gap-2 rounded-2xl border-2 border-dashed p-4"
                     @submit.prevent="addEmail"
                 >
-                    <UInput
+                    <DesignInput
                         v-model="newEmail"
                         type="email"
                         placeholder="john@doe.com"
+                        class="flex-1"
                     />
-                    <UButton type="submit" variant="soft">Add</UButton>
+                    <DesignButton type="submit" variant="secondary">
+                        Add
+                    </DesignButton>
                 </form>
                 <AdminPermissionView
                     v-for="[email, perms] in Object.entries(
@@ -123,9 +126,11 @@ const { data: exportDestinations } = useAsyncData(
         v-else
         class="flex h-screen w-screen flex-col items-center justify-center gap-4"
     >
-        <h1 class="text-2xl font-bold">You are not an admin</h1>
+        <h1 class="text-heading-3 text-text-default">You are not an admin</h1>
         <NuxtLink to="/">
-            <UButton variant="soft" block>Go home</UButton>
+            <DesignButton variant="secondary" class="w-full">
+                Go home
+            </DesignButton>
         </NuxtLink>
     </div>
 </template>

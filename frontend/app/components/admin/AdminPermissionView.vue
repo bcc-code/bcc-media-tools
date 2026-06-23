@@ -60,17 +60,17 @@ const isOpen = ref(false);
 
 <template>
     <div
-        class="border-accented bg-default flex flex-col overflow-hidden rounded-xl border"
+        class="border-border-1 bg-surface-default flex flex-col overflow-hidden rounded-xl border"
     >
         <LayoutGroup>
             <AnimatePresence>
                 <motion.button
-                    class="bg-muted flex items-center justify-between p-4"
+                    class="bg-surface-indent flex items-center justify-between p-4"
                     layout
                     @click="isOpen = !isOpen"
                 >
                     <div class="flex items-center gap-2">
-                        <h3>{{ email }}</h3>
+                        <h3 class="text-text-default">{{ email }}</h3>
                         <Icon
                             name="tabler:chevron-down"
                             :class="[
@@ -79,44 +79,47 @@ const isOpen = ref(false);
                             ]"
                         />
                     </div>
-                    <UButton
-                        size="sm"
-                        variant="ghost"
-                        color="error"
+                    <DesignButton
+                        size="small"
+                        variant="tertiary"
+                        intent="danger"
                         icon="tabler:trash"
                         @click.stop="$emit('remove')"
                     >
                         Remove
-                    </UButton>
+                    </DesignButton>
                 </motion.button>
                 <motion.div
                     v-if="isOpen"
                     layout
-                    class="divide-default border-accented grid max-w-full grid-cols-[1fr_3fr] divide-y overflow-hidden border-t"
+                    class="divide-border-1 border-border-1 grid max-w-full grid-cols-[1fr_3fr] divide-y overflow-hidden border-t"
                     :initial="{ height: 0 }"
                     :animate="{ height: 'auto' }"
                     :exit="{ height: 0 }"
                 >
                     <AdminPermissionViewSection title="General">
-                        <USwitch
+                        <DesignSwitch
                             v-model="perms.admin"
                             label="Admin"
                             description="Can manage users and their roles"
                         />
                     </AdminPermissionViewSection>
                     <AdminPermissionViewSection v-if="perms.bmm" title="BMM">
-                        <USwitch
+                        <DesignSwitch
                             v-model="perms.bmm.admin"
                             label="BMM Admin"
                             description="Has full access to BMM upload tools"
                         />
-                        <USwitch
+                        <DesignSwitch
                             v-model="perms.bmm.integration"
                             label="Integration environment"
                             description="Can upload to the integration environment"
                         />
-                        <UFormField label="Podcasts">
-                            <USelect
+                        <div class="space-y-1">
+                            <label class="text-body-3 text-text-muted block">
+                                Podcasts
+                            </label>
+                            <DesignSelect
                                 v-model="perms.bmm.podcasts"
                                 multiple
                                 :items="[
@@ -128,9 +131,12 @@ const isOpen = ref(false);
                                 ]"
                                 class="w-full max-w-prose"
                             />
-                        </UFormField>
-                        <UFormField label="Languages">
-                            <USelect
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-body-3 text-text-muted block">
+                                Languages
+                            </label>
+                            <DesignSelect
                                 v-model="perms.bmm.languages"
                                 multiple
                                 :items="
@@ -141,18 +147,18 @@ const isOpen = ref(false);
                                 "
                                 class="w-full max-w-prose"
                             />
-                        </UFormField>
+                        </div>
                     </AdminPermissionViewSection>
                     <AdminPermissionViewSection
                         v-if="perms.transcription"
                         title="Transcription"
                     >
-                        <USwitch
+                        <DesignSwitch
                             v-model="perms.transcription.admin"
                             label="Transcription Admin"
                             description="Can correct transcriptions (and preview) any asset in Mediabanken"
                         />
-                        <USwitch
+                        <DesignSwitch
                             v-model="perms.transcription.mediabanken"
                             label="Mediabanken"
                             description="Can correct transcriptions shared from Mediabanken"
@@ -162,25 +168,28 @@ const isOpen = ref(false);
                         v-if="perms.export"
                         title="Export"
                     >
-                        <USwitch
+                        <DesignSwitch
                             v-model="perms.export.admin"
                             label="Export Admin"
                             description="Can export to all destinations"
                         />
-                        <UFormField label="Destinations">
-                            <USelect
+                        <div class="space-y-1">
+                            <label class="text-body-3 text-text-muted block">
+                                Destinations
+                            </label>
+                            <DesignSelect
                                 v-model="perms.export.destinations"
                                 multiple
                                 :items="exportDestinations"
                                 class="w-full max-w-prose"
                             />
-                        </UFormField>
-                        <USwitch
+                        </div>
+                        <DesignSwitch
                             v-model="perms.export.timedMetadata"
                             label="Timed metadata export"
                             description="Can trigger the timed metadata (VOD) export"
                         />
-                        <USwitch
+                        <DesignSwitch
                             v-model="perms.export.bulkExport"
                             label="Bulk export"
                             description="Can paste a list of VX-ids and export them in bulk"
@@ -190,20 +199,23 @@ const isOpen = ref(false);
                         v-if="perms.vbExport"
                         title="VB Export"
                     >
-                        <USwitch
+                        <DesignSwitch
                             v-model="perms.vbExport.admin"
                             label="VB Export Admin"
                             description="Can export to all VB destinations"
                         />
-                        <UFormField label="Destinations">
-                            <USelect
+                        <div class="space-y-1">
+                            <label class="text-body-3 text-text-muted block">
+                                Destinations
+                            </label>
+                            <DesignSelect
                                 v-model="perms.vbExport.destinations"
                                 multiple
                                 :items="vbExportDestinations"
                                 class="w-full max-w-prose"
                             />
-                        </UFormField>
-                        <USwitch
+                        </div>
+                        <DesignSwitch
                             v-model="perms.vbExport.bulkExport"
                             label="Bulk export"
                             description="Can paste a list of VX-ids and VB-export them in bulk"
@@ -213,22 +225,22 @@ const isOpen = ref(false);
                         v-if="perms.cantemo"
                         title="Cantemo"
                     >
-                        <USwitch
+                        <DesignSwitch
                             v-model="perms.cantemo.preview"
                             label="Make preview"
                             description="Can trigger preview generation"
                         />
-                        <USwitch
+                        <DesignSwitch
                             v-model="perms.cantemo.transcribe"
                             label="Transcribe"
                             description="Can trigger transcription"
                         />
-                        <USwitch
+                        <DesignSwitch
                             v-model="perms.cantemo.subtitles"
                             label="Update subtitle from Subtrans"
                             description="Can import subtitles from Subtrans"
                         />
-                        <USwitch
+                        <DesignSwitch
                             v-model="perms.cantemo.relations"
                             label="Update asset relations"
                             description="Can trigger the asset relations update flow"
@@ -238,7 +250,7 @@ const isOpen = ref(false);
                         v-if="perms.vault"
                         title="Vault"
                     >
-                        <USwitch
+                        <DesignSwitch
                             v-model="perms.vault.enabled"
                             label="Vault search"
                             description="Can search Mediabanken and view item previews"
