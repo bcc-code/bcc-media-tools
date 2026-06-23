@@ -138,23 +138,23 @@ const uploadFile = () => {
 
 <template>
     <div class="flex flex-col gap-2">
-        <UButton
+        <DesignButton
             v-if="!uploading"
             :disabled="selectedFiles.length < 1"
-            block
+            class="w-full"
             @click="uploadFile"
         >
             {{ $t("bmmUpload.upload") }}
-        </UButton>
-        <UButton
+        </DesignButton>
+        <DesignButton
             v-else
-            variant="soft"
+            variant="secondary"
             :disabled="uploadPercentage >= 100"
-            block
+            class="w-full"
             @click="abort"
         >
             {{ $t("bmmUpload.cancel") }}
-        </UButton>
+        </DesignButton>
         <Transition
             enter-active-class="transition duration-300 ease-out"
             enter-from-class="opacity-0 -translate-y-2 scale-95"
@@ -163,11 +163,10 @@ const uploadFile = () => {
             leave-from-class="opacity-100 translate-y-0 scale-100"
             leave-to-class="opacity-0 -translate-y-2 scale-95"
         >
-            <UProgress
+            <DesignProgress
                 v-if="showProgress"
                 v-model="uploadPercentage"
                 :max="100"
-                size="lg"
                 status
             />
         </Transition>

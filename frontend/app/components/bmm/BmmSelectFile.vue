@@ -26,32 +26,22 @@ const { me } = useMe();
 </script>
 
 <template>
-    <UFileUpload
+    <DesignFileUpload
         v-model="selectedFilesComputed"
         :multiple="props.acceptMultiple"
         accept="audio/mpeg,audio/wav"
-        layout="list"
         :label="$t('bmmUpload.addFiles')"
         :description="$t('bmmUpload.addFilesDescription')"
     >
         <template #file-trailing="{ index }">
-            <div class="ml-auto flex items-center gap-2">
-                <BmmLanguageSelector
-                    v-if="selectedFiles[index] && me?.bmm"
-                    v-model="selectedFiles[index].language"
-                    :disabled="!me.bmm.admin"
-                    :languages="me.bmm.languages"
-                    :env="props.environment"
-                    label=""
-                />
-                <UButton
-                    icon="tabler:x"
-                    variant="ghost"
-                    color="error"
-                    square
-                    @click="selectedFiles.splice(index, 1)"
-                />
-            </div>
+            <BmmLanguageSelector
+                v-if="selectedFiles[index] && me?.bmm"
+                v-model="selectedFiles[index].language"
+                :disabled="!me.bmm.admin"
+                :languages="me.bmm.languages"
+                :env="props.environment"
+                label=""
+            />
         </template>
-    </UFileUpload>
+    </DesignFileUpload>
 </template>

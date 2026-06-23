@@ -327,7 +327,69 @@ Note: `UModal :close="false"` (no X) has no DesignDialog equivalent — DesignDi
 close X. Acceptable here (X = cancel). Splitter handle `<style>` still uses `--ui-color-neutral-*`
 (Nuxt UI palette) — left for Stage 4.
 
-### Next steps (pick up here)
+### 2026-06-23 — BMM upload pages migrated (page-level) + DesignBanner, DesignStepper
+
+`upload/bmm/index.vue` + `upload/bmm/[id].vue`: `UStepper`→new `DesignStepper`, `UAlert`→new
+`DesignBanner`, `UCheckbox`→`DesignCheckbox`, `UButton`→`DesignButton` (`ghost`→`tertiary`,
+`block`→`w-full`), container utilities→tokens. No page-level `U*` left. Build + typecheck ✅.
+
+**New components:**
+- `DesignBanner.vue` — port of admin-web (cva, variants success/warning/info/error/neutral, `icon`
+  prop + slot). For `UAlert`, `:title` → slot content.
+- `DesignStepper.vue` — built on **Ark UI `Steps`**. Public API stays value-based
+  (`modelValue` string + `items[{title,value,icon}]`); converts to Ark's numeric `step` index
+  internally. Display-only here (triggers `disabled`, `step` one-way controlled). Styling is driven
+  by Ark's `data-current`/`data-complete` attributes on `Steps.Trigger` via a `group`
+  (`group-data-[current]:…` on the indicator/title, `data-[complete]:…` on the separator). NOT in
+  admin-web. (Verified the data-variant classes compile in the output CSS.)
+
+**Deferred (still render via the token bridge — Nuxt UI internally):** the child components the
+upload flow renders — `BmmSelectFile` (`UFileUpload`), `BmmFileUploader` (`UProgress`), and the
+metadata components (`BmmSingleMetadata`, `BmmAlbumSelector`, `BmmLanguageSelector`,
+`BmmTrackSelector`, `BmmTrackView`, `BmmTranscriptionDialog`). `UFileUpload` + `UProgress` need new
+`Design*` components (Ark ships `file-upload` + `progress`); the metadata ones are covered
+(Select/FormField/Button/Modal) and just need swapping. So the upload page looks migrated except the
+file-picker/progress area which keeps the Nuxt UI look for now.
+
+### 2026-06-23 — BMM file-upload + progress widgets
+
+**New components:**
+- `DesignProgress.vue` — Ark `Progress` (linear). `v-model` number + `max`; optional `status` shows
+  a computed `%`. Range uses `primary-contrast`.
+- `DesignFileUpload.vue` — Ark `FileUpload`. `v-model` is `File[]` (bridged to Ark
+  `v-model:accepted-files`); `multiple` (→ `maxFiles` 1 vs 100), `accept`, `label`, `description`.
+  Dropzone (`FileUpload.Trigger` click + drag-drop); list via `FileUpload.Context` v-slot; built-in
+  `ItemDeleteTrigger`. Exposes `#file-trailing="{ file, index }"` for per-row controls.
+
+**Migrated:** `BmmSelectFile.vue` (→`DesignFileUpload`; dropped the manual remove button — Ark's
+delete handles it; language selector stays in `#file-trailing`), `BmmFileUploader.vue`
+(`UProgress`→`DesignProgress`, buttons→`DesignButton`), `BmmLanguageSelector.vue` (`UFormField`+
+`USelect` → label markup + `DesignSelect`; empty-label case handled for the file row; item labels
+coerced to string). Build + typecheck ✅. Still deferred: `BmmSingleMetadata`, `BmmAlbumSelector`,
+`BmmTrackSelector`, `BmmTrackView`, `BmmTranscriptionDialog` — all covered, just swaps.
+
+### 2026-06-23 — BMM metadata components → BMM feature complete
+
+Migrated the last 5: `BmmSingleMetadata` (env select + submit button), `BmmAlbumSelector`
+(type/podcast/year/album selects), `BmmTrackSelector` (show-older button), `BmmTrackView` (card
+utilities + transcription button), `BmmTranscriptionDialog` (`UModal`→`DesignDialog size="xl"`,
+toast, copy button). No `U*` left anywhere in `app/components/bmm/` or `app/pages/upload/`.
+Build + typecheck ✅.
+
+**Two additive component extensions made for this:**
+- `DesignSelect` — added an `#item` slot (`{ item, normalized }`, passes the *original* item so
+  callers can read extra fields). Used for the year select's per-item album count. Also bridged a
+  numeric value via a string proxy in the caller (`selectedYearStr`).
+- `DesignDialog` — added a `size` prop (`md`=max-w-lg default / `lg`=2xl / `xl`=4xl) and made tall
+  content scroll (`max-h-[85vh] overflow-y-auto`). The transcription dialog uses `xl`.
+
+**App-wide status:** remaining `U*` is mostly `USkeleton` (×26, intentionally kept) + `UApp`
+(app.vue, removed at Stage 4). Pages/areas NOT yet migrated: `index.vue` (home — `UBadge`/`UCard`/
+`UContainer`), `transcription/index.vue` (`UFileUpload`/`UInput`/`UFormField`/`USeparator`/`UButton`),
+`vault/index.vue` (`UPagination`/`UCheckboxGroup`/`UInput`/`UIcon`), and `layouts/default.vue` header
+(`UNavigationMenu`). New widgets still needed: pagination, checkbox-group, nav-menu, separator,
+badge, card/container, and a text `DesignInput` is done (UInput→DesignInput) but `transcription/index`
++ `vault/index` also need file-upload (done) / pagination / nav.
 
 1. **Human visual review** of `/export` (with and without `?id=`) in light + dark. Compare against
    admin-web. Watch the gaps: checkbox styling, select trigger/menu, dialog, toast.

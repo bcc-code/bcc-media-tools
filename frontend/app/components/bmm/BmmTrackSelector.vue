@@ -117,19 +117,19 @@ const transcriptionTrack = ref<BMMTrack>();
                 leave-from-class="opacity-100 scale-100"
                 leave-to-class="opacity-0 scale-95"
             >
-                <UButton
+                <DesignButton
                     v-if="olderTracks.length && !selectedTrack"
-                    @click="showOlderTracks = !showOlderTracks"
                     type="button"
-                    variant="link"
-                    block
+                    variant="tertiary"
+                    class="w-full"
+                    @click="showOlderTracks = !showOlderTracks"
                 >
                     {{
                         showOlderTracks
                             ? $t("bmmUpload.hideOlderTracks")
                             : $t("bmmUpload.showOlderTracks")
                     }}
-                </UButton>
+                </DesignButton>
                 <BmmTrackView
                     v-for="t in filteredTracks"
                     :key="t.id"
@@ -148,7 +148,7 @@ const transcriptionTrack = ref<BMMTrack>();
 
         <p
             v-else-if="tracks && !tracks.length"
-            class="text-dimmed my-8 text-center text-sm"
+            class="text-text-hint my-8 text-center text-sm"
         >
             {{ $t("bmmUpload.noTracks") }}
         </p>

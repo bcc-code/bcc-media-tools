@@ -58,12 +58,12 @@ const isInFuture = computed(() => {
 
 <template>
     <div
-        class="border-accented hover:bg-muted bg-default grid w-full cursor-pointer grid-cols-[auto_1fr] grid-rows-[auto_1fr] overflow-clip rounded-md border shadow-xs"
+        class="border-border-1 hover:bg-surface-indent bg-surface-default grid w-full cursor-pointer grid-cols-[auto_1fr] grid-rows-[auto_1fr] overflow-clip rounded-md border shadow-xs"
     >
         <span
             v-if="track && trackPublishedAt"
             :class="[
-                'border-accented row-span-2 border-r px-2 py-1 text-left tabular-nums',
+                'border-border-1 row-span-2 border-r px-2 py-1 text-left tabular-nums',
                 {
                     'text-neutral-400': isInPast,
                     'text-neutral-600': isInFuture,
@@ -77,19 +77,19 @@ const isInFuture = computed(() => {
         </span>
         <div class="col-start-2 flex grow justify-between gap-2 px-2 py-1">
             <p>{{ track.title }}</p>
-            <UButton
+            <DesignButton
                 v-if="track.hasTranscriptions"
-                size="xs"
-                variant="link"
+                size="small"
+                variant="tertiary"
                 type="button"
                 @click.stop="emit('clickTranscription')"
             >
                 {{ $t("bmmUpload.showTranscription") }}
-            </UButton>
+            </DesignButton>
         </div>
         <div
             v-if="availableLanguages?.length"
-            class="border-accented col-start-2 row-start-2 flex h-full flex-wrap gap-1 border-t px-2 py-2"
+            class="border-border-1 col-start-2 row-start-2 flex h-full flex-wrap gap-1 border-t px-2 py-2"
         >
             <img
                 v-for="l in availableLanguages"

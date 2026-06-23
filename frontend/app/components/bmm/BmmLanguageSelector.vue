@@ -50,7 +50,7 @@ const items = computed(() => {
 
     langs.push(
         ...bmmLanguages.value.map((l) => ({
-            label: languageDisplay(l),
+            label: languageDisplay(l) ?? l,
             value: l,
         })),
     );
@@ -60,12 +60,17 @@ const items = computed(() => {
 </script>
 
 <template>
-    <UFormField required :label="label ?? $t('language')">
-        <USelect
+    <div class="flex flex-col gap-1">
+        <label
+            v-if="label ?? $t('language')"
+            class="text-body-3 text-text-muted block"
+        >
+            {{ label ?? $t("language") }}
+        </label>
+        <DesignSelect
             v-model="model"
             :placeholder="$t('selectAnOption')"
             :items
-            class="w-full"
         />
-    </UFormField>
+    </div>
 </template>

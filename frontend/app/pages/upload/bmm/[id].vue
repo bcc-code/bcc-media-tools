@@ -87,14 +87,15 @@ const uploaded = ref(false);
             <LanguageSwitcher />
         </div>
         <div
-            class="border-default bg-default flex h-full flex-col gap-4 rounded-2xl border p-4"
+            class="border-border-1 bg-surface-default flex h-full flex-col gap-4 rounded-2xl border p-4"
         >
-            <UAlert v-if="!routeParamsAreValid" variant="subtle" color="error">
-                <div class="flex items-center gap-2">
-                    <Icon name="tabler:alert-triangle" class="text-lg" />
-                    Invalid route parameters
-                </div>
-            </UAlert>
+            <DesignBanner
+                v-if="!routeParamsAreValid"
+                variant="error"
+                icon="tabler:alert-triangle"
+            >
+                Invalid route parameters
+            </DesignBanner>
             <template v-else>
                 <template
                     v-if="
@@ -110,7 +111,7 @@ const uploaded = ref(false);
                                     Upload files for "{{ routeParams.title }}"
                                 </h1>
                             </header>
-                            <UCheckbox
+                            <DesignCheckbox
                                 v-model="forceOverride"
                                 label="Replace transcription even if has been manually corrected"
                             />
@@ -131,12 +132,9 @@ const uploaded = ref(false);
                         </div>
                     </template>
                     <template v-else>
-                        <UAlert
-                            color="success"
-                            variant="subtle"
-                            :title="$t('uploaded')"
-                            icon="tabler:check"
-                        />
+                        <DesignBanner variant="success" icon="tabler:check">
+                            {{ $t("uploaded") }}
+                        </DesignBanner>
                         <p>You can now close this tab.</p>
                     </template>
                 </template>

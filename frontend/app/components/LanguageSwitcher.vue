@@ -9,19 +9,15 @@ const localeComp = computed({
         setLocale(v);
     },
 });
+
+const items = computed(() =>
+    locales.value.map((locale) => ({
+        label: locale.name,
+        value: locale.code,
+    })),
+);
 </script>
 
 <template>
-    <select
-        v-model="localeComp"
-        class="border-accented bg-default rounded-lg border px-3 py-1.5 text-sm shadow-sm"
-    >
-        <option
-            v-for="locale in locales"
-            :key="locale.code"
-            :value="locale.code"
-        >
-            {{ locale.name }}
-        </option>
-    </select>
+    <DesignSelect v-model="localeComp" :items="items" />
 </template>

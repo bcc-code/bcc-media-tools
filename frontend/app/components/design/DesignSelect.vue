@@ -99,12 +99,16 @@ const displayText = computed(() => {
                 >
                     <Select.ItemGroup>
                         <Select.Item
-                            v-for="item in normalized"
+                            v-for="(item, i) in normalized"
                             :key="item.value"
                             :item="item"
                             class="text-body-3 text-text-default data-highlighted:bg-surface-indent flex cursor-pointer items-center justify-between gap-2 rounded-lg px-3 py-2"
                         >
-                            <Select.ItemText>{{ item.label }}</Select.ItemText>
+                            <slot name="item" :item="items[i]" :normalized="item">
+                                <Select.ItemText>
+                                    {{ item.label }}
+                                </Select.ItemText>
+                            </slot>
                             <Select.ItemIndicator>
                                 <Icon
                                     name="tabler:check"

@@ -60,9 +60,17 @@ const yearItems = computed(() => {
         .sort((a, b) => b.year - a.year)
         .map((y) => ({
             label: y.year.toString(),
-            value: y.year,
+            value: y.year.toString(),
             count: y.count,
         }));
+});
+
+// DesignSelect is string-valued; bridge the numeric year.
+const selectedYearStr = computed({
+    get: () => String(selectedYear.value),
+    set: (v) => {
+        selectedYear.value = Number(v);
+    },
 });
 
 const albumItems = computed(() => {
@@ -74,68 +82,55 @@ const albumItems = computed(() => {
 </script>
 
 <template>
-    <UFormField v-if="permissions.admin" :label="$t('bmmUpload.type')">
-        <USelect
+    <div v-if="permissions.admin" class="flex flex-col gap-1">
+        <label class="text-body-3 text-text-muted block">
+            {{ $t("bmmUpload.type") }}
+        </label>
+        <DesignSelect
             v-model="selectedType"
             :items="[
-                {
-                    label: $t('bmmUpload.album', 2),
-                    value: 'albums',
-                },
-                {
-                    label: $t('bmmUpload.podcast', 2),
-                    value: 'podcasts',
-                },
+                { label: $t('bmmUpload.album', 2), value: 'albums' },
+                { label: $t('bmmUpload.podcast', 2), value: 'podcasts' },
             ]"
-            size="lg"
-            class="w-full"
         />
-    </UFormField>
+    </div>
 
-    <UFormField
-        v-if="selectedType == 'podcasts'"
-        :label="$t('bmmUpload.podcast')"
-    >
-        <USelect
+    <div v-if="selectedType == 'podcasts'" class="flex flex-col gap-1">
+        <label class="text-body-3 text-text-muted block">
+            {{ $t("bmmUpload.podcast") }}
+        </label>
+        <DesignSelect
             v-model="albumId"
             :disabled="permissions.podcasts.length < 2"
             :items="permissions.podcasts"
-            size="lg"
-            class="w-full"
         />
-    </UFormField>
+    </div>
 
     <template v-else-if="selectedType == 'albums' && years">
-        <UFormField :label="$t('bmmUpload.year')">
-            <USelect
-                v-model="selectedYear"
-                :items="yearItems"
-                size="lg"
-                class="w-full"
-            >
-                <template #item-trailing="{ item }">
-                    <span class="text-dimmed">
+        <div class="flex flex-col gap-1">
+            <label class="text-body-3 text-text-muted block">
+                {{ $t("bmmUpload.year") }}
+            </label>
+            <DesignSelect v-model="selectedYearStr" :items="yearItems">
+                <template #item="{ item }">
+                    <span>{{ (item as { label: string }).label }}</span>
+                    <span class="text-text-hint text-caption-1 ml-3">
                         {{
                             $t(
                                 "bmmUpload.albumCount",
-                                { count: item.count },
-                                item.count,
+                                { count: (item as unknown as { count: number }).count },
+                                (item as unknown as { count: number }).count,
                             )
                         }}
                     </span>
                 </template>
-            </USelect>
-        </UFormField>
-        <UFormField
-            v-if="Object.keys(albums).length"
-            :label="$t('bmmUpload.album')"
-        >
-            <USelect
-                v-model="albumId"
-                :items="albumItems"
-                size="lg"
-                class="w-full"
-            />
-        </UFormField>
+            </DesignSelect>
+        </div>
+        <div v-if="Object.keys(albums).length" class="flex flex-col gap-1">
+            <label class="text-body-3 text-text-muted block">
+                {{ $t("bmmUpload.album") }}
+            </label>
+            <DesignSelect v-model="albumId" :items="albumItems" />
+        </div>
     </template>
 </template>

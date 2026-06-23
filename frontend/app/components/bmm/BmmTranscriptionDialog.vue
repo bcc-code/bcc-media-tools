@@ -70,59 +70,47 @@ function resetTranscription() {
 }
 
 const { t } = useI18n();
-const toast = useToast();
+const toaster = useDesignToaster();
 function copyToClipboard() {
     if (!transcription.value) return;
     const text = transcription.value.segments.map((s) => s.text).join(" ");
     navigator.clipboard.writeText(text);
-    toast.add({
-        icon: "tabler:check",
+    toaster.create({
         title: t("bmmUpload.copiedToClipboard"),
-        color: "success",
+        type: "success",
     });
 }
 </script>
 
 <template>
-    <UModal
-        class="h-full w-full max-w-200"
-        dismissible
-        v-model:open="showTranscription"
-    >
-        <template #header>
-            <div class="flex w-full items-start justify-between gap-4">
-                <div>
-                    <h2 class="mb-2 text-xl font-bold">
-                        {{ $t("bmmUpload.transcription") }}
-                    </h2>
-                    <BmmLanguageSelector
-                        v-if="transcriptionLanguages?.length"
-                        v-model="transcriptionLanguage"
-                        :env="env"
-                        :languages="transcriptionLanguages"
-                    />
-                </div>
-                <UButton type="button" @click="copyToClipboard">
-                    {{ $t("bmmUpload.copyToClipboard") }}
-                </UButton>
-            </div>
-        </template>
-
-        <template #body>
-            <template v-if="transcription && status == 'success'">
-                <p
-                    v-for="segment in transcription.segments"
-                    class="leading-relaxed"
-                >
-                    {{ segment.text }}
-                </p>
-            </template>
-            <div v-else-if="status == 'pending'">
-                <Icon
-                    name="svg-spinners:bars-rotate-fade"
-                    class="absolute top-1/2 left-1/2 size-8"
+    <DesignDialog v-model:open="showTranscription" size="xl">
+        <div class="mb-4 flex w-full items-start justify-between gap-4">
+            <div>
+                <h2 class="text-heading-3 text-text-default mb-2">
+                    {{ $t("bmmUpload.transcription") }}
+                </h2>
+                <BmmLanguageSelector
+                    v-if="transcriptionLanguages?.length"
+                    v-model="transcriptionLanguage"
+                    :env="env"
+                    :languages="transcriptionLanguages"
                 />
             </div>
+            <DesignButton type="button" @click="copyToClipboard">
+                {{ $t("bmmUpload.copyToClipboard") }}
+            </DesignButton>
+        </div>
+
+        <template v-if="transcription && status == 'success'">
+            <p
+                v-for="segment in transcription.segments"
+                class="leading-relaxed"
+            >
+                {{ segment.text }}
+            </p>
         </template>
-    </UModal>
+        <div v-else-if="status == 'pending'" class="flex justify-center py-8">
+            <Icon name="svg-spinners:bars-rotate-fade" class="size-8" />
+        </div>
+    </DesignDialog>
 </template>

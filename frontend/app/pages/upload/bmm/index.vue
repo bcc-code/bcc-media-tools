@@ -70,9 +70,8 @@ const dateString = (date: Date) => {
 <template>
     <div class="flex h-full w-full flex-col items-stretch p-4">
         <div class="mx-auto w-full max-w-5xl py-6">
-            <UStepper
-                v-model="step"
-                disabled
+            <DesignStepper
+                :model-value="step"
                 :items="[
                     {
                         title: $t('bmmUpload.steps.metadata'),
@@ -93,7 +92,7 @@ const dateString = (date: Date) => {
             />
         </div>
         <div
-            class="border-default bg-default mx-auto flex h-full w-full max-w-5xl grow flex-col gap-4 rounded-2xl border p-4"
+            class="border-border-1 bg-surface-default mx-auto flex h-full w-full max-w-5xl grow flex-col gap-4 rounded-2xl border p-4"
         >
             <template
                 v-if="
@@ -127,7 +126,7 @@ const dateString = (date: Date) => {
                                 }}
                             </h1>
                             <div class="mt-1">
-                                <p class="text-muted text-sm">
+                                <p class="text-text-muted text-sm">
                                     {{ $t("bmmUpload.uploadedLanguages") }}
                                 </p>
                                 <img
@@ -139,7 +138,7 @@ const dateString = (date: Date) => {
                                 />
                             </div>
                         </header>
-                        <UCheckbox
+                        <DesignCheckbox
                             v-model="forceOverride"
                             :label="$t('bmmUpload.forceOverride')"
                         />
@@ -157,24 +156,22 @@ const dateString = (date: Date) => {
                             :forceOverride="forceOverride"
                             @uploaded="step = 'done'"
                         />
-                        <UButton
-                            variant="ghost"
-                            block
+                        <DesignButton
+                            variant="tertiary"
+                            class="w-full"
                             @click="step = 'metadata'"
                         >
                             {{ $t("bmmUpload.back") }}
-                        </UButton>
+                        </DesignButton>
                     </div>
                 </template>
                 <template v-else>
-                    <UAlert
-                        color="success"
-                        variant="subtle"
-                        :title="$t('bmmUpload.uploaded')"
-                    />
-                    <UButton @click="reset" block>
+                    <DesignBanner variant="success" icon="tabler:check">
+                        {{ $t("bmmUpload.uploaded") }}
+                    </DesignBanner>
+                    <DesignButton class="w-full" @click="reset">
                         {{ $t("bmmUpload.uploadMore") }}
-                    </UButton>
+                    </DesignButton>
                 </template>
             </template>
             <template v-else-if="permissionsLoading">

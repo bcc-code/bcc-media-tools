@@ -4,12 +4,23 @@ import { Dialog } from "@ark-ui/vue";
 interface Props {
     title?: string;
     description?: string;
+    size?: "md" | "lg" | "xl";
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
     title: undefined,
     description: undefined,
+    size: "md",
 });
+
+const maxWidthClass = computed(
+    () =>
+        ({
+            md: "max-w-lg",
+            lg: "max-w-2xl",
+            xl: "max-w-4xl",
+        })[props.size],
+);
 
 const open = defineModel<boolean>("open", { default: false });
 
@@ -58,7 +69,8 @@ watch(open, async (isOpen) => {
                 class="fixed inset-0 z-50 flex items-center justify-center p-4"
             >
                 <Dialog.Content
-                    class="gradient-border bg-surface-raise shadow-floating ease-out-expo w-full max-w-lg origin-center rounded-2xl p-6 transition-[opacity,transform] duration-200 data-[state=closed]:scale-95 data-[state=closed]:opacity-0 data-[state=open]:scale-100 data-[state=open]:opacity-100"
+                    class="gradient-border bg-surface-raise shadow-floating ease-out-expo max-h-[85vh] w-full origin-center overflow-y-auto rounded-2xl p-6 transition-[opacity,transform] duration-200 data-[state=closed]:scale-95 data-[state=closed]:opacity-0 data-[state=open]:scale-100 data-[state=open]:opacity-100"
+                    :class="maxWidthClass"
                 >
                     <div v-if="title || description" class="mb-5">
                         <Dialog.Title
