@@ -6,12 +6,14 @@ interface Props {
     accept?: string;
     label?: string;
     description?: string;
+    icon?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     accept: undefined,
     label: undefined,
     description: undefined,
+    icon: "tabler:upload",
 });
 
 const model = defineModel<File[]>({ default: () => [] });
@@ -32,7 +34,7 @@ const maxFiles = computed(() => (props.multiple ? 100 : 1));
             <FileUpload.Trigger
                 class="ds-focus-ring flex w-full cursor-pointer flex-col items-center gap-1 rounded-lg"
             >
-                <Icon name="tabler:upload" class="text-text-muted size-6" />
+                <Icon :name="icon" class="text-text-muted size-6" />
                 <span v-if="label" class="text-body-3 text-text-default">
                     {{ label }}
                 </span>

@@ -334,6 +334,7 @@ close X. Acceptable here (X = cancel). Splitter handle `<style>` still uses `--u
 `block`→`w-full`), container utilities→tokens. No page-level `U*` left. Build + typecheck ✅.
 
 **New components:**
+
 - `DesignBanner.vue` — port of admin-web (cva, variants success/warning/info/error/neutral, `icon`
   prop + slot). For `UAlert`, `:title` → slot content.
 - `DesignStepper.vue` — built on **Ark UI `Steps`**. Public API stays value-based
@@ -354,6 +355,7 @@ file-picker/progress area which keeps the Nuxt UI look for now.
 ### 2026-06-23 — BMM file-upload + progress widgets
 
 **New components:**
+
 - `DesignProgress.vue` — Ark `Progress` (linear). `v-model` number + `max`; optional `status` shows
   a computed `%`. Range uses `primary-contrast`.
 - `DesignFileUpload.vue` — Ark `FileUpload`. `v-model` is `File[]` (bridged to Ark
@@ -377,7 +379,8 @@ toast, copy button). No `U*` left anywhere in `app/components/bmm/` or `app/page
 Build + typecheck ✅.
 
 **Two additive component extensions made for this:**
-- `DesignSelect` — added an `#item` slot (`{ item, normalized }`, passes the *original* item so
+
+- `DesignSelect` — added an `#item` slot (`{ item, normalized }`, passes the _original_ item so
   callers can read extra fields). Used for the year select's per-item album count. Also bridged a
   numeric value via a string proxy in the caller (`selectedYearStr`).
 - `DesignDialog` — added a `size` prop (`md`=max-w-lg default / `lg`=2xl / `xl`=4xl) and made tall
@@ -389,7 +392,18 @@ Build + typecheck ✅.
 `vault/index.vue` (`UPagination`/`UCheckboxGroup`/`UInput`/`UIcon`), and `layouts/default.vue` header
 (`UNavigationMenu`). New widgets still needed: pagination, checkbox-group, nav-menu, separator,
 badge, card/container, and a text `DesignInput` is done (UInput→DesignInput) but `transcription/index`
-+ `vault/index` also need file-upload (done) / pagination / nav.
+
+- `vault/index` also need file-upload (done) / pagination / nav.
+
+### 2026-06-23 — transcription/index migrated → transcription feature complete
+
+`transcription/index.vue`: `UFileUpload`→`DesignFileUpload` (single JSON; bound a `File[]` ref +
+`watch` → existing `handleFile(files[0])`; the clickable dropzone replaces the old `#actions`
+button), `USeparator` (labelled "or") → inline token divider, `UFormField`+`UInput`→`DesignInput`
+(`label="VX-ID"`), `UButton`→`DesignButton`. Added an optional `icon` prop to `DesignFileUpload`
+(default `tabler:upload`; this page uses `tabler:file-text`). No `U*` left. Build + typecheck ✅.
+
+Transcription is now fully migrated (editor + index).
 
 1. **Human visual review** of `/export` (with and without `?id=`) in light + dark. Compare against
    admin-web. Watch the gaps: checkbox styling, select trigger/menu, dialog, toast.

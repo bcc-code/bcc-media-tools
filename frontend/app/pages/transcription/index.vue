@@ -19,6 +19,10 @@ const fileName = ref<string>();
 
 const tKey = ref<string>();
 
+// DesignFileUpload uses a File[] model; this page only takes the first file.
+const uploadFiles = ref<File[]>([]);
+watch(uploadFiles, (files) => handleFile(files[0]));
+
 const handleFile = (file: File | null | undefined) => {
     if (file) {
         fileName.value = file.name;
@@ -75,50 +79,42 @@ function setSegments(s: Segment[]) {
                 class="mx-auto flex w-full max-w-sm flex-col items-center gap-4"
             >
                 <div class="w-full shrink-0">
-                    <UFileUpload
+                    <DesignFileUpload
                         v-if="!transcription"
+                        v-model="uploadFiles"
                         accept="application/json"
                         icon="tabler:file-text"
                         :label="$t('transcription.uploadJsonFileTitle')"
                         :description="
                             $t('transcription.uploadJsonFileDescription')
                         "
-                        :interactive="false"
-                        layout="list"
-                        @update:model-value="handleFile"
-                    >
-                        <template #actions="{ open }">
-                            <UButton
-                                :label="$t('transcription.selectFile')"
-                                icon="tabler:upload"
-                                color="neutral"
-                                variant="outline"
-                                @click="open()"
-                            />
-                        </template>
-                    </UFileUpload>
+                    />
                 </div>
                 <template
                     v-if="
                         !fileName && me?.transcription && me.transcription.admin
                     "
                 >
-                    <USeparator :label="$t('transcription.or')" />
+                    <div
+                        class="text-text-hint text-caption-1 flex w-full items-center gap-3"
+                    >
+                        <span class="bg-border-1 h-px flex-1" />
+                        {{ $t("transcription.or") }}
+                        <span class="bg-border-1 h-px flex-1" />
+                    </div>
                     <form
                         class="flex w-full flex-col gap-2"
                         @submit.prevent="navigateTo(`/transcription/${vxId}`)"
                     >
-                        <UFormField label="VX-ID">
-                            <UInput
-                                v-model="vxId"
-                                required
-                                placeholder="VX-123456"
-                                class="w-full"
-                            />
-                        </UFormField>
-                        <UButton type="submit" block>
+                        <DesignInput
+                            v-model="vxId"
+                            label="VX-ID"
+                            required
+                            placeholder="VX-123456"
+                        />
+                        <DesignButton type="submit" class="w-full">
                             {{ $t("transcription.load") }}
-                        </UButton>
+                        </DesignButton>
                     </form>
                 </template>
                 <TranscriptionDownloader
