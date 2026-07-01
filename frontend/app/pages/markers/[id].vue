@@ -3,6 +3,9 @@ import { LayoutGroup, motion } from "motion-v";
 import { markerTypeMeta, sortMarkers } from "~/utils/markers";
 import type { Marker } from "~/utils/markers";
 
+// Seconds the arrow keys jump the playhead.
+const SEEK_STEP_SECONDS = 5;
+
 const route = useRoute();
 const vxId = computed(() => String(route.params.id ?? ""));
 
@@ -128,10 +131,10 @@ useEventListener(window, "keydown", (event: KeyboardEvent) => {
             el.paused ? el.play() : el.pause();
             break;
         case "ArrowRight":
-            if (el) el.currentTime += 1;
+            if (el) el.currentTime += SEEK_STEP_SECONDS;
             break;
         case "ArrowLeft":
-            if (el) el.currentTime -= 1;
+            if (el) el.currentTime -= SEEK_STEP_SECONDS;
             break;
         case "m":
         case "M":
