@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {
     MARKER_TYPES,
+    formatMarkerDuration,
     formatMarkerTime,
     markerTypeMeta,
     parseMarkerTime,
@@ -16,9 +17,15 @@ const emit = defineEmits<{
     update: [patch: Partial<Omit<Marker, "id">>];
     remove: [];
     seek: [seconds: number];
+    preview: [start: number, end: number];
 }>();
 
 const { t } = useI18n();
+
+const NUDGE_STEP = 1;
+
+const iconBtnClass =
+    "ds-focus-ring text-text-muted hover:bg-surface-indent hover:text-text-default flex items-center justify-center rounded-lg p-1.5 transition-colors";
 
 const typeItems = computed(() =>
     MARKER_TYPES.map((m) => ({
@@ -27,7 +34,6 @@ const typeItems = computed(() =>
     })),
 );
 
-// Two-way bridges that emit a patch on every change.
 const type = computed({
     get: () => props.marker?.type ?? "name-super",
     set: (v) => emit("update", { type: v as Marker["type"] }),
@@ -41,8 +47,6 @@ const note = computed({
     set: (v) => emit("update", { note: v }),
 });
 
-// In/out are edited as formatted strings, committed (parsed) on change so a
-// half-typed value never corrupts the marker.
 const startStr = ref("");
 const endStr = ref("");
 watch(
@@ -61,7 +65,6 @@ function commit(which: "start" | "end") {
     if (Number.isFinite(seconds)) {
         emit("update", { [which]: seconds });
     } else if (props.marker) {
-        // Revert the field to the last good value.
         startStr.value = formatMarkerTime(props.marker.start);
         endStr.value = formatMarkerTime(props.marker.end);
     }
@@ -69,6 +72,16 @@ function commit(which: "start" | "end") {
 
 function setToCurrent(which: "start" | "end") {
     emit("update", { [which]: Math.round(props.currentTime) });
+}
+
+function nudge(which: "start" | "end", delta: number) {
+    if (!props.marker) return;
+    const base = which === "start" ? props.marker.start : props.marker.end;
+    let value = Math.round(base) + delta;
+    if (which === "start")
+        value = Math.min(Math.max(0, value), props.marker.end);
+    else value = Math.max(value, props.marker.start);
+    emit("update", { [which]: value });
 }
 
 const duration = computed(() => {
@@ -98,7 +111,18 @@ const duration = computed(() => {
             <span class="text-body-3 text-text-muted mb-1 block">
                 {{ t("markers.editor.type") }}
             </span>
-            <DesignSelect v-model="type" :items="typeItems" />
+            <div class="flex items-center gap-2">
+                <Icon
+                    :name="markerTypeMeta(type).icon"
+                    class="size-5 shrink-0"
+                    :class="markerTypeMeta(type).iconColor"
+                />
+                <DesignSelect
+                    v-model="type"
+                    :items="typeItems"
+                    class="flex-1"
+                />
+            </div>
         </div>
 
         <DesignInput
@@ -114,66 +138,147 @@ const duration = computed(() => {
             :placeholder="t('markers.editor.notePlaceholder')"
         />
 
-        <div class="grid grid-cols-2 gap-3">
-            <div>
-                <span class="text-body-3 text-text-muted mb-1 block">
-                    {{ t("markers.editor.in") }}
+        <div>
+            <div class="mb-2 flex items-center justify-between">
+                <span class="text-body-3 text-text-muted">
+                    {{ t("markers.editor.timing") }}
                 </span>
-                <DesignInput
-                    v-model="startStr"
-                    class="tabular-nums"
-                    @change="commit('start')"
-                />
-                <div class="mt-1.5 flex gap-1">
-                    <DesignButton
-                        size="small"
-                        variant="tertiary"
-                        icon="tabler:player-track-prev"
-                        @click="setToCurrent('start')"
-                    >
-                        {{ t("markers.editor.setToPlayhead") }}
-                    </DesignButton>
-                    <DesignButton
-                        size="small"
-                        variant="tertiary"
-                        icon="tabler:player-play"
-                        :aria-label="t('markers.editor.seekTo')"
-                        @click="emit('seek', marker.start)"
+                <span class="text-text-hint text-caption-1 tabular-nums">
+                    {{ formatMarkerDuration(duration) }}
+                </span>
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <div class="flex items-center gap-2">
+                    <span class="text-text-hint text-caption-1 w-6 shrink-0">
+                        {{ t("markers.editor.in") }}
+                    </span>
+                    <DesignInput
+                        v-model="startStr"
+                        class="w-28 shrink-0 tabular-nums"
+                        @change="commit('start')"
                     />
+                    <div class="ml-auto flex items-center gap-0.5">
+                        <DesignTooltip
+                            :content="t('markers.editor.setToPlayhead')"
+                        >
+                            <button
+                                type="button"
+                                :class="iconBtnClass"
+                                @click="setToCurrent('start')"
+                            >
+                                <Icon
+                                    name="tabler:arrow-bar-to-left"
+                                    class="size-4"
+                                />
+                            </button>
+                        </DesignTooltip>
+                        <DesignTooltip :content="t('markers.editor.nudgeBack')">
+                            <button
+                                type="button"
+                                :class="iconBtnClass"
+                                @click="nudge('start', -NUDGE_STEP)"
+                            >
+                                <Icon name="tabler:minus" class="size-4" />
+                            </button>
+                        </DesignTooltip>
+                        <DesignTooltip
+                            :content="t('markers.editor.nudgeForward')"
+                        >
+                            <button
+                                type="button"
+                                :class="iconBtnClass"
+                                @click="nudge('start', NUDGE_STEP)"
+                            >
+                                <Icon name="tabler:plus" class="size-4" />
+                            </button>
+                        </DesignTooltip>
+                        <DesignTooltip :content="t('markers.editor.seekTo')">
+                            <button
+                                type="button"
+                                :class="iconBtnClass"
+                                @click="emit('seek', marker.start)"
+                            >
+                                <Icon
+                                    name="tabler:player-play"
+                                    class="size-4"
+                                />
+                            </button>
+                        </DesignTooltip>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <span class="text-text-hint text-caption-1 w-6 shrink-0">
+                        {{ t("markers.editor.out") }}
+                    </span>
+                    <DesignInput
+                        v-model="endStr"
+                        class="w-28 shrink-0 tabular-nums"
+                        @change="commit('end')"
+                    />
+                    <div class="ml-auto flex items-center gap-0.5">
+                        <DesignTooltip
+                            :content="t('markers.editor.setToPlayhead')"
+                        >
+                            <button
+                                type="button"
+                                :class="iconBtnClass"
+                                @click="setToCurrent('end')"
+                            >
+                                <Icon
+                                    name="tabler:arrow-bar-to-right"
+                                    class="size-4"
+                                />
+                            </button>
+                        </DesignTooltip>
+                        <DesignTooltip :content="t('markers.editor.nudgeBack')">
+                            <button
+                                type="button"
+                                :class="iconBtnClass"
+                                @click="nudge('end', -NUDGE_STEP)"
+                            >
+                                <Icon name="tabler:minus" class="size-4" />
+                            </button>
+                        </DesignTooltip>
+                        <DesignTooltip
+                            :content="t('markers.editor.nudgeForward')"
+                        >
+                            <button
+                                type="button"
+                                :class="iconBtnClass"
+                                @click="nudge('end', NUDGE_STEP)"
+                            >
+                                <Icon name="tabler:plus" class="size-4" />
+                            </button>
+                        </DesignTooltip>
+                        <DesignTooltip :content="t('markers.editor.seekTo')">
+                            <button
+                                type="button"
+                                :class="iconBtnClass"
+                                @click="emit('seek', marker.end)"
+                            >
+                                <Icon
+                                    name="tabler:player-play"
+                                    class="size-4"
+                                />
+                            </button>
+                        </DesignTooltip>
+                    </div>
                 </div>
             </div>
-            <div>
-                <span class="text-body-3 text-text-muted mb-1 block">
-                    {{ t("markers.editor.out") }}
-                </span>
-                <DesignInput
-                    v-model="endStr"
-                    class="tabular-nums"
-                    @change="commit('end')"
-                />
-                <div class="mt-1.5 flex gap-1">
-                    <DesignButton
-                        size="small"
-                        variant="tertiary"
-                        icon="tabler:player-track-next"
-                        @click="setToCurrent('end')"
-                    >
-                        {{ t("markers.editor.setToPlayhead") }}
-                    </DesignButton>
-                    <DesignButton
-                        size="small"
-                        variant="tertiary"
-                        icon="tabler:player-play"
-                        :aria-label="t('markers.editor.seekTo')"
-                        @click="emit('seek', marker.end)"
-                    />
-                </div>
+
+            <div class="mt-3 flex justify-center">
+                <DesignButton
+                    size="small"
+                    variant="tertiary"
+                    icon="tabler:player-play"
+                    @click="emit('preview', marker.start, marker.end)"
+                >
+                    {{ t("markers.editor.previewRange") }}
+                </DesignButton>
             </div>
         </div>
-
-        <p class="text-text-hint text-caption-1">
-            {{ t("markers.editor.duration") }}: {{ Math.round(duration) }} s
-        </p>
 
         <DesignButton
             variant="secondary"

@@ -38,9 +38,22 @@ const currentTime = ref(0);
 useEventListener(videoElement, "loadedmetadata", () => {
     videoDuration.value = videoElement.value?.duration ?? 0;
 });
+// When previewing a marker's range, stop playback once we reach its out-point.
+const previewEnd = ref<number | null>(null);
 useEventListener(videoElement, "timeupdate", () => {
     currentTime.value = videoElement.value?.currentTime ?? 0;
+    if (previewEnd.value !== null && currentTime.value >= previewEnd.value) {
+        videoElement.value?.pause();
+        previewEnd.value = null;
+    }
 });
+
+function previewRange(start: number, end: number) {
+    if (!videoElement.value) return;
+    videoElement.value.currentTime = start;
+    previewEnd.value = end;
+    videoElement.value.play();
+}
 
 // The timeline needs a span even before/without a loaded video: fall back to
 // the last marker's out-point (plus headroom) so blocks still render.
@@ -293,6 +306,7 @@ useEventListener(window, "keydown", (event: KeyboardEvent) => {
                             @update="onUpdate"
                             @remove="onRemove"
                             @seek="seek"
+                            @preview="previewRange"
                         />
                     </motion.div>
 

@@ -267,8 +267,12 @@
             "notePlaceholder": "Valgfritt notat",
             "in": "Inn",
             "out": "Ut",
-            "setToPlayhead": "Spillehode",
+            "timing": "Tidsrom",
+            "setToPlayhead": "Sett til spillehodet",
             "seekTo": "Gå til",
+            "nudgeBack": "−1 sekund",
+            "nudgeForward": "+1 sekund",
+            "previewRange": "Forhåndsvis utsnitt",
             "duration": "Varighet",
             "remove": "Fjern markør",
             "noSelection": "Velg en markør for å redigere, eller legg til en ved spillehodet."
