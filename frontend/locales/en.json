@@ -226,7 +226,6 @@
     "markers": {
         "save": "Save",
         "saved": "Markers saved",
-        "savedMock": "Saved (mock — no backend yet)",
         "unsaved": "Unsaved changes",
         "allSaved": "Saved",
         "leaveConfirm": "You have unsaved changes. Leave without saving?",

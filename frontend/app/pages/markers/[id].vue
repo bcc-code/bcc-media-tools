@@ -161,7 +161,6 @@ async function onSave() {
     await save();
     toaster.create({
         title: t("markers.saved"),
-        description: t("markers.savedMock"),
         type: "success",
     });
 }

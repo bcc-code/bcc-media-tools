@@ -226,7 +226,6 @@
     "markers": {
         "save": "Lagre",
         "saved": "Markører lagret",
-        "savedMock": "Lagret (mock — ingen backend ennå)",
         "unsaved": "Ulagrede endringer",
         "allSaved": "Lagret",
         "leaveConfirm": "Du har ulagrede endringer. Forlate uten å lagre?",
