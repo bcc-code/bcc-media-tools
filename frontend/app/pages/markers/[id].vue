@@ -142,7 +142,7 @@ useEventListener(window, "keydown", (event: KeyboardEvent) => {
 
 <template>
     <div
-        class="mx-auto flex h-[calc(100vh-var(--header-height,3.5rem))] w-full max-w-[1700px] flex-col gap-3 p-4"
+        class="mx-auto flex h-[calc(100vh-var(--header-height,3.5rem))] w-full max-w-[1600px] flex-col gap-3 p-4"
     >
         <header
             class="flex shrink-0 flex-wrap items-center justify-between gap-3"
@@ -274,6 +274,16 @@ useEventListener(window, "keydown", (event: KeyboardEvent) => {
 
             <!-- Right column: marker list (scrolls) on top, editor below -->
             <div class="flex min-h-0 flex-col gap-4">
+                <div class="shrink-0">
+                    <MarkersEditor
+                        :marker="selectedMarker"
+                        :current-time="currentTime"
+                        @update="onUpdate"
+                        @remove="onRemove"
+                        @seek="seek"
+                    />
+                </div>
+
                 <div
                     class="border-border-1 bg-surface-default flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border"
                 >
@@ -287,7 +297,7 @@ useEventListener(window, "keydown", (event: KeyboardEvent) => {
                     </div>
                     <div
                         v-if="visibleMarkers.length"
-                        class="flex flex-col gap-0.5 overflow-y-auto p-2"
+                        class="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto p-2"
                     >
                         <MarkersListItem
                             v-for="marker in visibleMarkers"
@@ -307,16 +317,6 @@ useEventListener(window, "keydown", (event: KeyboardEvent) => {
                     >
                         {{ t("markers.list.empty") }}
                     </div>
-                </div>
-
-                <div class="shrink-0">
-                    <MarkersEditor
-                        :marker="selectedMarker"
-                        :current-time="currentTime"
-                        @update="onUpdate"
-                        @remove="onRemove"
-                        @seek="seek"
-                    />
                 </div>
             </div>
         </div>
