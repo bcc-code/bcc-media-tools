@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { LayoutGroup, motion } from "motion-v";
+import { onBeforeRouteLeave } from "vue-router";
 import { formatMarkerTime, markerTypeMeta, sortMarkers } from "~/utils/markers";
 import type { Marker, MarkerType } from "~/utils/markers";
 
@@ -22,7 +23,7 @@ onMounted(() => {
 });
 
 const api = useAPI();
-const { markers, add, update, remove, restore, save, saving } =
+const { markers, dirty, add, update, remove, restore, save, saving } =
     useMarkers(vxId);
 
 // ---- Video preview (reuses the existing getPreview RPC, like shorts) --------
@@ -106,6 +107,34 @@ function onUpdate(patch: Partial<Omit<Marker, "id">>) {
     update(selectedId.value, patch);
 }
 
+// Select the previous/next marker (by time) and seek to it.
+function selectAdjacent(direction: 1 | -1) {
+    const list = visibleMarkers.value;
+    if (!list.length) return;
+    const index = list.findIndex((m) => m.id === selectedId.value);
+    const next =
+        index === -1
+            ? direction === 1
+                ? 0
+                : list.length - 1
+            : Math.max(0, Math.min(list.length - 1, index + direction));
+    const marker = list[next];
+    if (marker) {
+        selectedId.value = marker.id;
+        seek(marker.start);
+    }
+}
+
+// Set the selected marker's In/Out to the playhead (clamped so it can't invert).
+function setSelectedBound(which: "start" | "end") {
+    const marker = selectedMarker.value;
+    if (!marker) return;
+    const now = Math.round(currentTime.value);
+    if (which === "start")
+        update(marker.id, { start: Math.min(now, marker.end) });
+    else update(marker.id, { end: Math.max(now, marker.start) });
+}
+
 const toaster = useDesignToaster();
 const lastRemoved = ref<Marker>();
 let undoTimer: ReturnType<typeof setTimeout> | undefined;
@@ -144,6 +173,17 @@ function isTyping(target: EventTarget | null) {
     return tag === "INPUT" || tag === "TEXTAREA" || target.isContentEditable;
 }
 
+const showShortcuts = ref(false);
+const shortcuts = computed(() => [
+    { keys: ["Space"], label: t("markers.shortcuts.playPause") },
+    { keys: ["←", "→"], label: t("markers.shortcuts.seek") },
+    { keys: ["↑", "↓"], label: t("markers.shortcuts.prevNext") },
+    { keys: ["M"], label: t("markers.shortcuts.add") },
+    { keys: ["I", "O"], label: t("markers.shortcuts.setInOut") },
+    { keys: ["Del"], label: t("markers.shortcuts.remove") },
+    { keys: ["?"], label: t("markers.shortcuts.help") },
+]);
+
 useEventListener(window, "keydown", (event: KeyboardEvent) => {
     if (isTyping(event.target)) return;
     const el = videoElement.value;
@@ -159,11 +199,42 @@ useEventListener(window, "keydown", (event: KeyboardEvent) => {
         case "ArrowLeft":
             if (el) el.currentTime -= SEEK_STEP_SECONDS;
             break;
+        case "ArrowUp":
+            event.preventDefault();
+            selectAdjacent(-1);
+            break;
+        case "ArrowDown":
+            event.preventDefault();
+            selectAdjacent(1);
+            break;
         case "m":
         case "M":
             addMarker();
             break;
+        case "i":
+        case "I":
+            setSelectedBound("start");
+            break;
+        case "o":
+        case "O":
+            setSelectedBound("end");
+            break;
+        case "Delete":
+        case "Backspace":
+            onRemove();
+            break;
+        case "?":
+            showShortcuts.value = !showShortcuts.value;
+            break;
     }
+});
+
+// Warn before losing unsaved local changes.
+onBeforeRouteLeave(() => {
+    if (dirty.value && !window.confirm(t("markers.leaveConfirm"))) return false;
+});
+useEventListener(window, "beforeunload", (event: BeforeUnloadEvent) => {
+    if (dirty.value) event.preventDefault();
 });
 </script>
 
@@ -189,14 +260,28 @@ useEventListener(window, "keydown", (event: KeyboardEvent) => {
             </div>
             <div class="flex items-center gap-3">
                 <span
-                    class="text-text-hint text-caption-1 inline-flex items-center gap-1"
+                    class="text-caption-1 inline-flex items-center gap-1"
+                    :class="dirty ? 'text-semantic-warning' : 'text-text-hint'"
                 >
-                    <Icon name="tabler:device-floppy" class="size-3.5" />
-                    {{ t("markers.savedLocally") }}
+                    <Icon
+                        :name="dirty ? 'tabler:point-filled' : 'tabler:check'"
+                        class="size-3.5"
+                    />
+                    {{ dirty ? t("markers.unsaved") : t("markers.allSaved") }}
                 </span>
+                <DesignTooltip :content="t('markers.shortcuts.title')">
+                    <button
+                        type="button"
+                        class="ds-focus-ring text-text-muted hover:bg-surface-indent hover:text-text-default flex items-center justify-center rounded-lg p-2 transition-colors"
+                        @click="showShortcuts = true"
+                    >
+                        <Icon name="tabler:keyboard" class="size-4" />
+                    </button>
+                </DesignTooltip>
                 <DesignButton
                     icon="tabler:cloud-upload"
                     :loading="saving"
+                    :disabled="!dirty"
                     @click="onSave"
                 >
                     {{ t("markers.save") }}
@@ -352,5 +437,31 @@ useEventListener(window, "keydown", (event: KeyboardEvent) => {
                 </div>
             </LayoutGroup>
         </div>
+
+        <DesignDialog
+            v-model:open="showShortcuts"
+            :title="t('markers.shortcuts.title')"
+        >
+            <div class="flex flex-col gap-2">
+                <div
+                    v-for="(shortcut, i) in shortcuts"
+                    :key="i"
+                    class="flex items-center justify-between gap-4"
+                >
+                    <span class="text-body-3 text-text-default">
+                        {{ shortcut.label }}
+                    </span>
+                    <span class="flex shrink-0 items-center gap-1">
+                        <kbd
+                            v-for="key in shortcut.keys"
+                            :key="key"
+                            class="border-border-1 bg-surface-indent text-text-muted text-caption-1 min-w-6 rounded border px-1.5 py-0.5 text-center tabular-nums"
+                        >
+                            {{ key }}
+                        </kbd>
+                    </span>
+                </div>
+            </div>
+        </DesignDialog>
     </div>
 </template>

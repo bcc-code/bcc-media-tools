@@ -67,13 +67,12 @@ const zoom = ref(1);
 const scroll = useTemplateRef("scroll");
 const { width: viewportWidth } = useElementSize(scroll);
 
-// Nice, human-readable tick spacings (seconds) to choose from.
 const NICE_STEPS = [5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200];
 const tickStep = computed(() => {
     const contentWidth = viewportWidth.value * zoom.value;
     if (!contentWidth || !props.duration) return 600;
     const pxPerSec = contentWidth / props.duration;
-    const minSecondsPerTick = 72 / pxPerSec; // keep labels ~72px apart
+    const minSecondsPerTick = 72 / pxPerSec;
     return (
         NICE_STEPS.find((s) => s >= minSecondsPerTick) ??
         NICE_STEPS[NICE_STEPS.length - 1]!
@@ -83,16 +82,11 @@ const ticks = computed(() => {
     const step = tickStep.value;
     const out: { seconds: number; left: string; label: string }[] = [];
     for (let s = 0; s <= props.duration; s += step) {
-        out.push({
-            seconds: s,
-            left: `${pct(s)}%`,
-            label: formatMarkerTime(s),
-        });
+        out.push({ seconds: s, left: `${pct(s)}%`, label: formatMarkerTime(s) });
     }
     return out;
 });
 
-// Keep the playhead visible: recenter only when it nears/leaves the edges.
 function keepPlayheadVisible() {
     const el = scroll.value;
     if (!el || !props.duration) return;

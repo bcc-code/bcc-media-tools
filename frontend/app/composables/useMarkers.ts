@@ -62,6 +62,11 @@ export function useMarkers(vxId: MaybeRefOrGetter<string>) {
     // persists every mutation automatically.
     const markers = useLocalStorage<Marker[]>(storageKey, seedMarkers());
 
+    // True when there are local changes not yet submitted (via `save`). Starts
+    // clean; every mutation dirties it. With a real backend this would compare
+    // against the last submitted state.
+    const dirty = ref(false);
+
     function add(
         partial: Partial<Marker> & Pick<Marker, "start" | "end">,
     ): Marker {
@@ -73,6 +78,7 @@ export function useMarkers(vxId: MaybeRefOrGetter<string>) {
             ...partial,
         };
         markers.value = [...markers.value, marker];
+        dirty.value = true;
         return marker;
     }
 
@@ -80,16 +86,19 @@ export function useMarkers(vxId: MaybeRefOrGetter<string>) {
         markers.value = markers.value.map((m) =>
             m.id === id ? { ...m, ...patch } : m,
         );
+        dirty.value = true;
     }
 
     function remove(id: string) {
         markers.value = markers.value.filter((m) => m.id !== id);
+        dirty.value = true;
     }
 
     // Restore a previously removed marker (used by the undo toast).
     function restore(marker: Marker) {
         if (markers.value.some((m) => m.id === marker.id)) return;
         markers.value = [...markers.value, marker];
+        dirty.value = true;
     }
 
     const saving = ref(false);
@@ -98,6 +107,7 @@ export function useMarkers(vxId: MaybeRefOrGetter<string>) {
         saving.value = true;
         try {
             await new Promise((resolve) => setTimeout(resolve, 400));
+            dirty.value = false;
         } finally {
             saving.value = false;
         }
@@ -107,5 +117,15 @@ export function useMarkers(vxId: MaybeRefOrGetter<string>) {
         return markers.value.filter((m) => m.type === type).length;
     }
 
-    return { markers, add, update, remove, restore, save, saving, countByType };
+    return {
+        markers,
+        dirty,
+        add,
+        update,
+        remove,
+        restore,
+        save,
+        saving,
+        countByType,
+    };
 }
