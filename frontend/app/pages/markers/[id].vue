@@ -249,9 +249,11 @@ useEventListener(window, "keydown", (event: KeyboardEvent) => {
             el.paused ? el.play() : el.pause();
             break;
         case "ArrowRight":
+            event.preventDefault();
             if (el) el.currentTime += SEEK_STEP_SECONDS;
             break;
         case "ArrowLeft":
+            event.preventDefault();
             if (el) el.currentTime -= SEEK_STEP_SECONDS;
             break;
         case "ArrowUp":
