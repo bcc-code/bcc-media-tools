@@ -314,16 +314,16 @@ useEventListener(window, "beforeunload", (event: BeforeUnloadEvent) => {
                         <div
                             v-for="m in activeMarkers"
                             :key="m.id"
-                            class="flex items-center gap-2 rounded-md bg-black/70 px-3 py-1.5 text-sm text-white backdrop-blur"
+                            class="text-caption-1 flex items-center gap-2 rounded-lg bg-black/50 py-1.5 pr-3 pl-2 text-white backdrop-blur"
                         >
                             <Icon
                                 :name="markerTypeMeta(m.type).icon"
-                                class="size-4 shrink-0"
+                                class="shrink-0 text-sm"
                                 :class="markerTypeMeta(m.type).iconColor"
                             />
-                            <span class="font-medium">{{
-                                m.label || t(`markers.types.${m.type}`)
-                            }}</span>
+                            <span>
+                                {{ m.label || t(`markers.types.${m.type}`) }}
+                            </span>
                         </div>
                     </div>
                 </div>
