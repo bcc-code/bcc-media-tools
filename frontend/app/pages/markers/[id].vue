@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { MARKER_TYPES, markerTypeMeta, sortMarkers } from "~/utils/markers";
-import type { Marker, MarkerType } from "~/utils/markers";
+import { markerTypeMeta, sortMarkers } from "~/utils/markers";
+import type { Marker } from "~/utils/markers";
 
 const route = useRoute();
 const vxId = computed(() => String(route.params.id ?? ""));
@@ -57,18 +57,7 @@ const selectedMarker = computed(() =>
     markers.value.find((m) => m.id === selectedId.value),
 );
 
-const activeTypes = ref<MarkerType[]>(MARKER_TYPES.map((m) => m.value));
-function toggleType(type: MarkerType) {
-    activeTypes.value = activeTypes.value.includes(type)
-        ? activeTypes.value.filter((v) => v !== type)
-        : [...activeTypes.value, type];
-}
-
-const visibleMarkers = computed(() =>
-    sortMarkers(markers.value).filter((m) =>
-        activeTypes.value.includes(m.type),
-    ),
-);
+const visibleMarkers = computed(() => sortMarkers(markers.value));
 
 // Markers whose range contains the playhead — shown as an on-video overlay.
 const activeMarkers = computed(() =>
@@ -81,8 +70,7 @@ const activeMarkers = computed(() =>
 function addMarker() {
     const start = currentTime.value;
     const end = Math.min(start + 5, effectiveDuration.value);
-    const type = activeTypes.value[0] ?? "name-super";
-    const marker = add({ start, end, type });
+    const marker = add({ start, end, type: "name-super" });
     selectedId.value = marker.id;
 }
 
@@ -230,33 +218,15 @@ useEventListener(window, "keydown", (event: KeyboardEvent) => {
         </div>
 
         <!-- Controls -->
-        <div class="flex flex-wrap items-center gap-3">
+        <div class="flex items-center gap-3">
             <span class="text-text-default font-medium tabular-nums">
                 {{ formatTime(currentTime) }}
             </span>
-            <DesignButton icon="tabler:plus" @click="addMarker">
-                {{ t("markers.addAtPlayhead") }}
-            </DesignButton>
-            <span class="text-text-hint text-caption-1">{{
-                t("markers.addHint")
-            }}</span>
-
-            <div class="ml-auto flex flex-wrap items-center gap-1.5">
-                <DesignButton
-                    v-for="meta in MARKER_TYPES"
-                    :key="meta.value"
-                    size="small"
-                    :variant="
-                        activeTypes.includes(meta.value)
-                            ? 'secondary'
-                            : 'tertiary'
-                    "
-                    :icon="meta.icon"
-                    @click="toggleType(meta.value)"
-                >
-                    {{ t(`markers.types.${meta.value}`) }}
+            <DesignTooltip :content="t('markers.addHint')">
+                <DesignButton icon="tabler:plus" @click="addMarker">
+                    {{ t("markers.addAtPlayhead") }}
                 </DesignButton>
-            </div>
+            </DesignTooltip>
         </div>
 
         <!-- Timeline -->
