@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { LayoutGroup, motion } from "motion-v";
 import { markerTypeMeta, sortMarkers } from "~/utils/markers";
 import type { Marker } from "~/utils/markers";
 
@@ -272,53 +273,63 @@ useEventListener(window, "keydown", (event: KeyboardEvent) => {
                 />
             </div>
 
-            <!-- Right column: marker list (scrolls) on top, editor below -->
-            <div class="flex min-h-0 flex-col gap-4">
-                <div class="shrink-0">
-                    <MarkersEditor
-                        :marker="selectedMarker"
-                        :current-time="currentTime"
-                        @update="onUpdate"
-                        @remove="onRemove"
-                        @seek="seek"
-                    />
-                </div>
-
-                <div
-                    class="border-border-1 bg-surface-default flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border"
-                >
-                    <div
-                        class="border-border-1 text-text-muted flex shrink-0 items-center justify-between border-b px-4 py-2 text-sm"
+            <!-- Right column: editor (inspector) on top, marker list below.
+                 The editor grows/shrinks with selection; LayoutGroup animates
+                 the list smoothly repositioning instead of jumping. -->
+            <LayoutGroup>
+                <div class="flex min-h-0 flex-col gap-4">
+                    <motion.div
+                        layout="position"
+                        :transition="{ duration: 1, ease: [0.16, 1, 0.3, 1] }"
+                        class="shrink-0"
                     >
-                        <span>{{ t("markers.list.title") }}</span>
-                        <span class="tabular-nums">{{
-                            visibleMarkers.length
-                        }}</span>
-                    </div>
-                    <div
-                        v-if="visibleMarkers.length"
-                        class="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto p-2"
-                    >
-                        <MarkersListItem
-                            v-for="marker in visibleMarkers"
-                            :key="marker.id"
-                            :marker="marker"
-                            :selected="marker.id === selectedId"
+                        <MarkersEditor
+                            :marker="selectedMarker"
                             :current-time="currentTime"
-                            @select="
-                                selectedId = marker.id;
-                                seek(marker.start);
-                            "
+                            @update="onUpdate"
+                            @remove="onRemove"
+                            @seek="seek"
                         />
-                    </div>
-                    <div
-                        v-else
-                        class="text-text-hint flex flex-1 items-center justify-center p-8 text-center text-sm"
+                    </motion.div>
+
+                    <motion.div
+                        layout="position"
+                        :transition="{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }"
+                        class="border-border-1 bg-surface-default flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border"
                     >
-                        {{ t("markers.list.empty") }}
-                    </div>
+                        <div
+                            class="border-border-1 text-text-muted flex shrink-0 items-center justify-between border-b px-4 py-2 text-sm"
+                        >
+                            <span>{{ t("markers.list.title") }}</span>
+                            <span class="tabular-nums">{{
+                                visibleMarkers.length
+                            }}</span>
+                        </div>
+                        <div
+                            v-if="visibleMarkers.length"
+                            class="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto p-2"
+                        >
+                            <MarkersListItem
+                                v-for="marker in visibleMarkers"
+                                :key="marker.id"
+                                :marker="marker"
+                                :selected="marker.id === selectedId"
+                                :current-time="currentTime"
+                                @select="
+                                    selectedId = marker.id;
+                                    seek(marker.start);
+                                "
+                            />
+                        </div>
+                        <div
+                            v-else
+                            class="text-text-hint flex flex-1 items-center justify-center p-8 text-center text-sm"
+                        >
+                            {{ t("markers.list.empty") }}
+                        </div>
+                    </motion.div>
                 </div>
-            </div>
+            </LayoutGroup>
         </div>
     </div>
 </template>
