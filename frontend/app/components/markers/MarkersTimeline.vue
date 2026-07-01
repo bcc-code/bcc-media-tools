@@ -181,7 +181,9 @@ watch(zoom, () => nextTick(keepPlayheadVisible));
                                 <DesignTooltip
                                     v-for="marker in lane.markers"
                                     :key="marker.id"
-                                    :content="`${marker.label || laneLabel(marker.type)} · ${formatMarkerTime(marker.start)}–${formatMarkerTime(marker.end)}`"
+                                    :content="
+                                        marker.label || laneLabel(marker.type)
+                                    "
                                 >
                                     <button
                                         type="button"
