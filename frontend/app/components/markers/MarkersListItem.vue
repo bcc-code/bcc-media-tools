@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { formatMarkerTime, markerTypeMeta } from "~/utils/markers";
+import { formatMarkerDuration, markerTypeMeta } from "~/utils/markers";
 import type { Marker } from "~/utils/markers";
 
 const props = defineProps<{
@@ -32,11 +32,7 @@ const active = computed(
             class="size-4 shrink-0"
             :class="markerTypeMeta(marker.type).iconColor"
         />
-        <span class="text-text-hint text-caption-1 w-40 shrink-0 tabular-nums">
-            {{ formatMarkerTime(marker.start) }} –
-            {{ formatMarkerTime(marker.end) }}
-        </span>
-        <span class="text-body-3 text-text-default truncate">
+        <span class="text-body-3 text-text-default flex-1 truncate">
             {{ marker.label || t(`markers.types.${marker.type}`) }}
         </span>
         <Icon
@@ -44,12 +40,8 @@ const active = computed(
             name="tabler:volume"
             class="text-primary-default size-3.5 shrink-0"
         />
-        <DesignBadge
-            v-if="marker.source === 'imported'"
-            variant="info"
-            class="ml-auto shrink-0"
-        >
-            {{ t("markers.source.imported") }}
-        </DesignBadge>
+        <span class="text-text-hint text-caption-1 shrink-0 tabular-nums">
+            {{ formatMarkerDuration(marker.end - marker.start) }}
+        </span>
     </button>
 </template>

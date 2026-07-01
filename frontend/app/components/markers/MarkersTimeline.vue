@@ -107,7 +107,7 @@ function laneLabel(type: MarkerType) {
                     >
                         <button
                             type="button"
-                            class="ds-focus-ring absolute top-0.5 bottom-0.5 flex items-center overflow-hidden rounded px-1.5 text-left text-xs text-white/95 transition-[outline]"
+                            class="ds-focus-ring absolute top-0.5 bottom-0.5 flex items-center overflow-hidden rounded text-left text-xs text-white/95 transition-[outline]"
                             :class="[
                                 markerTypeMeta(marker.type).color,
                                 selectedId === marker.id
@@ -120,7 +120,9 @@ function laneLabel(type: MarkerType) {
                                 emit('seek', marker.start);
                             "
                         >
-                            <span class="truncate">{{
+                            <!-- Padding lives on the (clipped) label so the block
+                                 itself can shrink to its true width. -->
+                            <span class="min-w-0 truncate px-1.5">{{
                                 marker.label || laneLabel(marker.type)
                             }}</span>
                         </button>
