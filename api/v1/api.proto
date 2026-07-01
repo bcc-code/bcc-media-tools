@@ -398,6 +398,51 @@ message GetVaultItemResponse {
   VaultItem item = 1;
 }
 
+// ---- Markers ----
+
+enum MarkerType {
+  MARKER_TYPE_UNSPECIFIED = 0;
+  MARKER_TYPE_NAME_SUPER = 1;
+  MARKER_TYPE_BIBLE_VERSE = 2;
+  MARKER_TYPE_SONG = 3;
+  MARKER_TYPE_CHAPTER = 4;
+  MARKER_TYPE_CUSTOM = 5;
+}
+
+// Where a marker originated. IMPORTED markers come from the third-party timing
+// program (name-supers, bible-verse references, …); MANUAL ones are created in
+// this tool. The source is preserved through edits for reconciliation.
+enum MarkerSource {
+  MARKER_SOURCE_UNSPECIFIED = 0;
+  MARKER_SOURCE_IMPORTED = 1;
+  MARKER_SOURCE_MANUAL = 2;
+}
+
+message Marker {
+  string id = 1;
+  MarkerType type = 2;
+  // Display text: the name, the verse reference, the song/chapter title.
+  string label = 3;
+  string note = 4;
+  // In/out points in seconds.
+  double start = 5;
+  double end = 6;
+  MarkerSource source = 7;
+}
+
+message GetMarkersRequest {
+  string VXID = 1;
+}
+
+message GetMarkersResponse {
+  repeated Marker markers = 1;
+}
+
+message SubmitMarkersRequest {
+  string VXID = 1;
+  repeated Marker markers = 2;
+}
+
 service APIService {
 	// Permissions
 	rpc GetPermissions (Void) returns (Permissions) {}
@@ -441,4 +486,8 @@ service APIService {
   // VAULT (Vidispine search)
   rpc VaultSearch(VaultSearchRequest) returns (VaultSearchResponse) {}
   rpc GetVaultItem(GetVaultItemRequest) returns (GetVaultItemResponse) {}
+
+  // Markers
+  rpc GetMarkers(GetMarkersRequest) returns (GetMarkersResponse) {}
+  rpc SubmitMarkers(SubmitMarkersRequest) returns (Void) {}
 }

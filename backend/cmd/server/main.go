@@ -56,6 +56,7 @@ type ApiServer struct {
 	ExportAPI
 	CantemoAPI
 	VaultAPI
+	*MarkersAPI
 }
 
 func withCORS(connectHandler http.Handler) http.Handler {
@@ -142,6 +143,7 @@ func main() {
 		ExportAPI:        *exportAPI,
 		CantemoAPI:       *cantemoAPI,
 		VaultAPI:         *vaultAPI,
+		MarkersAPI:       NewMarkersAPI(),
 	}
 
 	if os.Getenv("STATIC_FILE_PATH") != "" {
