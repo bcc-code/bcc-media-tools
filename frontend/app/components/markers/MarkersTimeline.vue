@@ -82,7 +82,11 @@ const ticks = computed(() => {
     const step = tickStep.value;
     const out: { seconds: number; left: string; label: string }[] = [];
     for (let s = 0; s <= props.duration; s += step) {
-        out.push({ seconds: s, left: `${pct(s)}%`, label: formatMarkerTime(s) });
+        out.push({
+            seconds: s,
+            left: `${pct(s)}%`,
+            label: formatMarkerTime(s),
+        });
     }
     return out;
 });
@@ -101,7 +105,9 @@ watch(zoom, () => nextTick(keepPlayheadVisible));
 </script>
 
 <template>
-    <div class="border-border-1 bg-surface-default rounded-xl border p-3">
+    <div
+        class="gradient-border bg-surface-default shadow-resting rounded-2xl p-3"
+    >
         <div
             v-if="lanes.length === 0"
             class="text-text-hint py-6 text-center text-sm"

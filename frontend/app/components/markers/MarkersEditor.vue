@@ -110,7 +110,7 @@ defineExpose({ focusLabel });
 <template>
     <div
         v-if="marker"
-        class="border-border-1 bg-surface-default flex flex-col gap-4 rounded-xl border p-4"
+        class="gradient-border bg-surface-default shadow-resting flex flex-col gap-4 rounded-2xl p-4"
     >
         <div class="flex items-center justify-between">
             <h2 class="text-title-2 text-text-default flex items-center gap-2">

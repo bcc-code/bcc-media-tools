@@ -286,7 +286,7 @@ useEventListener(window, "beforeunload", (event: BeforeUnloadEvent) => {
         >
             <div class="flex min-h-0 flex-col gap-3">
                 <div
-                    class="bg-surface-default relative aspect-video max-h-full w-full shrink-0 overflow-hidden rounded-xl shadow-xl"
+                    class="bg-surface-default shadow-resting gradient-border relative aspect-video max-h-full w-full shrink-0 overflow-hidden rounded-2xl"
                 >
                     <video
                         v-if="videoStatus === 'success' && videoUrl"
@@ -393,7 +393,7 @@ useEventListener(window, "beforeunload", (event: BeforeUnloadEvent) => {
                     <motion.div
                         layout="position"
                         :transition="{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }"
-                        class="border-border-1 bg-surface-default flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border"
+                        class="gradient-border bg-surface-default shadow-resting flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl"
                     >
                         <div
                             class="border-border-1 text-text-muted flex shrink-0 items-center justify-between border-b px-4 py-2 text-sm"
