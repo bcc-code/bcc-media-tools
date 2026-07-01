@@ -141,8 +141,12 @@ useEventListener(window, "keydown", (event: KeyboardEvent) => {
 </script>
 
 <template>
-    <div class="mx-auto flex w-full max-w-7xl flex-col gap-4 p-8">
-        <header class="flex flex-wrap items-center justify-between gap-3">
+    <div
+        class="mx-auto flex h-[calc(100vh-var(--header-height,3.5rem))] w-full max-w-[1700px] flex-col gap-3 p-4"
+    >
+        <header
+            class="flex shrink-0 flex-wrap items-center justify-between gap-3"
+        >
             <div>
                 <NuxtLink
                     to="/markers/"
@@ -173,141 +177,148 @@ useEventListener(window, "keydown", (event: KeyboardEvent) => {
             </div>
         </header>
 
-        <!-- Video -->
+        <!-- Workspace: video + timeline (left), list + editor (right) -->
         <div
-            class="bg-surface-default relative aspect-video w-full overflow-hidden rounded-xl shadow-xl"
+            class="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[1fr_380px]"
         >
-            <video
-                v-if="videoStatus === 'success' && videoUrl"
-                ref="videoElement"
-                :src="videoUrl"
-                controls
-                class="size-full"
-            />
-            <DesignSkeleton
-                v-else-if="videoStatus === 'pending'"
-                class="size-full"
-            />
-            <div
-                v-else
-                class="text-text-hint flex size-full flex-col items-center justify-center gap-2 text-sm"
-            >
-                <Icon name="tabler:video-off" class="size-8" />
-                {{ t("markers.previewUnavailable") }}
-            </div>
-
-            <!-- On-video overlay of markers active at the playhead -->
-            <div
-                v-if="activeMarkers.length"
-                class="pointer-events-none absolute top-4 left-4 flex flex-col gap-1.5"
-            >
+            <!-- Left column -->
+            <div class="flex min-h-0 flex-col gap-3">
                 <div
-                    v-for="m in activeMarkers"
-                    :key="m.id"
-                    class="flex items-center gap-2 rounded-md bg-black/70 px-3 py-1.5 text-sm text-white backdrop-blur"
+                    class="bg-surface-default relative aspect-video max-h-full w-full shrink-0 overflow-hidden rounded-xl shadow-xl"
                 >
-                    <Icon
-                        :name="markerTypeMeta(m.type).icon"
-                        class="size-4 shrink-0"
-                        :class="markerTypeMeta(m.type).iconColor"
+                    <video
+                        v-if="videoStatus === 'success' && videoUrl"
+                        ref="videoElement"
+                        :src="videoUrl"
+                        controls
+                        class="size-full bg-black object-contain"
                     />
-                    <span class="font-medium">{{
-                        m.label || t(`markers.types.${m.type}`)
-                    }}</span>
+                    <DesignSkeleton
+                        v-else-if="videoStatus === 'pending'"
+                        class="size-full"
+                    />
+                    <div
+                        v-else
+                        class="text-text-hint flex size-full flex-col items-center justify-center gap-2 text-sm"
+                    >
+                        <Icon name="tabler:video-off" class="size-8" />
+                        {{ t("markers.previewUnavailable") }}
+                    </div>
+
+                    <!-- On-video overlay of markers active at the playhead -->
+                    <div
+                        v-if="activeMarkers.length"
+                        class="pointer-events-none absolute top-4 left-4 flex flex-col gap-1.5"
+                    >
+                        <div
+                            v-for="m in activeMarkers"
+                            :key="m.id"
+                            class="flex items-center gap-2 rounded-md bg-black/70 px-3 py-1.5 text-sm text-white backdrop-blur"
+                        >
+                            <Icon
+                                :name="markerTypeMeta(m.type).icon"
+                                class="size-4 shrink-0"
+                                :class="markerTypeMeta(m.type).iconColor"
+                            />
+                            <span class="font-medium">{{
+                                m.label || t(`markers.types.${m.type}`)
+                            }}</span>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Controls (undo notice folds in on the right when present) -->
+                <div class="flex shrink-0 items-center gap-3">
+                    <span class="text-text-default font-medium tabular-nums">
+                        {{ formatTime(currentTime) }}
+                    </span>
+                    <DesignTooltip :content="t('markers.addHint')">
+                        <DesignButton icon="tabler:plus" @click="addMarker">
+                            {{ t("markers.addAtPlayhead") }}
+                        </DesignButton>
+                    </DesignTooltip>
+                    <div
+                        v-if="lastRemoved"
+                        class="ml-auto flex items-center gap-2"
+                    >
+                        <span class="text-text-muted text-sm">
+                            {{
+                                t("markers.removed", {
+                                    label:
+                                        lastRemoved.label ||
+                                        t(`markers.types.${lastRemoved.type}`),
+                                })
+                            }}
+                        </span>
+                        <DesignButton
+                            size="small"
+                            variant="tertiary"
+                            icon="tabler:arrow-back-up"
+                            @click="undoRemove"
+                        >
+                            {{ t("markers.undo") }}
+                        </DesignButton>
+                    </div>
+                </div>
+
+                <MarkersTimeline
+                    class="shrink-0"
+                    :markers="visibleMarkers"
+                    :duration="effectiveDuration"
+                    :current="currentTime"
+                    :selected-id="selectedId"
+                    @select="(id) => (selectedId = id)"
+                    @seek="seek"
+                />
             </div>
-        </div>
 
-        <!-- Controls -->
-        <div class="flex items-center gap-3">
-            <span class="text-text-default font-medium tabular-nums">
-                {{ formatTime(currentTime) }}
-            </span>
-            <DesignTooltip :content="t('markers.addHint')">
-                <DesignButton icon="tabler:plus" @click="addMarker">
-                    {{ t("markers.addAtPlayhead") }}
-                </DesignButton>
-            </DesignTooltip>
-        </div>
-
-        <!-- Timeline -->
-        <MarkersTimeline
-            :markers="visibleMarkers"
-            :duration="effectiveDuration"
-            :current="currentTime"
-            :selected-id="selectedId"
-            @select="(id) => (selectedId = id)"
-            @seek="seek"
-        />
-
-        <!-- Undo notice -->
-        <div
-            v-if="lastRemoved"
-            class="border-border-1 bg-surface-default flex items-center justify-between gap-3 rounded-xl border px-4 py-2"
-        >
-            <span class="text-text-muted text-sm">
-                {{
-                    t("markers.removed", {
-                        label:
-                            lastRemoved.label ||
-                            t(`markers.types.${lastRemoved.type}`),
-                    })
-                }}
-            </span>
-            <DesignButton
-                size="small"
-                variant="tertiary"
-                icon="tabler:arrow-back-up"
-                @click="undoRemove"
-            >
-                {{ t("markers.undo") }}
-            </DesignButton>
-        </div>
-
-        <!-- List + editor -->
-        <div class="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_360px]">
-            <div
-                class="border-border-1 bg-surface-default flex max-h-[28rem] flex-col overflow-hidden rounded-xl border"
-            >
+            <!-- Right column: marker list (scrolls) on top, editor below -->
+            <div class="flex min-h-0 flex-col gap-4">
                 <div
-                    class="border-border-1 text-text-muted flex items-center justify-between border-b px-4 py-2 text-sm"
+                    class="border-border-1 bg-surface-default flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border"
                 >
-                    <span>{{ t("markers.list.title") }}</span>
-                    <span class="tabular-nums">{{
-                        visibleMarkers.length
-                    }}</span>
+                    <div
+                        class="border-border-1 text-text-muted flex shrink-0 items-center justify-between border-b px-4 py-2 text-sm"
+                    >
+                        <span>{{ t("markers.list.title") }}</span>
+                        <span class="tabular-nums">{{
+                            visibleMarkers.length
+                        }}</span>
+                    </div>
+                    <div
+                        v-if="visibleMarkers.length"
+                        class="flex flex-col gap-0.5 overflow-y-auto p-2"
+                    >
+                        <MarkersListItem
+                            v-for="marker in visibleMarkers"
+                            :key="marker.id"
+                            :marker="marker"
+                            :selected="marker.id === selectedId"
+                            :current-time="currentTime"
+                            @select="
+                                selectedId = marker.id;
+                                seek(marker.start);
+                            "
+                        />
+                    </div>
+                    <div
+                        v-else
+                        class="text-text-hint flex flex-1 items-center justify-center p-8 text-center text-sm"
+                    >
+                        {{ t("markers.list.empty") }}
+                    </div>
                 </div>
-                <div
-                    v-if="visibleMarkers.length"
-                    class="flex flex-col gap-0.5 overflow-y-auto p-2"
-                >
-                    <MarkersListItem
-                        v-for="marker in visibleMarkers"
-                        :key="marker.id"
-                        :marker="marker"
-                        :selected="marker.id === selectedId"
+
+                <div class="shrink-0">
+                    <MarkersEditor
+                        :marker="selectedMarker"
                         :current-time="currentTime"
-                        @select="
-                            selectedId = marker.id;
-                            seek(marker.start);
-                        "
+                        @update="onUpdate"
+                        @remove="onRemove"
+                        @seek="seek"
                     />
                 </div>
-                <div
-                    v-else
-                    class="text-text-hint flex flex-1 items-center justify-center p-8 text-center text-sm"
-                >
-                    {{ t("markers.list.empty") }}
-                </div>
             </div>
-
-            <MarkersEditor
-                :marker="selectedMarker"
-                :current-time="currentTime"
-                @update="onUpdate"
-                @remove="onRemove"
-                @seek="seek"
-            />
         </div>
     </div>
 </template>
