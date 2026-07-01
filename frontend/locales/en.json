@@ -239,6 +239,8 @@
         "importConfirm": "Replace the current markers with the imported file?",
         "imported": "Imported {count} markers",
         "importError": "Couldn't read that markers file",
+        "loadError": "Couldn't load markers",
+        "retry": "Retry",
         "empty": {
             "title": "No markers yet",
             "hint": "Add a marker at the playhead, or press M"

@@ -239,6 +239,8 @@
         "importConfirm": "Erstatt gjeldende markører med den importerte filen?",
         "imported": "Importerte {count} markører",
         "importError": "Kunne ikke lese markørfilen",
+        "loadError": "Kunne ikke laste markører",
+        "retry": "Prøv igjen",
         "empty": {
             "title": "Ingen markører ennå",
             "hint": "Legg til en markør ved spillehodet, eller trykk M"

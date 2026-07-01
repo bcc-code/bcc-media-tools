@@ -61,17 +61,20 @@ export function useMarkers(vxId: MaybeRefOrGetter<string>) {
 
     const markers = ref<Marker[]>([]);
     const loading = ref(true);
+    const error = ref(false);
     // True when there are local changes not yet submitted (via `save`).
     const dirty = ref(false);
 
     async function load() {
         loading.value = true;
+        error.value = false;
         try {
             const res = await api.getMarkers({ VXID: toValue(vxId) });
             markers.value = res.markers.map(fromPb);
             dirty.value = false;
         } catch (err) {
             console.error("Failed to load markers", err);
+            error.value = true;
         } finally {
             loading.value = false;
         }
@@ -134,6 +137,8 @@ export function useMarkers(vxId: MaybeRefOrGetter<string>) {
     return {
         markers,
         loading,
+        error,
+        reload: load,
         dirty,
         add,
         update,

@@ -31,6 +31,9 @@ onMounted(() => {
 const api = useAPI();
 const {
     markers,
+    loading,
+    error,
+    reload,
     dirty,
     add,
     update,
@@ -109,6 +112,7 @@ const lastMarkerType = useLocalStorage<MarkerType>(
 
 const editor = useTemplateRef("editor");
 function addMarker() {
+    if (loading.value || error.value) return;
     const start = Math.round(currentTime.value);
     const end = Math.min(start + 5, Math.round(effectiveDuration.value));
     const marker = add({ start, end, type: lastMarkerType.value });
@@ -425,7 +429,11 @@ useEventListener(window, "beforeunload", (event: BeforeUnloadEvent) => {
                         {{ formatMarkerTime(currentTime) }}
                     </span>
                     <DesignTooltip :content="t('markers.addHint')">
-                        <DesignButton icon="tabler:plus" @click="addMarker">
+                        <DesignButton
+                            icon="tabler:plus"
+                            :disabled="loading || error"
+                            @click="addMarker"
+                        >
                             {{ t("markers.addAtPlayhead") }}
                         </DesignButton>
                     </DesignTooltip>
@@ -453,8 +461,12 @@ useEventListener(window, "beforeunload", (event: BeforeUnloadEvent) => {
                     </div>
                 </div>
 
+                <DesignSkeleton
+                    v-if="loading"
+                    class="h-40 w-full shrink-0 rounded-2xl"
+                />
                 <MarkersTimeline
-                    v-if="visibleMarkers.length"
+                    v-else-if="visibleMarkers.length"
                     class="shrink-0"
                     :markers="visibleMarkers"
                     :duration="effectiveDuration"
@@ -467,7 +479,37 @@ useEventListener(window, "beforeunload", (event: BeforeUnloadEvent) => {
 
             <LayoutGroup>
                 <div class="flex min-h-0 flex-col gap-4">
-                    <template v-if="visibleMarkers.length">
+                    <template v-if="loading">
+                        <DesignSkeleton
+                            class="h-72 w-full shrink-0 rounded-2xl"
+                        />
+                        <DesignSkeleton
+                            class="min-h-0 w-full flex-1 rounded-2xl"
+                        />
+                    </template>
+
+                    <div
+                        v-else-if="error"
+                        class="gradient-border bg-surface-default shadow-resting flex min-h-0 flex-1 flex-col items-center justify-center gap-3 rounded-2xl p-8 text-center"
+                    >
+                        <Icon
+                            name="tabler:alert-triangle"
+                            class="text-semantic-error size-8"
+                        />
+                        <p class="text-body-3 text-text-default">
+                            {{ t("markers.loadError") }}
+                        </p>
+                        <DesignButton
+                            size="small"
+                            variant="secondary"
+                            icon="tabler:refresh"
+                            @click="reload"
+                        >
+                            {{ t("markers.retry") }}
+                        </DesignButton>
+                    </div>
+
+                    <template v-else-if="visibleMarkers.length">
                         <motion.div
                             layout="position"
                             :transition="{
