@@ -85,3 +85,23 @@ export function markerTypeMeta(type: MarkerType): MarkerTypeMeta {
 export function sortMarkers(markers: Marker[]): Marker[] {
     return [...markers].sort((a, b) => a.start - b.start || a.end - b.end);
 }
+
+// Markers are shown/edited at whole-second granularity — ms precision isn't
+// meaningful for on-screen graphics. (The shared `formatTime` keeps ms for the
+// transcription editor; these are marker-specific.)
+export function formatMarkerTime(seconds: number): string {
+    const s = Math.max(0, Math.round(seconds));
+    const hh = Math.floor(s / 3600);
+    const mm = Math.floor((s % 3600) / 60);
+    const ss = s % 60;
+    return [hh, mm, ss].map((n) => n.toString().padStart(2, "0")).join(":");
+}
+
+// Parses "SS", "MM:SS" or "HH:MM:SS" into whole seconds; NaN if malformed.
+export function parseMarkerTime(value: string): number {
+    const parts = value.trim().split(":");
+    if (parts.length === 0 || parts.length > 3) return NaN;
+    const nums = parts.map(Number);
+    if (nums.some((n) => !Number.isFinite(n) || n < 0)) return NaN;
+    return nums.reduce((total, n) => total * 60 + n, 0);
+}

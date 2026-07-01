@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import { MARKER_TYPES, markerTypeMeta } from "~/utils/markers";
+import {
+    MARKER_TYPES,
+    formatMarkerTime,
+    markerTypeMeta,
+    parseMarkerTime,
+} from "~/utils/markers";
 import type { Marker } from "~/utils/markers";
 
 const props = defineProps<{
@@ -44,29 +49,26 @@ watch(
     () => props.marker,
     (m) => {
         if (!m) return;
-        startStr.value = formatTime(m.start);
-        endStr.value = formatTime(m.end);
+        startStr.value = formatMarkerTime(m.start);
+        endStr.value = formatMarkerTime(m.end);
     },
     { immediate: true, deep: true },
 );
 
 function commit(which: "start" | "end") {
     const raw = which === "start" ? startStr.value : endStr.value;
-    try {
-        const seconds = secondsFromFormattedTime(raw);
-        if (!Number.isFinite(seconds) || seconds < 0)
-            throw new Error("bad time");
+    const seconds = parseMarkerTime(raw);
+    if (Number.isFinite(seconds)) {
         emit("update", { [which]: seconds });
-    } catch {
+    } else if (props.marker) {
         // Revert the field to the last good value.
-        if (!props.marker) return;
-        startStr.value = formatTime(props.marker.start);
-        endStr.value = formatTime(props.marker.end);
+        startStr.value = formatMarkerTime(props.marker.start);
+        endStr.value = formatMarkerTime(props.marker.end);
     }
 }
 
 function setToCurrent(which: "start" | "end") {
-    emit("update", { [which]: props.currentTime });
+    emit("update", { [which]: Math.round(props.currentTime) });
 }
 
 const duration = computed(() => {
@@ -170,7 +172,7 @@ const duration = computed(() => {
         </div>
 
         <p class="text-text-hint text-caption-1">
-            {{ t("markers.editor.duration") }}: {{ duration.toFixed(2) }}s
+            {{ t("markers.editor.duration") }}: {{ Math.round(duration) }} s
         </p>
 
         <DesignButton

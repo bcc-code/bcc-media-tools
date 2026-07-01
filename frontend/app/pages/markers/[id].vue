@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { LayoutGroup, motion } from "motion-v";
-import { markerTypeMeta, sortMarkers } from "~/utils/markers";
+import { formatMarkerTime, markerTypeMeta, sortMarkers } from "~/utils/markers";
 import type { Marker } from "~/utils/markers";
 
 // Seconds the arrow keys jump the playhead.
@@ -72,8 +72,8 @@ const activeMarkers = computed(() =>
 
 // ---- Mutations --------------------------------------------------------------
 function addMarker() {
-    const start = currentTime.value;
-    const end = Math.min(start + 5, effectiveDuration.value);
+    const start = Math.round(currentTime.value);
+    const end = Math.min(start + 5, Math.round(effectiveDuration.value));
     const marker = add({ start, end, type: "name-super" });
     selectedId.value = marker.id;
 }
@@ -234,7 +234,7 @@ useEventListener(window, "keydown", (event: KeyboardEvent) => {
                 <!-- Controls (undo notice folds in on the right when present) -->
                 <div class="flex shrink-0 items-center gap-3">
                     <span class="text-text-default font-medium tabular-nums">
-                        {{ formatTime(currentTime) }}
+                        {{ formatMarkerTime(currentTime) }}
                     </span>
                     <DesignTooltip :content="t('markers.addHint')">
                         <DesignButton icon="tabler:plus" @click="addMarker">

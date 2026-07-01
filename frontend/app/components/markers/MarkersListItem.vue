@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { markerTypeMeta } from "~/utils/markers";
+import { formatMarkerTime, markerTypeMeta } from "~/utils/markers";
 import type { Marker } from "~/utils/markers";
 
 const props = defineProps<{
@@ -32,8 +32,9 @@ const active = computed(
             class="size-4 shrink-0"
             :class="markerTypeMeta(marker.type).iconColor"
         />
-        <span class="text-text-hint text-caption-1 w-52 shrink-0 tabular-nums">
-            {{ formatTime(marker.start) }} – {{ formatTime(marker.end) }}
+        <span class="text-text-hint text-caption-1 w-40 shrink-0 tabular-nums">
+            {{ formatMarkerTime(marker.start) }} –
+            {{ formatMarkerTime(marker.end) }}
         </span>
         <span class="text-body-3 text-text-default truncate">
             {{ marker.label || t(`markers.types.${marker.type}`) }}

@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import { MARKER_TYPES, markerTypeMeta } from "~/utils/markers";
+import {
+    MARKER_TYPES,
+    formatMarkerTime,
+    markerTypeMeta,
+} from "~/utils/markers";
 import type { Marker, MarkerType } from "~/utils/markers";
 
 const props = defineProps<{
@@ -99,7 +103,7 @@ function laneLabel(type: MarkerType) {
                     <DesignTooltip
                         v-for="marker in lane.markers"
                         :key="marker.id"
-                        :content="`${marker.label || laneLabel(marker.type)} · ${formatTime(marker.start)}–${formatTime(marker.end)}`"
+                        :content="`${marker.label || laneLabel(marker.type)} · ${formatMarkerTime(marker.start)}–${formatMarkerTime(marker.end)}`"
                     >
                         <button
                             type="button"
