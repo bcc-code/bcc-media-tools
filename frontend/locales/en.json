@@ -240,7 +240,7 @@
             "demoHint": "Frontend-only preview — markers are stored in your browser."
         },
         "types": {
-            "name-super": "Name-super",
+            "name-super": "Person",
             "bible-verse": "Bible verse",
             "song": "Song",
             "chapter": "Chapter",
