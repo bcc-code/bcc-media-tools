@@ -181,11 +181,9 @@ useEventListener(window, "keydown", (event: KeyboardEvent) => {
             </div>
         </header>
 
-        <!-- Workspace: video + timeline (left), list + editor (right) -->
         <div
             class="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[1fr_380px]"
         >
-            <!-- Left column -->
             <div class="flex min-h-0 flex-col gap-3">
                 <div
                     class="bg-surface-default relative aspect-video max-h-full w-full shrink-0 overflow-hidden rounded-xl shadow-xl"
@@ -209,7 +207,6 @@ useEventListener(window, "keydown", (event: KeyboardEvent) => {
                         {{ t("markers.previewUnavailable") }}
                     </div>
 
-                    <!-- On-video overlay of markers active at the playhead -->
                     <div
                         v-if="activeMarkers.length"
                         class="pointer-events-none absolute top-4 left-4 flex flex-col gap-1.5"
@@ -231,7 +228,6 @@ useEventListener(window, "keydown", (event: KeyboardEvent) => {
                     </div>
                 </div>
 
-                <!-- Controls (undo notice folds in on the right when present) -->
                 <div class="flex shrink-0 items-center gap-3">
                     <span class="text-text-default font-medium tabular-nums">
                         {{ formatMarkerTime(currentTime) }}
@@ -276,9 +272,6 @@ useEventListener(window, "keydown", (event: KeyboardEvent) => {
                 />
             </div>
 
-            <!-- Right column: editor (inspector) on top, marker list below.
-                 The editor grows/shrinks with selection; LayoutGroup animates
-                 the list smoothly repositioning instead of jumping. -->
             <LayoutGroup>
                 <div class="flex min-h-0 flex-col gap-4">
                     <motion.div

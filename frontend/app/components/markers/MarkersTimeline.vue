@@ -76,7 +76,6 @@ function laneLabel(type: MarkerType) {
         </div>
 
         <div v-else class="flex gap-3">
-            <!-- Labels column; heights mirror the track rows so they align. -->
             <div class="flex w-32 shrink-0 flex-col gap-2">
                 <div
                     v-for="lane in lanes"
@@ -88,7 +87,6 @@ function laneLabel(type: MarkerType) {
                 </div>
             </div>
 
-            <!-- Tracks column; a single playhead is overlaid across all lanes. -->
             <div
                 class="relative flex grow flex-col gap-2"
                 @mousemove="onTracksMove"
@@ -120,8 +118,6 @@ function laneLabel(type: MarkerType) {
                                 emit('seek', marker.start);
                             "
                         >
-                            <!-- Padding lives on the (clipped) label so the block
-                                 itself can shrink to its true width. -->
                             <span class="min-w-0 truncate px-1.5">{{
                                 marker.label || laneLabel(marker.type)
                             }}</span>
