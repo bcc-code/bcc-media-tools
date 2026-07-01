@@ -245,19 +245,11 @@ useEventListener(window, "beforeunload", (event: BeforeUnloadEvent) => {
         <header
             class="flex shrink-0 flex-wrap items-center justify-between gap-3"
         >
-            <div>
-                <NuxtLink
-                    to="/markers/"
-                    class="text-text-hint hover:text-text-default text-caption-1 inline-flex items-center gap-1"
-                >
-                    <Icon name="tabler:chevron-left" class="size-3.5" />
-                    {{ t("markers.index.title") }}
-                </NuxtLink>
-                <h1 class="text-heading-3 text-text-default">
-                    {{ t("markers.editor.pageTitle") }}
-                    <span class="text-text-muted">{{ vxId }}</span>
-                </h1>
-            </div>
+            <h1 class="text-heading-3 text-text-default">
+                {{ t("markers.editor.pageTitle") }}
+                <span class="text-text-muted">{{ vxId }}</span>
+            </h1>
+
             <div class="flex items-center gap-3">
                 <span
                     class="text-caption-1 inline-flex items-center gap-1"
