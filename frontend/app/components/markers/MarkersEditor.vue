@@ -62,12 +62,22 @@ watch(
 function commit(which: "start" | "end") {
     const raw = which === "start" ? startStr.value : endStr.value;
     const seconds = parseMarkerTime(raw);
-    if (Number.isFinite(seconds)) {
-        emit("update", { [which]: seconds });
-    } else if (props.marker) {
-        startStr.value = formatMarkerTime(props.marker.start);
-        endStr.value = formatMarkerTime(props.marker.end);
+    if (!Number.isFinite(seconds) || !props.marker) {
+        // Revert the field to the last good value.
+        if (props.marker) {
+            startStr.value = formatMarkerTime(props.marker.start);
+            endStr.value = formatMarkerTime(props.marker.end);
+        }
+        return;
     }
+    // Clamp so the range can't invert (Out before In or vice-versa).
+    const value =
+        which === "start"
+            ? Math.min(Math.max(0, seconds), props.marker.end)
+            : Math.max(seconds, props.marker.start);
+    emit("update", { [which]: value });
+    if (which === "start") startStr.value = formatMarkerTime(value);
+    else endStr.value = formatMarkerTime(value);
 }
 
 function setToCurrent(which: "start" | "end") {
@@ -88,6 +98,13 @@ const duration = computed(() => {
     if (!props.marker) return 0;
     return Math.max(0, props.marker.end - props.marker.start);
 });
+
+const labelInput = useTemplateRef("labelInput");
+function focusLabel() {
+    const root = labelInput.value?.$el as HTMLElement | undefined;
+    root?.querySelector("input")?.focus();
+}
+defineExpose({ focusLabel });
 </script>
 
 <template>
@@ -126,6 +143,7 @@ const duration = computed(() => {
         </div>
 
         <DesignInput
+            ref="labelInput"
             v-model="label"
             :label="t('markers.editor.label')"
             :placeholder="t('markers.editor.labelPlaceholder')"

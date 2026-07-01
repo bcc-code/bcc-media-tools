@@ -91,11 +91,13 @@ const lastMarkerType = useLocalStorage<MarkerType>(
     "name-super",
 );
 
+const editor = useTemplateRef("editor");
 function addMarker() {
     const start = Math.round(currentTime.value);
     const end = Math.min(start + 5, Math.round(effectiveDuration.value));
     const marker = add({ start, end, type: lastMarkerType.value });
     selectedId.value = marker.id;
+    nextTick(() => editor.value?.focusLabel());
 }
 
 function onUpdate(patch: Partial<Omit<Marker, "id">>) {
@@ -301,6 +303,7 @@ useEventListener(window, "keydown", (event: KeyboardEvent) => {
                         class="shrink-0"
                     >
                         <MarkersEditor
+                            ref="editor"
                             :marker="selectedMarker"
                             :current-time="currentTime"
                             @update="onUpdate"
