@@ -165,11 +165,17 @@ async function onSave() {
     });
 }
 
-// ---- Keyboard shortcuts (ignored while typing in a field) -------------------
-function isTyping(target: EventTarget | null) {
+// ---- Keyboard shortcuts -----------------------------------------------------
+// Ignore shortcuts while typing in a field or while an Ark widget (select,
+// slider, menu, …) is focused — those consume arrow/space keys themselves.
+function shouldIgnoreKey(target: EventTarget | null) {
     if (!(target instanceof HTMLElement)) return false;
     const tag = target.tagName;
-    return tag === "INPUT" || tag === "TEXTAREA" || target.isContentEditable;
+    if (tag === "INPUT" || tag === "TEXTAREA" || target.isContentEditable)
+        return true;
+    return !!target.closest(
+        '[data-scope="select"],[data-scope="slider"],[data-scope="menu"],[data-scope="combobox"]',
+    );
 }
 
 const showShortcuts = ref(false);
@@ -184,7 +190,7 @@ const shortcuts = computed(() => [
 ]);
 
 useEventListener(window, "keydown", (event: KeyboardEvent) => {
-    if (isTyping(event.target)) return;
+    if (shouldIgnoreKey(event.target)) return;
     const el = videoElement.value;
     switch (event.key) {
         case " ":
