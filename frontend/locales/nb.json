@@ -234,6 +234,11 @@
         "previewUnavailable": "Forhåndsvisning utilgjengelig",
         "removed": "Fjernet «{label}»",
         "undo": "Angre",
+        "import": "Importer markører",
+        "export": "Eksporter markører",
+        "importConfirm": "Erstatt gjeldende markører med den importerte filen?",
+        "imported": "Importerte {count} markører",
+        "importError": "Kunne ikke lese markørfilen",
         "empty": {
             "title": "Ingen markører ennå",
             "hint": "Legg til en markør ved spillehodet, eller trykk M"

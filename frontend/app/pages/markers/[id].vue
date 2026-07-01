@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { LayoutGroup, motion } from "motion-v";
 import { onBeforeRouteLeave } from "vue-router";
-import { formatMarkerTime, markerTypeMeta, sortMarkers } from "~/utils/markers";
+import {
+    formatMarkerTime,
+    markerTypeMeta,
+    parseMarkers,
+    serializeMarkers,
+    sortMarkers,
+} from "~/utils/markers";
 import type { Marker, MarkerType } from "~/utils/markers";
 
 // Seconds the arrow keys jump the playhead.
@@ -23,8 +29,17 @@ onMounted(() => {
 });
 
 const api = useAPI();
-const { markers, dirty, add, update, remove, restore, save, saving } =
-    useMarkers(vxId);
+const {
+    markers,
+    dirty,
+    add,
+    update,
+    remove,
+    restore,
+    replaceAll,
+    save,
+    saving,
+} = useMarkers(vxId);
 
 // ---- Video preview (reuses the existing getPreview RPC, like shorts) --------
 const { data: videoUrl, status: videoStatus } = useAsyncData(
@@ -165,6 +180,41 @@ async function onSave() {
     });
 }
 
+// ---- Import / export --------------------------------------------------------
+function exportMarkers() {
+    const blob = new Blob([serializeMarkers(vxId.value, markers.value)], {
+        type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `markers-${vxId.value}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+const fileInput = useTemplateRef("fileInput");
+async function onImportFile(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = "";
+    if (!file) return;
+    try {
+        const imported = parseMarkers(await file.text());
+        if (markers.value.length && !window.confirm(t("markers.importConfirm")))
+            return;
+        replaceAll(imported);
+        selectedId.value = undefined;
+        toaster.create({
+            title: t("markers.imported", { count: imported.length }),
+            type: "success",
+        });
+    } catch (err) {
+        console.error("Marker import failed", err);
+        toaster.create({ title: t("markers.importError"), type: "error" });
+    }
+}
+
 // ---- Keyboard shortcuts -----------------------------------------------------
 // Ignore shortcuts while typing in a field or while an Ark widget (select,
 // slider, menu, …) is focused — those consume arrow/space keys themselves.
@@ -266,7 +316,42 @@ useEventListener(window, "beforeunload", (event: BeforeUnloadEvent) => {
                     />
                     {{ dirty ? t("markers.unsaved") : t("markers.allSaved") }}
                 </span>
-                <DesignTooltip :content="t('markers.shortcuts.title')">
+                <input
+                    ref="fileInput"
+                    type="file"
+                    accept="application/json,.json"
+                    class="hidden"
+                    @change="onImportFile"
+                />
+                <DesignTooltip
+                    :content="t('markers.import')"
+                    placement="bottom"
+                >
+                    <button
+                        type="button"
+                        class="ds-focus-ring text-text-muted hover:bg-surface-indent hover:text-text-default flex items-center justify-center rounded-lg p-2 transition-colors"
+                        @click="fileInput?.click()"
+                    >
+                        <Icon name="tabler:file-import" class="size-4" />
+                    </button>
+                </DesignTooltip>
+                <DesignTooltip
+                    :content="t('markers.export')"
+                    placement="bottom"
+                >
+                    <button
+                        type="button"
+                        :disabled="!markers.length"
+                        class="ds-focus-ring text-text-muted hover:bg-surface-indent hover:text-text-default flex items-center justify-center rounded-lg p-2 transition-colors disabled:pointer-events-none disabled:opacity-40"
+                        @click="exportMarkers"
+                    >
+                        <Icon name="tabler:file-export" class="size-4" />
+                    </button>
+                </DesignTooltip>
+                <DesignTooltip
+                    :content="t('markers.shortcuts.title')"
+                    placement="bottom"
+                >
                     <button
                         type="button"
                         class="ds-focus-ring text-text-muted hover:bg-surface-indent hover:text-text-default flex items-center justify-center rounded-lg p-2 transition-colors"

@@ -86,6 +86,46 @@ export function sortMarkers(markers: Marker[]): Marker[] {
     return [...markers].sort((a, b) => a.start - b.start || a.end - b.end);
 }
 
+// ---- Import / export --------------------------------------------------------
+
+export type MarkersFile = {
+    vxId: string;
+    markers: Marker[];
+};
+
+export function serializeMarkers(vxId: string, markers: Marker[]): string {
+    const data: MarkersFile = { vxId, markers };
+    return JSON.stringify(data, null, 2);
+}
+
+// Coerce an untrusted imported entry into a valid Marker, filling gaps.
+function normalizeImportedMarker(raw: unknown): Marker {
+    const m = (raw ?? {}) as Record<string, unknown>;
+    const type = MARKER_TYPES.some((t) => t.value === m.type)
+        ? (m.type as MarkerType)
+        : "custom";
+    const start = Math.max(0, Number(m.start) || 0);
+    const end = Math.max(start, Number(m.end) || start);
+    return {
+        id: typeof m.id === "string" && m.id ? m.id : generateRandomId(),
+        type,
+        label: typeof m.label === "string" ? m.label : "",
+        note: typeof m.note === "string" && m.note ? m.note : undefined,
+        start,
+        end,
+        source: m.source === "imported" ? "imported" : "manual",
+    };
+}
+
+// Parse an exported markers file — either a { markers: [...] } wrapper or a
+// bare array — into validated markers. Throws if the shape is unusable.
+export function parseMarkers(text: string): Marker[] {
+    const data = JSON.parse(text);
+    const raw = Array.isArray(data) ? data : (data?.markers ?? null);
+    if (!Array.isArray(raw)) throw new Error("Invalid markers file");
+    return raw.map(normalizeImportedMarker);
+}
+
 // Markers are shown/edited at whole-second granularity — ms precision isn't
 // meaningful for on-screen graphics. (The shared `formatTime` keeps ms for the
 // transcription editor; these are marker-specific.)

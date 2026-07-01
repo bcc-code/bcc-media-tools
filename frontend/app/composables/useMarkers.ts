@@ -111,6 +111,12 @@ export function useMarkers(vxId: MaybeRefOrGetter<string>) {
         dirty.value = true;
     }
 
+    // Replace the whole working set (used by import).
+    function replaceAll(next: Marker[]) {
+        markers.value = next;
+        dirty.value = true;
+    }
+
     const saving = ref(false);
     async function save() {
         saving.value = true;
@@ -133,6 +139,7 @@ export function useMarkers(vxId: MaybeRefOrGetter<string>) {
         update,
         remove,
         restore,
+        replaceAll,
         save,
         saving,
     };
