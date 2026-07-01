@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { LayoutGroup, motion } from "motion-v";
 import { formatMarkerTime, markerTypeMeta, sortMarkers } from "~/utils/markers";
-import type { Marker } from "~/utils/markers";
+import type { Marker, MarkerType } from "~/utils/markers";
 
 // Seconds the arrow keys jump the playhead.
 const SEEK_STEP_SECONDS = 5;
@@ -71,15 +71,23 @@ const activeMarkers = computed(() =>
 );
 
 // ---- Mutations --------------------------------------------------------------
+// Remembers the type of the last marker added/edited so the next one defaults
+// to it (persisted across sessions).
+const lastMarkerType = useLocalStorage<MarkerType>(
+    "markers-last-type",
+    "name-super",
+);
+
 function addMarker() {
     const start = Math.round(currentTime.value);
     const end = Math.min(start + 5, Math.round(effectiveDuration.value));
-    const marker = add({ start, end, type: "name-super" });
+    const marker = add({ start, end, type: lastMarkerType.value });
     selectedId.value = marker.id;
 }
 
 function onUpdate(patch: Partial<Omit<Marker, "id">>) {
     if (!selectedId.value) return;
+    if (patch.type) lastMarkerType.value = patch.type;
     update(selectedId.value, patch);
 }
 
