@@ -235,6 +235,10 @@
         "previewUnavailable": "Forhåndsvisning utilgjengelig",
         "removed": "Fjernet «{label}»",
         "undo": "Angre",
+        "empty": {
+            "title": "Ingen markører ennå",
+            "hint": "Legg til en markør ved spillehodet, eller trykk M"
+        },
         "shortcuts": {
             "title": "Hurtigtaster",
             "playPause": "Spill / pause",

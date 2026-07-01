@@ -235,6 +235,10 @@
         "previewUnavailable": "Preview unavailable",
         "removed": "Removed \"{label}\"",
         "undo": "Undo",
+        "empty": {
+            "title": "No markers yet",
+            "hint": "Add a marker at the playhead, or press M"
+        },
         "shortcuts": {
             "title": "Keyboard shortcuts",
             "playPause": "Play / pause",
