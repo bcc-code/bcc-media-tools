@@ -192,6 +192,10 @@
         "vault": {
             "title": "Vault",
             "description": "Search Mediabanken and preview items"
+        },
+        "markers": {
+            "title": "Markers",
+            "description": "Add, edit and remove markers on a video"
         }
     },
     "vault": {
@@ -217,6 +221,57 @@
             "video": "Video",
             "audio": "Audio",
             "image": "Image"
+        }
+    },
+    "markers": {
+        "save": "Save",
+        "saved": "Markers saved",
+        "savedMock": "Saved (mock — no backend yet)",
+        "savedLocally": "Saved locally",
+        "addAtPlayhead": "Add marker at playhead",
+        "addHint": "Press M to add a marker",
+        "previewUnavailable": "Preview unavailable",
+        "removed": "Removed \"{label}\"",
+        "undo": "Undo",
+        "index": {
+            "title": "Markers",
+            "description": "Open a Cantemo asset by its VX-ID to manage markers.",
+            "open": "Open",
+            "demoHint": "Frontend-only preview — markers are stored in your browser."
+        },
+        "types": {
+            "name-super": "Name-super",
+            "bible-verse": "Bible verse",
+            "song": "Song",
+            "chapter": "Chapter",
+            "custom": "Custom"
+        },
+        "source": {
+            "imported": "Imported",
+            "manual": "Manual"
+        },
+        "timeline": {
+            "empty": "No markers yet. Add one at the playhead."
+        },
+        "list": {
+            "title": "Markers",
+            "empty": "No markers match the current filter."
+        },
+        "editor": {
+            "pageTitle": "Markers ·",
+            "title": "Edit marker",
+            "type": "Type",
+            "label": "Label",
+            "labelPlaceholder": "e.g. John Doe or John 3:16",
+            "note": "Note",
+            "notePlaceholder": "Optional note",
+            "in": "In",
+            "out": "Out",
+            "setToPlayhead": "Playhead",
+            "seekTo": "Seek to",
+            "duration": "Duration",
+            "remove": "Remove marker",
+            "noSelection": "Select a marker to edit, or add one at the playhead."
         }
     }
 }

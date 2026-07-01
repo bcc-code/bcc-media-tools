@@ -192,6 +192,10 @@
         "vault": {
             "title": "Vault",
             "description": "Søk i Mediabanken og forhåndsvis elementer"
+        },
+        "markers": {
+            "title": "Markører",
+            "description": "Legg til, rediger og fjern markører på en video"
         }
     },
     "vault": {
@@ -217,6 +221,57 @@
             "video": "Video",
             "audio": "Lyd",
             "image": "Bilde"
+        }
+    },
+    "markers": {
+        "save": "Lagre",
+        "saved": "Markører lagret",
+        "savedMock": "Lagret (mock — ingen backend ennå)",
+        "savedLocally": "Lagret lokalt",
+        "addAtPlayhead": "Legg til markør ved spillehodet",
+        "addHint": "Trykk M for å legge til en markør",
+        "previewUnavailable": "Forhåndsvisning utilgjengelig",
+        "removed": "Fjernet «{label}»",
+        "undo": "Angre",
+        "index": {
+            "title": "Markører",
+            "description": "Åpne et Cantemo-element med VX-ID for å håndtere markører.",
+            "open": "Åpne",
+            "demoHint": "Kun frontend — markører lagres i nettleseren din."
+        },
+        "types": {
+            "name-super": "Navneskilt",
+            "bible-verse": "Bibelvers",
+            "song": "Sang",
+            "chapter": "Kapittel",
+            "custom": "Egendefinert"
+        },
+        "source": {
+            "imported": "Importert",
+            "manual": "Manuell"
+        },
+        "timeline": {
+            "empty": "Ingen markører ennå. Legg til en ved spillehodet."
+        },
+        "list": {
+            "title": "Markører",
+            "empty": "Ingen markører samsvarer med filteret."
+        },
+        "editor": {
+            "pageTitle": "Markører ·",
+            "title": "Rediger markør",
+            "type": "Type",
+            "label": "Etikett",
+            "labelPlaceholder": "f.eks. Ola Nordmann eller Joh 3:16",
+            "note": "Notat",
+            "notePlaceholder": "Valgfritt notat",
+            "in": "Inn",
+            "out": "Ut",
+            "setToPlayhead": "Spillehode",
+            "seekTo": "Gå til",
+            "duration": "Varighet",
+            "remove": "Fjern markør",
+            "noSelection": "Velg en markør for å redigere, eller legg til en ved spillehodet."
         }
     }
 }
