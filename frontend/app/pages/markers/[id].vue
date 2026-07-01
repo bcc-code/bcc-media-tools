@@ -206,9 +206,10 @@ useEventListener(window, "keydown", (event: KeyboardEvent) => {
                     :key="m.id"
                     class="flex items-center gap-2 rounded-md bg-black/70 px-3 py-1.5 text-sm text-white backdrop-blur"
                 >
-                    <span
-                        class="size-2 rounded-full"
-                        :class="markerTypeMeta(m.type).color"
+                    <Icon
+                        :name="markerTypeMeta(m.type).icon"
+                        class="size-4 shrink-0"
+                        :class="markerTypeMeta(m.type).iconColor"
                     />
                     <span class="font-medium">{{
                         m.label || t(`markers.types.${m.type}`)

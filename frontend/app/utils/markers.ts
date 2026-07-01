@@ -33,18 +33,45 @@ export type Marker = {
 export type MarkerTypeMeta = {
     value: MarkerType;
     icon: string;
-    // Tailwind background class used on timeline blocks and list dots.
+    // Tailwind background class, used to fill the timeline blocks.
     color: string;
+    // Tailwind text class, used to tint the type icon in the list / overlay.
+    iconColor: string;
 };
 
 // Single source of truth for the available marker types. Labels are resolved
 // via i18n (`markers.types.<value>`); see `markerTypeLabel`.
 export const MARKER_TYPES: MarkerTypeMeta[] = [
-    { value: "name-super", icon: "tabler:user", color: "bg-blue-500" },
-    { value: "bible-verse", icon: "tabler:book-2", color: "bg-purple-500" },
-    { value: "song", icon: "tabler:music", color: "bg-emerald-500" },
-    { value: "chapter", icon: "tabler:bookmark", color: "bg-amber-500" },
-    { value: "custom", icon: "tabler:tag", color: "bg-slate-500" },
+    {
+        value: "name-super",
+        icon: "tabler:user",
+        color: "bg-blue-500",
+        iconColor: "text-blue-500",
+    },
+    {
+        value: "bible-verse",
+        icon: "tabler:book-2",
+        color: "bg-purple-500",
+        iconColor: "text-purple-500",
+    },
+    {
+        value: "song",
+        icon: "tabler:music",
+        color: "bg-emerald-500",
+        iconColor: "text-emerald-500",
+    },
+    {
+        value: "chapter",
+        icon: "tabler:bookmark",
+        color: "bg-amber-500",
+        iconColor: "text-amber-500",
+    },
+    {
+        value: "custom",
+        icon: "tabler:tag",
+        color: "bg-slate-500",
+        iconColor: "text-slate-500",
+    },
 ];
 
 export function markerTypeMeta(type: MarkerType): MarkerTypeMeta {
