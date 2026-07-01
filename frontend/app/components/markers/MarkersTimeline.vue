@@ -39,6 +39,15 @@ function blockStyle(marker: Marker) {
 
 const playheadStyle = computed(() => ({ left: `${pct(props.current)}%` }));
 
+// Muted hover playhead — previews where a click on the tracks would seek.
+const hoverLeft = ref<string | null>(null);
+function onTracksMove(event: MouseEvent) {
+    const el = event.currentTarget as HTMLElement;
+    const rect = el.getBoundingClientRect();
+    const ratio = (event.clientX - rect.left) / rect.width;
+    hoverLeft.value = `${Math.min(100, Math.max(0, ratio * 100))}%`;
+}
+
 // Click anywhere on a lane background to scrub there.
 function onLaneClick(event: MouseEvent) {
     if (!props.duration) return;
@@ -62,27 +71,31 @@ function laneLabel(type: MarkerType) {
             {{ t("markers.timeline.empty") }}
         </div>
 
-        <div v-else class="flex flex-col gap-2">
-            <div
-                v-for="lane in lanes"
-                :key="lane.value"
-                class="flex items-center gap-3"
-            >
+        <div v-else class="flex gap-3">
+            <!-- Labels column; heights mirror the track rows so they align. -->
+            <div class="flex w-32 shrink-0 flex-col gap-2">
                 <div
-                    class="text-text-muted flex w-32 shrink-0 items-center gap-1.5 text-sm"
+                    v-for="lane in lanes"
+                    :key="lane.value"
+                    class="text-text-muted flex h-7 items-center gap-1.5 text-sm"
                 >
                     <Icon :name="lane.icon" class="size-4 shrink-0" />
                     <span class="truncate">{{ laneLabel(lane.value) }}</span>
                 </div>
+            </div>
+
+            <!-- Tracks column; a single playhead is overlaid across all lanes. -->
+            <div
+                class="relative flex grow flex-col gap-2"
+                @mousemove="onTracksMove"
+                @mouseleave="hoverLeft = null"
+            >
                 <div
-                    class="bg-surface-indent relative h-7 grow cursor-pointer overflow-hidden rounded-md"
+                    v-for="lane in lanes"
+                    :key="lane.value"
+                    class="bg-surface-indent relative h-7 cursor-pointer overflow-hidden rounded-md"
                     @click="onLaneClick"
                 >
-                    <!-- Per-lane playhead segment; stacked lanes read as one line. -->
-                    <div
-                        class="bg-text-default pointer-events-none absolute inset-y-0 z-20 w-px"
-                        :style="playheadStyle"
-                    />
                     <DesignTooltip
                         v-for="marker in lane.markers"
                         :key="marker.id"
@@ -109,6 +122,16 @@ function laneLabel(type: MarkerType) {
                         </button>
                     </DesignTooltip>
                 </div>
+
+                <div
+                    v-if="hoverLeft"
+                    class="bg-text-default/30 pointer-events-none absolute inset-y-0 z-10 w-px"
+                    :style="{ left: hoverLeft }"
+                />
+                <div
+                    class="bg-text-default pointer-events-none absolute inset-y-0 z-20 w-px"
+                    :style="playheadStyle"
+                />
             </div>
         </div>
     </div>
