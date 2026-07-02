@@ -97,6 +97,17 @@ const (
 	APIServiceVaultSearchProcedure = "/api.v1.APIService/VaultSearch"
 	// APIServiceGetVaultItemProcedure is the fully-qualified name of the APIService's GetVaultItem RPC.
 	APIServiceGetVaultItemProcedure = "/api.v1.APIService/GetVaultItem"
+	// APIServiceGetMarkersProcedure is the fully-qualified name of the APIService's GetMarkers RPC.
+	APIServiceGetMarkersProcedure = "/api.v1.APIService/GetMarkers"
+	// APIServiceSubmitMarkersProcedure is the fully-qualified name of the APIService's SubmitMarkers
+	// RPC.
+	APIServiceSubmitMarkersProcedure = "/api.v1.APIService/SubmitMarkers"
+	// APIServiceSearchEntitiesProcedure is the fully-qualified name of the APIService's SearchEntities
+	// RPC.
+	APIServiceSearchEntitiesProcedure = "/api.v1.APIService/SearchEntities"
+	// APIServiceResolveReferencesProcedure is the fully-qualified name of the APIService's
+	// ResolveReferences RPC.
+	APIServiceResolveReferencesProcedure = "/api.v1.APIService/ResolveReferences"
 )
 
 // APIServiceClient is a client for the api.v1.APIService service.
@@ -135,6 +146,13 @@ type APIServiceClient interface {
 	// VAULT (Vidispine search)
 	VaultSearch(context.Context, *connect.Request[v1.VaultSearchRequest]) (*connect.Response[v1.VaultSearchResponse], error)
 	GetVaultItem(context.Context, *connect.Request[v1.GetVaultItemRequest]) (*connect.Response[v1.GetVaultItemResponse], error)
+	// Markers
+	GetMarkers(context.Context, *connect.Request[v1.GetMarkersRequest]) (*connect.Response[v1.GetMarkersResponse], error)
+	SubmitMarkers(context.Context, *connect.Request[v1.SubmitMarkersRequest]) (*connect.Response[v1.Void], error)
+	// Autocomplete for marker labels (bible passages, songs, people).
+	SearchEntities(context.Context, *connect.Request[v1.SearchEntitiesRequest]) (*connect.Response[v1.SearchEntitiesResponse], error)
+	// Bulk-resolve free-text marker labels to canonical entities.
+	ResolveReferences(context.Context, *connect.Request[v1.ResolveReferencesRequest]) (*connect.Response[v1.ResolveReferencesResponse], error)
 }
 
 // NewAPIServiceClient constructs a client for the api.v1.APIService service. By default, it uses
@@ -292,6 +310,30 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(aPIServiceMethods.ByName("GetVaultItem")),
 			connect.WithClientOptions(opts...),
 		),
+		getMarkers: connect.NewClient[v1.GetMarkersRequest, v1.GetMarkersResponse](
+			httpClient,
+			baseURL+APIServiceGetMarkersProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("GetMarkers")),
+			connect.WithClientOptions(opts...),
+		),
+		submitMarkers: connect.NewClient[v1.SubmitMarkersRequest, v1.Void](
+			httpClient,
+			baseURL+APIServiceSubmitMarkersProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("SubmitMarkers")),
+			connect.WithClientOptions(opts...),
+		),
+		searchEntities: connect.NewClient[v1.SearchEntitiesRequest, v1.SearchEntitiesResponse](
+			httpClient,
+			baseURL+APIServiceSearchEntitiesProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("SearchEntities")),
+			connect.WithClientOptions(opts...),
+		),
+		resolveReferences: connect.NewClient[v1.ResolveReferencesRequest, v1.ResolveReferencesResponse](
+			httpClient,
+			baseURL+APIServiceResolveReferencesProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("ResolveReferences")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -321,6 +363,10 @@ type aPIServiceClient struct {
 	triggerCantemoAction  *connect.Client[v1.TriggerCantemoActionRequest, v1.Void]
 	vaultSearch           *connect.Client[v1.VaultSearchRequest, v1.VaultSearchResponse]
 	getVaultItem          *connect.Client[v1.GetVaultItemRequest, v1.GetVaultItemResponse]
+	getMarkers            *connect.Client[v1.GetMarkersRequest, v1.GetMarkersResponse]
+	submitMarkers         *connect.Client[v1.SubmitMarkersRequest, v1.Void]
+	searchEntities        *connect.Client[v1.SearchEntitiesRequest, v1.SearchEntitiesResponse]
+	resolveReferences     *connect.Client[v1.ResolveReferencesRequest, v1.ResolveReferencesResponse]
 }
 
 // GetPermissions calls api.v1.APIService.GetPermissions.
@@ -443,6 +489,26 @@ func (c *aPIServiceClient) GetVaultItem(ctx context.Context, req *connect.Reques
 	return c.getVaultItem.CallUnary(ctx, req)
 }
 
+// GetMarkers calls api.v1.APIService.GetMarkers.
+func (c *aPIServiceClient) GetMarkers(ctx context.Context, req *connect.Request[v1.GetMarkersRequest]) (*connect.Response[v1.GetMarkersResponse], error) {
+	return c.getMarkers.CallUnary(ctx, req)
+}
+
+// SubmitMarkers calls api.v1.APIService.SubmitMarkers.
+func (c *aPIServiceClient) SubmitMarkers(ctx context.Context, req *connect.Request[v1.SubmitMarkersRequest]) (*connect.Response[v1.Void], error) {
+	return c.submitMarkers.CallUnary(ctx, req)
+}
+
+// SearchEntities calls api.v1.APIService.SearchEntities.
+func (c *aPIServiceClient) SearchEntities(ctx context.Context, req *connect.Request[v1.SearchEntitiesRequest]) (*connect.Response[v1.SearchEntitiesResponse], error) {
+	return c.searchEntities.CallUnary(ctx, req)
+}
+
+// ResolveReferences calls api.v1.APIService.ResolveReferences.
+func (c *aPIServiceClient) ResolveReferences(ctx context.Context, req *connect.Request[v1.ResolveReferencesRequest]) (*connect.Response[v1.ResolveReferencesResponse], error) {
+	return c.resolveReferences.CallUnary(ctx, req)
+}
+
 // APIServiceHandler is an implementation of the api.v1.APIService service.
 type APIServiceHandler interface {
 	// Permissions
@@ -479,6 +545,13 @@ type APIServiceHandler interface {
 	// VAULT (Vidispine search)
 	VaultSearch(context.Context, *connect.Request[v1.VaultSearchRequest]) (*connect.Response[v1.VaultSearchResponse], error)
 	GetVaultItem(context.Context, *connect.Request[v1.GetVaultItemRequest]) (*connect.Response[v1.GetVaultItemResponse], error)
+	// Markers
+	GetMarkers(context.Context, *connect.Request[v1.GetMarkersRequest]) (*connect.Response[v1.GetMarkersResponse], error)
+	SubmitMarkers(context.Context, *connect.Request[v1.SubmitMarkersRequest]) (*connect.Response[v1.Void], error)
+	// Autocomplete for marker labels (bible passages, songs, people).
+	SearchEntities(context.Context, *connect.Request[v1.SearchEntitiesRequest]) (*connect.Response[v1.SearchEntitiesResponse], error)
+	// Bulk-resolve free-text marker labels to canonical entities.
+	ResolveReferences(context.Context, *connect.Request[v1.ResolveReferencesRequest]) (*connect.Response[v1.ResolveReferencesResponse], error)
 }
 
 // NewAPIServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -632,6 +705,30 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(aPIServiceMethods.ByName("GetVaultItem")),
 		connect.WithHandlerOptions(opts...),
 	)
+	aPIServiceGetMarkersHandler := connect.NewUnaryHandler(
+		APIServiceGetMarkersProcedure,
+		svc.GetMarkers,
+		connect.WithSchema(aPIServiceMethods.ByName("GetMarkers")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aPIServiceSubmitMarkersHandler := connect.NewUnaryHandler(
+		APIServiceSubmitMarkersProcedure,
+		svc.SubmitMarkers,
+		connect.WithSchema(aPIServiceMethods.ByName("SubmitMarkers")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aPIServiceSearchEntitiesHandler := connect.NewUnaryHandler(
+		APIServiceSearchEntitiesProcedure,
+		svc.SearchEntities,
+		connect.WithSchema(aPIServiceMethods.ByName("SearchEntities")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aPIServiceResolveReferencesHandler := connect.NewUnaryHandler(
+		APIServiceResolveReferencesProcedure,
+		svc.ResolveReferences,
+		connect.WithSchema(aPIServiceMethods.ByName("ResolveReferences")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/api.v1.APIService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case APIServiceGetPermissionsProcedure:
@@ -682,6 +779,14 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceVaultSearchHandler.ServeHTTP(w, r)
 		case APIServiceGetVaultItemProcedure:
 			aPIServiceGetVaultItemHandler.ServeHTTP(w, r)
+		case APIServiceGetMarkersProcedure:
+			aPIServiceGetMarkersHandler.ServeHTTP(w, r)
+		case APIServiceSubmitMarkersProcedure:
+			aPIServiceSubmitMarkersHandler.ServeHTTP(w, r)
+		case APIServiceSearchEntitiesProcedure:
+			aPIServiceSearchEntitiesHandler.ServeHTTP(w, r)
+		case APIServiceResolveReferencesProcedure:
+			aPIServiceResolveReferencesHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -785,4 +890,20 @@ func (UnimplementedAPIServiceHandler) VaultSearch(context.Context, *connect.Requ
 
 func (UnimplementedAPIServiceHandler) GetVaultItem(context.Context, *connect.Request[v1.GetVaultItemRequest]) (*connect.Response[v1.GetVaultItemResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetVaultItem is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) GetMarkers(context.Context, *connect.Request[v1.GetMarkersRequest]) (*connect.Response[v1.GetMarkersResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetMarkers is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) SubmitMarkers(context.Context, *connect.Request[v1.SubmitMarkersRequest]) (*connect.Response[v1.Void], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.SubmitMarkers is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) SearchEntities(context.Context, *connect.Request[v1.SearchEntitiesRequest]) (*connect.Response[v1.SearchEntitiesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.SearchEntities is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) ResolveReferences(context.Context, *connect.Request[v1.ResolveReferencesRequest]) (*connect.Response[v1.ResolveReferencesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.ResolveReferences is not implemented"))
 }

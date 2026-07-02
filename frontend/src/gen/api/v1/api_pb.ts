@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/api.proto.
  */
 export const file_api_v1_api: GenFile = /*@__PURE__*/
-  fileDesc("ChBhcGkvdjEvYXBpLnByb3RvEgZhcGkudjEiaAoNQk1NUGVybWlzc2lvbhIRCglsYW5ndWFnZXMYASADKAkSDgoGYWxidW1zGAIgAygJEhAKCHBvZGNhc3RzGAMgAygJEg0KBWFkbWluGAQgASgIEhMKC2ludGVncmF0aW9uGAUgASgIIj0KF1RyYW5zY3JpcHRpb25QZXJtaXNzaW9uEg0KBWFkbWluGAEgASgIEhMKC21lZGlhYmFua2VuGAIgASgIImQKEEV4cG9ydFBlcm1pc3Npb24SFAoMZGVzdGluYXRpb25zGAEgAygJEg0KBWFkbWluGAIgASgIEhYKDnRpbWVkX21ldGFkYXRhGAMgASgIEhMKC2J1bGtfZXhwb3J0GAQgASgIIk4KElZCRXhwb3J0UGVybWlzc2lvbhIUCgxkZXN0aW5hdGlvbnMYASADKAkSDQoFYWRtaW4YAiABKAgSEwoLYnVsa19leHBvcnQYAyABKAgiXgoRQ2FudGVtb1Blcm1pc3Npb24SDwoHcHJldmlldxgBIAEoCBISCgp0cmFuc2NyaWJlGAIgASgIEhEKCXN1YnRpdGxlcxgDIAEoCBIRCglyZWxhdGlvbnMYBCABKAgiIgoPVmF1bHRQZXJtaXNzaW9uEg8KB2VuYWJsZWQYASABKAgitAIKC1Blcm1pc3Npb25zEg0KBWFkbWluGAEgASgIEiIKA2JtbRgCIAEoCzIVLmFwaS52MS5CTU1QZXJtaXNzaW9uEg0KBWVtYWlsGAMgASgJEjYKDXRyYW5zY3JpcHRpb24YBCABKAsyHy5hcGkudjEuVHJhbnNjcmlwdGlvblBlcm1pc3Npb24SKAoGZXhwb3J0GAUgASgLMhguYXBpLnYxLkV4cG9ydFBlcm1pc3Npb24SLQoJdmJfZXhwb3J0GAYgASgLMhouYXBpLnYxLlZCRXhwb3J0UGVybWlzc2lvbhIqCgdjYW50ZW1vGAcgASgLMhkuYXBpLnYxLkNhbnRlbW9QZXJtaXNzaW9uEiYKBXZhdWx0GAggASgLMhcuYXBpLnYxLlZhdWx0UGVybWlzc2lvbiIXChVHZXRQZXJtaXNzaW9uc1JlcXVlc3QiUAoVU2V0UGVybWlzc2lvbnNSZXF1ZXN0Eg0KBWVtYWlsGAEgASgJEigKC3Blcm1pc3Npb25zGAIgASgLMhMuYXBpLnYxLlBlcm1pc3Npb25zIikKGERlbGV0ZVBlcm1pc3Npb25zUmVxdWVzdBINCgVlbWFpbBgBIAEoCSKZAQoPUGVybWlzc2lvbnNMaXN0Ej0KC3Blcm1pc3Npb25zGAEgAygLMiguYXBpLnYxLlBlcm1pc3Npb25zTGlzdC5QZXJtaXNzaW9uc0VudHJ5GkcKEFBlcm1pc3Npb25zRW50cnkSCwoDa2V5GAEgASgJEiIKBXZhbHVlGAIgASgLMhMuYXBpLnYxLlBlcm1pc3Npb25zOgI4ASImCgdCTU1ZZWFyEgwKBHllYXIYASABKA0SDQoFY291bnQYAiABKA0iggEKEEdldFllYXJzUmVzcG9uc2USMAoEZGF0YRgBIAMoCzIiLmFwaS52MS5HZXRZZWFyc1Jlc3BvbnNlLkRhdGFFbnRyeRo8CglEYXRhRW50cnkSCwoDa2V5GAEgASgNEh4KBXZhbHVlGAIgASgLMg8uYXBpLnYxLkJNTVllYXI6AjgBIj4KD0dldFllYXJzUmVxdWVzdBIrCgtlbnZpcm9ubWVudBgBIAEoDjIWLmFwaS52MS5CbW1FbnZpcm9ubWVudCJNChBHZXRBbGJ1bXNSZXF1ZXN0EgwKBHllYXIYASABKA0SKwoLZW52aXJvbm1lbnQYAiABKA4yFi5hcGkudjEuQm1tRW52aXJvbm1lbnQiRAoFQWxidW0SCgoCaWQYASABKAkSDQoFdGl0bGUYAiABKAkSDQoFY292ZXIYBCABKAkSEQoJbGFuZ3VhZ2VzGAUgAygJIisKCkFsYnVtc0xpc3QSHQoGYWxidW1zGAEgAygLMg0uYXBpLnYxLkFsYnVtIlYKFUdldEFsYnVtVHJhY2tzUmVxdWVzdBIQCghhbGJ1bV9pZBgBIAEoCRIrCgtlbnZpcm9ubWVudBgCIAEoDjIWLmFwaS52MS5CbW1FbnZpcm9ubWVudCJqChdHZXRQb2RjYXN0VHJhY2tzUmVxdWVzdBITCgtwb2RjYXN0X3RhZxgBIAEoCRINCgVsaW1pdBgCIAEoDRIrCgtlbnZpcm9ubWVudBgDIAEoDjIWLmFwaS52MS5CbW1FbnZpcm9ubWVudCJLChxHZXRBdmFpbGFibGVMYW5ndWFnZXNSZXF1ZXN0EisKC2Vudmlyb25tZW50GAEgASgOMhYuYXBpLnYxLkJtbUVudmlyb25tZW50IsgBCghCTU1UcmFjaxIKCgJpZBgBIAEoCRINCgV0aXRsZRgCIAEoCRIvCgtwdWJsaXNoZWRBdBgDIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASJwoJbGFuZ3VhZ2VzGAQgASgLMhQuYXBpLnYxLkxhbmd1YWdlTGlzdBIsCg50cmFuc2NyaXB0aW9ucxgFIAEoCzIULmFwaS52MS5MYW5ndWFnZUxpc3QSGQoRaGFzVHJhbnNjcmlwdGlvbnMYBiABKAgiLgoKVHJhY2tzTGlzdBIgCgZ0cmFja3MYASADKAsyEC5hcGkudjEuQk1NVHJhY2siMwoMTGFuZ3VhZ2VMaXN0EiMKCUxhbmd1YWdlcxgBIAMoCzIQLmFwaS52MS5MYW5ndWFnZSIrCghMYW5ndWFnZRIMCgRjb2RlGAEgASgJEhEKCWljb25fZmlsZRgDIAEoCSImChZHZXRUcmFuc2NyaXB0aW9uUmVxZXN0EgwKBFZYSUQYASABKAkiQQoNVHJhbnNjcmlwdGlvbhIMCgR0ZXh0GAEgASgJEiIKCHNlZ21lbnRzGAIgAygLMhAuYXBpLnYxLlNlZ21lbnRzIu0BCghTZWdtZW50cxIKCgJpZBgBIAEoARIMCgRzZWVrGAIgASgFEg0KBXN0YXJ0GAMgASgBEgsKA2VuZBgEIAEoARIMCgR0ZXh0GAUgASgJEg4KBnRva2VucxgGIAMoBRITCgt0ZW1wZXJhdHVyZRgHIAEoARITCgthdmdfbG9ncHJvYhgIIAEoARIZChFjb21wcmVzc2lvbl9yYXRpbxgJIAEoARIWCg5ub19zcGVlY2hfcHJvYhgKIAEoARISCgpjb25maWRlbmNlGAsgASgBEhwKBXdvcmRzGAwgAygLMg0uYXBpLnYxLldvcmRzIkUKBVdvcmRzEgwKBHRleHQYASABKAkSDQoFc3RhcnQYAiABKAESCwoDZW5kGAMgASgBEhIKCmNvbmZpZGVuY2UYBCABKAEiIQoRR2V0UHJldmlld1JlcXVlc3QSDAoEVlhJRBgBIAEoCSIWCgdQcmV2aWV3EgsKA3VybBgBIAEoCSJrChpHZXRCTU1UcmFuc2NyaXB0aW9uUmVxdWVzdBIOCgZibW1faWQYASABKAkSEAoIbGFuZ3VhZ2UYAiABKAkSKwoLZW52aXJvbm1lbnQYAyABKA4yFi5hcGkudjEuQm1tRW52aXJvbm1lbnQiWAoaU3VibWl0VHJhbnNjcmlwdGlvblJlcXVlc3QSDAoEVlhJRBgBIAEoCRIsCg10cmFuc2NyaXB0aW9uGAIgASgLMhUuYXBpLnYxLlRyYW5zY3JpcHRpb24iSQoSU3VibWl0U2hvcnRSZXF1ZXN0EgwKBFZYSUQYASABKAkSEQoJSW5TZWNvbmRzGAIgASgBEhIKCk91dFNlY29uZHMYAyABKAEiMQoQRXhwb3J0UmVzb2x1dGlvbhINCgV3aWR0aBgBIAEoBRIOCgZoZWlnaHQYAiABKAUiRgoORXhwb3J0TGFuZ3VhZ2USDAoEY29kZRgBIAEoCRIMCgRuYW1lGAIgASgJEgsKA211MRgDIAEoCBILCgNtdTIYBCABKAgiHgoNRXhwb3J0U3ViY2xpcBINCgV0aXRsZRgBIAEoCSImChZHZXRFeHBvcnRDb25maWdSZXF1ZXN0EgwKBFZYSUQYASABKAki1gIKF0dldEV4cG9ydENvbmZpZ1Jlc3BvbnNlEgwKBFZYSUQYASABKAkSDQoFdGl0bGUYAiABKAkSFAoMZGVzdGluYXRpb25zGAMgAygJEhUKDWF1ZGlvX3NvdXJjZXMYBCADKAkSHQoVc2VsZWN0ZWRfYXVkaW9fc291cmNlGAUgASgJEikKCWxhbmd1YWdlcxgGIAMoCzIWLmFwaS52MS5FeHBvcnRMYW5ndWFnZRIaChJzZWxlY3RlZF9sYW5ndWFnZXMYByADKAkSLQoLcmVzb2x1dGlvbnMYCCADKAsyGC5hcGkudjEuRXhwb3J0UmVzb2x1dGlvbhIQCghvdmVybGF5cxgJIAMoCRInCghzdWJjbGlwcxgKIAMoCzIVLmFwaS52MS5FeHBvcnRTdWJjbGlwEiEKGWNhbl9leHBvcnRfdGltZWRfbWV0YWRhdGEYCyABKAgiUAoZRXhwb3J0UmVzb2x1dGlvblNlbGVjdGlvbhINCgV3aWR0aBgBIAEoBRIOCgZoZWlnaHQYAiABKAUSFAoMZG93bmxvYWRhYmxlGAMgASgIIoMCChJTdGFydEV4cG9ydFJlcXVlc3QSDAoEVlhJRBgBIAEoCRIUCgxkZXN0aW5hdGlvbnMYAiADKAkSFAoMYXVkaW9fc291cmNlGAMgASgJEhEKCWxhbmd1YWdlcxgEIAMoCRI2CgtyZXNvbHV0aW9ucxgFIAMoCzIhLmFwaS52MS5FeHBvcnRSZXNvbHV0aW9uU2VsZWN0aW9uEg8KB292ZXJsYXkYBiABKAkSFQoNd2l0aF9jaGFwdGVycxgHIAEoCBIWCg5pZ25vcmVfc2lsZW5jZRgIIAEoCBIWCg5leHBvcnRfYWlfc3VicxgJIAEoCBIQCghzdWJjbGlwcxgKIAMoCSIrChNTdGFydEV4cG9ydFJlc3BvbnNlEhQKDHdvcmtmbG93X2lkcxgBIAMoCSIqChpFeHBvcnRUaW1lZE1ldGFkYXRhUmVxdWVzdBIMCgRWWElEGAEgASgJIigKGEdldFZCRXhwb3J0Q29uZmlnUmVxdWVzdBIMCgRWWElEGAEgASgJIoABChlHZXRWQkV4cG9ydENvbmZpZ1Jlc3BvbnNlEgwKBFZYSUQYASABKAkSDQoFdGl0bGUYAiABKAkSFAoMZGVzdGluYXRpb25zGAMgAygJEhcKD3N1YnRpdGxlX3NoYXBlcxgEIAMoCRIXCg9zdWJ0aXRsZV9zdHlsZXMYBSADKAkiagoUU3RhcnRWQkV4cG9ydFJlcXVlc3QSDAoEVlhJRBgBIAEoCRIUCgxkZXN0aW5hdGlvbnMYAiADKAkSFgoOc3VidGl0bGVfc2hhcGUYAyABKAkSFgoOc3VidGl0bGVfc3R5bGUYBCABKAkiLAoVU3RhcnRWQkV4cG9ydFJlc3BvbnNlEhMKC3dvcmtmbG93X2lkGAEgASgJIjQKGkV4cG9ydERlc3RpbmF0aW9uc1Jlc3BvbnNlEgoKAnZ4GAEgAygJEgoKAnZiGAIgAygJIiUKFFJlc29sdmVBc3NldHNSZXF1ZXN0Eg0KBVZYSURzGAEgAygJIjsKDVJlc29sdmVkQXNzZXQSDAoEVlhJRBgBIAEoCRINCgV0aXRsZRgCIAEoCRINCgVmb3VuZBgDIAEoCCI+ChVSZXNvbHZlQXNzZXRzUmVzcG9uc2USJQoGYXNzZXRzGAEgAygLMhUuYXBpLnYxLlJlc29sdmVkQXNzZXQiUgobVHJpZ2dlckNhbnRlbW9BY3Rpb25SZXF1ZXN0EgwKBFZYSUQYASABKAkSJQoGYWN0aW9uGAIgASgOMhUuYXBpLnYxLkNhbnRlbW9BY3Rpb24iRgoSVmF1bHRTZWFyY2hSZXF1ZXN0Eg0KBXF1ZXJ5GAEgASgJEhMKC21lZGlhX3R5cGVzGAIgAygJEgwKBHBhZ2UYAyABKAUimAEKCVZhdWx0SXRlbRIMCgRWWElEGAEgASgJEg0KBXRpdGxlGAIgASgJEhIKCm1lZGlhX3R5cGUYAyABKAkSDQoFYWRkZWQYBCABKAkSDgoGZm9ybWF0GAUgASgJEgwKBHNpemUYBiABKAkSGAoQZHVyYXRpb25fc2Vjb25kcxgHIAEoBRITCgtoYXNfcHJldmlldxgIIAEoCCIvCgpWYXVsdEZhY2V0EhIKCm1lZGlhX3R5cGUYASABKAkSDQoFY291bnQYAiABKAUikAEKE1ZhdWx0U2VhcmNoUmVzcG9uc2USIAoFaXRlbXMYASADKAsyES5hcGkudjEuVmF1bHRJdGVtEhIKCnRvdGFsX2hpdHMYAiABKAUSDAoEcGFnZRgDIAEoBRIRCglwYWdlX3NpemUYBCABKAUSIgoGZmFjZXRzGAUgAygLMhIuYXBpLnYxLlZhdWx0RmFjZXQiIwoTR2V0VmF1bHRJdGVtUmVxdWVzdBIMCgRWWElEGAEgASgJIjcKFEdldFZhdWx0SXRlbVJlc3BvbnNlEh8KBGl0ZW0YASABKAsyES5hcGkudjEuVmF1bHRJdGVtKjEKDkJtbUVudmlyb25tZW50Eg4KClByb2R1Y3Rpb24QABIPCgtJbnRlZ3JhdGlvbhABKroBCg1DYW50ZW1vQWN0aW9uEh4KGkNBTlRFTU9fQUNUSU9OX1VOU1BFQ0lGSUVEEAASGgoWQ0FOVEVNT19BQ1RJT05fUFJFVklFVxABEh0KGUNBTlRFTU9fQUNUSU9OX1RSQU5TQ1JJQkUQAhIpCiVDQU5URU1PX0FDVElPTl9TVUJUSVRMRV9GUk9NX1NVQlRSQU5TEAMSIwofQ0FOVEVNT19BQ1RJT05fVVBEQVRFX1JFTEFUSU9OUxAEMuMNCgpBUElTZXJ2aWNlEjUKDkdldFBlcm1pc3Npb25zEgwuYXBpLnYxLlZvaWQaEy5hcGkudjEuUGVybWlzc2lvbnMiABJCChFVcGRhdGVQZXJtaXNzaW9ucxIdLmFwaS52MS5TZXRQZXJtaXNzaW9uc1JlcXVlc3QaDC5hcGkudjEuVm9pZCIAEkUKEURlbGV0ZVBlcm1pc3Npb25zEiAuYXBpLnYxLkRlbGV0ZVBlcm1pc3Npb25zUmVxdWVzdBoMLmFwaS52MS5Wb2lkIgASOgoPTGlzdFBlcm1pc3Npb25zEgwuYXBpLnYxLlZvaWQaFy5hcGkudjEuUGVybWlzc2lvbnNMaXN0IgASSwoQR2V0VHJhbnNjcmlwdGlvbhIeLmFwaS52MS5HZXRUcmFuc2NyaXB0aW9uUmVxZXN0GhUuYXBpLnYxLlRyYW5zY3JpcHRpb24iABI6CgpHZXRQcmV2aWV3EhkuYXBpLnYxLkdldFByZXZpZXdSZXF1ZXN0Gg8uYXBpLnYxLlByZXZpZXciABJJChNTdWJtaXRUcmFuc2NyaXB0aW9uEiIuYXBpLnYxLlN1Ym1pdFRyYW5zY3JpcHRpb25SZXF1ZXN0GgwuYXBpLnYxLlZvaWQiABI/CghHZXRZZWFycxIXLmFwaS52MS5HZXRZZWFyc1JlcXVlc3QaGC5hcGkudjEuR2V0WWVhcnNSZXNwb25zZSIAEjsKCUdldEFsYnVtcxIYLmFwaS52MS5HZXRBbGJ1bXNSZXF1ZXN0GhIuYXBpLnYxLkFsYnVtc0xpc3QiABJFCg5HZXRBbGJ1bVRyYWNrcxIdLmFwaS52MS5HZXRBbGJ1bVRyYWNrc1JlcXVlc3QaEi5hcGkudjEuVHJhY2tzTGlzdCIAEkkKEEdldFBvZGNhc3RUcmFja3MSHy5hcGkudjEuR2V0UG9kY2FzdFRyYWNrc1JlcXVlc3QaEi5hcGkudjEuVHJhY2tzTGlzdCIAEkwKDEdldExhbmd1YWdlcxIkLmFwaS52MS5HZXRBdmFpbGFibGVMYW5ndWFnZXNSZXF1ZXN0GhQuYXBpLnYxLkxhbmd1YWdlTGlzdCIAElIKE0dldEJNTVRyYW5zY3JpcHRpb24SIi5hcGkudjEuR2V0Qk1NVHJhbnNjcmlwdGlvblJlcXVlc3QaFS5hcGkudjEuVHJhbnNjcmlwdGlvbiIAEjkKC1N1Ym1pdFNob3J0EhouYXBpLnYxLlN1Ym1pdFNob3J0UmVxdWVzdBoMLmFwaS52MS5Wb2lkIgASVAoPR2V0RXhwb3J0Q29uZmlnEh4uYXBpLnYxLkdldEV4cG9ydENvbmZpZ1JlcXVlc3QaHy5hcGkudjEuR2V0RXhwb3J0Q29uZmlnUmVzcG9uc2UiABJICgtTdGFydEV4cG9ydBIaLmFwaS52MS5TdGFydEV4cG9ydFJlcXVlc3QaGy5hcGkudjEuU3RhcnRFeHBvcnRSZXNwb25zZSIAEkkKE0V4cG9ydFRpbWVkTWV0YWRhdGESIi5hcGkudjEuRXhwb3J0VGltZWRNZXRhZGF0YVJlcXVlc3QaDC5hcGkudjEuVm9pZCIAEk4KDVJlc29sdmVBc3NldHMSHC5hcGkudjEuUmVzb2x2ZUFzc2V0c1JlcXVlc3QaHS5hcGkudjEuUmVzb2x2ZUFzc2V0c1Jlc3BvbnNlIgASWgoRR2V0VkJFeHBvcnRDb25maWcSIC5hcGkudjEuR2V0VkJFeHBvcnRDb25maWdSZXF1ZXN0GiEuYXBpLnYxLkdldFZCRXhwb3J0Q29uZmlnUmVzcG9uc2UiABJOCg1TdGFydFZCRXhwb3J0EhwuYXBpLnYxLlN0YXJ0VkJFeHBvcnRSZXF1ZXN0Gh0uYXBpLnYxLlN0YXJ0VkJFeHBvcnRSZXNwb25zZSIAEksKFUdldEV4cG9ydERlc3RpbmF0aW9ucxIMLmFwaS52MS5Wb2lkGiIuYXBpLnYxLkV4cG9ydERlc3RpbmF0aW9uc1Jlc3BvbnNlIgASSwoUVHJpZ2dlckNhbnRlbW9BY3Rpb24SIy5hcGkudjEuVHJpZ2dlckNhbnRlbW9BY3Rpb25SZXF1ZXN0GgwuYXBpLnYxLlZvaWQiABJICgtWYXVsdFNlYXJjaBIaLmFwaS52MS5WYXVsdFNlYXJjaFJlcXVlc3QaGy5hcGkudjEuVmF1bHRTZWFyY2hSZXNwb25zZSIAEksKDEdldFZhdWx0SXRlbRIbLmFwaS52MS5HZXRWYXVsdEl0ZW1SZXF1ZXN0GhwuYXBpLnYxLkdldFZhdWx0SXRlbVJlc3BvbnNlIgBCHlocYmNjLW1lZGlhLXRvb2xzL2FwaS92MTthcGl2MWIGcHJvdG8z", [file_google_protobuf_timestamp, file_api_v1_common]);
+  fileDesc("ChBhcGkvdjEvYXBpLnByb3RvEgZhcGkudjEiaAoNQk1NUGVybWlzc2lvbhIRCglsYW5ndWFnZXMYASADKAkSDgoGYWxidW1zGAIgAygJEhAKCHBvZGNhc3RzGAMgAygJEg0KBWFkbWluGAQgASgIEhMKC2ludGVncmF0aW9uGAUgASgIIj0KF1RyYW5zY3JpcHRpb25QZXJtaXNzaW9uEg0KBWFkbWluGAEgASgIEhMKC21lZGlhYmFua2VuGAIgASgIImQKEEV4cG9ydFBlcm1pc3Npb24SFAoMZGVzdGluYXRpb25zGAEgAygJEg0KBWFkbWluGAIgASgIEhYKDnRpbWVkX21ldGFkYXRhGAMgASgIEhMKC2J1bGtfZXhwb3J0GAQgASgIIk4KElZCRXhwb3J0UGVybWlzc2lvbhIUCgxkZXN0aW5hdGlvbnMYASADKAkSDQoFYWRtaW4YAiABKAgSEwoLYnVsa19leHBvcnQYAyABKAgiXgoRQ2FudGVtb1Blcm1pc3Npb24SDwoHcHJldmlldxgBIAEoCBISCgp0cmFuc2NyaWJlGAIgASgIEhEKCXN1YnRpdGxlcxgDIAEoCBIRCglyZWxhdGlvbnMYBCABKAgiIgoPVmF1bHRQZXJtaXNzaW9uEg8KB2VuYWJsZWQYASABKAgitAIKC1Blcm1pc3Npb25zEg0KBWFkbWluGAEgASgIEiIKA2JtbRgCIAEoCzIVLmFwaS52MS5CTU1QZXJtaXNzaW9uEg0KBWVtYWlsGAMgASgJEjYKDXRyYW5zY3JpcHRpb24YBCABKAsyHy5hcGkudjEuVHJhbnNjcmlwdGlvblBlcm1pc3Npb24SKAoGZXhwb3J0GAUgASgLMhguYXBpLnYxLkV4cG9ydFBlcm1pc3Npb24SLQoJdmJfZXhwb3J0GAYgASgLMhouYXBpLnYxLlZCRXhwb3J0UGVybWlzc2lvbhIqCgdjYW50ZW1vGAcgASgLMhkuYXBpLnYxLkNhbnRlbW9QZXJtaXNzaW9uEiYKBXZhdWx0GAggASgLMhcuYXBpLnYxLlZhdWx0UGVybWlzc2lvbiIXChVHZXRQZXJtaXNzaW9uc1JlcXVlc3QiUAoVU2V0UGVybWlzc2lvbnNSZXF1ZXN0Eg0KBWVtYWlsGAEgASgJEigKC3Blcm1pc3Npb25zGAIgASgLMhMuYXBpLnYxLlBlcm1pc3Npb25zIikKGERlbGV0ZVBlcm1pc3Npb25zUmVxdWVzdBINCgVlbWFpbBgBIAEoCSKZAQoPUGVybWlzc2lvbnNMaXN0Ej0KC3Blcm1pc3Npb25zGAEgAygLMiguYXBpLnYxLlBlcm1pc3Npb25zTGlzdC5QZXJtaXNzaW9uc0VudHJ5GkcKEFBlcm1pc3Npb25zRW50cnkSCwoDa2V5GAEgASgJEiIKBXZhbHVlGAIgASgLMhMuYXBpLnYxLlBlcm1pc3Npb25zOgI4ASImCgdCTU1ZZWFyEgwKBHllYXIYASABKA0SDQoFY291bnQYAiABKA0iggEKEEdldFllYXJzUmVzcG9uc2USMAoEZGF0YRgBIAMoCzIiLmFwaS52MS5HZXRZZWFyc1Jlc3BvbnNlLkRhdGFFbnRyeRo8CglEYXRhRW50cnkSCwoDa2V5GAEgASgNEh4KBXZhbHVlGAIgASgLMg8uYXBpLnYxLkJNTVllYXI6AjgBIj4KD0dldFllYXJzUmVxdWVzdBIrCgtlbnZpcm9ubWVudBgBIAEoDjIWLmFwaS52MS5CbW1FbnZpcm9ubWVudCJNChBHZXRBbGJ1bXNSZXF1ZXN0EgwKBHllYXIYASABKA0SKwoLZW52aXJvbm1lbnQYAiABKA4yFi5hcGkudjEuQm1tRW52aXJvbm1lbnQiRAoFQWxidW0SCgoCaWQYASABKAkSDQoFdGl0bGUYAiABKAkSDQoFY292ZXIYBCABKAkSEQoJbGFuZ3VhZ2VzGAUgAygJIisKCkFsYnVtc0xpc3QSHQoGYWxidW1zGAEgAygLMg0uYXBpLnYxLkFsYnVtIlYKFUdldEFsYnVtVHJhY2tzUmVxdWVzdBIQCghhbGJ1bV9pZBgBIAEoCRIrCgtlbnZpcm9ubWVudBgCIAEoDjIWLmFwaS52MS5CbW1FbnZpcm9ubWVudCJqChdHZXRQb2RjYXN0VHJhY2tzUmVxdWVzdBITCgtwb2RjYXN0X3RhZxgBIAEoCRINCgVsaW1pdBgCIAEoDRIrCgtlbnZpcm9ubWVudBgDIAEoDjIWLmFwaS52MS5CbW1FbnZpcm9ubWVudCJLChxHZXRBdmFpbGFibGVMYW5ndWFnZXNSZXF1ZXN0EisKC2Vudmlyb25tZW50GAEgASgOMhYuYXBpLnYxLkJtbUVudmlyb25tZW50IsgBCghCTU1UcmFjaxIKCgJpZBgBIAEoCRINCgV0aXRsZRgCIAEoCRIvCgtwdWJsaXNoZWRBdBgDIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASJwoJbGFuZ3VhZ2VzGAQgASgLMhQuYXBpLnYxLkxhbmd1YWdlTGlzdBIsCg50cmFuc2NyaXB0aW9ucxgFIAEoCzIULmFwaS52MS5MYW5ndWFnZUxpc3QSGQoRaGFzVHJhbnNjcmlwdGlvbnMYBiABKAgiLgoKVHJhY2tzTGlzdBIgCgZ0cmFja3MYASADKAsyEC5hcGkudjEuQk1NVHJhY2siMwoMTGFuZ3VhZ2VMaXN0EiMKCUxhbmd1YWdlcxgBIAMoCzIQLmFwaS52MS5MYW5ndWFnZSIrCghMYW5ndWFnZRIMCgRjb2RlGAEgASgJEhEKCWljb25fZmlsZRgDIAEoCSImChZHZXRUcmFuc2NyaXB0aW9uUmVxZXN0EgwKBFZYSUQYASABKAkiQQoNVHJhbnNjcmlwdGlvbhIMCgR0ZXh0GAEgASgJEiIKCHNlZ21lbnRzGAIgAygLMhAuYXBpLnYxLlNlZ21lbnRzIu0BCghTZWdtZW50cxIKCgJpZBgBIAEoARIMCgRzZWVrGAIgASgFEg0KBXN0YXJ0GAMgASgBEgsKA2VuZBgEIAEoARIMCgR0ZXh0GAUgASgJEg4KBnRva2VucxgGIAMoBRITCgt0ZW1wZXJhdHVyZRgHIAEoARITCgthdmdfbG9ncHJvYhgIIAEoARIZChFjb21wcmVzc2lvbl9yYXRpbxgJIAEoARIWCg5ub19zcGVlY2hfcHJvYhgKIAEoARISCgpjb25maWRlbmNlGAsgASgBEhwKBXdvcmRzGAwgAygLMg0uYXBpLnYxLldvcmRzIkUKBVdvcmRzEgwKBHRleHQYASABKAkSDQoFc3RhcnQYAiABKAESCwoDZW5kGAMgASgBEhIKCmNvbmZpZGVuY2UYBCABKAEiIQoRR2V0UHJldmlld1JlcXVlc3QSDAoEVlhJRBgBIAEoCSIWCgdQcmV2aWV3EgsKA3VybBgBIAEoCSJrChpHZXRCTU1UcmFuc2NyaXB0aW9uUmVxdWVzdBIOCgZibW1faWQYASABKAkSEAoIbGFuZ3VhZ2UYAiABKAkSKwoLZW52aXJvbm1lbnQYAyABKA4yFi5hcGkudjEuQm1tRW52aXJvbm1lbnQiWAoaU3VibWl0VHJhbnNjcmlwdGlvblJlcXVlc3QSDAoEVlhJRBgBIAEoCRIsCg10cmFuc2NyaXB0aW9uGAIgASgLMhUuYXBpLnYxLlRyYW5zY3JpcHRpb24iSQoSU3VibWl0U2hvcnRSZXF1ZXN0EgwKBFZYSUQYASABKAkSEQoJSW5TZWNvbmRzGAIgASgBEhIKCk91dFNlY29uZHMYAyABKAEiMQoQRXhwb3J0UmVzb2x1dGlvbhINCgV3aWR0aBgBIAEoBRIOCgZoZWlnaHQYAiABKAUiRgoORXhwb3J0TGFuZ3VhZ2USDAoEY29kZRgBIAEoCRIMCgRuYW1lGAIgASgJEgsKA211MRgDIAEoCBILCgNtdTIYBCABKAgiHgoNRXhwb3J0U3ViY2xpcBINCgV0aXRsZRgBIAEoCSImChZHZXRFeHBvcnRDb25maWdSZXF1ZXN0EgwKBFZYSUQYASABKAki1gIKF0dldEV4cG9ydENvbmZpZ1Jlc3BvbnNlEgwKBFZYSUQYASABKAkSDQoFdGl0bGUYAiABKAkSFAoMZGVzdGluYXRpb25zGAMgAygJEhUKDWF1ZGlvX3NvdXJjZXMYBCADKAkSHQoVc2VsZWN0ZWRfYXVkaW9fc291cmNlGAUgASgJEikKCWxhbmd1YWdlcxgGIAMoCzIWLmFwaS52MS5FeHBvcnRMYW5ndWFnZRIaChJzZWxlY3RlZF9sYW5ndWFnZXMYByADKAkSLQoLcmVzb2x1dGlvbnMYCCADKAsyGC5hcGkudjEuRXhwb3J0UmVzb2x1dGlvbhIQCghvdmVybGF5cxgJIAMoCRInCghzdWJjbGlwcxgKIAMoCzIVLmFwaS52MS5FeHBvcnRTdWJjbGlwEiEKGWNhbl9leHBvcnRfdGltZWRfbWV0YWRhdGEYCyABKAgiUAoZRXhwb3J0UmVzb2x1dGlvblNlbGVjdGlvbhINCgV3aWR0aBgBIAEoBRIOCgZoZWlnaHQYAiABKAUSFAoMZG93bmxvYWRhYmxlGAMgASgIIoMCChJTdGFydEV4cG9ydFJlcXVlc3QSDAoEVlhJRBgBIAEoCRIUCgxkZXN0aW5hdGlvbnMYAiADKAkSFAoMYXVkaW9fc291cmNlGAMgASgJEhEKCWxhbmd1YWdlcxgEIAMoCRI2CgtyZXNvbHV0aW9ucxgFIAMoCzIhLmFwaS52MS5FeHBvcnRSZXNvbHV0aW9uU2VsZWN0aW9uEg8KB292ZXJsYXkYBiABKAkSFQoNd2l0aF9jaGFwdGVycxgHIAEoCBIWCg5pZ25vcmVfc2lsZW5jZRgIIAEoCBIWCg5leHBvcnRfYWlfc3VicxgJIAEoCBIQCghzdWJjbGlwcxgKIAMoCSIrChNTdGFydEV4cG9ydFJlc3BvbnNlEhQKDHdvcmtmbG93X2lkcxgBIAMoCSIqChpFeHBvcnRUaW1lZE1ldGFkYXRhUmVxdWVzdBIMCgRWWElEGAEgASgJIigKGEdldFZCRXhwb3J0Q29uZmlnUmVxdWVzdBIMCgRWWElEGAEgASgJIoABChlHZXRWQkV4cG9ydENvbmZpZ1Jlc3BvbnNlEgwKBFZYSUQYASABKAkSDQoFdGl0bGUYAiABKAkSFAoMZGVzdGluYXRpb25zGAMgAygJEhcKD3N1YnRpdGxlX3NoYXBlcxgEIAMoCRIXCg9zdWJ0aXRsZV9zdHlsZXMYBSADKAkiagoUU3RhcnRWQkV4cG9ydFJlcXVlc3QSDAoEVlhJRBgBIAEoCRIUCgxkZXN0aW5hdGlvbnMYAiADKAkSFgoOc3VidGl0bGVfc2hhcGUYAyABKAkSFgoOc3VidGl0bGVfc3R5bGUYBCABKAkiLAoVU3RhcnRWQkV4cG9ydFJlc3BvbnNlEhMKC3dvcmtmbG93X2lkGAEgASgJIjQKGkV4cG9ydERlc3RpbmF0aW9uc1Jlc3BvbnNlEgoKAnZ4GAEgAygJEgoKAnZiGAIgAygJIiUKFFJlc29sdmVBc3NldHNSZXF1ZXN0Eg0KBVZYSURzGAEgAygJIjsKDVJlc29sdmVkQXNzZXQSDAoEVlhJRBgBIAEoCRINCgV0aXRsZRgCIAEoCRINCgVmb3VuZBgDIAEoCCI+ChVSZXNvbHZlQXNzZXRzUmVzcG9uc2USJQoGYXNzZXRzGAEgAygLMhUuYXBpLnYxLlJlc29sdmVkQXNzZXQiUgobVHJpZ2dlckNhbnRlbW9BY3Rpb25SZXF1ZXN0EgwKBFZYSUQYASABKAkSJQoGYWN0aW9uGAIgASgOMhUuYXBpLnYxLkNhbnRlbW9BY3Rpb24iRgoSVmF1bHRTZWFyY2hSZXF1ZXN0Eg0KBXF1ZXJ5GAEgASgJEhMKC21lZGlhX3R5cGVzGAIgAygJEgwKBHBhZ2UYAyABKAUimAEKCVZhdWx0SXRlbRIMCgRWWElEGAEgASgJEg0KBXRpdGxlGAIgASgJEhIKCm1lZGlhX3R5cGUYAyABKAkSDQoFYWRkZWQYBCABKAkSDgoGZm9ybWF0GAUgASgJEgwKBHNpemUYBiABKAkSGAoQZHVyYXRpb25fc2Vjb25kcxgHIAEoBRITCgtoYXNfcHJldmlldxgIIAEoCCIvCgpWYXVsdEZhY2V0EhIKCm1lZGlhX3R5cGUYASABKAkSDQoFY291bnQYAiABKAUikAEKE1ZhdWx0U2VhcmNoUmVzcG9uc2USIAoFaXRlbXMYASADKAsyES5hcGkudjEuVmF1bHRJdGVtEhIKCnRvdGFsX2hpdHMYAiABKAUSDAoEcGFnZRgDIAEoBRIRCglwYWdlX3NpemUYBCABKAUSIgoGZmFjZXRzGAUgAygLMhIuYXBpLnYxLlZhdWx0RmFjZXQiIwoTR2V0VmF1bHRJdGVtUmVxdWVzdBIMCgRWWElEGAEgASgJIjcKFEdldFZhdWx0SXRlbVJlc3BvbnNlEh8KBGl0ZW0YASABKAsyES5hcGkudjEuVmF1bHRJdGVtIr8BCgZNYXJrZXISCgoCaWQYASABKAkSIAoEdHlwZRgCIAEoDjISLmFwaS52MS5NYXJrZXJUeXBlEg0KBWxhYmVsGAMgASgJEgwKBG5vdGUYBCABKAkSDQoFc3RhcnQYBSABKAESCwoDZW5kGAYgASgBEiQKBnNvdXJjZRgHIAEoDjIULmFwaS52MS5NYXJrZXJTb3VyY2USEQoJZW50aXR5X2lkGAggASgJEhUKDWVudGl0eV9zb3VyY2UYCSABKAkiQwoGRW50aXR5EgoKAmlkGAEgASgJEg4KBnNvdXJjZRgCIAEoCRINCgVsYWJlbBgDIAEoCRIOCgZkZXRhaWwYBCABKAkiVwoVU2VhcmNoRW50aXRpZXNSZXF1ZXN0EiAKBHR5cGUYASABKA4yEi5hcGkudjEuTWFya2VyVHlwZRINCgVxdWVyeRgCIAEoCRINCgVsaW1pdBgDIAEoBSI6ChZTZWFyY2hFbnRpdGllc1Jlc3BvbnNlEiAKCGVudGl0aWVzGAEgAygLMg4uYXBpLnYxLkVudGl0eSJQCg5SZWZlcmVuY2VRdWVyeRIOCgZyZWZfaWQYASABKAkSIAoEdHlwZRgCIAEoDjISLmFwaS52MS5NYXJrZXJUeXBlEgwKBHRleHQYAyABKAkiVQoRUmVzb2x2ZWRSZWZlcmVuY2USDgoGcmVmX2lkGAEgASgJEhAKCHJlc29sdmVkGAIgASgIEh4KBmVudGl0eRgDIAEoCzIOLmFwaS52MS5FbnRpdHkiQwoYUmVzb2x2ZVJlZmVyZW5jZXNSZXF1ZXN0EicKB3F1ZXJpZXMYASADKAsyFi5hcGkudjEuUmVmZXJlbmNlUXVlcnkiRwoZUmVzb2x2ZVJlZmVyZW5jZXNSZXNwb25zZRIqCgdyZXN1bHRzGAEgAygLMhkuYXBpLnYxLlJlc29sdmVkUmVmZXJlbmNlIiEKEUdldE1hcmtlcnNSZXF1ZXN0EgwKBFZYSUQYASABKAkiNQoSR2V0TWFya2Vyc1Jlc3BvbnNlEh8KB21hcmtlcnMYASADKAsyDi5hcGkudjEuTWFya2VyIkUKFFN1Ym1pdE1hcmtlcnNSZXF1ZXN0EgwKBFZYSUQYASABKAkSHwoHbWFya2VycxgCIAMoCzIOLmFwaS52MS5NYXJrZXIqMQoOQm1tRW52aXJvbm1lbnQSDgoKUHJvZHVjdGlvbhAAEg8KC0ludGVncmF0aW9uEAEqugEKDUNhbnRlbW9BY3Rpb24SHgoaQ0FOVEVNT19BQ1RJT05fVU5TUEVDSUZJRUQQABIaChZDQU5URU1PX0FDVElPTl9QUkVWSUVXEAESHQoZQ0FOVEVNT19BQ1RJT05fVFJBTlNDUklCRRACEikKJUNBTlRFTU9fQUNUSU9OX1NVQlRJVExFX0ZST01fU1VCVFJBTlMQAxIjCh9DQU5URU1PX0FDVElPTl9VUERBVEVfUkVMQVRJT05TEAQqqQEKCk1hcmtlclR5cGUSGwoXTUFSS0VSX1RZUEVfVU5TUEVDSUZJRUQQABIaChZNQVJLRVJfVFlQRV9OQU1FX1NVUEVSEAESGwoXTUFSS0VSX1RZUEVfQklCTEVfVkVSU0UQAhIUChBNQVJLRVJfVFlQRV9TT05HEAMSFwoTTUFSS0VSX1RZUEVfQ0hBUFRFUhAEEhYKEk1BUktFUl9UWVBFX0NVU1RPTRAFKmMKDE1hcmtlclNvdXJjZRIdChlNQVJLRVJfU09VUkNFX1VOU1BFQ0lGSUVEEAASGgoWTUFSS0VSX1NPVVJDRV9JTVBPUlRFRBABEhgKFE1BUktFUl9TT1VSQ0VfTUFOVUFMEAIymBAKCkFQSVNlcnZpY2USNQoOR2V0UGVybWlzc2lvbnMSDC5hcGkudjEuVm9pZBoTLmFwaS52MS5QZXJtaXNzaW9ucyIAEkIKEVVwZGF0ZVBlcm1pc3Npb25zEh0uYXBpLnYxLlNldFBlcm1pc3Npb25zUmVxdWVzdBoMLmFwaS52MS5Wb2lkIgASRQoRRGVsZXRlUGVybWlzc2lvbnMSIC5hcGkudjEuRGVsZXRlUGVybWlzc2lvbnNSZXF1ZXN0GgwuYXBpLnYxLlZvaWQiABI6Cg9MaXN0UGVybWlzc2lvbnMSDC5hcGkudjEuVm9pZBoXLmFwaS52MS5QZXJtaXNzaW9uc0xpc3QiABJLChBHZXRUcmFuc2NyaXB0aW9uEh4uYXBpLnYxLkdldFRyYW5zY3JpcHRpb25SZXFlc3QaFS5hcGkudjEuVHJhbnNjcmlwdGlvbiIAEjoKCkdldFByZXZpZXcSGS5hcGkudjEuR2V0UHJldmlld1JlcXVlc3QaDy5hcGkudjEuUHJldmlldyIAEkkKE1N1Ym1pdFRyYW5zY3JpcHRpb24SIi5hcGkudjEuU3VibWl0VHJhbnNjcmlwdGlvblJlcXVlc3QaDC5hcGkudjEuVm9pZCIAEj8KCEdldFllYXJzEhcuYXBpLnYxLkdldFllYXJzUmVxdWVzdBoYLmFwaS52MS5HZXRZZWFyc1Jlc3BvbnNlIgASOwoJR2V0QWxidW1zEhguYXBpLnYxLkdldEFsYnVtc1JlcXVlc3QaEi5hcGkudjEuQWxidW1zTGlzdCIAEkUKDkdldEFsYnVtVHJhY2tzEh0uYXBpLnYxLkdldEFsYnVtVHJhY2tzUmVxdWVzdBoSLmFwaS52MS5UcmFja3NMaXN0IgASSQoQR2V0UG9kY2FzdFRyYWNrcxIfLmFwaS52MS5HZXRQb2RjYXN0VHJhY2tzUmVxdWVzdBoSLmFwaS52MS5UcmFja3NMaXN0IgASTAoMR2V0TGFuZ3VhZ2VzEiQuYXBpLnYxLkdldEF2YWlsYWJsZUxhbmd1YWdlc1JlcXVlc3QaFC5hcGkudjEuTGFuZ3VhZ2VMaXN0IgASUgoTR2V0Qk1NVHJhbnNjcmlwdGlvbhIiLmFwaS52MS5HZXRCTU1UcmFuc2NyaXB0aW9uUmVxdWVzdBoVLmFwaS52MS5UcmFuc2NyaXB0aW9uIgASOQoLU3VibWl0U2hvcnQSGi5hcGkudjEuU3VibWl0U2hvcnRSZXF1ZXN0GgwuYXBpLnYxLlZvaWQiABJUCg9HZXRFeHBvcnRDb25maWcSHi5hcGkudjEuR2V0RXhwb3J0Q29uZmlnUmVxdWVzdBofLmFwaS52MS5HZXRFeHBvcnRDb25maWdSZXNwb25zZSIAEkgKC1N0YXJ0RXhwb3J0EhouYXBpLnYxLlN0YXJ0RXhwb3J0UmVxdWVzdBobLmFwaS52MS5TdGFydEV4cG9ydFJlc3BvbnNlIgASSQoTRXhwb3J0VGltZWRNZXRhZGF0YRIiLmFwaS52MS5FeHBvcnRUaW1lZE1ldGFkYXRhUmVxdWVzdBoMLmFwaS52MS5Wb2lkIgASTgoNUmVzb2x2ZUFzc2V0cxIcLmFwaS52MS5SZXNvbHZlQXNzZXRzUmVxdWVzdBodLmFwaS52MS5SZXNvbHZlQXNzZXRzUmVzcG9uc2UiABJaChFHZXRWQkV4cG9ydENvbmZpZxIgLmFwaS52MS5HZXRWQkV4cG9ydENvbmZpZ1JlcXVlc3QaIS5hcGkudjEuR2V0VkJFeHBvcnRDb25maWdSZXNwb25zZSIAEk4KDVN0YXJ0VkJFeHBvcnQSHC5hcGkudjEuU3RhcnRWQkV4cG9ydFJlcXVlc3QaHS5hcGkudjEuU3RhcnRWQkV4cG9ydFJlc3BvbnNlIgASSwoVR2V0RXhwb3J0RGVzdGluYXRpb25zEgwuYXBpLnYxLlZvaWQaIi5hcGkudjEuRXhwb3J0RGVzdGluYXRpb25zUmVzcG9uc2UiABJLChRUcmlnZ2VyQ2FudGVtb0FjdGlvbhIjLmFwaS52MS5UcmlnZ2VyQ2FudGVtb0FjdGlvblJlcXVlc3QaDC5hcGkudjEuVm9pZCIAEkgKC1ZhdWx0U2VhcmNoEhouYXBpLnYxLlZhdWx0U2VhcmNoUmVxdWVzdBobLmFwaS52MS5WYXVsdFNlYXJjaFJlc3BvbnNlIgASSwoMR2V0VmF1bHRJdGVtEhsuYXBpLnYxLkdldFZhdWx0SXRlbVJlcXVlc3QaHC5hcGkudjEuR2V0VmF1bHRJdGVtUmVzcG9uc2UiABJFCgpHZXRNYXJrZXJzEhkuYXBpLnYxLkdldE1hcmtlcnNSZXF1ZXN0GhouYXBpLnYxLkdldE1hcmtlcnNSZXNwb25zZSIAEj0KDVN1Ym1pdE1hcmtlcnMSHC5hcGkudjEuU3VibWl0TWFya2Vyc1JlcXVlc3QaDC5hcGkudjEuVm9pZCIAElEKDlNlYXJjaEVudGl0aWVzEh0uYXBpLnYxLlNlYXJjaEVudGl0aWVzUmVxdWVzdBoeLmFwaS52MS5TZWFyY2hFbnRpdGllc1Jlc3BvbnNlIgASWgoRUmVzb2x2ZVJlZmVyZW5jZXMSIC5hcGkudjEuUmVzb2x2ZVJlZmVyZW5jZXNSZXF1ZXN0GiEuYXBpLnYxLlJlc29sdmVSZWZlcmVuY2VzUmVzcG9uc2UiAEIeWhxiY2MtbWVkaWEtdG9vbHMvYXBpL3YxO2FwaXYxYgZwcm90bzM", [file_google_protobuf_timestamp, file_api_v1_common]);
 
 /**
  * @generated from message api.v1.BMMPermission
@@ -1585,6 +1585,317 @@ export const GetVaultItemResponseSchema: GenMessage<GetVaultItemResponse> = /*@_
   messageDesc(file_api_v1_api, 56);
 
 /**
+ * @generated from message api.v1.Marker
+ */
+export type Marker = Message<"api.v1.Marker"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: api.v1.MarkerType type = 2;
+   */
+  type: MarkerType;
+
+  /**
+   * Display text: the name, the verse reference, the song/chapter title.
+   * Always present; for linked markers it mirrors the canonical entity label,
+   * for custom / free-text markers it's whatever the user typed.
+   *
+   * @generated from field: string label = 3;
+   */
+  label: string;
+
+  /**
+   * @generated from field: string note = 4;
+   */
+  note: string;
+
+  /**
+   * In/out points in seconds.
+   *
+   * @generated from field: double start = 5;
+   */
+  start: number;
+
+  /**
+   * @generated from field: double end = 6;
+   */
+  end: number;
+
+  /**
+   * @generated from field: api.v1.MarkerSource source = 7;
+   */
+  source: MarkerSource;
+
+  /**
+   * Canonical entity reference, when the label is linked to a known entity (a
+   * bible passage, a song, a person). Empty for free-text / custom markers.
+   * `label` is kept as denormalized display text so linking is enrichment, not
+   * a requirement — unmatched markers still round-trip.
+   *
+   * @generated from field: string entity_id = 8;
+   */
+  entityId: string;
+
+  /**
+   * Which registry `entity_id` belongs to: "bible" | "songbook" | "people".
+   * Empty when `entity_id` is empty.
+   *
+   * @generated from field: string entity_source = 9;
+   */
+  entitySource: string;
+};
+
+/**
+ * Describes the message api.v1.Marker.
+ * Use `create(MarkerSchema)` to create a new message.
+ */
+export const MarkerSchema: GenMessage<Marker> = /*@__PURE__*/
+  messageDesc(file_api_v1_api, 57);
+
+/**
+ * A resolvable entity behind a marker label, returned by SearchEntities for
+ * autocomplete. `id`/`source` map to Marker.entity_id/entity_source.
+ *
+ * @generated from message api.v1.Entity
+ */
+export type Entity = Message<"api.v1.Entity"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: string source = 2;
+   */
+  source: string;
+
+  /**
+   * Canonical display text, e.g. "John 3:16".
+   *
+   * @generated from field: string label = 3;
+   */
+  label: string;
+
+  /**
+   * Optional secondary text shown under the label, e.g. a translation or book.
+   *
+   * @generated from field: string detail = 4;
+   */
+  detail: string;
+};
+
+/**
+ * Describes the message api.v1.Entity.
+ * Use `create(EntitySchema)` to create a new message.
+ */
+export const EntitySchema: GenMessage<Entity> = /*@__PURE__*/
+  messageDesc(file_api_v1_api, 58);
+
+/**
+ * @generated from message api.v1.SearchEntitiesRequest
+ */
+export type SearchEntitiesRequest = Message<"api.v1.SearchEntitiesRequest"> & {
+  /**
+   * Which kind of entity to search — mapped from the marker's type.
+   *
+   * @generated from field: api.v1.MarkerType type = 1;
+   */
+  type: MarkerType;
+
+  /**
+   * @generated from field: string query = 2;
+   */
+  query: string;
+
+  /**
+   * Max results to return; server clamps to a sane bound. 0 means default.
+   *
+   * @generated from field: int32 limit = 3;
+   */
+  limit: number;
+};
+
+/**
+ * Describes the message api.v1.SearchEntitiesRequest.
+ * Use `create(SearchEntitiesRequestSchema)` to create a new message.
+ */
+export const SearchEntitiesRequestSchema: GenMessage<SearchEntitiesRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_api, 59);
+
+/**
+ * @generated from message api.v1.SearchEntitiesResponse
+ */
+export type SearchEntitiesResponse = Message<"api.v1.SearchEntitiesResponse"> & {
+  /**
+   * @generated from field: repeated api.v1.Entity entities = 1;
+   */
+  entities: Entity[];
+};
+
+/**
+ * Describes the message api.v1.SearchEntitiesResponse.
+ * Use `create(SearchEntitiesResponseSchema)` to create a new message.
+ */
+export const SearchEntitiesResponseSchema: GenMessage<SearchEntitiesResponse> = /*@__PURE__*/
+  messageDesc(file_api_v1_api, 60);
+
+/**
+ * One free-text label to try to resolve to a canonical entity, used by the bulk
+ * "resolve references" action.
+ *
+ * @generated from message api.v1.ReferenceQuery
+ */
+export type ReferenceQuery = Message<"api.v1.ReferenceQuery"> & {
+  /**
+   * Opaque id echoed back so the caller can correlate results (the marker id).
+   *
+   * @generated from field: string ref_id = 1;
+   */
+  refId: string;
+
+  /**
+   * @generated from field: api.v1.MarkerType type = 2;
+   */
+  type: MarkerType;
+
+  /**
+   * @generated from field: string text = 3;
+   */
+  text: string;
+};
+
+/**
+ * Describes the message api.v1.ReferenceQuery.
+ * Use `create(ReferenceQuerySchema)` to create a new message.
+ */
+export const ReferenceQuerySchema: GenMessage<ReferenceQuery> = /*@__PURE__*/
+  messageDesc(file_api_v1_api, 61);
+
+/**
+ * @generated from message api.v1.ResolvedReference
+ */
+export type ResolvedReference = Message<"api.v1.ResolvedReference"> & {
+  /**
+   * @generated from field: string ref_id = 1;
+   */
+  refId: string;
+
+  /**
+   * True only when the text resolved to a single, confident match.
+   *
+   * @generated from field: bool resolved = 2;
+   */
+  resolved: boolean;
+
+  /**
+   * Set only when resolved.
+   *
+   * @generated from field: api.v1.Entity entity = 3;
+   */
+  entity?: Entity | undefined;
+};
+
+/**
+ * Describes the message api.v1.ResolvedReference.
+ * Use `create(ResolvedReferenceSchema)` to create a new message.
+ */
+export const ResolvedReferenceSchema: GenMessage<ResolvedReference> = /*@__PURE__*/
+  messageDesc(file_api_v1_api, 62);
+
+/**
+ * @generated from message api.v1.ResolveReferencesRequest
+ */
+export type ResolveReferencesRequest = Message<"api.v1.ResolveReferencesRequest"> & {
+  /**
+   * @generated from field: repeated api.v1.ReferenceQuery queries = 1;
+   */
+  queries: ReferenceQuery[];
+};
+
+/**
+ * Describes the message api.v1.ResolveReferencesRequest.
+ * Use `create(ResolveReferencesRequestSchema)` to create a new message.
+ */
+export const ResolveReferencesRequestSchema: GenMessage<ResolveReferencesRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_api, 63);
+
+/**
+ * @generated from message api.v1.ResolveReferencesResponse
+ */
+export type ResolveReferencesResponse = Message<"api.v1.ResolveReferencesResponse"> & {
+  /**
+   * @generated from field: repeated api.v1.ResolvedReference results = 1;
+   */
+  results: ResolvedReference[];
+};
+
+/**
+ * Describes the message api.v1.ResolveReferencesResponse.
+ * Use `create(ResolveReferencesResponseSchema)` to create a new message.
+ */
+export const ResolveReferencesResponseSchema: GenMessage<ResolveReferencesResponse> = /*@__PURE__*/
+  messageDesc(file_api_v1_api, 64);
+
+/**
+ * @generated from message api.v1.GetMarkersRequest
+ */
+export type GetMarkersRequest = Message<"api.v1.GetMarkersRequest"> & {
+  /**
+   * @generated from field: string VXID = 1;
+   */
+  VXID: string;
+};
+
+/**
+ * Describes the message api.v1.GetMarkersRequest.
+ * Use `create(GetMarkersRequestSchema)` to create a new message.
+ */
+export const GetMarkersRequestSchema: GenMessage<GetMarkersRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_api, 65);
+
+/**
+ * @generated from message api.v1.GetMarkersResponse
+ */
+export type GetMarkersResponse = Message<"api.v1.GetMarkersResponse"> & {
+  /**
+   * @generated from field: repeated api.v1.Marker markers = 1;
+   */
+  markers: Marker[];
+};
+
+/**
+ * Describes the message api.v1.GetMarkersResponse.
+ * Use `create(GetMarkersResponseSchema)` to create a new message.
+ */
+export const GetMarkersResponseSchema: GenMessage<GetMarkersResponse> = /*@__PURE__*/
+  messageDesc(file_api_v1_api, 66);
+
+/**
+ * @generated from message api.v1.SubmitMarkersRequest
+ */
+export type SubmitMarkersRequest = Message<"api.v1.SubmitMarkersRequest"> & {
+  /**
+   * @generated from field: string VXID = 1;
+   */
+  VXID: string;
+
+  /**
+   * @generated from field: repeated api.v1.Marker markers = 2;
+   */
+  markers: Marker[];
+};
+
+/**
+ * Describes the message api.v1.SubmitMarkersRequest.
+ * Use `create(SubmitMarkersRequestSchema)` to create a new message.
+ */
+export const SubmitMarkersRequestSchema: GenMessage<SubmitMarkersRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_api, 67);
+
+/**
  * @generated from enum api.v1.BmmEnvironment
  */
 export enum BmmEnvironment {
@@ -1640,6 +1951,77 @@ export enum CantemoAction {
  */
 export const CantemoActionSchema: GenEnum<CantemoAction> = /*@__PURE__*/
   enumDesc(file_api_v1_api, 1);
+
+/**
+ * @generated from enum api.v1.MarkerType
+ */
+export enum MarkerType {
+  /**
+   * @generated from enum value: MARKER_TYPE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: MARKER_TYPE_NAME_SUPER = 1;
+   */
+  NAME_SUPER = 1,
+
+  /**
+   * @generated from enum value: MARKER_TYPE_BIBLE_VERSE = 2;
+   */
+  BIBLE_VERSE = 2,
+
+  /**
+   * @generated from enum value: MARKER_TYPE_SONG = 3;
+   */
+  SONG = 3,
+
+  /**
+   * @generated from enum value: MARKER_TYPE_CHAPTER = 4;
+   */
+  CHAPTER = 4,
+
+  /**
+   * @generated from enum value: MARKER_TYPE_CUSTOM = 5;
+   */
+  CUSTOM = 5,
+}
+
+/**
+ * Describes the enum api.v1.MarkerType.
+ */
+export const MarkerTypeSchema: GenEnum<MarkerType> = /*@__PURE__*/
+  enumDesc(file_api_v1_api, 2);
+
+/**
+ * Where a marker originated. IMPORTED markers come from the third-party timing
+ * program (name-supers, bible-verse references, …); MANUAL ones are created in
+ * this tool. The source is preserved through edits for reconciliation.
+ *
+ * @generated from enum api.v1.MarkerSource
+ */
+export enum MarkerSource {
+  /**
+   * @generated from enum value: MARKER_SOURCE_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: MARKER_SOURCE_IMPORTED = 1;
+   */
+  IMPORTED = 1,
+
+  /**
+   * @generated from enum value: MARKER_SOURCE_MANUAL = 2;
+   */
+  MANUAL = 2,
+}
+
+/**
+ * Describes the enum api.v1.MarkerSource.
+ */
+export const MarkerSourceSchema: GenEnum<MarkerSource> = /*@__PURE__*/
+  enumDesc(file_api_v1_api, 3);
 
 /**
  * @generated from service api.v1.APIService
@@ -1856,6 +2238,44 @@ export const APIService: GenService<{
     methodKind: "unary";
     input: typeof GetVaultItemRequestSchema;
     output: typeof GetVaultItemResponseSchema;
+  },
+  /**
+   * Markers
+   *
+   * @generated from rpc api.v1.APIService.GetMarkers
+   */
+  getMarkers: {
+    methodKind: "unary";
+    input: typeof GetMarkersRequestSchema;
+    output: typeof GetMarkersResponseSchema;
+  },
+  /**
+   * @generated from rpc api.v1.APIService.SubmitMarkers
+   */
+  submitMarkers: {
+    methodKind: "unary";
+    input: typeof SubmitMarkersRequestSchema;
+    output: typeof VoidSchema;
+  },
+  /**
+   * Autocomplete for marker labels (bible passages, songs, people).
+   *
+   * @generated from rpc api.v1.APIService.SearchEntities
+   */
+  searchEntities: {
+    methodKind: "unary";
+    input: typeof SearchEntitiesRequestSchema;
+    output: typeof SearchEntitiesResponseSchema;
+  },
+  /**
+   * Bulk-resolve free-text marker labels to canonical entities.
+   *
+   * @generated from rpc api.v1.APIService.ResolveReferences
+   */
+  resolveReferences: {
+    methodKind: "unary";
+    input: typeof ResolveReferencesRequestSchema;
+    output: typeof ResolveReferencesResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_api_v1_api, 0);

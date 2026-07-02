@@ -1,0 +1,181 @@
+// Markers tool — data model.
+//
+// NOTE: this tool is currently frontend-only. Markers are persisted to
+// localStorage by `useMarkers`. The shapes below are intentionally close to
+// what a future ConnectRPC `GetMarkers` / `SubmitMarkers` pair would return so
+// the mock data layer can be swapped for `api.*` calls with minimal churn.
+
+export type MarkerType =
+    | "name-super"
+    | "bible-verse"
+    | "song"
+    | "chapter"
+    | "custom";
+
+// Where a marker came from. "imported" markers originate from the third-party
+// timing program (name-supers, bible-verse references, …); "manual" ones are
+// created here. The flag is preserved through edits so the future backend can
+// reconcile imported markers with their source.
+export type MarkerSource = "imported" | "manual";
+
+export type Marker = {
+    id: string;
+    type: MarkerType;
+    // Display text: the name, the verse reference, the song/chapter title.
+    label: string;
+    note?: string;
+    // In/out points in seconds (float, ms precision — matches transcription Word).
+    start: number;
+    end: number;
+    source: MarkerSource;
+    // Canonical entity reference when the label is linked to a known entity (a
+    // bible passage, song, or person) — e.g. the bible ref "Jn 3/16". Empty for
+    // free-text / custom markers; `label` always holds the display text so
+    // linking stays optional enrichment.
+    entityId?: string;
+    // Which registry `entityId` belongs to: "bible" | "songbook" | "people".
+    entitySource?: string;
+};
+
+export type MarkerTypeMeta = {
+    value: MarkerType;
+    icon: string;
+    // Tailwind background class, used to fill the timeline blocks.
+    color: string;
+    // Tailwind text class, used to tint the type icon in the list / overlay.
+    iconColor: string;
+};
+
+// Single source of truth for the available marker types. Labels are resolved
+// via i18n (`markers.types.<value>`); see `markerTypeLabel`.
+export const MARKER_TYPES: MarkerTypeMeta[] = [
+    {
+        value: "name-super",
+        icon: "tabler:user",
+        color: "bg-blue-500",
+        iconColor: "text-blue-500",
+    },
+    {
+        value: "bible-verse",
+        icon: "tabler:book-2",
+        color: "bg-purple-500",
+        iconColor: "text-purple-500",
+    },
+    {
+        value: "song",
+        icon: "tabler:music",
+        color: "bg-emerald-500",
+        iconColor: "text-emerald-500",
+    },
+    {
+        value: "chapter",
+        icon: "tabler:bookmark",
+        color: "bg-amber-500",
+        iconColor: "text-amber-500",
+    },
+    {
+        value: "custom",
+        icon: "tabler:tag",
+        color: "bg-slate-500",
+        iconColor: "text-slate-500",
+    },
+];
+
+export function markerTypeMeta(type: MarkerType): MarkerTypeMeta {
+    return (
+        MARKER_TYPES.find((m) => m.value === type) ??
+        MARKER_TYPES[MARKER_TYPES.length - 1]!
+    );
+}
+
+// Marker types whose labels can be linked to a canonical entity via the entity
+// search / resolve backend. Grows as song and people registries come online.
+export const LINKABLE_TYPES: ReadonlySet<MarkerType> = new Set(["bible-verse"]);
+
+// A marker whose type should carry a canonical reference but doesn't yet — it
+// has a label to resolve but no `entityId`. These are surfaced as "for review":
+// auto-resolve couldn't confidently match them, so they need a manual look.
+export function isMarkerUnresolved(m: Marker): boolean {
+    return LINKABLE_TYPES.has(m.type) && !!m.label.trim() && !m.entityId;
+}
+
+// Sort by start time, then end time — stable order for the list and timeline.
+export function sortMarkers(markers: Marker[]): Marker[] {
+    return [...markers].sort((a, b) => a.start - b.start || a.end - b.end);
+}
+
+// ---- Import / export --------------------------------------------------------
+
+export type MarkersFile = {
+    vxId: string;
+    markers: Marker[];
+};
+
+export function serializeMarkers(vxId: string, markers: Marker[]): string {
+    const data: MarkersFile = { vxId, markers };
+    return JSON.stringify(data, null, 2);
+}
+
+// A non-empty string, or undefined — used to coerce optional imported fields.
+const optStr = (v: unknown): string | undefined =>
+    typeof v === "string" && v ? v : undefined;
+
+// Coerce an untrusted imported entry into a valid Marker, filling gaps.
+function normalizeImportedMarker(raw: unknown): Marker {
+    const m = (raw ?? {}) as Record<string, unknown>;
+    const type = MARKER_TYPES.some((t) => t.value === m.type)
+        ? (m.type as MarkerType)
+        : "custom";
+    const start = Math.max(0, Number(m.start) || 0);
+    const end = Math.max(start, Number(m.end) || start);
+    return {
+        id: optStr(m.id) ?? generateRandomId(),
+        type,
+        label: typeof m.label === "string" ? m.label : "",
+        note: optStr(m.note),
+        start,
+        end,
+        source: m.source === "imported" ? "imported" : "manual",
+        entityId: optStr(m.entityId),
+        entitySource: optStr(m.entitySource),
+    };
+}
+
+// Parse an exported markers file — either a { markers: [...] } wrapper or a
+// bare array — into validated markers. Throws if the shape is unusable.
+export function parseMarkers(text: string): Marker[] {
+    const data = JSON.parse(text);
+    const raw = Array.isArray(data) ? data : (data?.markers ?? null);
+    if (!Array.isArray(raw)) throw new Error("Invalid markers file");
+    return raw.map(normalizeImportedMarker);
+}
+
+// Markers are shown/edited at whole-second granularity — ms precision isn't
+// meaningful for on-screen graphics. (The shared `formatTime` keeps ms for the
+// transcription editor; these are marker-specific.)
+export function formatMarkerTime(seconds: number): string {
+    const s = Math.max(0, Math.round(seconds));
+    const hh = Math.floor(s / 3600);
+    const mm = Math.floor((s % 3600) / 60);
+    const ss = s % 60;
+    return [hh, mm, ss].map((n) => n.toString().padStart(2, "0")).join(":");
+}
+
+// Compact marker length as M:SS (or H:MM:SS once it passes an hour).
+export function formatMarkerDuration(seconds: number): string {
+    const s = Math.max(0, Math.round(seconds));
+    const hh = Math.floor(s / 3600);
+    const mm = Math.floor((s % 3600) / 60);
+    const ss = s % 60;
+    const pad = (n: number) => n.toString().padStart(2, "0");
+    return hh > 0 ? `${hh}:${pad(mm)}:${pad(ss)}` : `${mm}:${pad(ss)}`;
+}
+
+// Parses "SS", "MM:SS" or "HH:MM:SS" into whole seconds; NaN if malformed.
+export function parseMarkerTime(value: string): number {
+    const parts = value.trim().split(":");
+    if (parts.length === 0 || parts.length > 3) return NaN;
+    const nums = parts.map(Number);
+    if (nums.some((n) => !Number.isFinite(n) || n < 0)) return NaN;
+    return nums.reduce((total, n) => total * 60 + n, 0);
+}

@@ -192,6 +192,10 @@
         "vault": {
             "title": "Vault",
             "description": "Søk i Mediabanken og forhåndsvis elementer"
+        },
+        "markers": {
+            "title": "Markører",
+            "description": "Legg til, rediger og fjern markører på en video"
         }
     },
     "vault": {
@@ -217,6 +221,95 @@
             "video": "Video",
             "audio": "Lyd",
             "image": "Bilde"
+        }
+    },
+    "markers": {
+        "save": "Lagre",
+        "saved": "Markører lagret",
+        "unsaved": "Ulagrede endringer",
+        "allSaved": "Lagret",
+        "leaveConfirm": "Du har ulagrede endringer. Forlate uten å lagre?",
+        "addAtPlayhead": "Legg til markør ved spillehodet",
+        "addHint": "Trykk M for å legge til en markør",
+        "previewUnavailable": "Forhåndsvisning utilgjengelig",
+        "removed": "Fjernet «{label}»",
+        "undo": "Angre",
+        "import": "Importer markører",
+        "export": "Eksporter markører",
+        "importConfirm": "Erstatt gjeldende markører med den importerte filen?",
+        "imported": "Importerte {count} markører",
+        "importError": "Kunne ikke lese markørfilen",
+        "loadError": "Kunne ikke laste markører",
+        "retry": "Prøv igjen",
+        "resolve": {
+            "action": "Koble referanser",
+            "one": "Koble",
+            "done": "Koblet {linked} referanser",
+            "noMatch": "Fant ingen sikker match — velg manuelt",
+            "error": "Kunne ikke koble referanser"
+        },
+        "review": {
+            "hint": "Ikke koblet til en referanse ennå"
+        },
+        "empty": {
+            "title": "Ingen markører ennå",
+            "hint": "Legg til en markør ved spillehodet, eller trykk M"
+        },
+        "shortcuts": {
+            "title": "Hurtigtaster",
+            "playPause": "Spill / pause",
+            "seek": "Spol ±5 sekunder",
+            "prevNext": "Forrige / neste markør",
+            "add": "Legg til markør ved spillehodet",
+            "setInOut": "Sett inn / ut til spillehodet",
+            "remove": "Fjern valgt markør",
+            "help": "Vis denne hjelpen"
+        },
+        "index": {
+            "title": "Markører",
+            "description": "Åpne et Cantemo-element med VX-ID for å håndtere markører.",
+            "open": "Åpne",
+            "demoHint": "Kun frontend — markører lagres i nettleseren din."
+        },
+        "types": {
+            "name-super": "Person",
+            "bible-verse": "Bibelvers",
+            "song": "Sang",
+            "chapter": "Kapittel",
+            "custom": "Egendefinert"
+        },
+        "source": {
+            "imported": "Importert",
+            "manual": "Manuell"
+        },
+        "timeline": {
+            "empty": "Ingen markører ennå. Legg til en ved spillehodet."
+        },
+        "list": {
+            "title": "Markører",
+            "empty": "Ingen markører samsvarer med filteret."
+        },
+        "editor": {
+            "pageTitle": "Markører ·",
+            "title": "Rediger markør",
+            "type": "Type",
+            "label": "Etikett",
+            "labelPlaceholder": "f.eks. Ola Nordmann eller Joh 3:16",
+            "biblePlaceholder": "Søk etter et skriftsted, f.eks. Joh 3:16",
+            "bibleEmpty": "Fant ingen skriftsteder",
+            "note": "Notat",
+            "notePlaceholder": "Valgfritt notat",
+            "in": "Inn",
+            "out": "Ut",
+            "timing": "Tidsrom",
+            "setToPlayhead": "Sett til spillehodet",
+            "seekTo": "Gå til",
+            "nudgeBack": "−1 sekund",
+            "nudgeForward": "+1 sekund",
+            "previewRange": "Forhåndsvis utsnitt",
+            "duration": "Varighet",
+            "remove": "Fjern markør",
+            "noSelection": "Velg en markør for å redigere, eller legg til en ved spillehodet."
         }
     }
 }
