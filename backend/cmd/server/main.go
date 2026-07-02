@@ -130,6 +130,8 @@ func main() {
 		os.Getenv("VIDISPINE_USERNAME"),
 		os.Getenv("VIDISPINE_PASSWORD"),
 	)
+	bibleClient := NewBibleClient(os.Getenv("BIBLE_API_URL"), os.Getenv("BIBLE_ID"))
+	markersAPI := NewMarkersAPI(bibleClient)
 
 	// Dedicated Cantemo client for the VAULT preview proxy (same creds as the
 	// transcription tool).
@@ -143,7 +145,7 @@ func main() {
 		ExportAPI:        *exportAPI,
 		CantemoAPI:       *cantemoAPI,
 		VaultAPI:         *vaultAPI,
-		MarkersAPI:       NewMarkersAPI(),
+		MarkersAPI:       markersAPI,
 	}
 
 	if os.Getenv("STATIC_FILE_PATH") != "" {

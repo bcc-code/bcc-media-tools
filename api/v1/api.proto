@@ -422,12 +422,70 @@ message Marker {
   string id = 1;
   MarkerType type = 2;
   // Display text: the name, the verse reference, the song/chapter title.
+  // Always present; for linked markers it mirrors the canonical entity label,
+  // for custom / free-text markers it's whatever the user typed.
   string label = 3;
   string note = 4;
   // In/out points in seconds.
   double start = 5;
   double end = 6;
   MarkerSource source = 7;
+  // Canonical entity reference, when the label is linked to a known entity (a
+  // bible passage, a song, a person). Empty for free-text / custom markers.
+  // `label` is kept as denormalized display text so linking is enrichment, not
+  // a requirement — unmatched markers still round-trip.
+  string entity_id = 8;
+  // Which registry `entity_id` belongs to: "bible" | "songbook" | "people".
+  // Empty when `entity_id` is empty.
+  string entity_source = 9;
+}
+
+// A resolvable entity behind a marker label, returned by SearchEntities for
+// autocomplete. `id`/`source` map to Marker.entity_id/entity_source.
+message Entity {
+  string id = 1;
+  string source = 2;
+  // Canonical display text, e.g. "John 3:16".
+  string label = 3;
+  // Optional secondary text shown under the label, e.g. a translation or book.
+  string detail = 4;
+}
+
+message SearchEntitiesRequest {
+  // Which kind of entity to search — mapped from the marker's type.
+  MarkerType type = 1;
+  string query = 2;
+  // Max results to return; server clamps to a sane bound. 0 means default.
+  int32 limit = 3;
+}
+
+message SearchEntitiesResponse {
+  repeated Entity entities = 1;
+}
+
+// One free-text label to try to resolve to a canonical entity, used by the bulk
+// "resolve references" action.
+message ReferenceQuery {
+  // Opaque id echoed back so the caller can correlate results (the marker id).
+  string ref_id = 1;
+  MarkerType type = 2;
+  string text = 3;
+}
+
+message ResolvedReference {
+  string ref_id = 1;
+  // True only when the text resolved to a single, confident match.
+  bool resolved = 2;
+  // Set only when resolved.
+  Entity entity = 3;
+}
+
+message ResolveReferencesRequest {
+  repeated ReferenceQuery queries = 1;
+}
+
+message ResolveReferencesResponse {
+  repeated ResolvedReference results = 1;
 }
 
 message GetMarkersRequest {
@@ -490,4 +548,8 @@ service APIService {
   // Markers
   rpc GetMarkers(GetMarkersRequest) returns (GetMarkersResponse) {}
   rpc SubmitMarkers(SubmitMarkersRequest) returns (Void) {}
+  // Autocomplete for marker labels (bible passages, songs, people).
+  rpc SearchEntities(SearchEntitiesRequest) returns (SearchEntitiesResponse) {}
+  // Bulk-resolve free-text marker labels to canonical entities.
+  rpc ResolveReferences(ResolveReferencesRequest) returns (ResolveReferencesResponse) {}
 }

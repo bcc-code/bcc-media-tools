@@ -28,6 +28,13 @@ export type Marker = {
     start: number;
     end: number;
     source: MarkerSource;
+    // Canonical entity reference when the label is linked to a known entity (a
+    // bible passage, song, or person) — e.g. the bible ref "Jn 3/16". Empty for
+    // free-text / custom markers; `label` always holds the display text so
+    // linking stays optional enrichment.
+    entityId?: string;
+    // Which registry `entityId` belongs to: "bible" | "songbook" | "people".
+    entitySource?: string;
 };
 
 export type MarkerTypeMeta = {
@@ -81,6 +88,17 @@ export function markerTypeMeta(type: MarkerType): MarkerTypeMeta {
     );
 }
 
+// Marker types whose labels can be linked to a canonical entity via the entity
+// search / resolve backend. Grows as song and people registries come online.
+export const LINKABLE_TYPES: ReadonlySet<MarkerType> = new Set(["bible-verse"]);
+
+// A marker whose type should carry a canonical reference but doesn't yet — it
+// has a label to resolve but no `entityId`. These are surfaced as "for review":
+// auto-resolve couldn't confidently match them, so they need a manual look.
+export function isMarkerUnresolved(m: Marker): boolean {
+    return LINKABLE_TYPES.has(m.type) && !!m.label.trim() && !m.entityId;
+}
+
 // Sort by start time, then end time — stable order for the list and timeline.
 export function sortMarkers(markers: Marker[]): Marker[] {
     return [...markers].sort((a, b) => a.start - b.start || a.end - b.end);
@@ -98,6 +116,10 @@ export function serializeMarkers(vxId: string, markers: Marker[]): string {
     return JSON.stringify(data, null, 2);
 }
 
+// A non-empty string, or undefined — used to coerce optional imported fields.
+const optStr = (v: unknown): string | undefined =>
+    typeof v === "string" && v ? v : undefined;
+
 // Coerce an untrusted imported entry into a valid Marker, filling gaps.
 function normalizeImportedMarker(raw: unknown): Marker {
     const m = (raw ?? {}) as Record<string, unknown>;
@@ -107,13 +129,15 @@ function normalizeImportedMarker(raw: unknown): Marker {
     const start = Math.max(0, Number(m.start) || 0);
     const end = Math.max(start, Number(m.end) || start);
     return {
-        id: typeof m.id === "string" && m.id ? m.id : generateRandomId(),
+        id: optStr(m.id) ?? generateRandomId(),
         type,
         label: typeof m.label === "string" ? m.label : "",
-        note: typeof m.note === "string" && m.note ? m.note : undefined,
+        note: optStr(m.note),
         start,
         end,
         source: m.source === "imported" ? "imported" : "manual",
+        entityId: optStr(m.entityId),
+        entitySource: optStr(m.entitySource),
     };
 }
 

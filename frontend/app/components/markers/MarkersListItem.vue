@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import { formatMarkerDuration, markerTypeMeta } from "~/utils/markers";
+import {
+    formatMarkerDuration,
+    isMarkerUnresolved,
+    markerTypeMeta,
+} from "~/utils/markers";
 import type { Marker } from "~/utils/markers";
 
 const props = defineProps<{
@@ -37,6 +41,8 @@ watch(
 const displayLabel = computed(
     () => props.marker.label || t(`markers.types.${props.marker.type}`),
 );
+
+const unresolved = computed(() => isMarkerUnresolved(props.marker));
 </script>
 
 <template>
@@ -62,6 +68,16 @@ const displayLabel = computed(
         <span class="text-body-3 text-text-default flex-1 truncate">
             {{ displayLabel }}
         </span>
+        <DesignTooltip
+            v-if="unresolved"
+            :content="t('markers.review.hint')"
+            placement="top"
+        >
+            <Icon
+                name="tabler:alert-triangle"
+                class="text-semantic-warning size-3.5 shrink-0"
+            />
+        </DesignTooltip>
         <Icon
             v-if="active"
             name="tabler:volume"

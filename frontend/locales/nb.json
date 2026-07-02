@@ -241,6 +241,16 @@
         "importError": "Kunne ikke lese markørfilen",
         "loadError": "Kunne ikke laste markører",
         "retry": "Prøv igjen",
+        "resolve": {
+            "action": "Koble referanser",
+            "one": "Koble",
+            "done": "Koblet {linked} referanser",
+            "noMatch": "Fant ingen sikker match — velg manuelt",
+            "error": "Kunne ikke koble referanser"
+        },
+        "review": {
+            "hint": "Ikke koblet til en referanse ennå"
+        },
         "empty": {
             "title": "Ingen markører ennå",
             "hint": "Legg til en markør ved spillehodet, eller trykk M"
@@ -285,6 +295,8 @@
             "type": "Type",
             "label": "Etikett",
             "labelPlaceholder": "f.eks. Ola Nordmann eller Joh 3:16",
+            "biblePlaceholder": "Søk etter et skriftsted, f.eks. Joh 3:16",
+            "bibleEmpty": "Fant ingen skriftsteder",
             "note": "Notat",
             "notePlaceholder": "Valgfritt notat",
             "in": "Inn",

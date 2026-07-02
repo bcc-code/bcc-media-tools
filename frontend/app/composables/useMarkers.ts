@@ -9,7 +9,7 @@ import type { Marker, MarkerSource, MarkerType } from "~/utils/markers";
 // locally; `save` submits it. See `backend/cmd/server/markers.go` — the backend
 // is still an in-memory placeholder pending the third-party timing integration.
 
-const TYPE_TO_PB: Record<MarkerType, PbMarkerType> = {
+export const TYPE_TO_PB: Record<MarkerType, PbMarkerType> = {
     "name-super": PbMarkerType.NAME_SUPER,
     "bible-verse": PbMarkerType.BIBLE_VERSE,
     song: PbMarkerType.SONG,
@@ -41,6 +41,8 @@ function fromPb(m: PbMarker): Marker {
         start: m.start,
         end: m.end,
         source: SOURCE_FROM_PB[m.source] ?? "manual",
+        entityId: m.entityId || undefined,
+        entitySource: m.entitySource || undefined,
     };
 }
 
@@ -53,6 +55,8 @@ function toPb(m: Marker) {
         start: m.start,
         end: m.end,
         source: SOURCE_TO_PB[m.source],
+        entityId: m.entityId ?? "",
+        entitySource: m.entitySource ?? "",
     };
 }
 

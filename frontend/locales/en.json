@@ -241,6 +241,16 @@
         "importError": "Couldn't read that markers file",
         "loadError": "Couldn't load markers",
         "retry": "Retry",
+        "resolve": {
+            "action": "Resolve references",
+            "one": "Resolve",
+            "done": "Linked {linked} references",
+            "noMatch": "Couldn't find a confident match — pick it manually",
+            "error": "Couldn't resolve references"
+        },
+        "review": {
+            "hint": "Not linked to a reference yet"
+        },
         "empty": {
             "title": "No markers yet",
             "hint": "Add a marker at the playhead, or press M"
@@ -285,6 +295,8 @@
             "type": "Type",
             "label": "Label",
             "labelPlaceholder": "e.g. John Doe or John 3:16",
+            "biblePlaceholder": "Search a passage, e.g. John 3:16",
+            "bibleEmpty": "No matching passage",
             "note": "Note",
             "notePlaceholder": "Optional note",
             "in": "In",

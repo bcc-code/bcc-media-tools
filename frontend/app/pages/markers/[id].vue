@@ -3,12 +3,14 @@ import { LayoutGroup, motion } from "motion-v";
 import { onBeforeRouteLeave } from "vue-router";
 import {
     formatMarkerTime,
+    isMarkerUnresolved,
     markerTypeMeta,
     parseMarkers,
     serializeMarkers,
     sortMarkers,
 } from "~/utils/markers";
 import type { Marker, MarkerType } from "~/utils/markers";
+import { TYPE_TO_PB } from "~/composables/useMarkers";
 
 // Seconds the arrow keys jump the playhead.
 const SEEK_STEP_SECONDS = 5;
@@ -219,6 +221,51 @@ async function onImportFile(event: Event) {
     }
 }
 
+// ---- Resolve references -----------------------------------------------------
+// Try to auto-link every unlinked marker with a resolvable label to its
+// canonical entity. Confident matches are linked; the rest stay "for review".
+const resolving = ref(false);
+async function resolveReferences() {
+    const candidates = markers.value.filter(isMarkerUnresolved);
+    if (!candidates.length) return;
+
+    resolving.value = true;
+    try {
+        const res = await api.resolveReferences({
+            queries: candidates.map((m) => ({
+                refId: m.id,
+                type: TYPE_TO_PB[m.type],
+                text: m.label,
+            })),
+        });
+        let linked = 0;
+        for (const r of res.results) {
+            if (!r.resolved || !r.entity) continue;
+            update(r.refId, {
+                label: r.entity.label,
+                entityId: r.entity.id,
+                entitySource: r.entity.source,
+            });
+            linked++;
+        }
+        toaster.create({
+            title: t("markers.resolve.done", { linked }),
+            type: "success",
+        });
+    } catch (err) {
+        console.error("Resolve references failed", err);
+        toaster.create({ title: t("markers.resolve.error"), type: "error" });
+    } finally {
+        resolving.value = false;
+    }
+}
+
+// Count of markers still awaiting a canonical link — gates the resolve button
+// and drives the "for review" indicators.
+const unresolvedCount = computed(
+    () => markers.value.filter(isMarkerUnresolved).length,
+);
+
 // ---- Keyboard shortcuts -----------------------------------------------------
 // Ignore shortcuts while typing in a field or while an Ark widget (select,
 // slider, menu, …) is focused — those consume arrow/space keys themselves.
@@ -329,6 +376,31 @@ useEventListener(window, "beforeunload", (event: BeforeUnloadEvent) => {
                     class="hidden"
                     @change="onImportFile"
                 />
+                <DesignTooltip
+                    :content="t('markers.resolve.action')"
+                    placement="bottom"
+                >
+                    <button
+                        type="button"
+                        :disabled="resolving || !unresolvedCount"
+                        class="ds-focus-ring text-text-muted hover:bg-surface-indent hover:text-text-default relative flex items-center justify-center rounded-lg p-2 transition-colors disabled:pointer-events-none disabled:opacity-40"
+                        @click="resolveReferences"
+                    >
+                        <Icon
+                            :name="
+                                resolving ? 'tabler:loader-2' : 'tabler:wand'
+                            "
+                            class="size-4"
+                            :class="{ 'animate-spin': resolving }"
+                        />
+                        <span
+                            v-if="unresolvedCount"
+                            class="border-semantic-warning bg-surface-default text-semantic-warning absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full border px-1 text-[10px] font-semibold tabular-nums"
+                        >
+                            {{ unresolvedCount }}
+                        </span>
+                    </button>
+                </DesignTooltip>
                 <DesignTooltip
                     :content="t('markers.import')"
                     placement="bottom"

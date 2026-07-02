@@ -3617,12 +3617,22 @@ type Marker struct {
 	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Type  MarkerType             `protobuf:"varint,2,opt,name=type,proto3,enum=api.v1.MarkerType" json:"type,omitempty"`
 	// Display text: the name, the verse reference, the song/chapter title.
+	// Always present; for linked markers it mirrors the canonical entity label,
+	// for custom / free-text markers it's whatever the user typed.
 	Label string `protobuf:"bytes,3,opt,name=label,proto3" json:"label,omitempty"`
 	Note  string `protobuf:"bytes,4,opt,name=note,proto3" json:"note,omitempty"`
 	// In/out points in seconds.
-	Start         float64      `protobuf:"fixed64,5,opt,name=start,proto3" json:"start,omitempty"`
-	End           float64      `protobuf:"fixed64,6,opt,name=end,proto3" json:"end,omitempty"`
-	Source        MarkerSource `protobuf:"varint,7,opt,name=source,proto3,enum=api.v1.MarkerSource" json:"source,omitempty"`
+	Start  float64      `protobuf:"fixed64,5,opt,name=start,proto3" json:"start,omitempty"`
+	End    float64      `protobuf:"fixed64,6,opt,name=end,proto3" json:"end,omitempty"`
+	Source MarkerSource `protobuf:"varint,7,opt,name=source,proto3,enum=api.v1.MarkerSource" json:"source,omitempty"`
+	// Canonical entity reference, when the label is linked to a known entity (a
+	// bible passage, a song, a person). Empty for free-text / custom markers.
+	// `label` is kept as denormalized display text so linking is enrichment, not
+	// a requirement — unmatched markers still round-trip.
+	EntityId string `protobuf:"bytes,8,opt,name=entity_id,json=entityId,proto3" json:"entity_id,omitempty"`
+	// Which registry `entity_id` belongs to: "bible" | "songbook" | "people".
+	// Empty when `entity_id` is empty.
+	EntitySource  string `protobuf:"bytes,9,opt,name=entity_source,json=entitySource,proto3" json:"entity_source,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3706,6 +3716,411 @@ func (x *Marker) GetSource() MarkerSource {
 	return MarkerSource_MARKER_SOURCE_UNSPECIFIED
 }
 
+func (x *Marker) GetEntityId() string {
+	if x != nil {
+		return x.EntityId
+	}
+	return ""
+}
+
+func (x *Marker) GetEntitySource() string {
+	if x != nil {
+		return x.EntitySource
+	}
+	return ""
+}
+
+// A resolvable entity behind a marker label, returned by SearchEntities for
+// autocomplete. `id`/`source` map to Marker.entity_id/entity_source.
+type Entity struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	Id     string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Source string                 `protobuf:"bytes,2,opt,name=source,proto3" json:"source,omitempty"`
+	// Canonical display text, e.g. "John 3:16".
+	Label string `protobuf:"bytes,3,opt,name=label,proto3" json:"label,omitempty"`
+	// Optional secondary text shown under the label, e.g. a translation or book.
+	Detail        string `protobuf:"bytes,4,opt,name=detail,proto3" json:"detail,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Entity) Reset() {
+	*x = Entity{}
+	mi := &file_api_v1_api_proto_msgTypes[58]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Entity) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Entity) ProtoMessage() {}
+
+func (x *Entity) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_api_proto_msgTypes[58]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Entity.ProtoReflect.Descriptor instead.
+func (*Entity) Descriptor() ([]byte, []int) {
+	return file_api_v1_api_proto_rawDescGZIP(), []int{58}
+}
+
+func (x *Entity) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Entity) GetSource() string {
+	if x != nil {
+		return x.Source
+	}
+	return ""
+}
+
+func (x *Entity) GetLabel() string {
+	if x != nil {
+		return x.Label
+	}
+	return ""
+}
+
+func (x *Entity) GetDetail() string {
+	if x != nil {
+		return x.Detail
+	}
+	return ""
+}
+
+type SearchEntitiesRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Which kind of entity to search — mapped from the marker's type.
+	Type  MarkerType `protobuf:"varint,1,opt,name=type,proto3,enum=api.v1.MarkerType" json:"type,omitempty"`
+	Query string     `protobuf:"bytes,2,opt,name=query,proto3" json:"query,omitempty"`
+	// Max results to return; server clamps to a sane bound. 0 means default.
+	Limit         int32 `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SearchEntitiesRequest) Reset() {
+	*x = SearchEntitiesRequest{}
+	mi := &file_api_v1_api_proto_msgTypes[59]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SearchEntitiesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SearchEntitiesRequest) ProtoMessage() {}
+
+func (x *SearchEntitiesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_api_proto_msgTypes[59]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SearchEntitiesRequest.ProtoReflect.Descriptor instead.
+func (*SearchEntitiesRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_api_proto_rawDescGZIP(), []int{59}
+}
+
+func (x *SearchEntitiesRequest) GetType() MarkerType {
+	if x != nil {
+		return x.Type
+	}
+	return MarkerType_MARKER_TYPE_UNSPECIFIED
+}
+
+func (x *SearchEntitiesRequest) GetQuery() string {
+	if x != nil {
+		return x.Query
+	}
+	return ""
+}
+
+func (x *SearchEntitiesRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+type SearchEntitiesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Entities      []*Entity              `protobuf:"bytes,1,rep,name=entities,proto3" json:"entities,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SearchEntitiesResponse) Reset() {
+	*x = SearchEntitiesResponse{}
+	mi := &file_api_v1_api_proto_msgTypes[60]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SearchEntitiesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SearchEntitiesResponse) ProtoMessage() {}
+
+func (x *SearchEntitiesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_api_proto_msgTypes[60]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SearchEntitiesResponse.ProtoReflect.Descriptor instead.
+func (*SearchEntitiesResponse) Descriptor() ([]byte, []int) {
+	return file_api_v1_api_proto_rawDescGZIP(), []int{60}
+}
+
+func (x *SearchEntitiesResponse) GetEntities() []*Entity {
+	if x != nil {
+		return x.Entities
+	}
+	return nil
+}
+
+// One free-text label to try to resolve to a canonical entity, used by the bulk
+// "resolve references" action.
+type ReferenceQuery struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Opaque id echoed back so the caller can correlate results (the marker id).
+	RefId         string     `protobuf:"bytes,1,opt,name=ref_id,json=refId,proto3" json:"ref_id,omitempty"`
+	Type          MarkerType `protobuf:"varint,2,opt,name=type,proto3,enum=api.v1.MarkerType" json:"type,omitempty"`
+	Text          string     `protobuf:"bytes,3,opt,name=text,proto3" json:"text,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReferenceQuery) Reset() {
+	*x = ReferenceQuery{}
+	mi := &file_api_v1_api_proto_msgTypes[61]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReferenceQuery) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReferenceQuery) ProtoMessage() {}
+
+func (x *ReferenceQuery) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_api_proto_msgTypes[61]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReferenceQuery.ProtoReflect.Descriptor instead.
+func (*ReferenceQuery) Descriptor() ([]byte, []int) {
+	return file_api_v1_api_proto_rawDescGZIP(), []int{61}
+}
+
+func (x *ReferenceQuery) GetRefId() string {
+	if x != nil {
+		return x.RefId
+	}
+	return ""
+}
+
+func (x *ReferenceQuery) GetType() MarkerType {
+	if x != nil {
+		return x.Type
+	}
+	return MarkerType_MARKER_TYPE_UNSPECIFIED
+}
+
+func (x *ReferenceQuery) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
+}
+
+type ResolvedReference struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	RefId string                 `protobuf:"bytes,1,opt,name=ref_id,json=refId,proto3" json:"ref_id,omitempty"`
+	// True only when the text resolved to a single, confident match.
+	Resolved bool `protobuf:"varint,2,opt,name=resolved,proto3" json:"resolved,omitempty"`
+	// Set only when resolved.
+	Entity        *Entity `protobuf:"bytes,3,opt,name=entity,proto3" json:"entity,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResolvedReference) Reset() {
+	*x = ResolvedReference{}
+	mi := &file_api_v1_api_proto_msgTypes[62]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResolvedReference) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResolvedReference) ProtoMessage() {}
+
+func (x *ResolvedReference) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_api_proto_msgTypes[62]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResolvedReference.ProtoReflect.Descriptor instead.
+func (*ResolvedReference) Descriptor() ([]byte, []int) {
+	return file_api_v1_api_proto_rawDescGZIP(), []int{62}
+}
+
+func (x *ResolvedReference) GetRefId() string {
+	if x != nil {
+		return x.RefId
+	}
+	return ""
+}
+
+func (x *ResolvedReference) GetResolved() bool {
+	if x != nil {
+		return x.Resolved
+	}
+	return false
+}
+
+func (x *ResolvedReference) GetEntity() *Entity {
+	if x != nil {
+		return x.Entity
+	}
+	return nil
+}
+
+type ResolveReferencesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Queries       []*ReferenceQuery      `protobuf:"bytes,1,rep,name=queries,proto3" json:"queries,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResolveReferencesRequest) Reset() {
+	*x = ResolveReferencesRequest{}
+	mi := &file_api_v1_api_proto_msgTypes[63]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResolveReferencesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResolveReferencesRequest) ProtoMessage() {}
+
+func (x *ResolveReferencesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_api_proto_msgTypes[63]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResolveReferencesRequest.ProtoReflect.Descriptor instead.
+func (*ResolveReferencesRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_api_proto_rawDescGZIP(), []int{63}
+}
+
+func (x *ResolveReferencesRequest) GetQueries() []*ReferenceQuery {
+	if x != nil {
+		return x.Queries
+	}
+	return nil
+}
+
+type ResolveReferencesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Results       []*ResolvedReference   `protobuf:"bytes,1,rep,name=results,proto3" json:"results,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResolveReferencesResponse) Reset() {
+	*x = ResolveReferencesResponse{}
+	mi := &file_api_v1_api_proto_msgTypes[64]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResolveReferencesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResolveReferencesResponse) ProtoMessage() {}
+
+func (x *ResolveReferencesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_api_proto_msgTypes[64]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResolveReferencesResponse.ProtoReflect.Descriptor instead.
+func (*ResolveReferencesResponse) Descriptor() ([]byte, []int) {
+	return file_api_v1_api_proto_rawDescGZIP(), []int{64}
+}
+
+func (x *ResolveReferencesResponse) GetResults() []*ResolvedReference {
+	if x != nil {
+		return x.Results
+	}
+	return nil
+}
+
 type GetMarkersRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	VXID          string                 `protobuf:"bytes,1,opt,name=VXID,proto3" json:"VXID,omitempty"`
@@ -3715,7 +4130,7 @@ type GetMarkersRequest struct {
 
 func (x *GetMarkersRequest) Reset() {
 	*x = GetMarkersRequest{}
-	mi := &file_api_v1_api_proto_msgTypes[58]
+	mi := &file_api_v1_api_proto_msgTypes[65]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3727,7 +4142,7 @@ func (x *GetMarkersRequest) String() string {
 func (*GetMarkersRequest) ProtoMessage() {}
 
 func (x *GetMarkersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[58]
+	mi := &file_api_v1_api_proto_msgTypes[65]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3740,7 +4155,7 @@ func (x *GetMarkersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMarkersRequest.ProtoReflect.Descriptor instead.
 func (*GetMarkersRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{58}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{65}
 }
 
 func (x *GetMarkersRequest) GetVXID() string {
@@ -3759,7 +4174,7 @@ type GetMarkersResponse struct {
 
 func (x *GetMarkersResponse) Reset() {
 	*x = GetMarkersResponse{}
-	mi := &file_api_v1_api_proto_msgTypes[59]
+	mi := &file_api_v1_api_proto_msgTypes[66]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3771,7 +4186,7 @@ func (x *GetMarkersResponse) String() string {
 func (*GetMarkersResponse) ProtoMessage() {}
 
 func (x *GetMarkersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[59]
+	mi := &file_api_v1_api_proto_msgTypes[66]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3784,7 +4199,7 @@ func (x *GetMarkersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMarkersResponse.ProtoReflect.Descriptor instead.
 func (*GetMarkersResponse) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{59}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{66}
 }
 
 func (x *GetMarkersResponse) GetMarkers() []*Marker {
@@ -3804,7 +4219,7 @@ type SubmitMarkersRequest struct {
 
 func (x *SubmitMarkersRequest) Reset() {
 	*x = SubmitMarkersRequest{}
-	mi := &file_api_v1_api_proto_msgTypes[60]
+	mi := &file_api_v1_api_proto_msgTypes[67]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3816,7 +4231,7 @@ func (x *SubmitMarkersRequest) String() string {
 func (*SubmitMarkersRequest) ProtoMessage() {}
 
 func (x *SubmitMarkersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[60]
+	mi := &file_api_v1_api_proto_msgTypes[67]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3829,7 +4244,7 @@ func (x *SubmitMarkersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubmitMarkersRequest.ProtoReflect.Descriptor instead.
 func (*SubmitMarkersRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{60}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{67}
 }
 
 func (x *SubmitMarkersRequest) GetVXID() string {
@@ -4098,7 +4513,7 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\x13GetVaultItemRequest\x12\x12\n" +
 	"\x04VXID\x18\x01 \x01(\tR\x04VXID\"=\n" +
 	"\x14GetVaultItemResponse\x12%\n" +
-	"\x04item\x18\x01 \x01(\v2\x11.api.v1.VaultItemR\x04item\"\xc0\x01\n" +
+	"\x04item\x18\x01 \x01(\v2\x11.api.v1.VaultItemR\x04item\"\x82\x02\n" +
 	"\x06Marker\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12&\n" +
 	"\x04type\x18\x02 \x01(\x0e2\x12.api.v1.MarkerTypeR\x04type\x12\x14\n" +
@@ -4106,7 +4521,32 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\x04note\x18\x04 \x01(\tR\x04note\x12\x14\n" +
 	"\x05start\x18\x05 \x01(\x01R\x05start\x12\x10\n" +
 	"\x03end\x18\x06 \x01(\x01R\x03end\x12,\n" +
-	"\x06source\x18\a \x01(\x0e2\x14.api.v1.MarkerSourceR\x06source\"'\n" +
+	"\x06source\x18\a \x01(\x0e2\x14.api.v1.MarkerSourceR\x06source\x12\x1b\n" +
+	"\tentity_id\x18\b \x01(\tR\bentityId\x12#\n" +
+	"\rentity_source\x18\t \x01(\tR\fentitySource\"^\n" +
+	"\x06Entity\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x16\n" +
+	"\x06source\x18\x02 \x01(\tR\x06source\x12\x14\n" +
+	"\x05label\x18\x03 \x01(\tR\x05label\x12\x16\n" +
+	"\x06detail\x18\x04 \x01(\tR\x06detail\"k\n" +
+	"\x15SearchEntitiesRequest\x12&\n" +
+	"\x04type\x18\x01 \x01(\x0e2\x12.api.v1.MarkerTypeR\x04type\x12\x14\n" +
+	"\x05query\x18\x02 \x01(\tR\x05query\x12\x14\n" +
+	"\x05limit\x18\x03 \x01(\x05R\x05limit\"D\n" +
+	"\x16SearchEntitiesResponse\x12*\n" +
+	"\bentities\x18\x01 \x03(\v2\x0e.api.v1.EntityR\bentities\"c\n" +
+	"\x0eReferenceQuery\x12\x15\n" +
+	"\x06ref_id\x18\x01 \x01(\tR\x05refId\x12&\n" +
+	"\x04type\x18\x02 \x01(\x0e2\x12.api.v1.MarkerTypeR\x04type\x12\x12\n" +
+	"\x04text\x18\x03 \x01(\tR\x04text\"n\n" +
+	"\x11ResolvedReference\x12\x15\n" +
+	"\x06ref_id\x18\x01 \x01(\tR\x05refId\x12\x1a\n" +
+	"\bresolved\x18\x02 \x01(\bR\bresolved\x12&\n" +
+	"\x06entity\x18\x03 \x01(\v2\x0e.api.v1.EntityR\x06entity\"L\n" +
+	"\x18ResolveReferencesRequest\x120\n" +
+	"\aqueries\x18\x01 \x03(\v2\x16.api.v1.ReferenceQueryR\aqueries\"P\n" +
+	"\x19ResolveReferencesResponse\x123\n" +
+	"\aresults\x18\x01 \x03(\v2\x19.api.v1.ResolvedReferenceR\aresults\"'\n" +
 	"\x11GetMarkersRequest\x12\x12\n" +
 	"\x04VXID\x18\x01 \x01(\tR\x04VXID\">\n" +
 	"\x12GetMarkersResponse\x12(\n" +
@@ -4135,7 +4575,7 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\fMarkerSource\x12\x1d\n" +
 	"\x19MARKER_SOURCE_UNSPECIFIED\x10\x00\x12\x1a\n" +
 	"\x16MARKER_SOURCE_IMPORTED\x10\x01\x12\x18\n" +
-	"\x14MARKER_SOURCE_MANUAL\x10\x022\xe9\x0e\n" +
+	"\x14MARKER_SOURCE_MANUAL\x10\x022\x98\x10\n" +
 	"\n" +
 	"APIService\x125\n" +
 	"\x0eGetPermissions\x12\f.api.v1.Void\x1a\x13.api.v1.Permissions\"\x00\x12B\n" +
@@ -4165,7 +4605,9 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\fGetVaultItem\x12\x1b.api.v1.GetVaultItemRequest\x1a\x1c.api.v1.GetVaultItemResponse\"\x00\x12E\n" +
 	"\n" +
 	"GetMarkers\x12\x19.api.v1.GetMarkersRequest\x1a\x1a.api.v1.GetMarkersResponse\"\x00\x12=\n" +
-	"\rSubmitMarkers\x12\x1c.api.v1.SubmitMarkersRequest\x1a\f.api.v1.Void\"\x00B\x1eZ\x1cbcc-media-tools/api/v1;apiv1b\x06proto3"
+	"\rSubmitMarkers\x12\x1c.api.v1.SubmitMarkersRequest\x1a\f.api.v1.Void\"\x00\x12Q\n" +
+	"\x0eSearchEntities\x12\x1d.api.v1.SearchEntitiesRequest\x1a\x1e.api.v1.SearchEntitiesResponse\"\x00\x12Z\n" +
+	"\x11ResolveReferences\x12 .api.v1.ResolveReferencesRequest\x1a!.api.v1.ResolveReferencesResponse\"\x00B\x1eZ\x1cbcc-media-tools/api/v1;apiv1b\x06proto3"
 
 var (
 	file_api_v1_api_proto_rawDescOnce sync.Once
@@ -4180,7 +4622,7 @@ func file_api_v1_api_proto_rawDescGZIP() []byte {
 }
 
 var file_api_v1_api_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_api_v1_api_proto_msgTypes = make([]protoimpl.MessageInfo, 63)
+var file_api_v1_api_proto_msgTypes = make([]protoimpl.MessageInfo, 70)
 var file_api_v1_api_proto_goTypes = []any{
 	(BmmEnvironment)(0),                  // 0: api.v1.BmmEnvironment
 	(CantemoAction)(0),                   // 1: api.v1.CantemoAction
@@ -4244,13 +4686,20 @@ var file_api_v1_api_proto_goTypes = []any{
 	(*GetVaultItemRequest)(nil),          // 59: api.v1.GetVaultItemRequest
 	(*GetVaultItemResponse)(nil),         // 60: api.v1.GetVaultItemResponse
 	(*Marker)(nil),                       // 61: api.v1.Marker
-	(*GetMarkersRequest)(nil),            // 62: api.v1.GetMarkersRequest
-	(*GetMarkersResponse)(nil),           // 63: api.v1.GetMarkersResponse
-	(*SubmitMarkersRequest)(nil),         // 64: api.v1.SubmitMarkersRequest
-	nil,                                  // 65: api.v1.PermissionsList.PermissionsEntry
-	nil,                                  // 66: api.v1.GetYearsResponse.DataEntry
-	(*timestamppb.Timestamp)(nil),        // 67: google.protobuf.Timestamp
-	(*Void)(nil),                         // 68: api.v1.Void
+	(*Entity)(nil),                       // 62: api.v1.Entity
+	(*SearchEntitiesRequest)(nil),        // 63: api.v1.SearchEntitiesRequest
+	(*SearchEntitiesResponse)(nil),       // 64: api.v1.SearchEntitiesResponse
+	(*ReferenceQuery)(nil),               // 65: api.v1.ReferenceQuery
+	(*ResolvedReference)(nil),            // 66: api.v1.ResolvedReference
+	(*ResolveReferencesRequest)(nil),     // 67: api.v1.ResolveReferencesRequest
+	(*ResolveReferencesResponse)(nil),    // 68: api.v1.ResolveReferencesResponse
+	(*GetMarkersRequest)(nil),            // 69: api.v1.GetMarkersRequest
+	(*GetMarkersResponse)(nil),           // 70: api.v1.GetMarkersResponse
+	(*SubmitMarkersRequest)(nil),         // 71: api.v1.SubmitMarkersRequest
+	nil,                                  // 72: api.v1.PermissionsList.PermissionsEntry
+	nil,                                  // 73: api.v1.GetYearsResponse.DataEntry
+	(*timestamppb.Timestamp)(nil),        // 74: google.protobuf.Timestamp
+	(*Void)(nil),                         // 75: api.v1.Void
 }
 var file_api_v1_api_proto_depIdxs = []int32{
 	4,  // 0: api.v1.Permissions.bmm:type_name -> api.v1.BMMPermission
@@ -4260,15 +4709,15 @@ var file_api_v1_api_proto_depIdxs = []int32{
 	8,  // 4: api.v1.Permissions.cantemo:type_name -> api.v1.CantemoPermission
 	9,  // 5: api.v1.Permissions.vault:type_name -> api.v1.VaultPermission
 	10, // 6: api.v1.SetPermissionsRequest.permissions:type_name -> api.v1.Permissions
-	65, // 7: api.v1.PermissionsList.permissions:type_name -> api.v1.PermissionsList.PermissionsEntry
-	66, // 8: api.v1.GetYearsResponse.data:type_name -> api.v1.GetYearsResponse.DataEntry
+	72, // 7: api.v1.PermissionsList.permissions:type_name -> api.v1.PermissionsList.PermissionsEntry
+	73, // 8: api.v1.GetYearsResponse.data:type_name -> api.v1.GetYearsResponse.DataEntry
 	0,  // 9: api.v1.GetYearsRequest.environment:type_name -> api.v1.BmmEnvironment
 	0,  // 10: api.v1.GetAlbumsRequest.environment:type_name -> api.v1.BmmEnvironment
 	19, // 11: api.v1.AlbumsList.albums:type_name -> api.v1.Album
 	0,  // 12: api.v1.GetAlbumTracksRequest.environment:type_name -> api.v1.BmmEnvironment
 	0,  // 13: api.v1.GetPodcastTracksRequest.environment:type_name -> api.v1.BmmEnvironment
 	0,  // 14: api.v1.GetAvailableLanguagesRequest.environment:type_name -> api.v1.BmmEnvironment
-	67, // 15: api.v1.BMMTrack.publishedAt:type_name -> google.protobuf.Timestamp
+	74, // 15: api.v1.BMMTrack.publishedAt:type_name -> google.protobuf.Timestamp
 	26, // 16: api.v1.BMMTrack.languages:type_name -> api.v1.LanguageList
 	26, // 17: api.v1.BMMTrack.transcriptions:type_name -> api.v1.LanguageList
 	24, // 18: api.v1.TracksList.tracks:type_name -> api.v1.BMMTrack
@@ -4288,67 +4737,77 @@ var file_api_v1_api_proto_depIdxs = []int32{
 	56, // 32: api.v1.GetVaultItemResponse.item:type_name -> api.v1.VaultItem
 	2,  // 33: api.v1.Marker.type:type_name -> api.v1.MarkerType
 	3,  // 34: api.v1.Marker.source:type_name -> api.v1.MarkerSource
-	61, // 35: api.v1.GetMarkersResponse.markers:type_name -> api.v1.Marker
-	61, // 36: api.v1.SubmitMarkersRequest.markers:type_name -> api.v1.Marker
-	10, // 37: api.v1.PermissionsList.PermissionsEntry.value:type_name -> api.v1.Permissions
-	15, // 38: api.v1.GetYearsResponse.DataEntry.value:type_name -> api.v1.BMMYear
-	68, // 39: api.v1.APIService.GetPermissions:input_type -> api.v1.Void
-	12, // 40: api.v1.APIService.UpdatePermissions:input_type -> api.v1.SetPermissionsRequest
-	13, // 41: api.v1.APIService.DeletePermissions:input_type -> api.v1.DeletePermissionsRequest
-	68, // 42: api.v1.APIService.ListPermissions:input_type -> api.v1.Void
-	28, // 43: api.v1.APIService.GetTranscription:input_type -> api.v1.GetTranscriptionReqest
-	32, // 44: api.v1.APIService.GetPreview:input_type -> api.v1.GetPreviewRequest
-	35, // 45: api.v1.APIService.SubmitTranscription:input_type -> api.v1.SubmitTranscriptionRequest
-	17, // 46: api.v1.APIService.GetYears:input_type -> api.v1.GetYearsRequest
-	18, // 47: api.v1.APIService.GetAlbums:input_type -> api.v1.GetAlbumsRequest
-	21, // 48: api.v1.APIService.GetAlbumTracks:input_type -> api.v1.GetAlbumTracksRequest
-	22, // 49: api.v1.APIService.GetPodcastTracks:input_type -> api.v1.GetPodcastTracksRequest
-	23, // 50: api.v1.APIService.GetLanguages:input_type -> api.v1.GetAvailableLanguagesRequest
-	34, // 51: api.v1.APIService.GetBMMTranscription:input_type -> api.v1.GetBMMTranscriptionRequest
-	36, // 52: api.v1.APIService.SubmitShort:input_type -> api.v1.SubmitShortRequest
-	40, // 53: api.v1.APIService.GetExportConfig:input_type -> api.v1.GetExportConfigRequest
-	43, // 54: api.v1.APIService.StartExport:input_type -> api.v1.StartExportRequest
-	45, // 55: api.v1.APIService.ExportTimedMetadata:input_type -> api.v1.ExportTimedMetadataRequest
-	51, // 56: api.v1.APIService.ResolveAssets:input_type -> api.v1.ResolveAssetsRequest
-	46, // 57: api.v1.APIService.GetVBExportConfig:input_type -> api.v1.GetVBExportConfigRequest
-	48, // 58: api.v1.APIService.StartVBExport:input_type -> api.v1.StartVBExportRequest
-	68, // 59: api.v1.APIService.GetExportDestinations:input_type -> api.v1.Void
-	54, // 60: api.v1.APIService.TriggerCantemoAction:input_type -> api.v1.TriggerCantemoActionRequest
-	55, // 61: api.v1.APIService.VaultSearch:input_type -> api.v1.VaultSearchRequest
-	59, // 62: api.v1.APIService.GetVaultItem:input_type -> api.v1.GetVaultItemRequest
-	62, // 63: api.v1.APIService.GetMarkers:input_type -> api.v1.GetMarkersRequest
-	64, // 64: api.v1.APIService.SubmitMarkers:input_type -> api.v1.SubmitMarkersRequest
-	10, // 65: api.v1.APIService.GetPermissions:output_type -> api.v1.Permissions
-	68, // 66: api.v1.APIService.UpdatePermissions:output_type -> api.v1.Void
-	68, // 67: api.v1.APIService.DeletePermissions:output_type -> api.v1.Void
-	14, // 68: api.v1.APIService.ListPermissions:output_type -> api.v1.PermissionsList
-	29, // 69: api.v1.APIService.GetTranscription:output_type -> api.v1.Transcription
-	33, // 70: api.v1.APIService.GetPreview:output_type -> api.v1.Preview
-	68, // 71: api.v1.APIService.SubmitTranscription:output_type -> api.v1.Void
-	16, // 72: api.v1.APIService.GetYears:output_type -> api.v1.GetYearsResponse
-	20, // 73: api.v1.APIService.GetAlbums:output_type -> api.v1.AlbumsList
-	25, // 74: api.v1.APIService.GetAlbumTracks:output_type -> api.v1.TracksList
-	25, // 75: api.v1.APIService.GetPodcastTracks:output_type -> api.v1.TracksList
-	26, // 76: api.v1.APIService.GetLanguages:output_type -> api.v1.LanguageList
-	29, // 77: api.v1.APIService.GetBMMTranscription:output_type -> api.v1.Transcription
-	68, // 78: api.v1.APIService.SubmitShort:output_type -> api.v1.Void
-	41, // 79: api.v1.APIService.GetExportConfig:output_type -> api.v1.GetExportConfigResponse
-	44, // 80: api.v1.APIService.StartExport:output_type -> api.v1.StartExportResponse
-	68, // 81: api.v1.APIService.ExportTimedMetadata:output_type -> api.v1.Void
-	53, // 82: api.v1.APIService.ResolveAssets:output_type -> api.v1.ResolveAssetsResponse
-	47, // 83: api.v1.APIService.GetVBExportConfig:output_type -> api.v1.GetVBExportConfigResponse
-	49, // 84: api.v1.APIService.StartVBExport:output_type -> api.v1.StartVBExportResponse
-	50, // 85: api.v1.APIService.GetExportDestinations:output_type -> api.v1.ExportDestinationsResponse
-	68, // 86: api.v1.APIService.TriggerCantemoAction:output_type -> api.v1.Void
-	58, // 87: api.v1.APIService.VaultSearch:output_type -> api.v1.VaultSearchResponse
-	60, // 88: api.v1.APIService.GetVaultItem:output_type -> api.v1.GetVaultItemResponse
-	63, // 89: api.v1.APIService.GetMarkers:output_type -> api.v1.GetMarkersResponse
-	68, // 90: api.v1.APIService.SubmitMarkers:output_type -> api.v1.Void
-	65, // [65:91] is the sub-list for method output_type
-	39, // [39:65] is the sub-list for method input_type
-	39, // [39:39] is the sub-list for extension type_name
-	39, // [39:39] is the sub-list for extension extendee
-	0,  // [0:39] is the sub-list for field type_name
+	2,  // 35: api.v1.SearchEntitiesRequest.type:type_name -> api.v1.MarkerType
+	62, // 36: api.v1.SearchEntitiesResponse.entities:type_name -> api.v1.Entity
+	2,  // 37: api.v1.ReferenceQuery.type:type_name -> api.v1.MarkerType
+	62, // 38: api.v1.ResolvedReference.entity:type_name -> api.v1.Entity
+	65, // 39: api.v1.ResolveReferencesRequest.queries:type_name -> api.v1.ReferenceQuery
+	66, // 40: api.v1.ResolveReferencesResponse.results:type_name -> api.v1.ResolvedReference
+	61, // 41: api.v1.GetMarkersResponse.markers:type_name -> api.v1.Marker
+	61, // 42: api.v1.SubmitMarkersRequest.markers:type_name -> api.v1.Marker
+	10, // 43: api.v1.PermissionsList.PermissionsEntry.value:type_name -> api.v1.Permissions
+	15, // 44: api.v1.GetYearsResponse.DataEntry.value:type_name -> api.v1.BMMYear
+	75, // 45: api.v1.APIService.GetPermissions:input_type -> api.v1.Void
+	12, // 46: api.v1.APIService.UpdatePermissions:input_type -> api.v1.SetPermissionsRequest
+	13, // 47: api.v1.APIService.DeletePermissions:input_type -> api.v1.DeletePermissionsRequest
+	75, // 48: api.v1.APIService.ListPermissions:input_type -> api.v1.Void
+	28, // 49: api.v1.APIService.GetTranscription:input_type -> api.v1.GetTranscriptionReqest
+	32, // 50: api.v1.APIService.GetPreview:input_type -> api.v1.GetPreviewRequest
+	35, // 51: api.v1.APIService.SubmitTranscription:input_type -> api.v1.SubmitTranscriptionRequest
+	17, // 52: api.v1.APIService.GetYears:input_type -> api.v1.GetYearsRequest
+	18, // 53: api.v1.APIService.GetAlbums:input_type -> api.v1.GetAlbumsRequest
+	21, // 54: api.v1.APIService.GetAlbumTracks:input_type -> api.v1.GetAlbumTracksRequest
+	22, // 55: api.v1.APIService.GetPodcastTracks:input_type -> api.v1.GetPodcastTracksRequest
+	23, // 56: api.v1.APIService.GetLanguages:input_type -> api.v1.GetAvailableLanguagesRequest
+	34, // 57: api.v1.APIService.GetBMMTranscription:input_type -> api.v1.GetBMMTranscriptionRequest
+	36, // 58: api.v1.APIService.SubmitShort:input_type -> api.v1.SubmitShortRequest
+	40, // 59: api.v1.APIService.GetExportConfig:input_type -> api.v1.GetExportConfigRequest
+	43, // 60: api.v1.APIService.StartExport:input_type -> api.v1.StartExportRequest
+	45, // 61: api.v1.APIService.ExportTimedMetadata:input_type -> api.v1.ExportTimedMetadataRequest
+	51, // 62: api.v1.APIService.ResolveAssets:input_type -> api.v1.ResolveAssetsRequest
+	46, // 63: api.v1.APIService.GetVBExportConfig:input_type -> api.v1.GetVBExportConfigRequest
+	48, // 64: api.v1.APIService.StartVBExport:input_type -> api.v1.StartVBExportRequest
+	75, // 65: api.v1.APIService.GetExportDestinations:input_type -> api.v1.Void
+	54, // 66: api.v1.APIService.TriggerCantemoAction:input_type -> api.v1.TriggerCantemoActionRequest
+	55, // 67: api.v1.APIService.VaultSearch:input_type -> api.v1.VaultSearchRequest
+	59, // 68: api.v1.APIService.GetVaultItem:input_type -> api.v1.GetVaultItemRequest
+	69, // 69: api.v1.APIService.GetMarkers:input_type -> api.v1.GetMarkersRequest
+	71, // 70: api.v1.APIService.SubmitMarkers:input_type -> api.v1.SubmitMarkersRequest
+	63, // 71: api.v1.APIService.SearchEntities:input_type -> api.v1.SearchEntitiesRequest
+	67, // 72: api.v1.APIService.ResolveReferences:input_type -> api.v1.ResolveReferencesRequest
+	10, // 73: api.v1.APIService.GetPermissions:output_type -> api.v1.Permissions
+	75, // 74: api.v1.APIService.UpdatePermissions:output_type -> api.v1.Void
+	75, // 75: api.v1.APIService.DeletePermissions:output_type -> api.v1.Void
+	14, // 76: api.v1.APIService.ListPermissions:output_type -> api.v1.PermissionsList
+	29, // 77: api.v1.APIService.GetTranscription:output_type -> api.v1.Transcription
+	33, // 78: api.v1.APIService.GetPreview:output_type -> api.v1.Preview
+	75, // 79: api.v1.APIService.SubmitTranscription:output_type -> api.v1.Void
+	16, // 80: api.v1.APIService.GetYears:output_type -> api.v1.GetYearsResponse
+	20, // 81: api.v1.APIService.GetAlbums:output_type -> api.v1.AlbumsList
+	25, // 82: api.v1.APIService.GetAlbumTracks:output_type -> api.v1.TracksList
+	25, // 83: api.v1.APIService.GetPodcastTracks:output_type -> api.v1.TracksList
+	26, // 84: api.v1.APIService.GetLanguages:output_type -> api.v1.LanguageList
+	29, // 85: api.v1.APIService.GetBMMTranscription:output_type -> api.v1.Transcription
+	75, // 86: api.v1.APIService.SubmitShort:output_type -> api.v1.Void
+	41, // 87: api.v1.APIService.GetExportConfig:output_type -> api.v1.GetExportConfigResponse
+	44, // 88: api.v1.APIService.StartExport:output_type -> api.v1.StartExportResponse
+	75, // 89: api.v1.APIService.ExportTimedMetadata:output_type -> api.v1.Void
+	53, // 90: api.v1.APIService.ResolveAssets:output_type -> api.v1.ResolveAssetsResponse
+	47, // 91: api.v1.APIService.GetVBExportConfig:output_type -> api.v1.GetVBExportConfigResponse
+	49, // 92: api.v1.APIService.StartVBExport:output_type -> api.v1.StartVBExportResponse
+	50, // 93: api.v1.APIService.GetExportDestinations:output_type -> api.v1.ExportDestinationsResponse
+	75, // 94: api.v1.APIService.TriggerCantemoAction:output_type -> api.v1.Void
+	58, // 95: api.v1.APIService.VaultSearch:output_type -> api.v1.VaultSearchResponse
+	60, // 96: api.v1.APIService.GetVaultItem:output_type -> api.v1.GetVaultItemResponse
+	70, // 97: api.v1.APIService.GetMarkers:output_type -> api.v1.GetMarkersResponse
+	75, // 98: api.v1.APIService.SubmitMarkers:output_type -> api.v1.Void
+	64, // 99: api.v1.APIService.SearchEntities:output_type -> api.v1.SearchEntitiesResponse
+	68, // 100: api.v1.APIService.ResolveReferences:output_type -> api.v1.ResolveReferencesResponse
+	73, // [73:101] is the sub-list for method output_type
+	45, // [45:73] is the sub-list for method input_type
+	45, // [45:45] is the sub-list for extension type_name
+	45, // [45:45] is the sub-list for extension extendee
+	0,  // [0:45] is the sub-list for field type_name
 }
 
 func init() { file_api_v1_api_proto_init() }
@@ -4363,7 +4822,7 @@ func file_api_v1_api_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_v1_api_proto_rawDesc), len(file_api_v1_api_proto_rawDesc)),
 			NumEnums:      4,
-			NumMessages:   63,
+			NumMessages:   70,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
