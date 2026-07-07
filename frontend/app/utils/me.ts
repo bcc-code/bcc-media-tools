@@ -1,7 +1,10 @@
-import { create } from '@bufbuild/protobuf';
+import { create } from "@bufbuild/protobuf";
 import { useAPI } from "~/utils/api";
 import type { Permissions } from "~~/src/gen/api/v1/api_pb";
-import { BMMPermissionSchema, PermissionsSchema } from "~~/src/gen/api/v1/api_pb";
+import {
+    BMMPermissionSchema,
+    PermissionsSchema,
+} from "~~/src/gen/api/v1/api_pb";
 
 export type Me = {
     admin: boolean;

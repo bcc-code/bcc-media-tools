@@ -29,8 +29,8 @@ export class Analytics {
         };
     }) {
         if (!this.initialized) {
-            this.pageQueue.push(page)
-            return
+            this.pageQueue.push(page);
+            return;
         }
 
         const data = Object.assign({}, page) as any;
@@ -40,9 +40,9 @@ export class Analytics {
 
     public track<T extends keyof Events>(event: T, data: Events[T]) {
         if (!this.initialized) {
-            this.trackQueue.push({ event, data })
-            return
-        };
+            this.trackQueue.push({ event, data });
+            return;
+        }
 
         track(
             event,
@@ -55,22 +55,23 @@ export class Analytics {
     }
 
     public async initialize() {
-        const api = useAPI()
+        const api = useAPI();
 
         this.setUser({
-            Email: (await api.getPermissions({})).email
+            Email: (await api.getPermissions({})).email,
         });
 
         this.initialized = true;
 
-        this.pageQueue.forEach(p => this.page(p))
-        this.pageQueue = []
+        this.pageQueue.forEach((p) => this.page(p));
+        this.pageQueue = [];
 
-        this.trackQueue.forEach(({ event: e, data: d }, _, __) => this.track(e, d))
+        this.trackQueue.forEach(({ event: e, data: d }, _, __) =>
+            this.track(e, d),
+        );
     }
 }
 
 interface IdentifyData {
     Email: string;
 }
-

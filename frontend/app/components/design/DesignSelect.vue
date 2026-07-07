@@ -104,7 +104,11 @@ const displayText = computed(() => {
                             :item="item"
                             class="text-body-3 text-text-default data-highlighted:bg-surface-indent flex cursor-pointer items-center justify-between gap-2 rounded-lg px-3 py-2"
                         >
-                            <slot name="item" :item="items[i]" :normalized="item">
+                            <slot
+                                name="item"
+                                :item="items[i]"
+                                :normalized="item"
+                            >
                                 <Select.ItemText>
                                     {{ item.label }}
                                 </Select.ItemText>

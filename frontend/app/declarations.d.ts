@@ -1,10 +1,10 @@
 // https://nuxt.com/blog/v3-13#vue-typescript-changes
 import type {
-	ComponentCustomOptions as _ComponentCustomOptions,
-	ComponentCustomProperties as _ComponentCustomProperties,
-} from 'vue';
+    ComponentCustomOptions as _ComponentCustomOptions,
+    ComponentCustomProperties as _ComponentCustomProperties,
+} from "vue";
 
-declare module '@vue/runtime-core' {
-	interface ComponentCustomProperties extends _ComponentCustomProperties { }
-	interface ComponentCustomOptions extends _ComponentCustomOptions { }
+declare module "@vue/runtime-core" {
+    interface ComponentCustomProperties extends _ComponentCustomProperties {}
+    interface ComponentCustomOptions extends _ComponentCustomOptions {}
 }

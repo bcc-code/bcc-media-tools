@@ -3,9 +3,9 @@
 # without them, so they stay disabled (false). Set one to true if it ever needs
 # its native/postinstall step to run.
 allowBuilds:
-  '@bufbuild/buf': false
-  '@parcel/watcher': false
-  browser-tabs-lock: false
-  esbuild: false
-  rudder-sdk-js: false
-  vue-demi: false
+    "@bufbuild/buf": false
+    "@parcel/watcher": false
+    browser-tabs-lock: false
+    esbuild: false
+    rudder-sdk-js: false
+    vue-demi: false

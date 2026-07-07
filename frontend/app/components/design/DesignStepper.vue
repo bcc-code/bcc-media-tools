@@ -30,7 +30,7 @@ const currentIndex = computed(() => {
             >
                 <Steps.Trigger disabled class="group flex items-center gap-2">
                     <Steps.Indicator
-                        class="bg-surface-indent text-text-hint group-data-[current]:bg-primary-default group-data-[current]:text-on-primary group-data-[complete]:bg-primary-default group-data-[complete]:text-on-primary ease-out-expo flex size-8 shrink-0 items-center justify-center rounded-full text-title-3 transition-colors duration-200"
+                        class="bg-surface-indent text-text-hint group-data-[current]:bg-primary-default group-data-[current]:text-on-primary group-data-[complete]:bg-primary-default group-data-[complete]:text-on-primary ease-out-expo text-title-3 flex size-8 shrink-0 items-center justify-center rounded-full transition-colors duration-200"
                     >
                         <Icon
                             v-if="item.icon"

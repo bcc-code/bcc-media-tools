@@ -1,7 +1,11 @@
 type StringWithAutocomplete<T> = T | (string & {});
 
 export type Page = StringWithAutocomplete<
-    "upload_index" | "upload_continue" | "upload_success" | "upload_redirect" | "transcription"
+    | "upload_index"
+    | "upload_continue"
+    | "upload_success"
+    | "upload_redirect"
+    | "transcription"
 >;
 
 export type Events = {

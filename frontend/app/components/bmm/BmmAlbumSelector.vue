@@ -15,7 +15,9 @@ const albums = ref<{ [key: string]: string }>({});
 const currentYear = new Date().getFullYear();
 const selectedYear = ref(currentYear);
 const albumId = defineModel<string>();
-const contentType = defineModel<"podcast" | "album">("contentType", { default: "album" });
+const contentType = defineModel<"podcast" | "album">("contentType", {
+    default: "album",
+});
 
 const selectedType = computed({
     get: () => (contentType.value === "podcast" ? "podcasts" : "albums"),
@@ -118,7 +120,11 @@ const albumItems = computed(() => {
                         {{
                             $t(
                                 "bmmUpload.albumCount",
-                                { count: (item as unknown as { count: number }).count },
+                                {
+                                    count: (
+                                        item as unknown as { count: number }
+                                    ).count,
+                                },
                                 (item as unknown as { count: number }).count,
                             )
                         }}
