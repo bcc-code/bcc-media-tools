@@ -27,6 +27,7 @@ func (s ShortsAPI) SubmitShort(ctx context.Context, req *connect.Request[apiv1.S
 	queue := getQueue()
 	workflowOptions := client.StartWorkflowOptions{
 		TaskQueue: queue,
+		Memo:      workflowMemo(getEmail(req), req.Msg.GetVXID()),
 	}
 
 	_, err := s.temporalClient.ExecuteWorkflow(ctx, workflowOptions, exportworkflows.GenerateShort, exportworkflows.GenerateShortDataParams{

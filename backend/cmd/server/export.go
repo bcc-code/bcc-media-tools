@@ -304,12 +304,7 @@ func (e ExportAPI) StartExport(ctx context.Context, req *connect.Request[apiv1.S
 	}
 
 	queue := getQueue()
-	baseOpts := client.StartWorkflowOptions{TaskQueue: queue}
-	if os.Getenv("DEBUG") == "" {
-		baseOpts.SearchAttributes = map[string]any{
-			"CustomStringField": vxID,
-		}
-	}
+	baseOpts := client.StartWorkflowOptions{TaskQueue: queue, Memo: workflowMemo(getEmail(req), vxID)}
 
 	// One workflow per subclip, or a single workflow for the whole asset.
 	subclips := msg.GetSubclips()
@@ -381,11 +376,7 @@ func (e ExportAPI) ExportTimedMetadata(ctx context.Context, req *connect.Request
 	opts := client.StartWorkflowOptions{
 		TaskQueue: queue,
 		ID:        uuid.NewString(),
-	}
-	if os.Getenv("DEBUG") == "" {
-		opts.SearchAttributes = map[string]any{
-			"CustomStringField": vxID,
-		}
+		Memo:      workflowMemo(getEmail(req), vxID),
 	}
 
 	_, err := e.temporalClient.ExecuteWorkflow(ctx, opts, exportworkflows.ExportTimedMetadata, exportworkflows.ExportTimedMetadataParams{
@@ -537,11 +528,7 @@ func (e ExportAPI) StartVBExport(ctx context.Context, req *connect.Request[apiv1
 	opts := client.StartWorkflowOptions{
 		TaskQueue: getQueue(),
 		ID:        uuid.NewString(),
-	}
-	if os.Getenv("DEBUG") == "" {
-		opts.SearchAttributes = map[string]any{
-			"CustomStringField": vxID,
-		}
+		Memo:      workflowMemo(getEmail(req), vxID),
 	}
 
 	run, err := e.temporalClient.ExecuteWorkflow(ctx, opts, vbexportworkflows.VBExport, params)

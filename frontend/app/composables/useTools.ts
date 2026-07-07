@@ -70,6 +70,12 @@ export function useTools() {
             enabled: me.value?.admin || me.value?.vault?.enabled,
         },
         {
+            label: t("tools.jobs.title"),
+            icon: "tabler:list-check",
+            description: t("tools.jobs.description"),
+            to: "/jobs/",
+        },
+        {
             label: t("tools.admin.title"),
             icon: "tabler:settings",
             description: t("tools.admin.description"),

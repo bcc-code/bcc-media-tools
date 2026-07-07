@@ -125,6 +125,7 @@ func (t TranscriptionAPI) SubmitTranscription(ctx context.Context, req *connect.
 	queue := getQueue()
 	workflowOptions := client.StartWorkflowOptions{
 		TaskQueue: queue,
+		Memo:      workflowMemo(getEmail(req), req.Msg.GetVXID()),
 	}
 
 	_, err := t.temporalClient.ExecuteWorkflow(ctx, workflowOptions, ingestworkflows.ImportSubtitles, ingestworkflows.ImportSubtitlesInput{

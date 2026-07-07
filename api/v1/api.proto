@@ -398,6 +398,56 @@ message GetVaultItemResponse {
   VaultItem item = 1;
 }
 
+// A single Temporal workflow run, mapped to a user-facing "job".
+message Job {
+  string workflow_id = 1;
+  string run_id = 2;
+  // friendly tool key derived from the workflow type (export, vb_export,
+  // timed_metadata, shorts, bmm_upload, subtitles, transcribe, other)
+  string tool = 3;
+  // raw Temporal workflow type name
+  string workflow_type = 4;
+  // running / completed / failed / canceled / terminated / timed_out / continued_as_new
+  string status = 5;
+  // the asset this job relates to (from the CustomStringField attribute), if any
+  string reference = 6;
+  // email of the user who started it (from the Memo), if attached
+  string started_by = 7;
+  google.protobuf.Timestamp started_at = 8;
+  // unset while the job is still running
+  google.protobuf.Timestamp closed_at = 9;
+}
+
+message ListJobsRequest {
+  // optional status filter (empty = all)
+  repeated string statuses = 1;
+  // optional tool filter, matched against Job.tool (empty = all surfaced tools)
+  repeated string tools = 2;
+  // optional exact asset reference (VXID) filter
+  string reference = 3;
+  int32 page_size = 4;
+  // opaque Temporal pagination token from a previous response
+  bytes page_token = 5;
+}
+
+message ListJobsResponse {
+  repeated Job jobs = 1;
+  bytes next_page_token = 2;
+}
+
+message GetJobRequest {
+  string workflow_id = 1;
+  string run_id = 2;
+}
+
+message GetJobResponse {
+  Job job = 1;
+  // failure detail when the job failed (empty otherwise)
+  string error_message = 2;
+  // deep link to this workflow in the Temporal Web UI (empty if not configured)
+  string temporal_url = 3;
+}
+
 service APIService {
 	// Permissions
 	rpc GetPermissions (Void) returns (Permissions) {}
@@ -441,4 +491,8 @@ service APIService {
   // VAULT (Vidispine search)
   rpc VaultSearch(VaultSearchRequest) returns (VaultSearchResponse) {}
   rpc GetVaultItem(GetVaultItemRequest) returns (GetVaultItemResponse) {}
+
+  // Jobs (Temporal workflow status)
+  rpc ListJobs(ListJobsRequest) returns (ListJobsResponse) {}
+  rpc GetJob(GetJobRequest) returns (GetJobResponse) {}
 }

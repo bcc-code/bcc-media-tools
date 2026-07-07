@@ -11,6 +11,7 @@ const vxId = computed(() => route.query.id?.toString());
 
 const api = useAPI();
 const toaster = useDesignToaster();
+const { goToJobsAction } = useJobsToast();
 const { t } = useI18n();
 const { formatNumber } = useNumberFormat();
 const { me } = useMe();
@@ -84,6 +85,11 @@ async function onStartExport({
             }
         }
         const started = vxIds.length - failed.length;
+        // Deep-link to the single asset's jobs, or the whole list for a bulk run.
+        const jobAction =
+            started > 0
+                ? goToJobsAction(vxIds.length === 1 ? vxIds[0] : undefined)
+                : undefined;
         if (failed.length === 0) {
             toaster.create({
                 title: t("export.exportStarted"),
@@ -91,12 +97,14 @@ async function onStartExport({
                     n: formatNumber(started),
                 }),
                 type: "success",
+                action: jobAction,
             });
         } else {
             toaster.create({
                 title: t("export.exportStarted"),
                 description: `${t("export.bulkStartedCount", { n: formatNumber(started) })} · ${t("export.bulkFailedCount", { n: formatNumber(failed.length) })}`,
                 type: started === 0 ? "error" : "warning",
+                action: jobAction,
             });
         }
     } finally {
@@ -112,6 +120,7 @@ async function onExportTimedMetadata() {
         toaster.create({
             title: t("export.timedMetadataStarted"),
             type: "success",
+            action: goToJobsAction(vxId.value),
         });
     } catch (err) {
         toaster.create({

@@ -11,6 +11,7 @@ const vxId = computed(() => route.query.id?.toString());
 
 const api = useAPI();
 const toaster = useDesignToaster();
+const { goToJobsAction } = useJobsToast();
 const { t } = useI18n();
 const { formatNumber } = useNumberFormat();
 const { me } = useMe();
@@ -82,6 +83,10 @@ async function onStartExport({
             }
         }
         const started = vxIds.length - failed.length;
+        const jobAction =
+            started > 0
+                ? goToJobsAction(vxIds.length === 1 ? vxIds[0] : undefined)
+                : undefined;
         if (failed.length === 0) {
             toaster.create({
                 title: t("vbExport.exportStarted"),
@@ -89,12 +94,14 @@ async function onStartExport({
                     n: formatNumber(started),
                 }),
                 type: "success",
+                action: jobAction,
             });
         } else {
             toaster.create({
                 title: t("vbExport.exportStarted"),
                 description: `${t("vbExport.bulkStartedCount", { n: formatNumber(started) })} · ${t("vbExport.bulkFailedCount", { n: formatNumber(failed.length) })}`,
                 type: started === 0 ? "error" : "warning",
+                action: jobAction,
             });
         }
     } finally {

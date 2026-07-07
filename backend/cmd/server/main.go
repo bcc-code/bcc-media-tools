@@ -56,6 +56,7 @@ type ApiServer struct {
 	ExportAPI
 	CantemoAPI
 	VaultAPI
+	JobsAPI
 }
 
 func withCORS(connectHandler http.Handler) http.Handler {
@@ -123,6 +124,11 @@ func main() {
 	shortsAPI := NewShortsAPI(temporalClient)
 	exportAPI := NewExportAPI(vidispineClient, temporalClient)
 	cantemoAPI := NewCantemoAPI(temporalClient)
+	jobsAPI := NewJobsAPI(
+		temporalClient,
+		os.Getenv("TEMPORAL_NAMESPACE"),
+		temporalUIBaseURL(os.Getenv("TEMPORAL_UI_URL"), os.Getenv("TEMPORAL_HOST_PORT")),
+	)
 	vaultAPI := NewVaultAPI(
 		vidispineClient,
 		os.Getenv("VIDISPINE_BASE_URL"),
@@ -142,6 +148,7 @@ func main() {
 		ExportAPI:        *exportAPI,
 		CantemoAPI:       *cantemoAPI,
 		VaultAPI:         *vaultAPI,
+		JobsAPI:          *jobsAPI,
 	}
 
 	if os.Getenv("STATIC_FILE_PATH") != "" {

@@ -192,6 +192,10 @@
         "vault": {
             "title": "Vault",
             "description": "Søk i Mediabanken og forhåndsvis elementer"
+        },
+        "jobs": {
+            "title": "Jobber",
+            "description": "Følg status på eksporter, opplastinger og andre arbeidsflyter"
         }
     },
     "vault": {
@@ -217,6 +221,52 @@
             "video": "Video",
             "audio": "Lyd",
             "image": "Bilde"
+        }
+    },
+    "jobs": {
+        "title": "Jobber",
+        "goToJob": "Gå til jobb",
+        "filters": "Filtre",
+        "clear": "Nullstill",
+        "refresh": "Oppdater",
+        "autoRefresh": "Oppdaterer automatisk",
+        "paused": "Pauset",
+        "loadMore": "Last inn flere",
+        "mineOnly": "Kun mine jobber",
+        "referencePlaceholder": "Filtrer på VX-id",
+        "status": "Status",
+        "tool": "Verktøy",
+        "reference": "Referanse",
+        "startedBy": "Startet av",
+        "started": "Startet",
+        "duration": "Varighet",
+        "type": "Arbeidsflyt-type",
+        "workflowId": "Arbeidsflyt-ID",
+        "copy": "Kopier",
+        "copied": "Kopiert til utklippstavlen",
+        "seeInTemporal": "Se i Temporal",
+        "error": "Feil",
+        "unknownUser": "Ukjent",
+        "noResults": "Ingen jobber samsvarer med filtrene.",
+        "statusLabel": {
+            "running": "Kjører",
+            "completed": "Fullført",
+            "failed": "Feilet",
+            "canceled": "Avbrutt",
+            "terminated": "Terminert",
+            "timed_out": "Tidsavbrudd",
+            "continued_as_new": "Fortsatt",
+            "unknown": "Ukjent"
+        },
+        "toolLabel": {
+            "export": "Eksport",
+            "vb_export": "VB-eksport",
+            "timed_metadata": "Tidsmetadata",
+            "shorts": "Shorts",
+            "bmm_upload": "BMM-opplasting",
+            "subtitles": "Undertekst-import",
+            "transcribe": "Transkribering",
+            "other": "Annet"
         }
     }
 }

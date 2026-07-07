@@ -97,6 +97,10 @@ const (
 	APIServiceVaultSearchProcedure = "/api.v1.APIService/VaultSearch"
 	// APIServiceGetVaultItemProcedure is the fully-qualified name of the APIService's GetVaultItem RPC.
 	APIServiceGetVaultItemProcedure = "/api.v1.APIService/GetVaultItem"
+	// APIServiceListJobsProcedure is the fully-qualified name of the APIService's ListJobs RPC.
+	APIServiceListJobsProcedure = "/api.v1.APIService/ListJobs"
+	// APIServiceGetJobProcedure is the fully-qualified name of the APIService's GetJob RPC.
+	APIServiceGetJobProcedure = "/api.v1.APIService/GetJob"
 )
 
 // APIServiceClient is a client for the api.v1.APIService service.
@@ -135,6 +139,9 @@ type APIServiceClient interface {
 	// VAULT (Vidispine search)
 	VaultSearch(context.Context, *connect.Request[v1.VaultSearchRequest]) (*connect.Response[v1.VaultSearchResponse], error)
 	GetVaultItem(context.Context, *connect.Request[v1.GetVaultItemRequest]) (*connect.Response[v1.GetVaultItemResponse], error)
+	// Jobs (Temporal workflow status)
+	ListJobs(context.Context, *connect.Request[v1.ListJobsRequest]) (*connect.Response[v1.ListJobsResponse], error)
+	GetJob(context.Context, *connect.Request[v1.GetJobRequest]) (*connect.Response[v1.GetJobResponse], error)
 }
 
 // NewAPIServiceClient constructs a client for the api.v1.APIService service. By default, it uses
@@ -292,6 +299,18 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(aPIServiceMethods.ByName("GetVaultItem")),
 			connect.WithClientOptions(opts...),
 		),
+		listJobs: connect.NewClient[v1.ListJobsRequest, v1.ListJobsResponse](
+			httpClient,
+			baseURL+APIServiceListJobsProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("ListJobs")),
+			connect.WithClientOptions(opts...),
+		),
+		getJob: connect.NewClient[v1.GetJobRequest, v1.GetJobResponse](
+			httpClient,
+			baseURL+APIServiceGetJobProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("GetJob")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -321,6 +340,8 @@ type aPIServiceClient struct {
 	triggerCantemoAction  *connect.Client[v1.TriggerCantemoActionRequest, v1.Void]
 	vaultSearch           *connect.Client[v1.VaultSearchRequest, v1.VaultSearchResponse]
 	getVaultItem          *connect.Client[v1.GetVaultItemRequest, v1.GetVaultItemResponse]
+	listJobs              *connect.Client[v1.ListJobsRequest, v1.ListJobsResponse]
+	getJob                *connect.Client[v1.GetJobRequest, v1.GetJobResponse]
 }
 
 // GetPermissions calls api.v1.APIService.GetPermissions.
@@ -443,6 +464,16 @@ func (c *aPIServiceClient) GetVaultItem(ctx context.Context, req *connect.Reques
 	return c.getVaultItem.CallUnary(ctx, req)
 }
 
+// ListJobs calls api.v1.APIService.ListJobs.
+func (c *aPIServiceClient) ListJobs(ctx context.Context, req *connect.Request[v1.ListJobsRequest]) (*connect.Response[v1.ListJobsResponse], error) {
+	return c.listJobs.CallUnary(ctx, req)
+}
+
+// GetJob calls api.v1.APIService.GetJob.
+func (c *aPIServiceClient) GetJob(ctx context.Context, req *connect.Request[v1.GetJobRequest]) (*connect.Response[v1.GetJobResponse], error) {
+	return c.getJob.CallUnary(ctx, req)
+}
+
 // APIServiceHandler is an implementation of the api.v1.APIService service.
 type APIServiceHandler interface {
 	// Permissions
@@ -479,6 +510,9 @@ type APIServiceHandler interface {
 	// VAULT (Vidispine search)
 	VaultSearch(context.Context, *connect.Request[v1.VaultSearchRequest]) (*connect.Response[v1.VaultSearchResponse], error)
 	GetVaultItem(context.Context, *connect.Request[v1.GetVaultItemRequest]) (*connect.Response[v1.GetVaultItemResponse], error)
+	// Jobs (Temporal workflow status)
+	ListJobs(context.Context, *connect.Request[v1.ListJobsRequest]) (*connect.Response[v1.ListJobsResponse], error)
+	GetJob(context.Context, *connect.Request[v1.GetJobRequest]) (*connect.Response[v1.GetJobResponse], error)
 }
 
 // NewAPIServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -632,6 +666,18 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(aPIServiceMethods.ByName("GetVaultItem")),
 		connect.WithHandlerOptions(opts...),
 	)
+	aPIServiceListJobsHandler := connect.NewUnaryHandler(
+		APIServiceListJobsProcedure,
+		svc.ListJobs,
+		connect.WithSchema(aPIServiceMethods.ByName("ListJobs")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aPIServiceGetJobHandler := connect.NewUnaryHandler(
+		APIServiceGetJobProcedure,
+		svc.GetJob,
+		connect.WithSchema(aPIServiceMethods.ByName("GetJob")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/api.v1.APIService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case APIServiceGetPermissionsProcedure:
@@ -682,6 +728,10 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceVaultSearchHandler.ServeHTTP(w, r)
 		case APIServiceGetVaultItemProcedure:
 			aPIServiceGetVaultItemHandler.ServeHTTP(w, r)
+		case APIServiceListJobsProcedure:
+			aPIServiceListJobsHandler.ServeHTTP(w, r)
+		case APIServiceGetJobProcedure:
+			aPIServiceGetJobHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -785,4 +835,12 @@ func (UnimplementedAPIServiceHandler) VaultSearch(context.Context, *connect.Requ
 
 func (UnimplementedAPIServiceHandler) GetVaultItem(context.Context, *connect.Request[v1.GetVaultItemRequest]) (*connect.Response[v1.GetVaultItemResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetVaultItem is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) ListJobs(context.Context, *connect.Request[v1.ListJobsRequest]) (*connect.Response[v1.ListJobsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.ListJobs is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) GetJob(context.Context, *connect.Request[v1.GetJobRequest]) (*connect.Response[v1.GetJobResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetJob is not implemented"))
 }

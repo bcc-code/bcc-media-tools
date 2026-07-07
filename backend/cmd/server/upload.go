@@ -117,6 +117,7 @@ func (u uploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	queue := getQueue()
 	workflowOptions := client.StartWorkflowOptions{
 		TaskQueue: queue,
+		Memo:      workflowMemo(getEmailFromHttp(r), ""),
 	}
 
 	trackID, err := strconv.Atoi(formData["trackId"])

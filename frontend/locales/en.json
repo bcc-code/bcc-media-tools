@@ -192,6 +192,10 @@
         "vault": {
             "title": "Vault",
             "description": "Search Mediabanken and preview items"
+        },
+        "jobs": {
+            "title": "Jobs",
+            "description": "Track the status of exports, uploads and other workflows"
         }
     },
     "vault": {
@@ -217,6 +221,52 @@
             "video": "Video",
             "audio": "Audio",
             "image": "Image"
+        }
+    },
+    "jobs": {
+        "title": "Jobs",
+        "goToJob": "Go to job",
+        "filters": "Filters",
+        "clear": "Clear",
+        "refresh": "Refresh",
+        "autoRefresh": "Auto-refreshing",
+        "paused": "Paused",
+        "loadMore": "Load more",
+        "mineOnly": "Only my jobs",
+        "referencePlaceholder": "Filter by VX-id",
+        "status": "Status",
+        "tool": "Tool",
+        "reference": "Reference",
+        "startedBy": "Started by",
+        "started": "Started",
+        "duration": "Duration",
+        "type": "Workflow type",
+        "workflowId": "Workflow ID",
+        "copy": "Copy",
+        "copied": "Copied to clipboard",
+        "seeInTemporal": "See in Temporal",
+        "error": "Error",
+        "unknownUser": "Unknown",
+        "noResults": "No jobs match your filters.",
+        "statusLabel": {
+            "running": "Running",
+            "completed": "Completed",
+            "failed": "Failed",
+            "canceled": "Canceled",
+            "terminated": "Terminated",
+            "timed_out": "Timed out",
+            "continued_as_new": "Continued",
+            "unknown": "Unknown"
+        },
+        "toolLabel": {
+            "export": "Export",
+            "vb_export": "VB Export",
+            "timed_metadata": "Timed metadata",
+            "shorts": "Shorts",
+            "bmm_upload": "BMM upload",
+            "subtitles": "Subtitle import",
+            "transcribe": "Transcription",
+            "other": "Other"
         }
     }
 }
