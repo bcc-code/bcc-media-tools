@@ -3,6 +3,7 @@ import type { VaultItem, VaultFacet } from "~~/src/gen/api/v1/api_pb";
 
 const api = useAPI();
 const { t } = useI18n();
+const { formatNumber } = useNumberFormat();
 const config = useRuntimeConfig();
 const base = config.public.grpcUrl;
 
@@ -97,7 +98,9 @@ const rangeTo = computed(() =>
 <template>
     <div>
         <!-- Search bar -->
-        <div class="border-border-1 border-b px-6 py-5">
+        <div
+            class="border-border-1 flex items-center justify-between gap-4 border-b px-6 py-5"
+        >
             <DesignInput
                 v-model="query"
                 leading-icon="tabler:search"
@@ -112,6 +115,16 @@ const rangeTo = computed(() =>
                     />
                 </template>
             </DesignInput>
+
+            <p class="text-text-muted">
+                {{
+                    t("vault.resultsRange", {
+                        from: formatNumber(rangeFrom),
+                        to: formatNumber(rangeTo),
+                        total: formatNumber(totalHits),
+                    })
+                }}
+            </p>
         </div>
 
         <div class="flex items-start">
@@ -153,7 +166,7 @@ const rangeTo = computed(() =>
                                 "
                             />
                             <span class="text-text-muted font-mono text-xs">
-                                {{ facetCount(item.value) }}
+                                {{ formatNumber(facetCount(item.value)) }}
                             </span>
                         </div>
                     </div>
@@ -162,22 +175,6 @@ const rangeTo = computed(() =>
 
             <!-- Results -->
             <main class="min-w-0 flex-1 p-6">
-                <div class="mb-4 flex items-baseline justify-between">
-                    <h2 class="text-text-default text-sm font-semibold">
-                        {{ t("vault.results") }}
-                    </h2>
-                    <span class="text-text-muted">
-                        {{
-                            t("vault.resultsRange", {
-                                from: rangeFrom,
-                                to: rangeTo,
-                                total: totalHits,
-                            })
-                        }}
-                    </span>
-                </div>
-
-                <!-- Searching state -->
                 <div
                     v-if="loading"
                     class="grid grid-cols-[repeat(auto-fit,minmax(400px,1fr))] gap-4"
@@ -187,7 +184,9 @@ const rangeTo = computed(() =>
                         :key="n"
                         class="border-border-1 overflow-hidden rounded-[14px] border"
                     >
-                        <DesignSkeleton class="aspect-16/10 w-full !rounded-none" />
+                        <DesignSkeleton
+                            class="aspect-16/10 w-full !rounded-none"
+                        />
                         <div class="flex flex-col gap-2 p-3">
                             <DesignSkeleton class="mb-1 h-4 w-3/4" />
                             <DesignSkeleton class="h-3 w-1/2" />

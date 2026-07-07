@@ -12,6 +12,7 @@ const vxId = computed(() => route.query.id?.toString());
 const api = useAPI();
 const toaster = useDesignToaster();
 const { t } = useI18n();
+const { formatNumber } = useNumberFormat();
 const { me } = useMe();
 
 // Users with the bulkExport permission get the bulk paste form on the empty
@@ -84,13 +85,15 @@ async function onStartExport({
         if (failed.length === 0) {
             toaster.create({
                 title: t("vbExport.exportStarted"),
-                description: t("vbExport.bulkStartedCount", { n: started }),
+                description: t("vbExport.bulkStartedCount", {
+                    n: formatNumber(started),
+                }),
                 type: "success",
             });
         } else {
             toaster.create({
                 title: t("vbExport.exportStarted"),
-                description: `${t("vbExport.bulkStartedCount", { n: started })} · ${t("vbExport.bulkFailedCount", { n: failed.length })}`,
+                description: `${t("vbExport.bulkStartedCount", { n: formatNumber(started) })} · ${t("vbExport.bulkFailedCount", { n: formatNumber(failed.length) })}`,
                 type: started === 0 ? "error" : "warning",
             });
         }

@@ -81,6 +81,7 @@ const selectedDestCount = computed(
 );
 
 const { t } = useI18n();
+const { formatNumber } = useNumberFormat();
 
 // Assets that actually resolved; "not found" pastes are excluded from export.
 const exportableAssets = computed(() =>
@@ -98,7 +99,9 @@ const disabledReason = computed(() => {
 
 const selectionSummary = computed(() =>
     [
-        t("vbExport.summaryAssets", { n: exportableAssets.value.length }),
+        t("vbExport.summaryAssets", {
+            n: formatNumber(exportableAssets.value.length),
+        }),
         t("vbExport.summaryDestinations", { n: selectedDestCount.value }),
     ].join(" · "),
 );
@@ -118,7 +121,7 @@ const confirmTitle = computed(() =>
 const confirmMessage = computed(() =>
     props.bulkMode
         ? t("vbExport.bulkConfirmMessage", {
-              n: exportableAssets.value.length,
+              n: formatNumber(exportableAssets.value.length),
               d: selectedDestCount.value,
           })
         : t("vbExport.confirmMessage", { d: selectedDestCount.value }),
@@ -169,7 +172,11 @@ function startExport() {
                     {{ $t("vbExport.assets") }}
                 </h3>
                 <span class="text-text-muted text-xs">
-                    {{ $t("vbExport.bulkDetected", { n: assets.length }) }}
+                    {{
+                        $t("vbExport.bulkDetected", {
+                            n: formatNumber(assets.length),
+                        })
+                    }}
                 </span>
             </div>
             <ul

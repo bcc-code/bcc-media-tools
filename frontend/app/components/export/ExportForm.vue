@@ -23,6 +23,7 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
+const { formatNumber } = useNumberFormat();
 
 /* ----------------------------------------------------------- asset list --- */
 
@@ -137,7 +138,9 @@ const disabledReason = computed(() => {
 
 const selectionSummary = computed(() =>
     [
-        t("export.summaryAssets", { n: exportableAssets.value.length }),
+        t("export.summaryAssets", {
+            n: formatNumber(exportableAssets.value.length),
+        }),
         t("export.summaryDestinations", { n: selectedDestCount.value }),
         t("export.summaryLanguages", { n: selectedLangCount.value }),
         t("export.summaryResolutions", { n: selectedResCount.value }),
@@ -179,7 +182,7 @@ const confirmTitle = computed(() =>
 const confirmMessage = computed(() =>
     props.bulkMode
         ? t("export.bulkConfirmMessage", {
-              n: exportableAssets.value.length,
+              n: formatNumber(exportableAssets.value.length),
               d: selectedDestCount.value,
           })
         : t("export.confirmMessage", { d: selectedDestCount.value }),
@@ -249,7 +252,11 @@ function startExport() {
                     {{ $t("export.assets") }}
                 </h3>
                 <span class="text-text-muted text-xs">
-                    {{ $t("export.bulkDetected", { n: assets.length }) }}
+                    {{
+                        $t("export.bulkDetected", {
+                            n: formatNumber(assets.length),
+                        })
+                    }}
                 </span>
             </div>
             <ul
