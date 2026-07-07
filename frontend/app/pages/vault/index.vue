@@ -185,7 +185,7 @@ const rangeTo = computed(() =>
                         class="border-border-1 overflow-hidden rounded-[14px] border"
                     >
                         <DesignSkeleton
-                            class="aspect-16/10 w-full !rounded-none"
+                            class="aspect-16/10 w-full rounded-none!"
                         />
                         <div class="flex flex-col gap-2 p-3">
                             <DesignSkeleton class="mb-1 h-4 w-3/4" />

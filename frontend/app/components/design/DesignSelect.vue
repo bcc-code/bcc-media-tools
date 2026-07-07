@@ -95,7 +95,7 @@ const displayText = computed(() => {
         <Teleport to="#teleports">
             <Select.Positioner>
                 <Select.Content
-                    class="gradient-border bg-surface-raise shadow-floating ease-out-expo z-50 min-w-[var(--reference-width)] origin-[--transform-origin] rounded-xl p-1 transition-[opacity,transform] duration-200 data-[state=closed]:scale-95 data-[state=closed]:opacity-0 data-[state=open]:scale-100 data-[state=open]:opacity-100"
+                    class="gradient-border bg-surface-raise shadow-floating ease-out-expo z-50 min-w-(--reference-width) origin-[--transform-origin] rounded-xl p-1 transition-[opacity,transform] duration-200 data-[state=closed]:scale-95 data-[state=closed]:opacity-0 data-[state=open]:scale-100 data-[state=open]:opacity-100"
                 >
                     <Select.ItemGroup>
                         <Select.Item
