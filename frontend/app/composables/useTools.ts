@@ -8,8 +8,16 @@ interface Tool {
 
 export function useTools() {
     const { t } = useI18n();
-    const { me } = useMe();
     const route = useRoute();
+    const {
+        admin,
+        canUpload,
+        canTranscription,
+        canExport,
+        canVBExport,
+        canVault,
+        canViewJobs,
+    } = usePermissions();
 
     const tools = computed<Tool[]>(() => [
         {
@@ -17,31 +25,21 @@ export function useTools() {
             icon: "tabler:upload",
             description: t("tools.bmmUpload.description"),
             to: "/upload/bmm/",
-            enabled:
-                me.value?.bmm &&
-                (me.value.bmm.podcasts.length > 0 || me.value.bmm.admin),
+            enabled: canUpload.value,
         },
         {
             label: t("tools.transcription.title"),
             icon: "tabler:edit",
             description: t("tools.transcription.description"),
             to: "/transcription/",
-            enabled:
-                me.value?.transcription &&
-                (me.value.transcription.mediabanken ||
-                    me.value.transcription.admin),
+            enabled: canTranscription.value,
         },
         {
             label: t("tools.export.title"),
             icon: "tabler:file-export",
             description: t("tools.export.description"),
             to: "/export/",
-            enabled:
-                me.value?.admin ||
-                (me.value?.export &&
-                    (me.value.export.destinations.length > 0 ||
-                        me.value.export.admin ||
-                        me.value.export.timedMetadata)),
+            enabled: canExport.value,
         },
         {
             label: t("tools.vbExport.title"),
@@ -49,12 +47,7 @@ export function useTools() {
             description: t("tools.vbExport.description"),
             to: "/vb-export/",
             // Shown when the user has access to any VB destination (or is on the page).
-            enabled:
-                me.value?.admin ||
-                (me.value?.vbExport &&
-                    (me.value.vbExport.destinations.length > 0 ||
-                        me.value.vbExport.admin)) ||
-                route.path.startsWith("/vb-export"),
+            enabled: canVBExport.value || route.path.startsWith("/vb-export"),
         },
         {
             label: "Shorts generation",
@@ -67,39 +60,21 @@ export function useTools() {
             icon: "tabler:building-warehouse",
             description: t("tools.vault.description"),
             to: "/vault/",
-            enabled: me.value?.admin || me.value?.vault?.enabled,
+            enabled: canVault.value,
         },
         {
             label: t("tools.jobs.title"),
             icon: "tabler:list-check",
             description: t("tools.jobs.description"),
             to: "/jobs/",
-            // Visible to admins or anyone with a tool that produces workflows
-            // (mirrors Permissions.CanViewJobs on the backend).
-            enabled:
-                me.value?.admin ||
-                (me.value?.export &&
-                    (me.value.export.destinations.length > 0 ||
-                        me.value.export.admin ||
-                        me.value.export.timedMetadata)) ||
-                (me.value?.vbExport &&
-                    (me.value.vbExport.destinations.length > 0 ||
-                        me.value.vbExport.admin)) ||
-                (me.value?.bmm &&
-                    (me.value.bmm.admin ||
-                        me.value.bmm.languages.length > 0 ||
-                        me.value.bmm.podcasts.length > 0)) ||
-                (me.value?.transcription &&
-                    (me.value.transcription.admin ||
-                        me.value.transcription.mediabanken)) ||
-                me.value?.vault?.enabled,
+            enabled: canViewJobs.value,
         },
         {
             label: t("tools.admin.title"),
             icon: "tabler:settings",
             description: t("tools.admin.description"),
             to: "/admin/",
-            enabled: me.value?.admin,
+            enabled: admin.value,
         },
     ]);
 

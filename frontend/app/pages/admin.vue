@@ -6,7 +6,7 @@ useHead({
     title: "Admin",
 });
 
-const { me } = useMe();
+const { admin } = usePermissions();
 const api = useAPI();
 
 const permissions = ref<{
@@ -66,7 +66,7 @@ const { data: exportDestinations } = useAsyncData(
 </script>
 
 <template>
-    <div class="flex h-screen w-screen" v-if="me?.admin">
+    <div class="flex h-screen w-screen" v-if="admin">
         <div class="mx-auto w-full max-w-3xl p-8">
             <div class="flex items-center justify-between gap-2">
                 <h2 class="text-heading-3 text-text-default">Admin</h2>
