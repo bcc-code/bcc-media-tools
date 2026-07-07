@@ -2,4 +2,5 @@ pnpm-lock.yaml
 src/
 .output/
 .nuxt/
-dist
+dist/
+node_modules/
