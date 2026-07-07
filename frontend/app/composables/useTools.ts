@@ -74,6 +74,25 @@ export function useTools() {
             icon: "tabler:list-check",
             description: t("tools.jobs.description"),
             to: "/jobs/",
+            // Visible to admins or anyone with a tool that produces workflows
+            // (mirrors Permissions.CanViewJobs on the backend).
+            enabled:
+                me.value?.admin ||
+                (me.value?.export &&
+                    (me.value.export.destinations.length > 0 ||
+                        me.value.export.admin ||
+                        me.value.export.timedMetadata)) ||
+                (me.value?.vbExport &&
+                    (me.value.vbExport.destinations.length > 0 ||
+                        me.value.vbExport.admin)) ||
+                (me.value?.bmm &&
+                    (me.value.bmm.admin ||
+                        me.value.bmm.languages.length > 0 ||
+                        me.value.bmm.podcasts.length > 0)) ||
+                (me.value?.transcription &&
+                    (me.value.transcription.admin ||
+                        me.value.transcription.mediabanken)) ||
+                me.value?.vault?.enabled,
         },
         {
             label: t("tools.admin.title"),

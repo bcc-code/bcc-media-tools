@@ -94,15 +94,24 @@ watch([selectedStatuses, selectedTools], () => refresh());
 
 const detailOpen = ref(false);
 
+// Poll only while the tab is visible and auto-refresh is on, so a backgrounded
+// tab doesn't keep hitting Temporal. Refresh once immediately on return.
+function pollTick() {
+    if (autoRefresh.value && !detailOpen.value && !document.hidden) load(true);
+}
+function onVisibility() {
+    if (!document.hidden) pollTick();
+}
+
 let timer: ReturnType<typeof setInterval> | undefined;
 onMounted(() => {
     load(true);
-    timer = setInterval(() => {
-        if (autoRefresh.value && !detailOpen.value) load(true);
-    }, 5000);
+    timer = setInterval(pollTick, 5000);
+    document.addEventListener("visibilitychange", onVisibility);
 });
 onBeforeUnmount(() => {
     if (timer) clearInterval(timer);
+    document.removeEventListener("visibilitychange", onVisibility);
 });
 
 // Reference and "mine only" filter client-side: both live in the workflow Memo,

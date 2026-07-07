@@ -1,6 +1,7 @@
 package main
 
 import (
+	apiv1 "bcc-media-tools/api/v1"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -65,6 +66,23 @@ func Test_temporalUIBaseURL(t *testing.T) {
 	// Remote host with no explicit URL: hidden (UI address is unknown).
 	assert.Equal(t, "", temporalUIBaseURL("", "ns.acct.tmprl.cloud:7233"))
 	assert.Equal(t, "", temporalUIBaseURL("", ""))
+}
+
+func Test_redactStartedBy(t *testing.T) {
+	// Non-admin keeps their own email...
+	own := &apiv1.Job{StartedBy: "me@bcc.media"}
+	redactStartedBy(own, "me@bcc.media", false)
+	assert.Equal(t, "me@bcc.media", own.StartedBy)
+
+	// ...but a colleague's email is hidden.
+	other := &apiv1.Job{StartedBy: "someone@bcc.media"}
+	redactStartedBy(other, "me@bcc.media", false)
+	assert.Equal(t, "", other.StartedBy)
+
+	// Admins see everyone.
+	adminView := &apiv1.Job{StartedBy: "someone@bcc.media"}
+	redactStartedBy(adminView, "me@bcc.media", true)
+	assert.Equal(t, "someone@bcc.media", adminView.StartedBy)
 }
 
 func Test_workflowMemo(t *testing.T) {

@@ -117,8 +117,13 @@ func workflowMemo(email, reference string) map[string]any {
 }
 
 func (j JobsAPI) ListJobs(ctx context.Context, req *connect.Request[apiv1.ListJobsRequest]) (*connect.Response[apiv1.ListJobsResponse], error) {
-	if getEmail(req) == "" {
+	email := getEmail(req)
+	if email == "" {
 		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("missing email header"))
+	}
+	perms := PermissionsForEmail(email)
+	if !perms.CanViewJobs() {
+		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("not authorized"))
 	}
 
 	pageSize := req.Msg.GetPageSize()
@@ -139,7 +144,9 @@ func (j JobsAPI) ListJobs(ctx context.Context, req *connect.Request[apiv1.ListJo
 
 	jobs := make([]*apiv1.Job, 0, len(res.GetExecutions()))
 	for _, e := range res.GetExecutions() {
-		jobs = append(jobs, executionToJob(e))
+		job := executionToJob(e)
+		redactStartedBy(job, email, perms.Admin)
+		jobs = append(jobs, job)
 	}
 
 	return connect.NewResponse(&apiv1.ListJobsResponse{
@@ -149,8 +156,13 @@ func (j JobsAPI) ListJobs(ctx context.Context, req *connect.Request[apiv1.ListJo
 }
 
 func (j JobsAPI) GetJob(ctx context.Context, req *connect.Request[apiv1.GetJobRequest]) (*connect.Response[apiv1.GetJobResponse], error) {
-	if getEmail(req) == "" {
+	email := getEmail(req)
+	if email == "" {
 		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("missing email header"))
+	}
+	perms := PermissionsForEmail(email)
+	if !perms.CanViewJobs() {
+		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("not authorized"))
 	}
 	wfID := req.Msg.GetWorkflowId()
 	if wfID == "" {
@@ -162,6 +174,7 @@ func (j JobsAPI) GetJob(ctx context.Context, req *connect.Request[apiv1.GetJobRe
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	job := executionToJob(desc.GetWorkflowExecutionInfo())
+	redactStartedBy(job, email, perms.Admin)
 
 	var errMsg string
 	if job.GetStatus() == "failed" {
@@ -267,6 +280,15 @@ func executionToJob(e *workflowpb.WorkflowExecutionInfo) *apiv1.Job {
 		job.ClosedAt = e.GetCloseTime()
 	}
 	return job
+}
+
+// redactStartedBy hides who started a job from non-admins, except for their own
+// jobs — so colleagues' email addresses aren't exposed to every tool user.
+func redactStartedBy(job *apiv1.Job, viewerEmail string, isAdmin bool) {
+	if isAdmin || job.GetStartedBy() == viewerEmail {
+		return
+	}
+	job.StartedBy = ""
 }
 
 func toolForType(typeName string) string {

@@ -82,3 +82,17 @@ func (p *Permissions) CanCantemoRelations() bool {
 func (p *Permissions) CanVault() bool {
 	return p.Admin || (p.Vault != nil && p.Vault.Enabled)
 }
+
+// CanViewJobs reports whether the user may view the jobs dashboard: admins, or
+// anyone with access to a tool that produces workflows (export, VB export, BMM
+// upload, transcription) or the vault. Gated the same tool-by-tool way as the
+// rest of the app rather than being open to any authenticated user.
+func (p *Permissions) CanViewJobs() bool {
+	return p.Admin ||
+		p.CanExport() ||
+		p.CanVBExport() ||
+		p.CanUpload() ||
+		(p.Bmm != nil && len(p.Bmm.Podcasts) > 0) ||
+		(p.Transcription != nil && (p.Transcription.Admin || p.Transcription.Mediabanken)) ||
+		p.CanVault()
+}
