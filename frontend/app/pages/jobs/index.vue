@@ -4,6 +4,10 @@ import type { Job } from "~~/src/gen/api/v1/api_pb";
 const api = useAPI();
 const { t, locale } = useI18n();
 const { me } = useMe();
+// Only total admins may see who started a job; everyone else gets the column
+// hidden. Non-admins still receive their own email in the payload (the backend
+// redacts others'), so the "Only my jobs" filter keeps working.
+const { admin } = usePermissions();
 const toaster = useDesignToaster();
 
 function copyText(text: string) {
@@ -330,7 +334,10 @@ async function openDetail(job: Job) {
                                 <th class="py-2 pr-4 font-semibold">
                                     {{ t("jobs.reference") }}
                                 </th>
-                                <th class="py-2 pr-4 font-semibold">
+                                <th
+                                    v-if="admin"
+                                    class="py-2 pr-4 font-semibold"
+                                >
                                     {{ t("jobs.startedBy") }}
                                 </th>
                                 <th class="py-2 pr-4 font-semibold">
@@ -359,7 +366,10 @@ async function openDetail(job: Job) {
                                 >
                                     {{ job.reference || "—" }}
                                 </td>
-                                <td class="text-text-muted py-2.5 pr-4">
+                                <td
+                                    v-if="admin"
+                                    class="text-text-muted py-2.5 pr-4"
+                                >
                                     {{ job.startedBy || t("jobs.unknownUser") }}
                                 </td>
                                 <td class="py-2.5 pr-4">
@@ -369,10 +379,16 @@ async function openDetail(job: Job) {
                                                 job.status
                                             ] as any) ?? 'neutral'
                                         "
-                                        :label="
+                                    >
+                                        <Icon
+                                            v-if="job.status === 'running'"
+                                            name="svg-spinners:bars-rotate-fade"
+                                            class="mr-1 size-3"
+                                        />
+                                        {{
                                             t(`jobs.statusLabel.${job.status}`)
-                                        "
-                                    />
+                                        }}
+                                    </DesignBadge>
                                 </td>
                                 <td
                                     class="text-text-muted py-2.5 pr-4 whitespace-nowrap"
@@ -424,8 +440,14 @@ async function openDetail(job: Job) {
                             (STATUS_VARIANT[detail.job.status] as any) ??
                             'neutral'
                         "
-                        :label="t(`jobs.statusLabel.${detail.job.status}`)"
-                    />
+                    >
+                        <Icon
+                            v-if="detail.job.status === 'running'"
+                            name="svg-spinners:bars-rotate-fade"
+                            class="mr-1 size-3"
+                        />
+                        {{ t(`jobs.statusLabel.${detail.job.status}`) }}
+                    </DesignBadge>
                     <span
                         v-if="detail.job.reference"
                         class="bg-surface-indent text-text-default rounded-md px-2 py-0.5 font-mono text-sm"
@@ -434,7 +456,7 @@ async function openDetail(job: Job) {
                     </span>
                     <Icon
                         v-if="detail.loading"
-                        name="svg-spinners:ring-resize"
+                        name="svg-spinners:bars-rotate-fade"
                         class="text-text-hint size-4"
                     />
                 </div>
@@ -443,6 +465,7 @@ async function openDetail(job: Job) {
                     class="border-border-1 divide-border-1 divide-y rounded-xl border text-sm"
                 >
                     <div
+                        v-if="admin"
                         class="flex items-center justify-between gap-4 px-4 py-3"
                     >
                         <dt class="text-text-muted">
