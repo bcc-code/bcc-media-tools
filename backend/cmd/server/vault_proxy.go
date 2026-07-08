@@ -6,16 +6,30 @@ import (
 
 	"github.com/bcc-code/bcc-media-flows/services/cantemo"
 	"github.com/bcc-code/mediabank-bridge/log"
+	lru "github.com/hashicorp/golang-lru/v2"
 )
 
 // vaultThumbnailHandler streams an item's thumbnail through the server (the
 // Vidispine thumbnail endpoints require basic auth, so they cannot be loaded
-// directly by the browser). GET /vault/thumbnail?vxid=VX-123[&t=<time>].
+// directly by the browser), with an LRU cache. The filmstrip in the shorts
+// editor requests many frames per asset, so caching keeps us from hammering
+// Vidispine on every load. GET /vault/thumbnail?vxid=VX-123[&f=<0..1>].
 type vaultThumbnailHandler struct {
 	vault *VaultAPI
+	cache *lru.Cache[string, cachedThumbnail]
 }
 
-func (h vaultThumbnailHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+type cachedThumbnail struct {
+	data        []byte
+	contentType string
+}
+
+func newVaultThumbnailHandler(vault *VaultAPI) *vaultThumbnailHandler {
+	cache, _ := lru.New[string, cachedThumbnail](4096)
+	return &vaultThumbnailHandler{vault: vault, cache: cache}
+}
+
+func (h *vaultThumbnailHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if !PermissionsForEmail(getEmailFromHttp(r)).CanVault() {
 		http.Error(w, "forbidden", http.StatusForbidden)
 		return
@@ -28,16 +42,30 @@ func (h vaultThumbnailHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Optional fraction (0..1) along the asset for trick-play; empty = poster.
-	data, contentType, err := h.vault.fetchThumbnail(vxID, r.URL.Query().Get("f"))
+	f := r.URL.Query().Get("f")
+	cacheKey := vxID + "|" + f
+	if c, ok := h.cache.Get(cacheKey); ok {
+		writeThumbnail(w, c, "HIT")
+		return
+	}
+
+	data, contentType, err := h.vault.fetchThumbnail(vxID, f)
 	if err != nil {
 		log.L.Debug().Err(err).Str("vxid", vxID).Msg("vault: thumbnail not available")
 		http.Error(w, "no thumbnail", http.StatusNotFound)
 		return
 	}
 
-	w.Header().Set("Content-Type", contentType)
+	c := cachedThumbnail{data: data, contentType: contentType}
+	h.cache.Add(cacheKey, c)
+	writeThumbnail(w, c, "MISS")
+}
+
+func writeThumbnail(w http.ResponseWriter, c cachedThumbnail, cacheStatus string) {
+	w.Header().Set("Content-Type", c.contentType)
 	w.Header().Set("Cache-Control", "private, max-age=3600")
-	_, _ = w.Write(data)
+	w.Header().Set("X-Cache", cacheStatus)
+	_, _ = w.Write(c.data)
 }
 
 // vaultPreviewHandler proxies an item's preview shape through the server so no

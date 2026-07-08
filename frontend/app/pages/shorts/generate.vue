@@ -18,6 +18,7 @@ useHead({
 });
 
 const api = useAPI();
+const base = useRuntimeConfig().public.grpcUrl;
 
 const { data: videoUrl, status } = useAsyncData(
     () => `preview:${vxId.value}`,
@@ -62,6 +63,11 @@ function previewShort() {
 }
 
 const currentTime = ref(0);
+function onSeek(time: number) {
+    if (!videoElement.value) return;
+    videoElement.value.currentTime = time;
+    currentTime.value = time;
+}
 useEventListener(videoElement, "timeupdate", () => {
     if (!videoElement.value) return;
     currentTime.value = videoElement.value.currentTime;
@@ -269,8 +275,11 @@ useVideoKeyboardControls({
                 :max="duration"
                 :current="currentTime"
                 :zoom="zoom"
+                :vxid="vxId ?? ''"
+                :base="base"
                 v-model:start="startTime"
                 v-model:end="endTime"
+                @seek="onSeek"
             />
             <DesignSlider v-model="zoom" :min="0.1" :max="10" :step="0.01" />
         </template>
@@ -285,7 +294,7 @@ useVideoKeyboardControls({
                 <DesignSkeleton class="h-8 w-28" />
                 <DesignSkeleton class="h-8 w-28" />
             </div>
-            <DesignSkeleton class="h-32 w-full" />
+            <DesignSkeleton class="h-38 w-full" />
             <DesignSkeleton class="h-2 w-full" />
         </template>
 
