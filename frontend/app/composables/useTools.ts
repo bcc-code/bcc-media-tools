@@ -61,6 +61,7 @@ export function useTools() {
             icon: "tabler:device-mobile",
             description: "Generate shorts from existing videos",
             to: "/shorts/",
+            enabled: me.value?.admin || me.value?.shorts?.enabled,
         },
         {
             label: t("tools.vault.title"),

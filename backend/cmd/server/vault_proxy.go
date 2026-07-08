@@ -30,7 +30,10 @@ func newVaultThumbnailHandler(vault *VaultAPI) *vaultThumbnailHandler {
 }
 
 func (h *vaultThumbnailHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if !PermissionsForEmail(getEmailFromHttp(r)).CanVault() {
+	// Vault users get thumbnails for search; shorts creators get them for the
+	// editor filmstrip.
+	perms := PermissionsForEmail(getEmailFromHttp(r))
+	if !perms.CanVault() && !perms.CanShorts() {
 		http.Error(w, "forbidden", http.StatusForbidden)
 		return
 	}

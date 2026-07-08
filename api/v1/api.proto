@@ -59,6 +59,12 @@ message VaultPermission {
   bool enabled = 1;
 }
 
+// Permission for the Shorts generation tool.
+message ShortsPermission {
+  // can open the shorts editor and submit shorts for generation
+  bool enabled = 1;
+}
+
 message Permissions {
 	bool admin = 1;
 	BMMPermission bmm = 2;
@@ -68,6 +74,7 @@ message Permissions {
   VBExportPermission vb_export = 6;
   CantemoPermission cantemo = 7;
   VaultPermission vault = 8;
+  ShortsPermission shorts = 9;
 }
 
 message GetPermissionsRequest {}

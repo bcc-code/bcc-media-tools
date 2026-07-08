@@ -82,3 +82,9 @@ func (p *Permissions) CanCantemoRelations() bool {
 func (p *Permissions) CanVault() bool {
 	return p.Admin || (p.Vault != nil && p.Vault.Enabled)
 }
+
+// CanShorts reports whether the user may create shorts (open the editor and
+// submit them for generation).
+func (p *Permissions) CanShorts() bool {
+	return p.Admin || (p.Shorts != nil && p.Shorts.Enabled)
+}

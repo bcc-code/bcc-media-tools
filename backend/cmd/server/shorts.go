@@ -21,6 +21,14 @@ func NewShortsAPI(temporalClient client.Client) *ShortsAPI {
 }
 
 func (s ShortsAPI) SubmitShort(ctx context.Context, req *connect.Request[apiv1.SubmitShortRequest]) (*connect.Response[apiv1.Void], error) {
+	email := getEmail(req)
+	if email == "" {
+		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("missing email header"))
+	}
+	if !PermissionsForEmail(email).CanShorts() {
+		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("not enough permissions to create shorts"))
+	}
+
 	fmt.Printf("Submitted short with VXID %s for generation", req.Msg.GetVXID())
 
 	// Trigger flow

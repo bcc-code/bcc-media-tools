@@ -39,6 +39,11 @@ const waveformSrc = computed(
         `${base}/vault/waveform?vxid=${encodeURIComponent(vxId.value)}&width=1200&height=240&bgcolor=000000&fgcolor=ffffff`,
 );
 
+const { me } = useMe();
+const canCreateShort = computed(
+    () => !!(me.value?.admin || me.value?.shorts?.enabled),
+);
+
 const isVideo = computed(() => item.value?.mediaType === "video");
 const isAudio = computed(() => item.value?.mediaType === "audio");
 const isImage = computed(() => item.value?.mediaType === "image");
@@ -92,7 +97,7 @@ const lengthLabel = computed(() => {
                     {{ t("vault.back") }}
                 </DesignButton>
                 <h1
-                    class="truncate font-mono text-2xl font-semibold tracking-tight"
+                    class="min-w-0 truncate font-mono text-2xl font-semibold tracking-tight"
                 >
                     {{ item?.title || vxId }}
                 </h1>
@@ -197,7 +202,7 @@ const lengthLabel = computed(() => {
                     </dl>
 
                     <div
-                        v-if="chips.length"
+                        v-if="chips.length || (isVideo && canCreateShort)"
                         class="border-border-1 mt-4 border-t pt-4"
                     >
                         <h3 class="mb-3 text-sm font-semibold">
@@ -219,6 +224,24 @@ const lengthLabel = computed(() => {
                                     :style="{ backgroundColor: chip.color }"
                                 />
                                 {{ chip.name }}
+                            </DesignButton>
+                            <DesignButton
+                                v-if="isVideo && canCreateShort"
+                                size="small"
+                                variant="secondary"
+                                :title="t('vault.createShort')"
+                                @click="
+                                    navigateTo({
+                                        name: 'shorts-generate',
+                                        query: { id: vxId },
+                                    })
+                                "
+                            >
+                                <span
+                                    class="mr-1 inline-block size-1.5 rounded-full"
+                                    :style="{ backgroundColor: '#ec4899' }"
+                                />
+                                {{ t("vault.createShort") }}
                             </DesignButton>
                         </div>
                     </div>
