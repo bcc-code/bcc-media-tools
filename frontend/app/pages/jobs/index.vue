@@ -173,7 +173,9 @@ function formatStarted(job: Job): string {
 
 function formatRelative(job: Job): string {
     const d = timestampToDate(job.startedAt);
-    return d ? formatTimeAgo(d) : "—";
+    return d
+        ? formatTimeAgo(d, { messages: timeAgoMessages(locale.value) })
+        : "—";
 }
 
 function formatDuration(job: Job): string {
