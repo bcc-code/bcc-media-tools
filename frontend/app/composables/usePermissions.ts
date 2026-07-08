@@ -67,6 +67,11 @@ export function usePermissions() {
 
     const canVault = computed(() => admin.value || !!me.value?.vault?.enabled);
 
+    // CanShorts: admin or the shorts permission.
+    const canShorts = computed(
+        () => admin.value || !!me.value?.shorts?.enabled,
+    );
+
     // Transcription-editor access deliberately does NOT honor global admin —
     // it requires the transcription permission itself (matches the backend
     // handler in transcription.go).
@@ -121,6 +126,7 @@ export function usePermissions() {
         canCantemoSubtitles,
         canCantemoRelations,
         canVault,
+        canShorts,
         canTranscription,
         transcriptionAdmin,
         canViewJobs,

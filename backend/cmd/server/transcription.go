@@ -82,14 +82,19 @@ func (t TranscriptionAPI) GetPreview(ctx context.Context, req *connect.Request[a
 	}
 
 	perms := PermissionsForEmail(email)
-	if perms.Transcription == nil || (!perms.Transcription.Admin && !perms.Transcription.Mediabanken) {
+	transcriptionAccess := perms.Transcription != nil && (perms.Transcription.Admin || perms.Transcription.Mediabanken)
+	// Shorts creators reuse the preview endpoint to load the source video into
+	// the editor; they are ACL-gated like Mediabanken transcribers below.
+	if !transcriptionAccess && !perms.CanShorts() {
 		return nil, connect.NewError(403, fmt.Errorf("not enough permissions for preview"))
 	}
 
-	// Check if any ACL entry is inherited from the requested VXID
-	accessAllowed := perms.Transcription.Admin
+	// Global and transcription admins see everything; everyone else (Mediabanken
+	// transcribers and shorts creators) is limited to items shared with the
+	// tools collection.
+	accessAllowed := perms.Admin || (perms.Transcription != nil && perms.Transcription.Admin)
 
-	if perms.Transcription.Mediabanken {
+	if !accessAllowed {
 		m, err := t.cantemoClient.GetACL(req.Msg.VXID)
 		if err != nil {
 			return nil, err

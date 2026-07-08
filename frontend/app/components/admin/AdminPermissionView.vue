@@ -5,6 +5,7 @@ import {
     CantemoPermissionSchema,
     ExportPermissionSchema,
     PermissionsSchema,
+    ShortsPermissionSchema,
     TranscriptionPermissionSchema,
     VaultPermissionSchema,
     VBExportPermissionSchema,
@@ -34,6 +35,7 @@ function withDefaultPermissions(p: Permissions): Permissions {
         vbExport: p.vbExport ?? create(VBExportPermissionSchema),
         cantemo: p.cantemo ?? create(CantemoPermissionSchema),
         vault: p.vault ?? create(VaultPermissionSchema),
+        shorts: p.shorts ?? create(ShortsPermissionSchema),
         email: p.email ?? "",
     });
 }
@@ -254,6 +256,16 @@ const isOpen = ref(false);
                             v-model="perms.vault.enabled"
                             label="Vault search"
                             description="Can search Mediabanken and view item previews"
+                        />
+                    </AdminPermissionViewSection>
+                    <AdminPermissionViewSection
+                        v-if="perms.shorts"
+                        title="Shorts"
+                    >
+                        <DesignSwitch
+                            v-model="perms.shorts.enabled"
+                            label="Shorts generation"
+                            description="Can open the shorts editor and submit shorts for generation"
                         />
                     </AdminPermissionViewSection>
                 </motion.div>

@@ -18,6 +18,7 @@ useHead({
 });
 
 const api = useAPI();
+const base = useRuntimeConfig().public.grpcUrl;
 
 const { data: videoUrl, status } = useAsyncData(
     () => `preview:${vxId.value}`,
@@ -62,6 +63,11 @@ function previewShort() {
 }
 
 const currentTime = ref(0);
+function onSeek(time: number) {
+    if (!videoElement.value) return;
+    videoElement.value.currentTime = time;
+    currentTime.value = time;
+}
 useEventListener(videoElement, "timeupdate", () => {
     if (!videoElement.value) return;
     currentTime.value = videoElement.value.currentTime;
@@ -116,7 +122,28 @@ async function submit() {
         });
         navigateTo("/shorts");
         confirmSubmit.value = false;
-    } catch (err) {}
+    } catch (err) {
+        toaster.create({
+            title: "Failed to submit short",
+            type: "error",
+        });
+    }
+}
+
+function setStartPoint() {
+    if (endTime.value == undefined) {
+        startTime.value = currentTime.value;
+        return;
+    }
+    startTime.value = Math.min(currentTime.value, endTime.value);
+}
+
+function setEndPoint() {
+    if (startTime.value == undefined) {
+        endTime.value = currentTime.value;
+        return;
+    }
+    endTime.value = Math.max(currentTime.value, startTime.value);
 }
 
 const formattedDuration = (duration: number) => {
@@ -143,6 +170,8 @@ useVideoKeyboardControls({
             videoElement.value.currentTime += 1;
         }
     },
+    setStartPoint,
+    setEndPoint,
 });
 </script>
 
@@ -214,16 +243,18 @@ useVideoKeyboardControls({
                 <DesignButton
                     class="border-border-1 ml-auto border"
                     variant="secondary"
-                    @click="startTime = currentTime"
+                    @click="setStartPoint"
                 >
                     {{ $t("shorts.generation.setStartPoint") }}
+                    <span class="text-text-hint ml-1 text-xs">I</span>
                 </DesignButton>
                 <DesignButton
                     class="border-border-1 border"
                     variant="secondary"
-                    @click="endTime = currentTime"
+                    @click="setEndPoint"
                 >
                     {{ $t("shorts.generation.setEndPoint") }}
+                    <span class="text-text-hint ml-1 text-xs">O</span>
                 </DesignButton>
                 <DesignButton
                     class="border-border-1 border"
@@ -244,8 +275,11 @@ useVideoKeyboardControls({
                 :max="duration"
                 :current="currentTime"
                 :zoom="zoom"
+                :vxid="vxId ?? ''"
+                :base="base"
                 v-model:start="startTime"
                 v-model:end="endTime"
+                @seek="onSeek"
             />
             <DesignSlider v-model="zoom" :min="0.1" :max="10" :step="0.01" />
         </template>
@@ -260,7 +294,7 @@ useVideoKeyboardControls({
                 <DesignSkeleton class="h-8 w-28" />
                 <DesignSkeleton class="h-8 w-28" />
             </div>
-            <DesignSkeleton class="h-32 w-full" />
+            <DesignSkeleton class="h-38 w-full" />
             <DesignSkeleton class="h-2 w-full" />
         </template>
 

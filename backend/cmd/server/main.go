@@ -167,7 +167,7 @@ func main() {
 	})
 
 	// VAULT media proxies (auth'd, server-side fetch — never expose upstream URLs).
-	mux.Handle("/vault/thumbnail", vaultThumbnailHandler{vault: vaultAPI})
+	mux.Handle("/vault/thumbnail", newVaultThumbnailHandler(vaultAPI))
 	mux.Handle("/vault/preview", vaultPreviewHandler{
 		cantemo:      cantemoClient,
 		cantemoToken: os.Getenv("CANTEMO_TOKEN"),

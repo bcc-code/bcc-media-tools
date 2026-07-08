@@ -16,6 +16,7 @@ export function useTools() {
         canExport,
         canVBExport,
         canVault,
+        canShorts,
         canViewJobs,
     } = usePermissions();
 
@@ -54,6 +55,7 @@ export function useTools() {
             icon: "tabler:device-mobile",
             description: "Generate shorts from existing videos",
             to: "/shorts/",
+            enabled: canShorts.value,
         },
         {
             label: t("tools.vault.title"),

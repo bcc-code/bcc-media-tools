@@ -96,3 +96,9 @@ func (p *Permissions) CanViewJobs() bool {
 		(p.Transcription != nil && (p.Transcription.Admin || p.Transcription.Mediabanken)) ||
 		p.CanVault()
 }
+
+// CanShorts reports whether the user may create shorts (open the editor and
+// submit them for generation).
+func (p *Permissions) CanShorts() bool {
+	return p.Admin || (p.Shorts != nil && p.Shorts.Enabled)
+}
