@@ -25,11 +25,19 @@ const currentLeft = computed(() => {
     return `${(props.current / props.max) * 100}%`;
 });
 
-const currentElement = useTemplateRef("currentElement");
-watch([currentLeft, () => props.zoom], () => {
-    if (currentElement.value) {
-        currentElement.value.scrollIntoView({
-            inline: "center",
+const scroller = useTemplateRef("scroller");
+watch([() => props.current, () => props.zoom], () => {
+    const el = scroller.value;
+    if (!el) return;
+    const playheadX = props.current * props.zoom;
+    // Only recenter when the playhead has left the visible window, so normal
+    // playback doesn't trigger a continuous smooth-scroll.
+    if (
+        playheadX < el.scrollLeft ||
+        playheadX > el.scrollLeft + el.clientWidth
+    ) {
+        el.scrollTo({
+            left: playheadX - el.clientWidth / 2,
             behavior: "smooth",
         });
     }
@@ -54,11 +62,13 @@ function onDrag(event: Event) {
     }
 
     if (dragging.value == "start") {
-        start.value = start.value + delta;
+        // Don't let the start handle move past the end handle.
+        start.value = Math.min(start.value + delta, end.value);
     }
 
     if (dragging.value == "end") {
-        end.value = end.value + delta;
+        // Don't let the end handle move before the start handle.
+        end.value = Math.max(end.value + delta, start.value);
     }
 }
 
@@ -74,7 +84,10 @@ watch([start, end], ([s, e]) => {
 </script>
 
 <template>
-    <div class="border-text-default h-32 w-full overflow-hidden border">
+    <div
+        ref="scroller"
+        class="border-text-default h-32 w-full overflow-hidden border"
+    >
         <div
             class="relative h-full"
             :style="{ width: `${props.max * props.zoom}px` }"
@@ -94,7 +107,6 @@ watch([start, end], ([s, e]) => {
                 />
             </div>
             <div
-                ref="currentElement"
                 class="pointer-events-none absolute z-10 h-full border-r border-dotted"
                 :style="{ left: currentLeft }"
             />

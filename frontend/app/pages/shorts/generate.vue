@@ -116,7 +116,28 @@ async function submit() {
         });
         navigateTo("/shorts");
         confirmSubmit.value = false;
-    } catch (err) {}
+    } catch (err) {
+        toaster.create({
+            title: "Failed to submit short",
+            type: "error",
+        });
+    }
+}
+
+function setStartPoint() {
+    if (endTime.value == undefined) {
+        startTime.value = currentTime.value;
+        return;
+    }
+    startTime.value = Math.min(currentTime.value, endTime.value);
+}
+
+function setEndPoint() {
+    if (startTime.value == undefined) {
+        endTime.value = currentTime.value;
+        return;
+    }
+    endTime.value = Math.max(currentTime.value, startTime.value);
 }
 
 const formattedDuration = (duration: number) => {
@@ -143,6 +164,8 @@ useVideoKeyboardControls({
             videoElement.value.currentTime += 1;
         }
     },
+    setStartPoint,
+    setEndPoint,
 });
 </script>
 
@@ -214,16 +237,18 @@ useVideoKeyboardControls({
                 <DesignButton
                     class="border-border-1 ml-auto border"
                     variant="secondary"
-                    @click="startTime = currentTime"
+                    @click="setStartPoint"
                 >
                     {{ $t("shorts.generation.setStartPoint") }}
+                    <span class="text-text-hint ml-1 text-xs">I</span>
                 </DesignButton>
                 <DesignButton
                     class="border-border-1 border"
                     variant="secondary"
-                    @click="endTime = currentTime"
+                    @click="setEndPoint"
                 >
                     {{ $t("shorts.generation.setEndPoint") }}
+                    <span class="text-text-hint ml-1 text-xs">O</span>
                 </DesignButton>
                 <DesignButton
                     class="border-border-1 border"
