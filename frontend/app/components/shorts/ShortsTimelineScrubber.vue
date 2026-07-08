@@ -200,15 +200,15 @@ watch([start, end], ([s, e]) => {
                     "
                 />
                 <div
-                    class="pointer-events-none absolute top-0 left-0 z-[1] h-full bg-black/60"
+                    class="pointer-events-none absolute top-0 left-0 z-1 h-full bg-black/60"
                     :style="{ width: startPct }"
                 />
                 <div
-                    class="pointer-events-none absolute top-0 z-[1] h-full bg-black/60"
+                    class="pointer-events-none absolute top-0 z-1 h-full bg-black/60"
                     :style="{ left: endPct, right: 0 }"
                 />
                 <div
-                    class="absolute z-[2] h-full cursor-grab shadow-[inset_0_0_0_2px_rgba(255,255,255,0.95),inset_0_0_0_3px_rgba(0,0,0,0.55)] active:cursor-grabbing"
+                    class="absolute z-2 h-full cursor-grab shadow-[inset_0_0_0_2px_rgba(255,255,255,0.95),inset_0_0_0_3px_rgba(0,0,0,0.55)] active:cursor-grabbing"
                     :style
                     @mousedown.stop="setDragging('move')"
                 >
