@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { formatTimeAgo } from "@vueuse/core";
 import type { Job } from "~~/src/gen/api/v1/api_pb";
 
 const api = useAPI();
@@ -168,6 +169,11 @@ const dateFmt = computed(
 function formatStarted(job: Job): string {
     const d = timestampToDate(job.startedAt);
     return d ? dateFmt.value.format(d) : "—";
+}
+
+function formatRelative(job: Job): string {
+    const d = timestampToDate(job.startedAt);
+    return d ? formatTimeAgo(d) : "—";
 }
 
 function formatDuration(job: Job): string {
@@ -392,8 +398,9 @@ async function openDetail(job: Job) {
                                 </td>
                                 <td
                                     class="text-text-muted py-2.5 pr-4 whitespace-nowrap"
+                                    :title="formatStarted(job)"
                                 >
-                                    {{ formatStarted(job) }}
+                                    {{ formatRelative(job) }}
                                 </td>
                                 <td
                                     class="text-text-muted py-2.5 whitespace-nowrap"
