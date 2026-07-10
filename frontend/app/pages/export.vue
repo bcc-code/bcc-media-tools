@@ -10,7 +10,7 @@ const route = useRoute();
 const vxId = computed(() => route.query.id?.toString());
 
 const api = useAPI();
-const toaster = useDesignToaster();
+const toaster = useToast();
 const { t } = useI18n();
 const { formatNumber } = useNumberFormat();
 const { me } = useMe();

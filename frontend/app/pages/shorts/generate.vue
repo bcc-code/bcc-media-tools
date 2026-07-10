@@ -107,7 +107,7 @@ watch([duration, scrubberWidth], ([d, s]) => {
     zoom.value = s / d;
 });
 
-const toaster = useDesignToaster();
+const toaster = useToast();
 const confirmSubmit = ref(false);
 async function submit() {
     try {

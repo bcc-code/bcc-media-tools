@@ -70,7 +70,7 @@ function resetTranscription() {
 }
 
 const { t } = useI18n();
-const toaster = useDesignToaster();
+const toaster = useToast();
 function copyToClipboard() {
     if (!transcription.value) return;
     const text = transcription.value.segments.map((s) => s.text).join(" ");

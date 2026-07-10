@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const show = ref(false);
 
-const toaster = useDesignToaster();
+const toaster = useToast();
 const clearLocalStorage = () => {
     localStorage.clear();
     toaster.create({

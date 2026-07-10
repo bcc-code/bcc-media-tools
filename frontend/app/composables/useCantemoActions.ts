@@ -13,7 +13,7 @@ export type CantemoChip = {
 export function useCantemoActions(vxId: MaybeRefOrGetter<string | undefined>) {
     const { me } = useMe();
     const api = useAPI();
-    const toaster = useDesignToaster();
+    const toaster = useToast();
 
     // Name of the chip whose workflow is currently being triggered (disables it).
     const loading = ref<string | null>(null);

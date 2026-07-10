@@ -6,7 +6,7 @@ const props = defineProps<{
 
 const format = ref<"json" | "srt" | "srt-words">("json");
 
-const toaster = useDesignToaster();
+const toaster = useToast();
 const download = () => {
     switch (format.value) {
         case "json":

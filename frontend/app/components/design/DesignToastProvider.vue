@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Toast, Toaster } from "@ark-ui/vue";
 
-const toaster = useDesignToaster();
+const toaster = useToast();
 
 const toastIcons: Record<string, { name: string; color: string }> = {
     info: { name: "tabler:info-circle", color: "text-semantic-info" },

@@ -49,7 +49,7 @@ function formatErrorMessage(msg: string | null): string | null {
 }
 
 const { t } = useI18n();
-const toaster = useDesignToaster();
+const toaster = useToast();
 const reset = async (notify: boolean = true) => {
     loading.value = true;
     error.value = null;
