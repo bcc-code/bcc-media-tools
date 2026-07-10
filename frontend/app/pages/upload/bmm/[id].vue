@@ -58,6 +58,7 @@ const forceOverride = ref(false);
 const selectedFiles = ref<FileAndLanguage[]>([]);
 
 const { me } = useMe();
+const { canUploadBmm, isBmmAdmin } = usePermissions();
 const config = useRuntimeConfig();
 
 const permissionsLoading = usePermissionsLoading();
@@ -97,13 +98,7 @@ const uploaded = ref(false);
                 Invalid route parameters
             </DesignBanner>
             <template v-else>
-                <template
-                    v-if="
-                        me &&
-                        me.bmm &&
-                        (me.bmm.podcasts.length > 0 || me.bmm.admin)
-                    "
-                >
+                <template v-if="canUploadBmm && me?.bmm">
                     <template v-if="!uploaded">
                         <div class="flex flex-col gap-4 p-4 transition">
                             <header v-if="routeParams.title">
@@ -116,10 +111,10 @@ const uploaded = ref(false);
                                 label="Replace transcription even if has been manually corrected"
                             />
                             <BmmSelectFile
-                                v-if="selectedFiles.length < 1 || me.bmm.admin"
+                                v-if="selectedFiles.length < 1 || isBmmAdmin"
                                 v-model="selectedFiles"
                                 :default-language="metadata.language![0]!"
-                                :accept-multiple="me.bmm.admin"
+                                :accept-multiple="isBmmAdmin"
                                 :environment="selectedEnvironment"
                             />
                             <BmmFileUploader

@@ -13,13 +13,10 @@ const api = useAPI();
 const toaster = useToast();
 const { t } = useI18n();
 const { formatNumber } = useNumberFormat();
-const { me } = useMe();
 
 // Users with the bulkExport permission get the bulk paste form on the empty
 // (no-id) state.
-const canBulk = computed(
-    () => !!(me.value?.admin || me.value?.vbExport?.bulkExport),
-);
+const { canVbBulkExport } = usePermissions();
 
 const {
     data: config,
@@ -44,7 +41,7 @@ const {
 );
 
 watch(
-    [canBulk, vxId],
+    [canVbBulkExport, vxId],
     ([can, id]) => {
         if (can && !id && !bulkConfig.value) loadBulkConfig();
     },
@@ -132,7 +129,7 @@ async function onStartExport({
     </div>
 
     <div v-else>
-        <template v-if="canBulk">
+        <template v-if="canVbBulkExport">
             <VbExportForm
                 v-if="bulkStatus === 'success' && bulkConfig"
                 :config="bulkConfig"

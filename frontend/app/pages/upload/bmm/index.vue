@@ -28,6 +28,7 @@ const forceOverride = ref(false);
 const selectedFiles = ref<FileAndLanguage[]>([]);
 
 const { me } = useMe();
+const { canUploadBmm, isBmmAdmin } = usePermissions();
 const config = useRuntimeConfig();
 
 const permissionsLoading = usePermissionsLoading();
@@ -94,11 +95,7 @@ const dateString = (date: Date) => {
         <div
             class="border-border-1 bg-surface-default mx-auto flex h-full w-full max-w-5xl grow flex-col gap-4 rounded-2xl border p-4"
         >
-            <template
-                v-if="
-                    me && me.bmm && (me.bmm.podcasts.length > 0 || me.bmm.admin)
-                "
-            >
+            <template v-if="canUploadBmm && me?.bmm">
                 <template v-if="step != 'done'">
                     <BmmSingleMetadata
                         v-if="step == 'metadata'"
@@ -143,10 +140,10 @@ const dateString = (date: Date) => {
                             :label="$t('bmmUpload.forceOverride')"
                         />
                         <BmmSelectFile
-                            v-if="selectedFiles.length < 1 || me.bmm.admin"
+                            v-if="selectedFiles.length < 1 || isBmmAdmin"
                             v-model="selectedFiles"
                             :default-language="metadata.language![0]!"
-                            :accept-multiple="me.bmm.admin"
+                            :accept-multiple="isBmmAdmin"
                             :environment="selectedEnvironment"
                         />
                         <BmmFileUploader

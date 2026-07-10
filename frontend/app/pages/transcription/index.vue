@@ -1,6 +1,4 @@
 <script lang="ts" setup>
-import { useMe } from "~/utils/me";
-
 useHead({
     title: "Transcription",
 });
@@ -56,7 +54,7 @@ const vxId = ref("");
 
 const { deleteMode } = useDeleteMode();
 
-const { me } = useMe();
+const { isTranscriptionAdmin } = usePermissions();
 
 function setSegments(s: Segment[]) {
     segments.value = s;
@@ -90,11 +88,7 @@ function setSegments(s: Segment[]) {
                         "
                     />
                 </div>
-                <template
-                    v-if="
-                        !fileName && me?.transcription && me.transcription.admin
-                    "
-                >
+                <template v-if="!fileName && isTranscriptionAdmin">
                     <div
                         class="text-text-hint text-caption-1 flex w-full items-center gap-3"
                     >

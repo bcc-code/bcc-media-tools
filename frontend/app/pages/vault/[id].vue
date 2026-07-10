@@ -39,10 +39,7 @@ const waveformSrc = computed(
         `${base}/vault/waveform?vxid=${encodeURIComponent(vxId.value)}&width=1200&height=240&bgcolor=000000&fgcolor=ffffff`,
 );
 
-const { me } = useMe();
-const canCreateShort = computed(
-    () => !!(me.value?.admin || me.value?.shorts?.enabled),
-);
+const { canUseShorts } = usePermissions();
 
 const isVideo = computed(() => item.value?.mediaType === "video");
 const isAudio = computed(() => item.value?.mediaType === "audio");
@@ -202,7 +199,7 @@ const lengthLabel = computed(() => {
                     </dl>
 
                     <div
-                        v-if="chips.length || (isVideo && canCreateShort)"
+                        v-if="chips.length || (isVideo && canUseShorts)"
                         class="border-border-1 mt-4 border-t pt-4"
                     >
                         <h3 class="mb-3 text-sm font-semibold">
@@ -226,7 +223,7 @@ const lengthLabel = computed(() => {
                                 {{ chip.name }}
                             </DesignButton>
                             <DesignButton
-                                v-if="isVideo && canCreateShort"
+                                v-if="isVideo && canUseShorts"
                                 size="small"
                                 variant="secondary"
                                 :title="t('vault.createShort')"

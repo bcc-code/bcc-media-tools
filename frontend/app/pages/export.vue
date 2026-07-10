@@ -13,13 +13,10 @@ const api = useAPI();
 const toaster = useToast();
 const { t } = useI18n();
 const { formatNumber } = useNumberFormat();
-const { me } = useMe();
 
 // Users with the bulkExport permission get the bulk paste form on the empty
 // (no-id) state.
-const canBulk = computed(
-    () => !!(me.value?.admin || me.value?.export?.bulkExport),
-);
+const { canBulkExport } = usePermissions();
 
 const {
     data: config,
@@ -46,7 +43,7 @@ const {
 );
 
 watch(
-    [canBulk, vxId],
+    [canBulkExport, vxId],
     ([can, id]) => {
         if (can && !id && !bulkConfig.value) loadBulkConfig();
     },
@@ -185,7 +182,7 @@ const triggers: Trigger[] = [
 
     <!-- No asset: bulk export (if permitted) + how to open the tool + links -->
     <div v-else>
-        <template v-if="canBulk">
+        <template v-if="canBulkExport">
             <ExportForm
                 v-if="bulkStatus === 'success' && bulkConfig"
                 :config="bulkConfig"

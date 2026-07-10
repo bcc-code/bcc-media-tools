@@ -23,6 +23,7 @@ const selectedFilesComputed = computed({
 });
 
 const { me } = useMe();
+const { isBmmAdmin } = usePermissions();
 </script>
 
 <template>
@@ -37,7 +38,7 @@ const { me } = useMe();
             <BmmLanguageSelector
                 v-if="selectedFiles[index] && me?.bmm"
                 v-model="selectedFiles[index].language"
-                :disabled="!me.bmm.admin"
+                :disabled="!isBmmAdmin"
                 :languages="me.bmm.languages"
                 :env="props.environment"
                 label=""

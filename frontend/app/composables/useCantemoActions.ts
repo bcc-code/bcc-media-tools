@@ -11,7 +11,7 @@ export type CantemoChip = {
 // Builds the permission-gated Cantemo action chips for a given Vidispine item id.
 // Shared by the embedded cantemo.vue panel and the VAULT item detail page.
 export function useCantemoActions(vxId: MaybeRefOrGetter<string | undefined>) {
-    const { me } = useMe();
+    const perms = usePermissions();
     const api = useAPI();
     const toaster = useToast();
 
@@ -60,38 +60,26 @@ export function useCantemoActions(vxId: MaybeRefOrGetter<string | undefined>) {
     }
 
     const chips = computed<CantemoChip[]>(() => {
-        const m = me.value;
         return [
             {
                 name: "Export",
                 action: "Go to VX export",
                 color: "#9aa0a8",
-                enabled: !!(
-                    m?.admin ||
-                    (m?.export &&
-                        (m.export.destinations.length > 0 ||
-                            m.export.admin ||
-                            m.export.timedMetadata))
-                ),
+                enabled: perms.canExport.value,
                 run: () => openTool("/export/"),
             },
             {
                 name: "Export Oslofjord",
                 action: "Go to VB export",
                 color: "#3c61d8",
-                enabled: !!(
-                    m?.admin ||
-                    (m?.vbExport &&
-                        (m.vbExport.destinations.length > 0 ||
-                            m.vbExport.admin))
-                ),
+                enabled: perms.canVbExport.value,
                 run: () => openTool("/vb-export/"),
             },
             {
                 name: "Make preview",
                 action: "Trigger preview generation",
                 color: "#cdbf3a",
-                enabled: !!(m?.admin || m?.cantemo?.preview),
+                enabled: perms.canCantemoPreview.value,
                 run: () =>
                     trigger(
                         "Make preview",
@@ -103,7 +91,7 @@ export function useCantemoActions(vxId: MaybeRefOrGetter<string | undefined>) {
                 name: "Transcribe",
                 action: "Trigger transcription",
                 color: "#3fb84f",
-                enabled: !!(m?.admin || m?.cantemo?.transcribe),
+                enabled: perms.canCantemoTranscribe.value,
                 run: () =>
                     trigger(
                         "Transcribe",
@@ -115,18 +103,16 @@ export function useCantemoActions(vxId: MaybeRefOrGetter<string | undefined>) {
                 name: "Correct transcription",
                 action: "Open the transcription editor",
                 color: "#8b5cf6",
-                enabled: !!(
-                    m?.admin ||
-                    (m?.transcription &&
-                        (m.transcription.admin || m.transcription.mediabanken))
-                ),
+                enabled:
+                    perms.canTranscribe.value ||
+                    perms.isTranscriptionAdmin.value,
                 run: () => openToolWithIdPath("/transcription"),
             },
             {
                 name: "Update subtitle from Subtrans",
                 action: "Trigger appropriate workflow",
                 color: "#3fb84f",
-                enabled: !!(m?.admin || m?.cantemo?.subtitles),
+                enabled: perms.canCantemoSubtitles.value,
                 run: () =>
                     trigger(
                         "Update subtitle from Subtrans",
@@ -138,7 +124,7 @@ export function useCantemoActions(vxId: MaybeRefOrGetter<string | undefined>) {
                 name: "Update asset relations",
                 action: "Update asset relations flow",
                 color: "#3c61d8",
-                enabled: !!(m?.admin || m?.cantemo?.relations),
+                enabled: perms.canCantemoRelations.value,
                 run: () =>
                     trigger(
                         "Update asset relations",
