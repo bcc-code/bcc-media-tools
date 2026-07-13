@@ -614,11 +614,6 @@ onBeforeRouteLeave(() => {
                             v-if="activeMarker"
                             class="gradient-border bg-surface-default shadow-resting rounded-2xl px-4 py-3"
                         >
-                            <p
-                                class="text-caption-1 text-text-hint mb-1 uppercase"
-                            >
-                                {{ t("editorial.nowPlaying") }}
-                            </p>
                             <div
                                 class="flex items-center justify-between gap-3"
                             >
