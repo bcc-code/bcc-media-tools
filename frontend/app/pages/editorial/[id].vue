@@ -136,6 +136,23 @@ const activeIndex = computed(() =>
 const activeMarker = computed(() =>
     activeIndex.value >= 0 ? rows.value[activeIndex.value] : undefined,
 );
+// Playhead position within the active marker (ms). Reading follows playback;
+// setting (dragging the slider) scrubs the video within the marker.
+const scrubMs = computed<number>({
+    get() {
+        const m = activeMarker.value;
+        if (!m) return 0;
+        const start = parseTc(m.start);
+        const end = parseTc(m.end);
+        return Math.min(end, Math.max(start, currentMs.value));
+    },
+    set(v) {
+        const el = videoEl.value;
+        if (!el) return;
+        el.currentTime = v / 1000;
+        currentMs.value = v;
+    },
+});
 
 async function load() {
     loading.value = true;
@@ -618,12 +635,25 @@ onBeforeRouteLeave(() => {
                                     {{ activeMarker.type }}
                                 </DesignBadge>
                             </div>
-                            <p
-                                class="text-caption-1 text-text-hint mt-1 tabular-nums"
-                            >
-                                {{ activeMarker.start }} –
-                                {{ activeMarker.end }}
-                            </p>
+                            <div class="mt-2 flex items-center gap-3">
+                                <span
+                                    class="text-caption-1 text-text-muted tabular-nums"
+                                >
+                                    {{ formatMs(scrubMs) }}
+                                </span>
+                                <DesignSlider
+                                    v-model="scrubMs"
+                                    :min="parseTc(activeMarker.start)"
+                                    :max="parseTc(activeMarker.end)"
+                                    :step="100"
+                                    class="flex-1"
+                                />
+                                <span
+                                    class="text-caption-1 text-text-hint tabular-nums"
+                                >
+                                    {{ activeMarker.end }}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
