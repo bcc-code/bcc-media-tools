@@ -88,6 +88,21 @@ function durationOf(row: Row): string {
     return formatMs(parseTc(row.end) - parseTc(row.start));
 }
 
+function typeVariant(
+    type: string,
+): "success" | "warning" | "info" | "error" | "neutral" {
+    switch (type) {
+        case "appell":
+            return "info";
+        case "vitnesbyrd":
+            return "success";
+        case "sang":
+            return "warning";
+        default:
+            return "neutral";
+    }
+}
+
 const previewUrl = ref<string>();
 const videoEl = useTemplateRef<HTMLVideoElement>("videoEl");
 
@@ -311,39 +326,21 @@ onBeforeRouteLeave(() => {
                     >
                         {{ title || session?.VXID }}
                     </h1>
-                    <p class="text-caption-1 text-text-hint mt-1">
+                    <p
+                        v-if="title && title !== session?.VXID"
+                        class="text-caption-1 text-text-hint mt-1"
+                    >
                         {{ session?.VXID }}
                     </p>
                 </div>
 
-                <div class="flex flex-wrap items-center gap-2">
-                    <div
+                <div class="flex flex-wrap items-center gap-3">
+                    <DesignSwitch
                         v-if="canEdit"
-                        class="bg-surface-indent flex rounded-full p-0.5"
-                    >
-                        <button
-                            class="text-title-3 rounded-full px-3 py-1 transition-colors"
-                            :class="
-                                effectiveMode === 'simple'
-                                    ? 'bg-surface-raise text-text-default shadow-resting'
-                                    : 'text-text-muted'
-                            "
-                            @click="mode = 'simple'"
-                        >
-                            {{ t("editorial.viewSimple") }}
-                        </button>
-                        <button
-                            class="text-title-3 rounded-full px-3 py-1 transition-colors"
-                            :class="
-                                effectiveMode === 'edit'
-                                    ? 'bg-surface-raise text-text-default shadow-resting'
-                                    : 'text-text-muted'
-                            "
-                            @click="mode = 'edit'"
-                        >
-                            {{ t("editorial.viewEdit") }}
-                        </button>
-                    </div>
+                        :model-value="mode === 'edit'"
+                        :label="t('editorial.viewEdit')"
+                        @update:model-value="mode = $event ? 'edit' : 'simple'"
+                    />
 
                     <DesignButton
                         v-if="effectiveMode === 'edit'"
@@ -449,11 +446,18 @@ onBeforeRouteLeave(() => {
                                             v-model="row.type"
                                             :items="TYPE_OPTIONS"
                                         />
+                                        <DesignBadge
+                                            v-else-if="row.type"
+                                            :variant="typeVariant(row.type)"
+                                            class="capitalize"
+                                        >
+                                            {{ row.type }}
+                                        </DesignBadge>
                                         <span
                                             v-else
-                                            class="text-body-3 text-text-muted"
+                                            class="text-body-3 text-text-hint"
                                         >
-                                            {{ row.type || "—" }}
+                                            —
                                         </span>
                                     </td>
                                     <td

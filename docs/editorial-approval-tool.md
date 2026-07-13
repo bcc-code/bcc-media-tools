@@ -314,17 +314,18 @@ Wiring checklist in `main.go`:
 
 ### `[id].vue` layout (mirrors the sketch)
 
-- Top bar: asset title, **view-mode toggle** (Enkel / Rediger via `DesignSwitch`
-  or two `DesignButton`s), **Importer** button (pull Vidispine markers),
-  **Lagre** button (right-aligned), and **Eksporter CSV** (calls
-  `ExportEditorialSession`, then triggers a browser download from the returned
-  bytes via a `Blob`).
+- Top bar: asset title (no redundant VXID subtitle when it equals the title),
+  a **`DesignSwitch`** labelled Rediger to flip Enkel↔Rediger (shown only to
+  editors), **Importer** button (pull Vidispine markers), **Lagre** button, and
+  **Eksporter CSV** (calls `ExportEditorialSession`, then triggers a browser
+  download from the returned bytes via a `Blob`).
 - Left: **marker table**. There is **no `DesignTable`** in the library, so build a
   semantic `<table>` styled with Tailwind + Design primitives inside cells.
   Columns:
   | Hvem/hva (name) | Type | Varighet (duration) | Forhåndsvis (▶) | Publiseres? (Ja/Nei) |
-  - **Enkel mode** (all editorial users): name/type/duration read-only; only the
-    Ja/Nei `DesignSwitch` and the preview button are interactive.
+  - **Enkel mode** (all editorial users): name/duration read-only, type shown as
+    a colour-coded `DesignBadge`; only the Ja/Nei `DesignSwitch` and the preview
+    button are interactive.
   - **Rediger mode** (only users with `canEditEditorial`): name = `DesignInput`,
     type = `DesignSelect` (preset list below, allows free text), start/end
     editable (time inputs), add-row button, per-row remove button, drag or
