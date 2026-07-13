@@ -228,6 +228,7 @@
         "noMarkers": "No markers yet — import from Mediabanken or add a row.",
         "unsavedWarning": "You have unsaved changes",
         "preview": "Preview",
+        "nowPlaying": "Now playing",
         "col": {
             "name": "Who or what",
             "type": "Type",

@@ -133,6 +133,9 @@ const activeIndex = computed(() =>
         return end > start && currentMs.value >= start && currentMs.value < end;
     }),
 );
+const activeMarker = computed(() =>
+    activeIndex.value >= 0 ? rows.value[activeIndex.value] : undefined,
+);
 
 async function load() {
     loading.value = true;
@@ -331,6 +334,7 @@ onBeforeRouteLeave(() => {
                     <DesignInput
                         v-if="effectiveMode === 'edit'"
                         v-model="title"
+                        :label="t('editorial.titleLabel')"
                         :placeholder="session?.VXID"
                     />
                     <h1
@@ -399,39 +403,45 @@ onBeforeRouteLeave(() => {
                         {{ t("editorial.noMarkers") }}
                     </p>
                     <div v-else class="overflow-x-auto">
-                        <table class="w-full border-collapse">
-                            <thead>
-                                <tr
-                                    class="text-caption-1 text-text-hint border-border-1 border-b text-left"
-                                >
-                                    <th class="py-2 pr-2 pl-4 font-normal">
+                        <table class="w-full border-separate border-spacing-0">
+                            <thead
+                                class="text-caption-1 text-text-hint text-left"
+                            >
+                                <tr>
+                                    <th
+                                        class="border-border-1 border-b py-2 pr-2 pl-4 font-normal"
+                                    >
                                         {{ t("editorial.col.name") }}
                                     </th>
-                                    <th class="px-2 py-2 font-normal">
+                                    <th
+                                        class="border-border-1 border-b px-2 py-2 font-normal"
+                                    >
                                         {{ t("editorial.col.type") }}
                                     </th>
                                     <th
                                         v-if="effectiveMode === 'edit'"
-                                        class="px-2 py-2 font-normal"
+                                        class="border-border-1 border-b px-2 py-2 font-normal"
                                     >
                                         {{ t("editorial.col.start") }}
                                     </th>
-                                    <th class="px-2 py-2 font-normal">
+                                    <th
+                                        class="border-border-1 border-b px-2 py-2 font-normal"
+                                    >
                                         {{ t("editorial.col.duration") }}
                                     </th>
                                     <th
-                                        class="px-2 py-2 text-center font-normal"
+                                        class="border-border-1 border-b px-2 py-2 text-center font-normal"
                                     >
                                         {{ t("editorial.col.preview") }}
                                     </th>
                                     <th
-                                        class="px-2 py-2 text-center font-normal"
+                                        class="border-border-1 border-b px-2 py-2 text-center font-normal"
                                     >
                                         {{ t("editorial.col.publish") }}
                                     </th>
                                     <th
                                         v-if="effectiveMode === 'edit'"
-                                        class="py-2 pl-2"
+                                        class="border-border-1 border-b py-2 pl-2"
                                     ></th>
                                 </tr>
                             </thead>
@@ -439,7 +449,7 @@ onBeforeRouteLeave(() => {
                                 <tr
                                     v-for="(row, i) in rows"
                                     :key="row.id || `new-${i}`"
-                                    class="border-border-1/50 border-b transition-colors"
+                                    class="[&>td]:border-border-1/50 transition-colors [&>td]:border-b"
                                     :class="
                                         i === activeIndex
                                             ? 'bg-primary-default/10'
@@ -562,21 +572,58 @@ onBeforeRouteLeave(() => {
 
                 <div>
                     <div
-                        class="bg-surface-indent gradient-border sticky top-4 aspect-video overflow-hidden rounded-2xl"
+                        class="sticky top-[calc(var(--header-height)+1rem)] flex flex-col gap-3"
                     >
-                        <video
-                            v-if="previewUrl"
-                            ref="videoEl"
-                            :src="previewUrl"
-                            controls
-                            class="h-full w-full"
-                            @timeupdate="onTimeUpdate"
-                        />
                         <div
-                            v-else
-                            class="text-text-hint flex h-full items-center justify-center"
+                            class="bg-surface-indent gradient-border aspect-video overflow-hidden rounded-2xl"
                         >
-                            <Icon name="tabler:video-off" class="size-8" />
+                            <video
+                                v-if="previewUrl"
+                                ref="videoEl"
+                                :src="previewUrl"
+                                controls
+                                class="h-full w-full"
+                                @timeupdate="onTimeUpdate"
+                            />
+                            <div
+                                v-else
+                                class="text-text-hint flex h-full items-center justify-center"
+                            >
+                                <Icon name="tabler:video-off" class="size-8" />
+                            </div>
+                        </div>
+
+                        <div
+                            v-if="activeMarker"
+                            class="gradient-border bg-surface-default shadow-resting rounded-2xl px-4 py-3"
+                        >
+                            <p
+                                class="text-caption-1 text-text-hint mb-1 uppercase"
+                            >
+                                {{ t("editorial.nowPlaying") }}
+                            </p>
+                            <div
+                                class="flex items-center justify-between gap-3"
+                            >
+                                <span
+                                    class="text-title-2 text-text-default truncate"
+                                >
+                                    {{ activeMarker.name || "—" }}
+                                </span>
+                                <DesignBadge
+                                    v-if="activeMarker.type"
+                                    :variant="typeVariant(activeMarker.type)"
+                                    class="capitalize"
+                                >
+                                    {{ activeMarker.type }}
+                                </DesignBadge>
+                            </div>
+                            <p
+                                class="text-caption-1 text-text-hint mt-1 tabular-nums"
+                            >
+                                {{ activeMarker.start }} –
+                                {{ activeMarker.end }}
+                            </p>
                         </div>
                     </div>
                 </div>
