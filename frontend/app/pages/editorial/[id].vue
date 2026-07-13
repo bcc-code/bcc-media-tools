@@ -121,6 +121,19 @@ function preview(row: Row) {
     void el.play();
 }
 
+// Highlight the marker whose [start, end) range contains the playhead.
+const currentMs = ref(0);
+function onTimeUpdate(e: Event) {
+    currentMs.value = (e.target as HTMLVideoElement).currentTime * 1000;
+}
+const activeIndex = computed(() =>
+    rows.value.findIndex((r) => {
+        const start = parseTc(r.start);
+        const end = parseTc(r.end);
+        return end > start && currentMs.value >= start && currentMs.value < end;
+    }),
+);
+
 async function load() {
     loading.value = true;
     notFound.value = false;
@@ -391,7 +404,7 @@ onBeforeRouteLeave(() => {
                                 <tr
                                     class="text-caption-1 text-text-hint border-border-1 border-b text-left"
                                 >
-                                    <th class="py-2 pr-2 font-normal">
+                                    <th class="py-2 pr-2 pl-4 font-normal">
                                         {{ t("editorial.col.name") }}
                                     </th>
                                     <th class="px-2 py-2 font-normal">
@@ -426,9 +439,14 @@ onBeforeRouteLeave(() => {
                                 <tr
                                     v-for="(row, i) in rows"
                                     :key="row.id || `new-${i}`"
-                                    class="border-border-1/50 border-b"
+                                    class="border-border-1/50 border-b transition-colors"
+                                    :class="
+                                        i === activeIndex
+                                            ? 'bg-primary-default/10'
+                                            : ''
+                                    "
                                 >
-                                    <td class="py-2 pr-2">
+                                    <td class="py-2 pr-2 pl-4">
                                         <DesignInput
                                             v-if="effectiveMode === 'edit'"
                                             v-model="row.name"
@@ -544,7 +562,7 @@ onBeforeRouteLeave(() => {
 
                 <div>
                     <div
-                        class="bg-surface-indent sticky top-4 aspect-video overflow-hidden rounded-2xl"
+                        class="bg-surface-indent gradient-border sticky top-4 aspect-video overflow-hidden rounded-2xl"
                     >
                         <video
                             v-if="previewUrl"
@@ -552,6 +570,7 @@ onBeforeRouteLeave(() => {
                             :src="previewUrl"
                             controls
                             class="h-full w-full"
+                            @timeupdate="onTimeUpdate"
                         />
                         <div
                             v-else
