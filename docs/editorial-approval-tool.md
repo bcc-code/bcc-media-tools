@@ -78,9 +78,16 @@ New DB file, path from an env var with a sensible default (mirrors how
 - `EDITORIAL_DB_PATH`, default `${CONFIG_ROOT}/editorial.db`.
 
 **Driver:** `modernc.org/sqlite` (pure Go, no cgo) so builds/deploys stay simple.
-Access via `database/sql` in a small `backend/editorial/store` package. Schema is
-created/migrated on startup with an idempotent `CREATE TABLE IF NOT EXISTS` (a
-tiny embedded-migrations helper; no heavy migration framework for v1).
+Access via `database/sql` in a small `backend/editorial` package (flat, like
+`bmm/`) — **DONE**
+(no sqlc: not established in this repo, and the one non-trivial query is a
+hand-orchestrated transaction anyway). Schema is created/migrated on startup with
+an idempotent `CREATE TABLE IF NOT EXISTS`. DSN sets `foreign_keys(1)`,
+`journal_mode(WAL)` and `busy_timeout(5000)`.
+
+**Timestamps are stored as INTEGER epoch-millis** (not the SQL `TIMESTAMP` type
+shown below) to stay independent of the driver's time-format handling; the store
+converts to/from `time.Time` at the boundary.
 
 ```sql
 CREATE TABLE IF NOT EXISTS sessions (
@@ -257,13 +264,14 @@ mutations, checks the session's `created_by` (or `admin`) before allowing edits.
 
 ## 7. Backend implementation
 
-New files, following the `ShortsAPI` / `ExportAPI` pattern:
+New files, following the `bmm/` support-package layout (flat, one package) plus
+the `ShortsAPI` / `ExportAPI` handler pattern:
 
-- `backend/editorial/store/store.go` — SQLite store (open/migrate + CRUD, all
-  parameterized queries; markers replaced in a tx on save).
-- `backend/editorial/store/store_test.go` — store unit tests against a temp DB.
+- `backend/editorial/store.go` — SQLite store, **package `editorial`** (open/migrate
+  + CRUD, parameterized queries; markers replaced in a tx on save). **DONE.**
+- `backend/editorial/store_test.go` — store unit tests against a temp DB. **DONE.**
 - `backend/cmd/server/editorial.go` — `EditorialAPI` handler struct + RPCs.
-  - Dependencies injected: `*store.Store` and the `vidispine.Client` (for import).
+  - Dependencies injected: `*editorial.Store` and the `vidispine.Client` (for import).
   - `ImportEditorialMarkers` reuses `vidispine.GetChapterMetaForClips` /
     chapter metadata (same source Export uses at `export.go:222`) and maps
     chapter title → `name`, TC → `start_ms/end_ms`.
@@ -272,8 +280,8 @@ New files, following the `ShortsAPI` / `ExportAPI` pattern:
 
 Wiring checklist in `main.go`:
 
-1. Open DB (`store.Open(dbPath)`), run migrations, `defer store.Close()`.
-2. `editorialAPI := NewEditorialAPI(editorialStore, vs)`.
+1. Open DB (`editorial.Open(dbPath)`), `defer store.Close()`.
+2. `editorialAPI := NewEditorialAPI(editorialStore, vidispineClient)`.
 3. Add `EditorialAPI` to the embedded `ApiServer` struct + literal.
 
 ## 8. Frontend implementation
@@ -368,7 +376,7 @@ editorial.status.sent           "Sendt"
 
 1. **Proto + permissions** — add messages, RPCs, `EditorialPermission`; `buf generate`;
    `CanEditorial` helper; frontend `canEditorial`. _(Compiles, no behavior yet.)_
-2. **Backend store** — `modernc.org/sqlite`, `go.mod`, store package + tests, migrations on boot.
+2. **Backend store** — `modernc.org/sqlite`, `go.mod`, store package + tests, migrations on boot. **DONE** (`backend/editorial/store/`, all tests pass).
 3. **Backend handler** — `EditorialAPI` (CRUD + mock send), wire into `main.go`.
    Import from Vidispine chapters.
 4. **Frontend list page** — `editorial/index.vue`: list sessions, create new.

@@ -1,7 +1,7 @@
-// Package store is the SQLite persistence layer for the editorial approval
+// Package editorial is the SQLite persistence layer for the editorial approval
 // tool. It stores review sessions and their markers. Timestamps are kept as
 // Unix-millisecond integers to stay independent of the driver's time handling.
-package store
+package editorial
 
 import (
 	"context"

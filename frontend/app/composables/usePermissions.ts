@@ -46,7 +46,9 @@ export function usePermissions() {
     const canVbBulkExport = cap((m) => !!m.vbExport?.bulkExport);
 
     const canUseShorts = cap((m) => !!m.shorts?.enabled);
+
     const canUseVault = cap((m) => !!m.vault?.enabled);
+
     const canUseEditorial = cap(
         (m) => !!m.editorial && (m.editorial.enabled || m.editorial.admin),
     );
