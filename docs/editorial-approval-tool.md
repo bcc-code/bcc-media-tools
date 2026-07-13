@@ -406,11 +406,15 @@ editorial.status.exported       "Eksportert"
    Import from Vidispine chapters. **DONE** (`editorial.go`; DB path from
    `EDITORIAL_DB_PATH`, default `${CONFIG_ROOT}/editorial.db`; vet + tests green).
 4. **Frontend list page** — `editorial/index.vue`: list sessions, create new.
+   **DONE** (list + create dialog, status badge, permission-gated create).
 5. **Frontend detail page** — build out `editorial/[id].vue`: table (both view
-   modes), preview panel, save, import, CSV export download.
-6. **Nav + i18n** — `useTools` entry, en/nb locales.
+   modes), preview panel, save, import, CSV export download. **DONE**
+   (Enkel/Rediger toggle, inline `<video>` preview + per-row seek, add/remove/
+   reorder, publish toggle persists immediately in Enkel mode, unsaved-changes
+   guard, CSV download via Blob).
+6. **Nav + i18n** — `useTools` entry, en/nb locales. **DONE**.
 7. **Polish** — dirty-state warning, empty/loading states (`DesignSkeleton`),
-   toasts, duration formatting (`useNumberFormat` if suitable).
+   toasts, `HH:MM:SS` duration formatting. **DONE**. Typecheck + Prettier clean.
 
 ## 11. Open questions / follow-ups
 
