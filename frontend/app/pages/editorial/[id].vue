@@ -426,7 +426,10 @@ onBeforeRouteLeave(() => {
                             >
                                 <tr>
                                     <th
-                                        class="border-border-1 border-b py-2 pr-2 pl-4 font-normal"
+                                        class="border-border-1 w-10 border-b py-2 pl-2"
+                                    ></th>
+                                    <th
+                                        class="border-border-1 border-b py-2 pr-2 pl-3 font-normal"
                                     >
                                         {{ t("editorial.col.name") }}
                                     </th>
@@ -445,11 +448,6 @@ onBeforeRouteLeave(() => {
                                         class="border-border-1 border-b px-2 py-2 font-normal"
                                     >
                                         {{ t("editorial.col.duration") }}
-                                    </th>
-                                    <th
-                                        class="border-border-1 border-b px-2 py-2 text-center font-normal"
-                                    >
-                                        {{ t("editorial.col.preview") }}
                                     </th>
                                     <th
                                         class="border-border-1 border-b px-2 py-2 text-center font-normal"
@@ -473,7 +471,16 @@ onBeforeRouteLeave(() => {
                                             : ''
                                     "
                                 >
-                                    <td class="py-2 pr-2 pl-4">
+                                    <td class="py-2 pl-2">
+                                        <DesignButton
+                                            variant="tertiary"
+                                            size="small"
+                                            icon="tabler:player-play"
+                                            :disabled="!previewUrl"
+                                            @click="preview(row)"
+                                        />
+                                    </td>
+                                    <td class="py-2 pr-2 pl-3">
                                         <DesignInput
                                             v-if="effectiveMode === 'edit'"
                                             v-model="row.name"
@@ -521,15 +528,6 @@ onBeforeRouteLeave(() => {
                                         class="text-body-3 text-text-muted px-2 py-2 tabular-nums"
                                     >
                                         {{ durationOf(row) }}
-                                    </td>
-                                    <td class="px-2 py-2 text-center">
-                                        <DesignButton
-                                            variant="tertiary"
-                                            size="small"
-                                            icon="tabler:player-play"
-                                            :disabled="!previewUrl"
-                                            @click="preview(row)"
-                                        />
                                     </td>
                                     <td class="px-2 py-2">
                                         <div class="flex justify-center">
