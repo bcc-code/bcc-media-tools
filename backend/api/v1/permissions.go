@@ -88,3 +88,15 @@ func (p *Permissions) CanVault() bool {
 func (p *Permissions) CanShorts() bool {
 	return p.Admin || (p.Shorts != nil && p.Shorts.Enabled)
 }
+
+// CanEditorial reports whether the user may use the editorial approval tool:
+// see all sessions and accept/reject markers for publishing.
+func (p *Permissions) CanEditorial() bool {
+	return p.Admin || (p.Editorial != nil && (p.Editorial.Enabled || p.Editorial.Admin))
+}
+
+// CanEditorialEdit reports whether the user may add, remove and edit markers
+// and sessions (the edit view). Users without this may only accept/reject.
+func (p *Permissions) CanEditorialEdit() bool {
+	return p.Admin || (p.Editorial != nil && p.Editorial.Admin)
+}

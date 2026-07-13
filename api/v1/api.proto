@@ -65,6 +65,16 @@ message ShortsPermission {
   bool enabled = 1;
 }
 
+// Permission for the Editorial approval tool (review markers for publishing).
+message EditorialPermission {
+  // can open the tool, see all sessions, and accept/reject markers for
+  // publishing (the "Enkel" / simple view)
+  bool enabled = 1;
+  // can additionally add, remove and edit markers and sessions (the "Rediger"
+  // / edit view); implies enabled
+  bool admin = 2;
+}
+
 message Permissions {
 	bool admin = 1;
 	BMMPermission bmm = 2;
@@ -75,6 +85,7 @@ message Permissions {
   CantemoPermission cantemo = 7;
   VaultPermission vault = 8;
   ShortsPermission shorts = 9;
+  EditorialPermission editorial = 10;
 }
 
 message GetPermissionsRequest {}

@@ -3,6 +3,7 @@ import { create } from "@bufbuild/protobuf";
 import {
     BMMPermissionSchema,
     CantemoPermissionSchema,
+    EditorialPermissionSchema,
     ExportPermissionSchema,
     PermissionsSchema,
     ShortsPermissionSchema,
@@ -36,6 +37,7 @@ function withDefaultPermissions(p: Permissions): Permissions {
         cantemo: p.cantemo ?? create(CantemoPermissionSchema),
         vault: p.vault ?? create(VaultPermissionSchema),
         shorts: p.shorts ?? create(ShortsPermissionSchema),
+        editorial: p.editorial ?? create(EditorialPermissionSchema),
         email: p.email ?? "",
     });
 }
@@ -266,6 +268,21 @@ const isOpen = ref(false);
                             v-model="perms.shorts.enabled"
                             label="Shorts generation"
                             description="Can open the shorts editor and submit shorts for generation"
+                        />
+                    </AdminPermissionViewSection>
+                    <AdminPermissionViewSection
+                        v-if="perms.editorial"
+                        title="Editorial"
+                    >
+                        <DesignSwitch
+                            v-model="perms.editorial.enabled"
+                            label="Editorial approval"
+                            description="Can see all sessions and accept/reject markers for publishing"
+                        />
+                        <DesignSwitch
+                            v-model="perms.editorial.admin"
+                            label="Editorial editing"
+                            description="Can add, remove and edit markers and sessions"
                         />
                     </AdminPermissionViewSection>
                 </motion.div>
