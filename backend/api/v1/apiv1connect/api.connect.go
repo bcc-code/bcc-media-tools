@@ -97,6 +97,30 @@ const (
 	APIServiceVaultSearchProcedure = "/api.v1.APIService/VaultSearch"
 	// APIServiceGetVaultItemProcedure is the fully-qualified name of the APIService's GetVaultItem RPC.
 	APIServiceGetVaultItemProcedure = "/api.v1.APIService/GetVaultItem"
+	// APIServiceListEditorialSessionsProcedure is the fully-qualified name of the APIService's
+	// ListEditorialSessions RPC.
+	APIServiceListEditorialSessionsProcedure = "/api.v1.APIService/ListEditorialSessions"
+	// APIServiceCreateEditorialSessionProcedure is the fully-qualified name of the APIService's
+	// CreateEditorialSession RPC.
+	APIServiceCreateEditorialSessionProcedure = "/api.v1.APIService/CreateEditorialSession"
+	// APIServiceGetEditorialSessionProcedure is the fully-qualified name of the APIService's
+	// GetEditorialSession RPC.
+	APIServiceGetEditorialSessionProcedure = "/api.v1.APIService/GetEditorialSession"
+	// APIServiceSaveEditorialSessionProcedure is the fully-qualified name of the APIService's
+	// SaveEditorialSession RPC.
+	APIServiceSaveEditorialSessionProcedure = "/api.v1.APIService/SaveEditorialSession"
+	// APIServiceSetEditorialPublishProcedure is the fully-qualified name of the APIService's
+	// SetEditorialPublish RPC.
+	APIServiceSetEditorialPublishProcedure = "/api.v1.APIService/SetEditorialPublish"
+	// APIServiceDeleteEditorialSessionProcedure is the fully-qualified name of the APIService's
+	// DeleteEditorialSession RPC.
+	APIServiceDeleteEditorialSessionProcedure = "/api.v1.APIService/DeleteEditorialSession"
+	// APIServiceImportEditorialMarkersProcedure is the fully-qualified name of the APIService's
+	// ImportEditorialMarkers RPC.
+	APIServiceImportEditorialMarkersProcedure = "/api.v1.APIService/ImportEditorialMarkers"
+	// APIServiceExportEditorialSessionProcedure is the fully-qualified name of the APIService's
+	// ExportEditorialSession RPC.
+	APIServiceExportEditorialSessionProcedure = "/api.v1.APIService/ExportEditorialSession"
 )
 
 // APIServiceClient is a client for the api.v1.APIService service.
@@ -135,6 +159,15 @@ type APIServiceClient interface {
 	// VAULT (Vidispine search)
 	VaultSearch(context.Context, *connect.Request[v1.VaultSearchRequest]) (*connect.Response[v1.VaultSearchResponse], error)
 	GetVaultItem(context.Context, *connect.Request[v1.GetVaultItemRequest]) (*connect.Response[v1.GetVaultItemResponse], error)
+	// Editorial approval
+	ListEditorialSessions(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.ListEditorialSessionsResponse], error)
+	CreateEditorialSession(context.Context, *connect.Request[v1.CreateEditorialSessionRequest]) (*connect.Response[v1.EditorialSession], error)
+	GetEditorialSession(context.Context, *connect.Request[v1.GetEditorialSessionRequest]) (*connect.Response[v1.EditorialSession], error)
+	SaveEditorialSession(context.Context, *connect.Request[v1.SaveEditorialSessionRequest]) (*connect.Response[v1.EditorialSession], error)
+	SetEditorialPublish(context.Context, *connect.Request[v1.SetEditorialPublishRequest]) (*connect.Response[v1.Void], error)
+	DeleteEditorialSession(context.Context, *connect.Request[v1.DeleteEditorialSessionRequest]) (*connect.Response[v1.Void], error)
+	ImportEditorialMarkers(context.Context, *connect.Request[v1.ImportEditorialMarkersRequest]) (*connect.Response[v1.ImportEditorialMarkersResponse], error)
+	ExportEditorialSession(context.Context, *connect.Request[v1.ExportEditorialSessionRequest]) (*connect.Response[v1.ExportEditorialSessionResponse], error)
 }
 
 // NewAPIServiceClient constructs a client for the api.v1.APIService service. By default, it uses
@@ -292,35 +325,91 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(aPIServiceMethods.ByName("GetVaultItem")),
 			connect.WithClientOptions(opts...),
 		),
+		listEditorialSessions: connect.NewClient[v1.Void, v1.ListEditorialSessionsResponse](
+			httpClient,
+			baseURL+APIServiceListEditorialSessionsProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("ListEditorialSessions")),
+			connect.WithClientOptions(opts...),
+		),
+		createEditorialSession: connect.NewClient[v1.CreateEditorialSessionRequest, v1.EditorialSession](
+			httpClient,
+			baseURL+APIServiceCreateEditorialSessionProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("CreateEditorialSession")),
+			connect.WithClientOptions(opts...),
+		),
+		getEditorialSession: connect.NewClient[v1.GetEditorialSessionRequest, v1.EditorialSession](
+			httpClient,
+			baseURL+APIServiceGetEditorialSessionProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("GetEditorialSession")),
+			connect.WithClientOptions(opts...),
+		),
+		saveEditorialSession: connect.NewClient[v1.SaveEditorialSessionRequest, v1.EditorialSession](
+			httpClient,
+			baseURL+APIServiceSaveEditorialSessionProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("SaveEditorialSession")),
+			connect.WithClientOptions(opts...),
+		),
+		setEditorialPublish: connect.NewClient[v1.SetEditorialPublishRequest, v1.Void](
+			httpClient,
+			baseURL+APIServiceSetEditorialPublishProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("SetEditorialPublish")),
+			connect.WithClientOptions(opts...),
+		),
+		deleteEditorialSession: connect.NewClient[v1.DeleteEditorialSessionRequest, v1.Void](
+			httpClient,
+			baseURL+APIServiceDeleteEditorialSessionProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("DeleteEditorialSession")),
+			connect.WithClientOptions(opts...),
+		),
+		importEditorialMarkers: connect.NewClient[v1.ImportEditorialMarkersRequest, v1.ImportEditorialMarkersResponse](
+			httpClient,
+			baseURL+APIServiceImportEditorialMarkersProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("ImportEditorialMarkers")),
+			connect.WithClientOptions(opts...),
+		),
+		exportEditorialSession: connect.NewClient[v1.ExportEditorialSessionRequest, v1.ExportEditorialSessionResponse](
+			httpClient,
+			baseURL+APIServiceExportEditorialSessionProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("ExportEditorialSession")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // aPIServiceClient implements APIServiceClient.
 type aPIServiceClient struct {
-	getPermissions        *connect.Client[v1.Void, v1.Permissions]
-	updatePermissions     *connect.Client[v1.SetPermissionsRequest, v1.Void]
-	deletePermissions     *connect.Client[v1.DeletePermissionsRequest, v1.Void]
-	listPermissions       *connect.Client[v1.Void, v1.PermissionsList]
-	getTranscription      *connect.Client[v1.GetTranscriptionReqest, v1.Transcription]
-	getPreview            *connect.Client[v1.GetPreviewRequest, v1.Preview]
-	submitTranscription   *connect.Client[v1.SubmitTranscriptionRequest, v1.Void]
-	getYears              *connect.Client[v1.GetYearsRequest, v1.GetYearsResponse]
-	getAlbums             *connect.Client[v1.GetAlbumsRequest, v1.AlbumsList]
-	getAlbumTracks        *connect.Client[v1.GetAlbumTracksRequest, v1.TracksList]
-	getPodcastTracks      *connect.Client[v1.GetPodcastTracksRequest, v1.TracksList]
-	getLanguages          *connect.Client[v1.GetAvailableLanguagesRequest, v1.LanguageList]
-	getBMMTranscription   *connect.Client[v1.GetBMMTranscriptionRequest, v1.Transcription]
-	submitShort           *connect.Client[v1.SubmitShortRequest, v1.Void]
-	getExportConfig       *connect.Client[v1.GetExportConfigRequest, v1.GetExportConfigResponse]
-	startExport           *connect.Client[v1.StartExportRequest, v1.StartExportResponse]
-	exportTimedMetadata   *connect.Client[v1.ExportTimedMetadataRequest, v1.Void]
-	resolveAssets         *connect.Client[v1.ResolveAssetsRequest, v1.ResolveAssetsResponse]
-	getVBExportConfig     *connect.Client[v1.GetVBExportConfigRequest, v1.GetVBExportConfigResponse]
-	startVBExport         *connect.Client[v1.StartVBExportRequest, v1.StartVBExportResponse]
-	getExportDestinations *connect.Client[v1.Void, v1.ExportDestinationsResponse]
-	triggerCantemoAction  *connect.Client[v1.TriggerCantemoActionRequest, v1.Void]
-	vaultSearch           *connect.Client[v1.VaultSearchRequest, v1.VaultSearchResponse]
-	getVaultItem          *connect.Client[v1.GetVaultItemRequest, v1.GetVaultItemResponse]
+	getPermissions         *connect.Client[v1.Void, v1.Permissions]
+	updatePermissions      *connect.Client[v1.SetPermissionsRequest, v1.Void]
+	deletePermissions      *connect.Client[v1.DeletePermissionsRequest, v1.Void]
+	listPermissions        *connect.Client[v1.Void, v1.PermissionsList]
+	getTranscription       *connect.Client[v1.GetTranscriptionReqest, v1.Transcription]
+	getPreview             *connect.Client[v1.GetPreviewRequest, v1.Preview]
+	submitTranscription    *connect.Client[v1.SubmitTranscriptionRequest, v1.Void]
+	getYears               *connect.Client[v1.GetYearsRequest, v1.GetYearsResponse]
+	getAlbums              *connect.Client[v1.GetAlbumsRequest, v1.AlbumsList]
+	getAlbumTracks         *connect.Client[v1.GetAlbumTracksRequest, v1.TracksList]
+	getPodcastTracks       *connect.Client[v1.GetPodcastTracksRequest, v1.TracksList]
+	getLanguages           *connect.Client[v1.GetAvailableLanguagesRequest, v1.LanguageList]
+	getBMMTranscription    *connect.Client[v1.GetBMMTranscriptionRequest, v1.Transcription]
+	submitShort            *connect.Client[v1.SubmitShortRequest, v1.Void]
+	getExportConfig        *connect.Client[v1.GetExportConfigRequest, v1.GetExportConfigResponse]
+	startExport            *connect.Client[v1.StartExportRequest, v1.StartExportResponse]
+	exportTimedMetadata    *connect.Client[v1.ExportTimedMetadataRequest, v1.Void]
+	resolveAssets          *connect.Client[v1.ResolveAssetsRequest, v1.ResolveAssetsResponse]
+	getVBExportConfig      *connect.Client[v1.GetVBExportConfigRequest, v1.GetVBExportConfigResponse]
+	startVBExport          *connect.Client[v1.StartVBExportRequest, v1.StartVBExportResponse]
+	getExportDestinations  *connect.Client[v1.Void, v1.ExportDestinationsResponse]
+	triggerCantemoAction   *connect.Client[v1.TriggerCantemoActionRequest, v1.Void]
+	vaultSearch            *connect.Client[v1.VaultSearchRequest, v1.VaultSearchResponse]
+	getVaultItem           *connect.Client[v1.GetVaultItemRequest, v1.GetVaultItemResponse]
+	listEditorialSessions  *connect.Client[v1.Void, v1.ListEditorialSessionsResponse]
+	createEditorialSession *connect.Client[v1.CreateEditorialSessionRequest, v1.EditorialSession]
+	getEditorialSession    *connect.Client[v1.GetEditorialSessionRequest, v1.EditorialSession]
+	saveEditorialSession   *connect.Client[v1.SaveEditorialSessionRequest, v1.EditorialSession]
+	setEditorialPublish    *connect.Client[v1.SetEditorialPublishRequest, v1.Void]
+	deleteEditorialSession *connect.Client[v1.DeleteEditorialSessionRequest, v1.Void]
+	importEditorialMarkers *connect.Client[v1.ImportEditorialMarkersRequest, v1.ImportEditorialMarkersResponse]
+	exportEditorialSession *connect.Client[v1.ExportEditorialSessionRequest, v1.ExportEditorialSessionResponse]
 }
 
 // GetPermissions calls api.v1.APIService.GetPermissions.
@@ -443,6 +532,46 @@ func (c *aPIServiceClient) GetVaultItem(ctx context.Context, req *connect.Reques
 	return c.getVaultItem.CallUnary(ctx, req)
 }
 
+// ListEditorialSessions calls api.v1.APIService.ListEditorialSessions.
+func (c *aPIServiceClient) ListEditorialSessions(ctx context.Context, req *connect.Request[v1.Void]) (*connect.Response[v1.ListEditorialSessionsResponse], error) {
+	return c.listEditorialSessions.CallUnary(ctx, req)
+}
+
+// CreateEditorialSession calls api.v1.APIService.CreateEditorialSession.
+func (c *aPIServiceClient) CreateEditorialSession(ctx context.Context, req *connect.Request[v1.CreateEditorialSessionRequest]) (*connect.Response[v1.EditorialSession], error) {
+	return c.createEditorialSession.CallUnary(ctx, req)
+}
+
+// GetEditorialSession calls api.v1.APIService.GetEditorialSession.
+func (c *aPIServiceClient) GetEditorialSession(ctx context.Context, req *connect.Request[v1.GetEditorialSessionRequest]) (*connect.Response[v1.EditorialSession], error) {
+	return c.getEditorialSession.CallUnary(ctx, req)
+}
+
+// SaveEditorialSession calls api.v1.APIService.SaveEditorialSession.
+func (c *aPIServiceClient) SaveEditorialSession(ctx context.Context, req *connect.Request[v1.SaveEditorialSessionRequest]) (*connect.Response[v1.EditorialSession], error) {
+	return c.saveEditorialSession.CallUnary(ctx, req)
+}
+
+// SetEditorialPublish calls api.v1.APIService.SetEditorialPublish.
+func (c *aPIServiceClient) SetEditorialPublish(ctx context.Context, req *connect.Request[v1.SetEditorialPublishRequest]) (*connect.Response[v1.Void], error) {
+	return c.setEditorialPublish.CallUnary(ctx, req)
+}
+
+// DeleteEditorialSession calls api.v1.APIService.DeleteEditorialSession.
+func (c *aPIServiceClient) DeleteEditorialSession(ctx context.Context, req *connect.Request[v1.DeleteEditorialSessionRequest]) (*connect.Response[v1.Void], error) {
+	return c.deleteEditorialSession.CallUnary(ctx, req)
+}
+
+// ImportEditorialMarkers calls api.v1.APIService.ImportEditorialMarkers.
+func (c *aPIServiceClient) ImportEditorialMarkers(ctx context.Context, req *connect.Request[v1.ImportEditorialMarkersRequest]) (*connect.Response[v1.ImportEditorialMarkersResponse], error) {
+	return c.importEditorialMarkers.CallUnary(ctx, req)
+}
+
+// ExportEditorialSession calls api.v1.APIService.ExportEditorialSession.
+func (c *aPIServiceClient) ExportEditorialSession(ctx context.Context, req *connect.Request[v1.ExportEditorialSessionRequest]) (*connect.Response[v1.ExportEditorialSessionResponse], error) {
+	return c.exportEditorialSession.CallUnary(ctx, req)
+}
+
 // APIServiceHandler is an implementation of the api.v1.APIService service.
 type APIServiceHandler interface {
 	// Permissions
@@ -479,6 +608,15 @@ type APIServiceHandler interface {
 	// VAULT (Vidispine search)
 	VaultSearch(context.Context, *connect.Request[v1.VaultSearchRequest]) (*connect.Response[v1.VaultSearchResponse], error)
 	GetVaultItem(context.Context, *connect.Request[v1.GetVaultItemRequest]) (*connect.Response[v1.GetVaultItemResponse], error)
+	// Editorial approval
+	ListEditorialSessions(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.ListEditorialSessionsResponse], error)
+	CreateEditorialSession(context.Context, *connect.Request[v1.CreateEditorialSessionRequest]) (*connect.Response[v1.EditorialSession], error)
+	GetEditorialSession(context.Context, *connect.Request[v1.GetEditorialSessionRequest]) (*connect.Response[v1.EditorialSession], error)
+	SaveEditorialSession(context.Context, *connect.Request[v1.SaveEditorialSessionRequest]) (*connect.Response[v1.EditorialSession], error)
+	SetEditorialPublish(context.Context, *connect.Request[v1.SetEditorialPublishRequest]) (*connect.Response[v1.Void], error)
+	DeleteEditorialSession(context.Context, *connect.Request[v1.DeleteEditorialSessionRequest]) (*connect.Response[v1.Void], error)
+	ImportEditorialMarkers(context.Context, *connect.Request[v1.ImportEditorialMarkersRequest]) (*connect.Response[v1.ImportEditorialMarkersResponse], error)
+	ExportEditorialSession(context.Context, *connect.Request[v1.ExportEditorialSessionRequest]) (*connect.Response[v1.ExportEditorialSessionResponse], error)
 }
 
 // NewAPIServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -632,6 +770,54 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(aPIServiceMethods.ByName("GetVaultItem")),
 		connect.WithHandlerOptions(opts...),
 	)
+	aPIServiceListEditorialSessionsHandler := connect.NewUnaryHandler(
+		APIServiceListEditorialSessionsProcedure,
+		svc.ListEditorialSessions,
+		connect.WithSchema(aPIServiceMethods.ByName("ListEditorialSessions")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aPIServiceCreateEditorialSessionHandler := connect.NewUnaryHandler(
+		APIServiceCreateEditorialSessionProcedure,
+		svc.CreateEditorialSession,
+		connect.WithSchema(aPIServiceMethods.ByName("CreateEditorialSession")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aPIServiceGetEditorialSessionHandler := connect.NewUnaryHandler(
+		APIServiceGetEditorialSessionProcedure,
+		svc.GetEditorialSession,
+		connect.WithSchema(aPIServiceMethods.ByName("GetEditorialSession")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aPIServiceSaveEditorialSessionHandler := connect.NewUnaryHandler(
+		APIServiceSaveEditorialSessionProcedure,
+		svc.SaveEditorialSession,
+		connect.WithSchema(aPIServiceMethods.ByName("SaveEditorialSession")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aPIServiceSetEditorialPublishHandler := connect.NewUnaryHandler(
+		APIServiceSetEditorialPublishProcedure,
+		svc.SetEditorialPublish,
+		connect.WithSchema(aPIServiceMethods.ByName("SetEditorialPublish")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aPIServiceDeleteEditorialSessionHandler := connect.NewUnaryHandler(
+		APIServiceDeleteEditorialSessionProcedure,
+		svc.DeleteEditorialSession,
+		connect.WithSchema(aPIServiceMethods.ByName("DeleteEditorialSession")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aPIServiceImportEditorialMarkersHandler := connect.NewUnaryHandler(
+		APIServiceImportEditorialMarkersProcedure,
+		svc.ImportEditorialMarkers,
+		connect.WithSchema(aPIServiceMethods.ByName("ImportEditorialMarkers")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aPIServiceExportEditorialSessionHandler := connect.NewUnaryHandler(
+		APIServiceExportEditorialSessionProcedure,
+		svc.ExportEditorialSession,
+		connect.WithSchema(aPIServiceMethods.ByName("ExportEditorialSession")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/api.v1.APIService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case APIServiceGetPermissionsProcedure:
@@ -682,6 +868,22 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceVaultSearchHandler.ServeHTTP(w, r)
 		case APIServiceGetVaultItemProcedure:
 			aPIServiceGetVaultItemHandler.ServeHTTP(w, r)
+		case APIServiceListEditorialSessionsProcedure:
+			aPIServiceListEditorialSessionsHandler.ServeHTTP(w, r)
+		case APIServiceCreateEditorialSessionProcedure:
+			aPIServiceCreateEditorialSessionHandler.ServeHTTP(w, r)
+		case APIServiceGetEditorialSessionProcedure:
+			aPIServiceGetEditorialSessionHandler.ServeHTTP(w, r)
+		case APIServiceSaveEditorialSessionProcedure:
+			aPIServiceSaveEditorialSessionHandler.ServeHTTP(w, r)
+		case APIServiceSetEditorialPublishProcedure:
+			aPIServiceSetEditorialPublishHandler.ServeHTTP(w, r)
+		case APIServiceDeleteEditorialSessionProcedure:
+			aPIServiceDeleteEditorialSessionHandler.ServeHTTP(w, r)
+		case APIServiceImportEditorialMarkersProcedure:
+			aPIServiceImportEditorialMarkersHandler.ServeHTTP(w, r)
+		case APIServiceExportEditorialSessionProcedure:
+			aPIServiceExportEditorialSessionHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -785,4 +987,36 @@ func (UnimplementedAPIServiceHandler) VaultSearch(context.Context, *connect.Requ
 
 func (UnimplementedAPIServiceHandler) GetVaultItem(context.Context, *connect.Request[v1.GetVaultItemRequest]) (*connect.Response[v1.GetVaultItemResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetVaultItem is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) ListEditorialSessions(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.ListEditorialSessionsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.ListEditorialSessions is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) CreateEditorialSession(context.Context, *connect.Request[v1.CreateEditorialSessionRequest]) (*connect.Response[v1.EditorialSession], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.CreateEditorialSession is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) GetEditorialSession(context.Context, *connect.Request[v1.GetEditorialSessionRequest]) (*connect.Response[v1.EditorialSession], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetEditorialSession is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) SaveEditorialSession(context.Context, *connect.Request[v1.SaveEditorialSessionRequest]) (*connect.Response[v1.EditorialSession], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.SaveEditorialSession is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) SetEditorialPublish(context.Context, *connect.Request[v1.SetEditorialPublishRequest]) (*connect.Response[v1.Void], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.SetEditorialPublish is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) DeleteEditorialSession(context.Context, *connect.Request[v1.DeleteEditorialSessionRequest]) (*connect.Response[v1.Void], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.DeleteEditorialSession is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) ImportEditorialMarkers(context.Context, *connect.Request[v1.ImportEditorialMarkersRequest]) (*connect.Response[v1.ImportEditorialMarkersResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.ImportEditorialMarkers is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) ExportEditorialSession(context.Context, *connect.Request[v1.ExportEditorialSessionRequest]) (*connect.Response[v1.ExportEditorialSessionResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.ExportEditorialSession is not implemented"))
 }

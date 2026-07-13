@@ -27,7 +27,7 @@ func TestCreateAndGetSession(t *testing.T) {
 	assert.NotEmpty(t, created.ID)
 	assert.Equal(t, StatusDraft, created.Status)
 	assert.False(t, created.CreatedAt.IsZero())
-	assert.Nil(t, created.SentAt)
+	assert.Nil(t, created.ExportedAt)
 
 	got, err := s.GetSession(ctx, created.ID)
 	require.NoError(t, err)
@@ -121,18 +121,49 @@ func TestSaveSessionNotFound(t *testing.T) {
 	assert.ErrorIs(t, err, ErrNotFound)
 }
 
-func TestMarkSent(t *testing.T) {
+func TestSetPublish(t *testing.T) {
+	s := newTestStore(t)
+	ctx := context.Background()
+
+	sess, err := s.CreateSession(ctx, "VX-9", "stream", "e@bcc.media")
+	require.NoError(t, err)
+	saved, err := s.SaveSession(ctx, sess.ID, "t", []Marker{
+		{Name: "m1", StartMS: 0, EndMS: 1},
+		{Name: "m2", StartMS: 2, EndMS: 3, Publish: true},
+	})
+	require.NoError(t, err)
+	m1ID := saved.Markers[0].ID
+
+	require.NoError(t, s.SetPublish(ctx, sess.ID, m1ID, true))
+
+	got, err := s.GetSession(ctx, sess.ID)
+	require.NoError(t, err)
+	assert.True(t, got.Markers[0].Publish)
+	// The other marker is untouched.
+	assert.True(t, got.Markers[1].Publish)
+	assert.Equal(t, "m1", got.Markers[0].Name)
+}
+
+func TestSetPublishNotFound(t *testing.T) {
+	s := newTestStore(t)
+	ctx := context.Background()
+	sess, err := s.CreateSession(ctx, "VX-9", "stream", "e@bcc.media")
+	require.NoError(t, err)
+	assert.ErrorIs(t, s.SetPublish(ctx, sess.ID, "no-such-marker", true), ErrNotFound)
+}
+
+func TestMarkExported(t *testing.T) {
 	s := newTestStore(t)
 	ctx := context.Background()
 
 	sess, err := s.CreateSession(ctx, "VX-9", "stream", "e@bcc.media")
 	require.NoError(t, err)
 
-	sent, err := s.MarkSent(ctx, sess.ID)
+	exported, err := s.MarkExported(ctx, sess.ID)
 	require.NoError(t, err)
-	assert.Equal(t, StatusSent, sent.Status)
-	require.NotNil(t, sent.SentAt)
-	assert.False(t, sent.SentAt.IsZero())
+	assert.Equal(t, StatusExported, exported.Status)
+	require.NotNil(t, exported.ExportedAt)
+	assert.False(t, exported.ExportedAt.IsZero())
 }
 
 func TestDeleteSessionCascadesMarkers(t *testing.T) {

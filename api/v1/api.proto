@@ -416,6 +416,96 @@ message GetVaultItemResponse {
   VaultItem item = 1;
 }
 
+// ---- Editorial approval ----
+
+// A single reviewable marker/chapter within a session.
+message EditorialMarker {
+  // empty on markers the client just added; the backend assigns an id on save
+  string id = 1;
+  // display order in the table (assigned server-side from list position on save)
+  int32 sort_order = 2;
+  // "Hvem eller hva" — person/thing
+  string name = 3;
+  // appell / vitnesbyrd / sang / ...
+  string type = 4;
+  int64 start_ms = 5;
+  int64 end_ms = 6;
+  // Ja/Nei publish toggle
+  bool publish = 7;
+  // "import" (from Mediabanken chapters) or "manual"
+  string source = 8;
+}
+
+// A review session tied to a single Mediabanken asset.
+message EditorialSession {
+  string id = 1;
+  string VXID = 2;
+  string title = 3;
+  // "draft" | "sent"
+  // "draft" | "exported"
+  string status = 4;
+  string created_by = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+  // set when the review was last exported to CSV
+  google.protobuf.Timestamp exported_at = 8;
+  // only populated by GetEditorialSession
+  repeated EditorialMarker markers = 9;
+}
+
+message ListEditorialSessionsResponse {
+  repeated EditorialSession sessions = 1;
+}
+
+message CreateEditorialSessionRequest {
+  string VXID = 1;
+  string title = 2;
+}
+
+message GetEditorialSessionRequest {
+  string id = 1;
+}
+
+// Full replace of the session's markers + title on save.
+message SaveEditorialSessionRequest {
+  string id = 1;
+  string title = 2;
+  repeated EditorialMarker markers = 3;
+}
+
+message DeleteEditorialSessionRequest {
+  string id = 1;
+}
+
+// Pull chapter markers from Mediabanken (Vidispine) for the session's asset.
+// Does not save; returns candidate rows for the client to merge into the table.
+message ImportEditorialMarkersRequest {
+  string id = 1;
+}
+
+message ImportEditorialMarkersResponse {
+  repeated EditorialMarker markers = 1;
+}
+
+// Toggle a single marker's publish flag (Ja/Nei). This is the write path for
+// reviewers who may accept/reject but not edit markers (the simple view).
+message SetEditorialPublishRequest {
+  string session_id = 1;
+  string marker_id = 2;
+  bool publish = 3;
+}
+
+// Export the review to a CSV file and mark the session as exported.
+message ExportEditorialSessionRequest {
+  string id = 1;
+}
+
+message ExportEditorialSessionResponse {
+  string filename = 1;
+  string content_type = 2;
+  bytes data = 3;
+}
+
 service APIService {
 	// Permissions
 	rpc GetPermissions (Void) returns (Permissions) {}
@@ -459,4 +549,14 @@ service APIService {
   // VAULT (Vidispine search)
   rpc VaultSearch(VaultSearchRequest) returns (VaultSearchResponse) {}
   rpc GetVaultItem(GetVaultItemRequest) returns (GetVaultItemResponse) {}
+
+  // Editorial approval
+  rpc ListEditorialSessions(Void) returns (ListEditorialSessionsResponse) {}
+  rpc CreateEditorialSession(CreateEditorialSessionRequest) returns (EditorialSession) {}
+  rpc GetEditorialSession(GetEditorialSessionRequest) returns (EditorialSession) {}
+  rpc SaveEditorialSession(SaveEditorialSessionRequest) returns (EditorialSession) {}
+  rpc SetEditorialPublish(SetEditorialPublishRequest) returns (Void) {}
+  rpc DeleteEditorialSession(DeleteEditorialSessionRequest) returns (Void) {}
+  rpc ImportEditorialMarkers(ImportEditorialMarkersRequest) returns (ImportEditorialMarkersResponse) {}
+  rpc ExportEditorialSession(ExportEditorialSessionRequest) returns (ExportEditorialSessionResponse) {}
 }

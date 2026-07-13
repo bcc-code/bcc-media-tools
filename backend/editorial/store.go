@@ -16,8 +16,8 @@ import (
 
 // Session status values.
 const (
-	StatusDraft = "draft"
-	StatusSent  = "sent"
+	StatusDraft    = "draft"
+	StatusExported = "exported"
 )
 
 // Marker source values.
@@ -31,14 +31,14 @@ var ErrNotFound = errors.New("editorial: session not found")
 
 // Session is a review session tied to a single Mediabanken asset.
 type Session struct {
-	ID        string
-	VXID      string
-	Title     string
-	Status    string
-	CreatedBy string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	SentAt    *time.Time
+	ID         string
+	VXID       string
+	Title      string
+	Status     string
+	CreatedBy  string
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+	ExportedAt *time.Time
 	// Markers is only populated by Get; List leaves it nil.
 	Markers []Marker
 }
@@ -96,7 +96,7 @@ CREATE TABLE IF NOT EXISTS sessions (
     created_by  TEXT NOT NULL,
     created_at  INTEGER NOT NULL,
     updated_at  INTEGER NOT NULL,
-    sent_at     INTEGER
+    exported_at INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS markers (
@@ -152,7 +152,7 @@ func (s *Store) CreateSession(ctx context.Context, vxid, title, createdBy string
 	}
 
 	_, err := s.db.ExecContext(ctx,
-		`INSERT INTO sessions (id, vxid, title, status, created_by, created_at, updated_at, sent_at)
+		`INSERT INTO sessions (id, vxid, title, status, created_by, created_at, updated_at, exported_at)
 		 VALUES (?, ?, ?, ?, ?, ?, ?, NULL)`,
 		sess.ID, sess.VXID, sess.Title, sess.Status, sess.CreatedBy,
 		toMillis(sess.CreatedAt), toMillis(sess.UpdatedAt),
@@ -166,7 +166,7 @@ func (s *Store) CreateSession(ctx context.Context, vxid, title, createdBy string
 // ListSessions returns all sessions (newest first) without their markers.
 func (s *Store) ListSessions(ctx context.Context) ([]Session, error) {
 	rows, err := s.db.QueryContext(ctx,
-		`SELECT id, vxid, title, status, created_by, created_at, updated_at, sent_at
+		`SELECT id, vxid, title, status, created_by, created_at, updated_at, exported_at
 		 FROM sessions ORDER BY created_at DESC`)
 	if err != nil {
 		return nil, fmt.Errorf("editorial: list sessions: %w", err)
@@ -188,7 +188,7 @@ func (s *Store) ListSessions(ctx context.Context) ([]Session, error) {
 // Returns ErrNotFound if the session does not exist.
 func (s *Store) GetSession(ctx context.Context, id string) (*Session, error) {
 	row := s.db.QueryRowContext(ctx,
-		`SELECT id, vxid, title, status, created_by, created_at, updated_at, sent_at
+		`SELECT id, vxid, title, status, created_by, created_at, updated_at, exported_at
 		 FROM sessions WHERE id = ?`, id)
 	sess, err := scanSession(row)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -288,15 +288,46 @@ func (s *Store) SaveSession(ctx context.Context, id, title string, markers []Mar
 	return s.GetSession(ctx, id)
 }
 
-// MarkSent flags the session as sent to Mediabanken (the mock publish step) and
-// returns the updated session with its markers.
-func (s *Store) MarkSent(ctx context.Context, id string) (*Session, error) {
+// SetPublish updates a single marker's publish flag without touching anything
+// else. This is the write path for reviewers who may accept/reject but not edit
+// markers (the simple view). Returns ErrNotFound if the marker does not exist in
+// the session.
+func (s *Store) SetPublish(ctx context.Context, sessionID, markerID string, publish bool) error {
+	now := time.Now().UTC()
+
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("editorial: begin tx: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	res, err := tx.ExecContext(ctx,
+		`UPDATE markers SET publish = ?, updated_at = ? WHERE id = ? AND session_id = ?`,
+		publish, toMillis(now), markerID, sessionID)
+	if err != nil {
+		return fmt.Errorf("editorial: set publish: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return ErrNotFound
+	}
+
+	if _, err := tx.ExecContext(ctx,
+		`UPDATE sessions SET updated_at = ? WHERE id = ?`, toMillis(now), sessionID); err != nil {
+		return fmt.Errorf("editorial: touch session: %w", err)
+	}
+
+	return tx.Commit()
+}
+
+// MarkExported flags the session as exported (records when the CSV was produced)
+// and returns the updated session with its markers.
+func (s *Store) MarkExported(ctx context.Context, id string) (*Session, error) {
 	now := time.Now().UTC()
 	res, err := s.db.ExecContext(ctx,
-		`UPDATE sessions SET status = ?, sent_at = ?, updated_at = ? WHERE id = ?`,
-		StatusSent, toMillis(now), toMillis(now), id)
+		`UPDATE sessions SET status = ?, exported_at = ?, updated_at = ? WHERE id = ?`,
+		StatusExported, toMillis(now), toMillis(now), id)
 	if err != nil {
-		return nil, fmt.Errorf("editorial: mark sent: %w", err)
+		return nil, fmt.Errorf("editorial: mark exported: %w", err)
 	}
 	if n, _ := res.RowsAffected(); n == 0 {
 		return nil, ErrNotFound
@@ -325,16 +356,16 @@ type scanner interface {
 func scanSession(sc scanner) (*Session, error) {
 	var sess Session
 	var createdAt, updatedAt int64
-	var sentAt sql.NullInt64
+	var exportedAt sql.NullInt64
 	if err := sc.Scan(&sess.ID, &sess.VXID, &sess.Title, &sess.Status, &sess.CreatedBy,
-		&createdAt, &updatedAt, &sentAt); err != nil {
+		&createdAt, &updatedAt, &exportedAt); err != nil {
 		return nil, err
 	}
 	sess.CreatedAt = fromMillis(createdAt)
 	sess.UpdatedAt = fromMillis(updatedAt)
-	if sentAt.Valid {
-		t := fromMillis(sentAt.Int64)
-		sess.SentAt = &t
+	if exportedAt.Valid {
+		t := fromMillis(exportedAt.Int64)
+		sess.ExportedAt = &t
 	}
 	return &sess, nil
 }

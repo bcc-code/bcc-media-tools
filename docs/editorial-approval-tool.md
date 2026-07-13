@@ -15,7 +15,7 @@ A simple tool where an editor:
 2. **Imports markers** for that asset and can **add / edit / remove** rows.
 3. **Approves or rejects** each marker for publishing (Ja / Nei toggle).
 4. **Saves the session at any time** (persisted in SQLite).
-5. When finished, **sends the approved set to Mediabanken** — _mocked for now_.
+5. When finished, **exports the review to a CSV file** (replaces the manual Excel sheet).
 
 Two table view modes:
 
@@ -32,8 +32,9 @@ Inline **video preview** per marker (Forhåndsvis / play button) using the exist
   "import timestamps from Playout" in the original sketch are **postponed** until
   that integration exists. v1 imports markers from Mediabanken (Vidispine
   chapter metadata) and/or manual entry.
-- **"Send to Mediabanken" is mocked.** The final publish step records that the
-  session was sent but performs no real write-back / workflow yet.
+- **No publishing / write-back.** The tool does not push anything to Mediabanken
+  or Playout. The deliverable is a CSV export of the review; downstream
+  publishing (if any) happens outside this tool.
 - No real-time collaboration / multi-user locking. Last write wins.
 
 ## 2. Key decisions (resolved with product)
@@ -44,7 +45,7 @@ Inline **video preview** per marker (Forhåndsvis / play button) using the exist
 | Marker source for v1     | Mediabanken asset chapters (Vidispine, like Export) + manual add/edit/remove |
 | Unit of persistence      | A **session** (asset + its marker rows + publish/edit state)                 |
 | Save behavior            | "Lagre" persists the session to SQLite; editable/re-openable later           |
-| Final output             | "Send to Mediabanken" — **mocked** (marks session as sent, no real write)    |
+| Final output             | **CSV export** (semicolon-separated, UTF-8 BOM); marks the session exported  |
 | Storage engine           | **SQLite** (greenfield — no DB in the repo today)                            |
 
 ## 3. Architecture overview
@@ -60,7 +61,7 @@ Frontend (Nuxt/Vue)                 Backend (Go / ConnectRPC)          Storage
   (marker table + preview)            GetSession
                                       SaveSession (upsert markers)
                                       DeleteSession
-                                      SendToMediabanken (MOCK)
+                                      ExportSession (CSV)
                                       ImportMarkers (Vidispine chapters)
                                     ▲
                                     │ Vidispine (chapters), getPreview (proxy)
@@ -94,11 +95,11 @@ CREATE TABLE IF NOT EXISTS sessions (
     id          TEXT PRIMARY KEY,          -- uuid
     vxid        TEXT NOT NULL,             -- Mediabanken asset id
     title       TEXT NOT NULL DEFAULT '',  -- display title (from asset or user)
-    status      TEXT NOT NULL DEFAULT 'draft', -- draft | sent
+    status      TEXT NOT NULL DEFAULT 'draft', -- draft | exported
     created_by  TEXT NOT NULL,             -- email
     created_at  TIMESTAMP NOT NULL,
     updated_at  TIMESTAMP NOT NULL,
-    sent_at     TIMESTAMP                  -- set when "sent to Mediabanken" (mock)
+    exported_at TIMESTAMP                  -- set when the review was last exported to CSV
 );
 
 CREATE TABLE IF NOT EXISTS markers (
@@ -208,11 +209,11 @@ message EditorialSession {
   string id         = 1;
   string vxid       = 2;
   string title      = 3;
-  string status     = 4; // "draft" | "sent"
+  string status     = 4; // "draft" | "exported"
   string created_by = 5;
-  google.protobuf.Timestamp created_at = 6;
-  google.protobuf.Timestamp updated_at = 7;
-  google.protobuf.Timestamp sent_at    = 8;
+  google.protobuf.Timestamp created_at  = 6;
+  google.protobuf.Timestamp updated_at  = 7;
+  google.protobuf.Timestamp exported_at = 8;
   repeated EditorialMarker markers = 9; // populated by GetSession only
 }
 
@@ -240,27 +241,45 @@ message DeleteEditorialSessionRequest { string id = 1; }
 message ImportEditorialMarkersRequest  { string id = 1; }
 message ImportEditorialMarkersResponse { repeated EditorialMarker markers = 1; }
 
-// MOCK: mark the session as sent to Mediabanken
-message SendEditorialToMediabankenRequest  { string id = 1; }
-message SendEditorialToMediabankenResponse { EditorialSession session = 1; }
+// Export the review to CSV and mark the session exported (returns file bytes)
+message ExportEditorialSessionRequest  { string id = 1; }
+message ExportEditorialSessionResponse { string filename = 1; string content_type = 2; bytes data = 3; }
 
 // ── Service methods ───────────────────────────────────────
 rpc ListEditorialSessions(ListEditorialSessionsRequest) returns (ListEditorialSessionsResponse) {}
 rpc CreateEditorialSession(CreateEditorialSessionRequest) returns (CreateEditorialSessionResponse) {}
 rpc GetEditorialSession(GetEditorialSessionRequest) returns (GetEditorialSessionResponse) {}
-rpc SaveEditorialSession(SaveEditorialSessionRequest) returns (SaveEditorialSessionResponse) {}
+rpc SaveEditorialSession(SaveEditorialSessionRequest) returns (EditorialSession) {}
+rpc SetEditorialPublish(SetEditorialPublishRequest) returns (Void) {} // publish toggle, non-edit users
 rpc DeleteEditorialSession(DeleteEditorialSessionRequest) returns (Void) {}
 rpc ImportEditorialMarkers(ImportEditorialMarkersRequest) returns (ImportEditorialMarkersResponse) {}
-rpc SendEditorialToMediabanken(SendEditorialToMediabankenRequest) returns (SendEditorialToMediabankenResponse) {}
+rpc ExportEditorialSession(ExportEditorialSessionRequest) returns (ExportEditorialSessionResponse) {}
 ```
 
-**Save strategy:** `SaveEditorialSession` sends the whole marker list and the
-backend does a transactional full replace (delete + insert within a tx). This is
-the simplest correct model for a table editor and matches the "save whenever" UX.
-Markers without an id are treated as new (backend assigns uuid).
+**Implemented in Phase 3 — DONE** (`backend/cmd/server/editorial.go`, wired in
+`main.go`). Notes on the final shape:
 
-Every RPC gates on `PermissionsForEmail(email).CanEditorial()` and, for
-mutations, checks the session's `created_by` (or `admin`) before allowing edits.
+- Create/get/save RPCs return `EditorialSession` directly (not wrapper
+  responses) — simpler, and the client always wants the session back.
+- **`ExportEditorialSession`** renders a semicolon-separated CSV with a UTF-8 BOM
+  (Norwegian Excel locale), returns the bytes inline, and marks the session
+  `exported` (sets `exported_at`). Columns: Hvem eller hva, Type, Start, Slutt,
+  Varighet, Publiseres (Ja/Nei). Timecodes formatted `HH:MM:SS`.
+- **`SetEditorialPublish`** was added beyond the original spec: `SaveEditorialSession`
+  is a structural edit (full marker replace) gated on `CanEditorialEdit`, so
+  non-edit reviewers need a separate lightweight path to persist their Ja/Nei
+  toggle. This single-marker update is gated on `CanEditorial`.
+
+**Save strategy:** `SaveEditorialSession` sends the whole marker list and the
+backend does a transactional full replace (delete + insert within a tx). Markers
+without an id are treated as new (backend assigns uuid); `sort_order` is assigned
+from list position.
+
+**Permission gating (implemented):**
+
+- `CanEditorial` (see + accept/reject): List, Get, SetEditorialPublish, ExportSession.
+- `CanEditorialEdit` (add/remove/edit): Create, Save, Delete, ImportMarkers.
+- `ErrNotFound` → `CodeNotFound`; missing email → `CodeUnauthenticated`.
 
 ## 7. Backend implementation
 
@@ -268,7 +287,7 @@ New files, following the `bmm/` support-package layout (flat, one package) plus
 the `ShortsAPI` / `ExportAPI` handler pattern:
 
 - `backend/editorial/store.go` — SQLite store, **package `editorial`** (open/migrate
-  + CRUD, parameterized queries; markers replaced in a tx on save). **DONE.**
+  - CRUD, parameterized queries; markers replaced in a tx on save). **DONE.**
 - `backend/editorial/store_test.go` — store unit tests against a temp DB. **DONE.**
 - `backend/cmd/server/editorial.go` — `EditorialAPI` handler struct + RPCs.
   - Dependencies injected: `*editorial.Store` and the `vidispine.Client` (for import).
@@ -297,7 +316,9 @@ Wiring checklist in `main.go`:
 
 - Top bar: asset title, **view-mode toggle** (Enkel / Rediger via `DesignSwitch`
   or two `DesignButton`s), **Importer** button (pull Vidispine markers),
-  **Lagre** button (right-aligned), and **Send til Mediabanken** (mock).
+  **Lagre** button (right-aligned), and **Eksporter CSV** (calls
+  `ExportEditorialSession`, then triggers a browser download from the returned
+  bytes via a `Blob`).
 - Left: **marker table**. There is **no `DesignTable`** in the library, so build a
   semantic `<table>` styled with Tailwind + Design primitives inside cells.
   Columns:
@@ -321,7 +342,11 @@ Preset **types** (free-text still allowed): `appell`, `vitnesbyrd`, `sang`,
 - `const api = useAPI()`; load via `GetEditorialSession`.
 - Local reactive copy of markers; "Lagre" calls `SaveEditorialSession` with the
   full list. Track a dirty flag; warn on navigate-away if unsaved.
-- Toast on save / send (`useToast` — note it was recently renamed; check the
+- **CSV download:** `ExportEditorialSession` returns `{filename, content_type, data}`;
+  build a `Blob([data], {type: content_type})`, create an object URL, click a
+  temporary `<a download=filename>`, then revoke. (Connect returns `data` as a
+  `Uint8Array`.)
+- Toast on save / export (`useToast` — note it was recently renamed; check the
   current composable name).
 - `useAnalytics().page()` + `useHead({ title })` like other pages.
 
@@ -333,7 +358,7 @@ Preset **types** (free-text still allowed): `appell`, `vitnesbyrd`, `sang`,
     icon: "tabler:checklist",           // or tabler:clipboard-check
     description: t("tools.editorial.description"),
     to: "/editorial/",
-    enabled: perms.canEditorial.value,
+    enabled: perms.canUseEditorial.value,
 }
 ```
 
@@ -353,7 +378,7 @@ editorial.viewSimple            "Enkel"
 editorial.viewEdit              "Rediger"
 editorial.import                "Importer markører"
 editorial.save                  "Lagre"
-editorial.sendToMediabanken     "Send til Mediabanken"
+editorial.exportCsv             "Eksporter CSV"
 editorial.col.name              "Hvem eller hva"
 editorial.col.type              "Type"
 editorial.col.duration          "Varighet"
@@ -365,9 +390,9 @@ editorial.addRow                "Legg til rad"
 editorial.removeRow             "Fjern rad"
 editorial.unsavedWarning        "Du har ulagrede endringer"
 editorial.saved                 "Lagret"
-editorial.sent                  "Sendt til Mediabanken"
+editorial.exported              "Eksportert"
 editorial.status.draft          "Utkast"
-editorial.status.sent           "Sendt"
+editorial.status.exported       "Eksportert"
 ```
 
 (No HTML comments in the templates — per project convention.)
@@ -376,12 +401,13 @@ editorial.status.sent           "Sendt"
 
 1. **Proto + permissions** — add messages, RPCs, `EditorialPermission`; `buf generate`;
    `CanEditorial` helper; frontend `canEditorial`. _(Compiles, no behavior yet.)_
-2. **Backend store** — `modernc.org/sqlite`, `go.mod`, store package + tests, migrations on boot. **DONE** (`backend/editorial/store/`, all tests pass).
-3. **Backend handler** — `EditorialAPI` (CRUD + mock send), wire into `main.go`.
-   Import from Vidispine chapters.
+2. **Backend store** — `modernc.org/sqlite`, `go.mod`, store package + tests, migrations on boot. **DONE** (`backend/editorial/`, all tests pass).
+3. **Backend handler** — `EditorialAPI` (CRUD + CSV export), wire into `main.go`.
+   Import from Vidispine chapters. **DONE** (`editorial.go`; DB path from
+   `EDITORIAL_DB_PATH`, default `${CONFIG_ROOT}/editorial.db`; vet + tests green).
 4. **Frontend list page** — `editorial/index.vue`: list sessions, create new.
 5. **Frontend detail page** — build out `editorial/[id].vue`: table (both view
-   modes), preview panel, save, import, mock send.
+   modes), preview panel, save, import, CSV export download.
 6. **Nav + i18n** — `useTools` entry, en/nb locales.
 7. **Polish** — dirty-state warning, empty/loading states (`DesignSkeleton`),
    toasts, duration formatting (`useNumberFormat` if suitable).
@@ -391,9 +417,9 @@ editorial.status.sent           "Sendt"
 - **Playout integration** (future): once the external Playout API/webhooks exist,
   add a Playout stream selector and an import path; likely a new RPC
   `ImportEditorialMarkersFromPlayout`. Marker `source` field already allows this.
-- **Real "Send to Mediabanken"** (future): replace the mock with the actual
-  write-back — probably a Temporal workflow (like Shorts/Export) or a Vidispine
-  metadata write. Decide the target field/shape then.
+- **Write-back / publishing** (future, if ever): the tool currently ends at CSV
+  export. If real publishing is wanted later, add a new RPC + Temporal workflow;
+  the `exported` status/`exported_at` model can extend to a `published` state.
 - **Session ownership / sharing**: RESOLVED — all editorial users see all
   sessions (no per-user filter on `ListEditorialSessions`). `created_by` is kept
   for display/audit only. Edit rights are governed by the `admin` flag, not
@@ -402,7 +428,3 @@ editorial.status.sent           "Sendt"
   or a plain VXID input? Vault search is nicer but heavier — confirm.
 - **DesignTable**: none exists. If tables become common across tools, consider
   adding a `DesignTable` primitive rather than a one-off here.
-
-```
-
-```
