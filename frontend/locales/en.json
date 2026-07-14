@@ -143,6 +143,7 @@
         "noDestinations": "You don't have permission to export to any destination",
         "subtitlesBurnIn": "Subtitles (burn-in)",
         "subtitlesBurnInStyle": "Subtitles burn in style",
+        "subtitlesBurnInBulkNote": "Subtitle burn-in is per-asset and can't be configured for a bulk export. To burn in subtitles, export a single asset from Mediabanken (Vault).",
         "summaryAssets": "{n} assets",
         "summaryDestinations": "{n} destinations",
         "selectAssetsHint": "Add at least one asset",

@@ -256,27 +256,37 @@ function startExport() {
                 </div>
             </section>
 
-            <!-- Subtitles (burn-in) -->
-            <div class="space-y-1">
-                <label class="text-body-3 text-text-muted block">
-                    {{ $t("vbExport.subtitlesBurnIn") }}
-                </label>
-                <DesignSelect
-                    v-model="subtitleShape"
-                    :items="config.subtitleShapes"
-                />
-            </div>
+            <!-- Subtitle burn-in — per-asset, so not configurable in bulk mode -->
+            <DesignBanner
+                v-if="bulkMode"
+                variant="info"
+                icon="tabler:info-circle"
+            >
+                {{ $t("vbExport.subtitlesBurnInBulkNote") }}
+            </DesignBanner>
+            <template v-else>
+                <!-- Subtitles (burn-in) -->
+                <div class="space-y-1">
+                    <label class="text-body-3 text-text-muted block">
+                        {{ $t("vbExport.subtitlesBurnIn") }}
+                    </label>
+                    <DesignSelect
+                        v-model="subtitleShape"
+                        :items="config.subtitleShapes"
+                    />
+                </div>
 
-            <!-- Subtitles burn in style -->
-            <div class="space-y-1">
-                <label class="text-body-3 text-text-muted block">
-                    {{ $t("vbExport.subtitlesBurnInStyle") }}
-                </label>
-                <DesignSelect
-                    v-model="subtitleStyle"
-                    :items="config.subtitleStyles"
-                />
-            </div>
+                <!-- Subtitles burn in style -->
+                <div class="space-y-1">
+                    <label class="text-body-3 text-text-muted block">
+                        {{ $t("vbExport.subtitlesBurnInStyle") }}
+                    </label>
+                    <DesignSelect
+                        v-model="subtitleStyle"
+                        :items="config.subtitleStyles"
+                    />
+                </div>
+            </template>
         </div>
 
         <!-- Sticky action bar -->

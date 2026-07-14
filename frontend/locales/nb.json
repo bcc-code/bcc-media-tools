@@ -143,6 +143,7 @@
         "noDestinations": "Du har ikke tilgang til å eksportere til noen destinasjon",
         "subtitlesBurnIn": "Undertekster (innbrent)",
         "subtitlesBurnInStyle": "Stil for innbrenning av undertekster",
+        "subtitlesBurnInBulkNote": "Innbrenning av undertekster er per element og kan ikke konfigureres for masseeksport. For å brenne inn undertekster, eksporter et enkelt element fra Mediabanken (Vault).",
         "summaryAssets": "{n} elementer",
         "summaryDestinations": "{n} destinasjoner",
         "selectAssetsHint": "Legg til minst ett element",
