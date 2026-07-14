@@ -118,9 +118,6 @@ const (
 	// APIServiceImportEditorialMarkersProcedure is the fully-qualified name of the APIService's
 	// ImportEditorialMarkers RPC.
 	APIServiceImportEditorialMarkersProcedure = "/api.v1.APIService/ImportEditorialMarkers"
-	// APIServiceExportEditorialSessionProcedure is the fully-qualified name of the APIService's
-	// ExportEditorialSession RPC.
-	APIServiceExportEditorialSessionProcedure = "/api.v1.APIService/ExportEditorialSession"
 )
 
 // APIServiceClient is a client for the api.v1.APIService service.
@@ -167,7 +164,6 @@ type APIServiceClient interface {
 	SetEditorialPublish(context.Context, *connect.Request[v1.SetEditorialPublishRequest]) (*connect.Response[v1.Void], error)
 	DeleteEditorialSession(context.Context, *connect.Request[v1.DeleteEditorialSessionRequest]) (*connect.Response[v1.Void], error)
 	ImportEditorialMarkers(context.Context, *connect.Request[v1.ImportEditorialMarkersRequest]) (*connect.Response[v1.ImportEditorialMarkersResponse], error)
-	ExportEditorialSession(context.Context, *connect.Request[v1.ExportEditorialSessionRequest]) (*connect.Response[v1.ExportEditorialSessionResponse], error)
 }
 
 // NewAPIServiceClient constructs a client for the api.v1.APIService service. By default, it uses
@@ -367,12 +363,6 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(aPIServiceMethods.ByName("ImportEditorialMarkers")),
 			connect.WithClientOptions(opts...),
 		),
-		exportEditorialSession: connect.NewClient[v1.ExportEditorialSessionRequest, v1.ExportEditorialSessionResponse](
-			httpClient,
-			baseURL+APIServiceExportEditorialSessionProcedure,
-			connect.WithSchema(aPIServiceMethods.ByName("ExportEditorialSession")),
-			connect.WithClientOptions(opts...),
-		),
 	}
 }
 
@@ -409,7 +399,6 @@ type aPIServiceClient struct {
 	setEditorialPublish    *connect.Client[v1.SetEditorialPublishRequest, v1.Void]
 	deleteEditorialSession *connect.Client[v1.DeleteEditorialSessionRequest, v1.Void]
 	importEditorialMarkers *connect.Client[v1.ImportEditorialMarkersRequest, v1.ImportEditorialMarkersResponse]
-	exportEditorialSession *connect.Client[v1.ExportEditorialSessionRequest, v1.ExportEditorialSessionResponse]
 }
 
 // GetPermissions calls api.v1.APIService.GetPermissions.
@@ -567,11 +556,6 @@ func (c *aPIServiceClient) ImportEditorialMarkers(ctx context.Context, req *conn
 	return c.importEditorialMarkers.CallUnary(ctx, req)
 }
 
-// ExportEditorialSession calls api.v1.APIService.ExportEditorialSession.
-func (c *aPIServiceClient) ExportEditorialSession(ctx context.Context, req *connect.Request[v1.ExportEditorialSessionRequest]) (*connect.Response[v1.ExportEditorialSessionResponse], error) {
-	return c.exportEditorialSession.CallUnary(ctx, req)
-}
-
 // APIServiceHandler is an implementation of the api.v1.APIService service.
 type APIServiceHandler interface {
 	// Permissions
@@ -616,7 +600,6 @@ type APIServiceHandler interface {
 	SetEditorialPublish(context.Context, *connect.Request[v1.SetEditorialPublishRequest]) (*connect.Response[v1.Void], error)
 	DeleteEditorialSession(context.Context, *connect.Request[v1.DeleteEditorialSessionRequest]) (*connect.Response[v1.Void], error)
 	ImportEditorialMarkers(context.Context, *connect.Request[v1.ImportEditorialMarkersRequest]) (*connect.Response[v1.ImportEditorialMarkersResponse], error)
-	ExportEditorialSession(context.Context, *connect.Request[v1.ExportEditorialSessionRequest]) (*connect.Response[v1.ExportEditorialSessionResponse], error)
 }
 
 // NewAPIServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -812,12 +795,6 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(aPIServiceMethods.ByName("ImportEditorialMarkers")),
 		connect.WithHandlerOptions(opts...),
 	)
-	aPIServiceExportEditorialSessionHandler := connect.NewUnaryHandler(
-		APIServiceExportEditorialSessionProcedure,
-		svc.ExportEditorialSession,
-		connect.WithSchema(aPIServiceMethods.ByName("ExportEditorialSession")),
-		connect.WithHandlerOptions(opts...),
-	)
 	return "/api.v1.APIService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case APIServiceGetPermissionsProcedure:
@@ -882,8 +859,6 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceDeleteEditorialSessionHandler.ServeHTTP(w, r)
 		case APIServiceImportEditorialMarkersProcedure:
 			aPIServiceImportEditorialMarkersHandler.ServeHTTP(w, r)
-		case APIServiceExportEditorialSessionProcedure:
-			aPIServiceExportEditorialSessionHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -1015,8 +990,4 @@ func (UnimplementedAPIServiceHandler) DeleteEditorialSession(context.Context, *c
 
 func (UnimplementedAPIServiceHandler) ImportEditorialMarkers(context.Context, *connect.Request[v1.ImportEditorialMarkersRequest]) (*connect.Response[v1.ImportEditorialMarkersResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.ImportEditorialMarkers is not implemented"))
-}
-
-func (UnimplementedAPIServiceHandler) ExportEditorialSession(context.Context, *connect.Request[v1.ExportEditorialSessionRequest]) (*connect.Response[v1.ExportEditorialSessionResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.ExportEditorialSession is not implemented"))
 }

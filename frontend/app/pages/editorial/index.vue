@@ -49,10 +49,6 @@ async function create() {
         creating.value = false;
     }
 }
-
-function statusVariant(status: string) {
-    return status === "exported" ? "success" : "neutral";
-}
 </script>
 
 <template>
@@ -99,9 +95,6 @@ function statusVariant(status: string) {
                             {{ s.VXID }} · {{ s.createdBy }}
                         </p>
                     </div>
-                    <DesignBadge :variant="statusVariant(s.status)">
-                        {{ t(`editorial.status.${s.status}`) }}
-                    </DesignBadge>
                 </NuxtLink>
             </li>
         </ul>

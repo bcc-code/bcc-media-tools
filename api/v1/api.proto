@@ -441,14 +441,11 @@ message EditorialSession {
   string id = 1;
   string VXID = 2;
   string title = 3;
-  // "draft" | "sent"
-  // "draft" | "exported"
+  // "draft"
   string status = 4;
   string created_by = 5;
   google.protobuf.Timestamp created_at = 6;
   google.protobuf.Timestamp updated_at = 7;
-  // set when the review was last exported to CSV
-  google.protobuf.Timestamp exported_at = 8;
   // only populated by GetEditorialSession
   repeated EditorialMarker markers = 9;
 }
@@ -493,17 +490,6 @@ message SetEditorialPublishRequest {
   string session_id = 1;
   string marker_id = 2;
   bool publish = 3;
-}
-
-// Export the review to a CSV file and mark the session as exported.
-message ExportEditorialSessionRequest {
-  string id = 1;
-}
-
-message ExportEditorialSessionResponse {
-  string filename = 1;
-  string content_type = 2;
-  bytes data = 3;
 }
 
 service APIService {
@@ -558,5 +544,4 @@ service APIService {
   rpc SetEditorialPublish(SetEditorialPublishRequest) returns (Void) {}
   rpc DeleteEditorialSession(DeleteEditorialSessionRequest) returns (Void) {}
   rpc ImportEditorialMarkers(ImportEditorialMarkersRequest) returns (ImportEditorialMarkersResponse) {}
-  rpc ExportEditorialSession(ExportEditorialSessionRequest) returns (ExportEditorialSessionResponse) {}
 }

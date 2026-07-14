@@ -3,12 +3,9 @@ package main
 import (
 	apiv1 "bcc-media-tools/api/v1"
 	"bcc-media-tools/editorial"
-	"bytes"
 	"context"
-	"encoding/csv"
 	"errors"
 	"fmt"
-	"strings"
 
 	"connectrpc.com/connect"
 	"github.com/bcc-code/bcc-media-flows/services/vidispine"
@@ -187,109 +184,6 @@ func (e EditorialAPI) importFromVidispine(vxID string) ([]*apiv1.EditorialMarker
 	return out, nil
 }
 
-// ExportEditorialSession renders the review to a CSV file (the deliverable that
-// replaces the manual Excel sheet) and marks the session as exported. The file
-// bytes are returned inline; the client saves them.
-func (e EditorialAPI) ExportEditorialSession(ctx context.Context, req *connect.Request[apiv1.ExportEditorialSessionRequest]) (*connect.Response[apiv1.ExportEditorialSessionResponse], error) {
-	if _, err := requireEditorial(req, false); err != nil {
-		return nil, err
-	}
-	sess, err := e.store.GetSession(ctx, req.Msg.GetId())
-	if err != nil {
-		return nil, editorialErr(err)
-	}
-
-	csvBytes, err := editorialSessionToCSV(sess)
-	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("build csv: %w", err))
-	}
-
-	if _, err := e.store.MarkExported(ctx, sess.ID); err != nil {
-		return nil, editorialErr(err)
-	}
-
-	return connect.NewResponse(&apiv1.ExportEditorialSessionResponse{
-		Filename:    editorialExportFilename(sess),
-		ContentType: "text/csv",
-		Data:        csvBytes,
-	}), nil
-}
-
-// editorialSessionToCSV renders a session's markers as a semicolon-separated CSV
-// (Norwegian Excel locale uses ';'), with a UTF-8 BOM so Excel reads æ/ø/å
-// correctly. Columns mirror the review table.
-func editorialSessionToCSV(s *editorial.Session) ([]byte, error) {
-	var buf bytes.Buffer
-	buf.Write([]byte{0xEF, 0xBB, 0xBF}) // UTF-8 BOM so Excel reads æ/ø/å correctly
-	w := csv.NewWriter(&buf)
-	w.Comma = ';'
-
-	header := []string{"Hvem eller hva", "Type", "Start", "Slutt", "Varighet", "Publiseres"}
-	if err := w.Write(header); err != nil {
-		return nil, err
-	}
-	for _, m := range s.Markers {
-		publish := "Nei"
-		if m.Publish {
-			publish = "Ja"
-		}
-		row := []string{
-			m.Name,
-			m.Type,
-			formatMillisTC(m.StartMS),
-			formatMillisTC(m.EndMS),
-			formatMillisTC(m.EndMS - m.StartMS),
-			publish,
-		}
-		if err := w.Write(row); err != nil {
-			return nil, err
-		}
-	}
-	w.Flush()
-	if err := w.Error(); err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
-}
-
-// formatMillisTC renders a duration/offset in milliseconds as HH:MM:SS.
-func formatMillisTC(ms int64) string {
-	if ms < 0 {
-		ms = 0
-	}
-	totalSec := ms / 1000
-	h := totalSec / 3600
-	m := (totalSec % 3600) / 60
-	sec := totalSec % 60
-	return fmt.Sprintf("%02d:%02d:%02d", h, m, sec)
-}
-
-// editorialExportFilename builds a safe CSV filename from the session title
-// (falling back to the VXID).
-func editorialExportFilename(s *editorial.Session) string {
-	base := s.Title
-	if base == "" {
-		base = s.VXID
-	}
-	if base == "" {
-		base = "editorial"
-	}
-	safe := strings.Map(func(r rune) rune {
-		switch {
-		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9', r == '-', r == '_':
-			return r
-		case r == ' ':
-			return '-'
-		default:
-			return -1
-		}
-	}, base)
-	if safe == "" {
-		safe = "editorial"
-	}
-	return safe + ".csv"
-}
-
 func editorialSessionToProto(s *editorial.Session) *apiv1.EditorialSession {
 	out := &apiv1.EditorialSession{
 		Id:        s.ID,
@@ -299,9 +193,6 @@ func editorialSessionToProto(s *editorial.Session) *apiv1.EditorialSession {
 		CreatedBy: s.CreatedBy,
 		CreatedAt: timestamppb.New(s.CreatedAt),
 		UpdatedAt: timestamppb.New(s.UpdatedAt),
-	}
-	if s.ExportedAt != nil {
-		out.ExportedAt = timestamppb.New(*s.ExportedAt)
 	}
 	for _, m := range s.Markers {
 		out.Markers = append(out.Markers, editorialMarkerToProto(m))

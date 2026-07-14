@@ -27,7 +27,6 @@ func TestCreateAndGetSession(t *testing.T) {
 	assert.NotEmpty(t, created.ID)
 	assert.Equal(t, StatusDraft, created.Status)
 	assert.False(t, created.CreatedAt.IsZero())
-	assert.Nil(t, created.ExportedAt)
 
 	got, err := s.GetSession(ctx, created.ID)
 	require.NoError(t, err)
@@ -150,20 +149,6 @@ func TestSetPublishNotFound(t *testing.T) {
 	sess, err := s.CreateSession(ctx, "VX-9", "stream", "e@bcc.media")
 	require.NoError(t, err)
 	assert.ErrorIs(t, s.SetPublish(ctx, sess.ID, "no-such-marker", true), ErrNotFound)
-}
-
-func TestMarkExported(t *testing.T) {
-	s := newTestStore(t)
-	ctx := context.Background()
-
-	sess, err := s.CreateSession(ctx, "VX-9", "stream", "e@bcc.media")
-	require.NoError(t, err)
-
-	exported, err := s.MarkExported(ctx, sess.ID)
-	require.NoError(t, err)
-	assert.Equal(t, StatusExported, exported.Status)
-	require.NotNil(t, exported.ExportedAt)
-	assert.False(t, exported.ExportedAt.IsZero())
 }
 
 func TestDeleteSessionCascadesMarkers(t *testing.T) {

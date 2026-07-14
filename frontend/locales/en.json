@@ -216,9 +216,6 @@
         "save": "Save",
         "saved": "Saved",
         "saveFailed": "Could not save",
-        "exportCsv": "Export CSV",
-        "exported": "Exported",
-        "exportFailed": "Could not export",
         "delete": "Delete review",
         "deleteConfirmTitle": "Delete this review?",
         "deleteConfirmMessage": "This permanently removes the review and all its markers.",
@@ -237,11 +234,7 @@
             "publish": "Publish?"
         },
         "publishYes": "Yes",
-        "publishNo": "No",
-        "status": {
-            "draft": "Draft",
-            "exported": "Exported"
-        }
+        "publishNo": "No"
     },
     "vault": {
         "searchPlaceholder": "Search the vault",

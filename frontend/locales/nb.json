@@ -216,9 +216,6 @@
         "save": "Lagre",
         "saved": "Lagret",
         "saveFailed": "Kunne ikke lagre",
-        "exportCsv": "Eksporter CSV",
-        "exported": "Eksportert",
-        "exportFailed": "Kunne ikke eksportere",
         "delete": "Slett gjennomgang",
         "deleteConfirmTitle": "Slette denne gjennomgangen?",
         "deleteConfirmMessage": "Dette fjerner gjennomgangen og alle markørene permanent.",
@@ -237,11 +234,7 @@
             "publish": "Publiseres?"
         },
         "publishYes": "Ja",
-        "publishNo": "Nei",
-        "status": {
-            "draft": "Utkast",
-            "exported": "Eksportert"
-        }
+        "publishNo": "Nei"
     },
     "vault": {
         "searchPlaceholder": "Søk i vault",

@@ -227,7 +227,6 @@ function move(i: number, delta: number) {
 // ── Backend actions ───────────────────────────────────────
 const importing = ref(false);
 const saving = ref(false);
-const exporting = ref(false);
 const deleteOpen = ref(false);
 
 async function importMarkers() {
@@ -274,30 +273,6 @@ async function save() {
         toaster.create({ title: t("editorial.saveFailed"), type: "error" });
     } finally {
         saving.value = false;
-    }
-}
-
-async function exportCsv() {
-    exporting.value = true;
-    try {
-        const res = await api.exportEditorialSession({ id: sessionId.value });
-        const blob = new Blob([new Uint8Array(res.data)], {
-            type: res.contentType || "text/csv",
-        });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = res.filename || "editorial.csv";
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-        if (session.value) session.value.status = "exported";
-        toaster.create({ title: t("editorial.exported"), type: "success" });
-    } catch {
-        toaster.create({ title: t("editorial.exportFailed"), type: "error" });
-    } finally {
-        exporting.value = false;
     }
 }
 
@@ -392,14 +367,6 @@ onBeforeRouteLeave(() => {
                         @click="save"
                     >
                         {{ t("editorial.save") }}
-                    </DesignButton>
-                    <DesignButton
-                        variant="secondary"
-                        icon="tabler:file-spreadsheet"
-                        :loading="exporting"
-                        @click="exportCsv"
-                    >
-                        {{ t("editorial.exportCsv") }}
                     </DesignButton>
                     <DesignButton
                         v-if="canEdit"
