@@ -22,7 +22,7 @@ const base = useRuntimeConfig().public.grpcUrl;
 
 const { data: videoUrl, status } = useAsyncData(
     () => `preview:${vxId.value}`,
-    () => api.getPreview({ VXID: vxId.value }),
+    () => api.getShortsPreview({ VXID: vxId.value }),
     { transform: (data) => data.url },
 );
 

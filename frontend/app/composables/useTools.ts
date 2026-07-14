@@ -58,6 +58,13 @@ export function useTools() {
             enabled: perms.canUseVault.value,
         },
         {
+            label: t("tools.editorial.title"),
+            icon: "tabler:checklist",
+            description: t("tools.editorial.description"),
+            to: "/editorial/",
+            enabled: perms.canUseEditorial.value,
+        },
+        {
             label: t("tools.admin.title"),
             icon: "tabler:settings",
             description: t("tools.admin.description"),

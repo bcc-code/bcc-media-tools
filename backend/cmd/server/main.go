@@ -3,6 +3,7 @@ package main
 import (
 	"bcc-media-tools/api/v1/apiv1connect"
 	"bcc-media-tools/bmm"
+	"bcc-media-tools/editorial"
 	"fmt"
 	"net/http"
 	"os"
@@ -56,6 +57,7 @@ type ApiServer struct {
 	ExportAPI
 	CantemoAPI
 	VaultAPI
+	EditorialAPI
 }
 
 func withCORS(connectHandler http.Handler) http.Handler {
@@ -120,7 +122,11 @@ func main() {
 	permissionsApi := PermissionsAPI{}
 	bmmApi := NewBMMApi(os.Getenv("BMM_BASE_URL"), bmmToken)
 	transcriptionAPI := NewTranscriptionAPI(os.Getenv("CANTEMO_URL"), os.Getenv("CANTEMO_TOKEN"), temporalClient)
-	shortsAPI := NewShortsAPI(temporalClient)
+
+	// Shared Cantemo client for tool previews and the VAULT proxy handlers.
+	cantemoClient := cantemo.NewClient(os.Getenv("CANTEMO_URL"), os.Getenv("CANTEMO_TOKEN"))
+
+	shortsAPI := NewShortsAPI(temporalClient, cantemoClient)
 	exportAPI := NewExportAPI(vidispineClient, temporalClient)
 	cantemoAPI := NewCantemoAPI(temporalClient)
 	vaultAPI := NewVaultAPI(
@@ -130,9 +136,16 @@ func main() {
 		os.Getenv("VIDISPINE_PASSWORD"),
 	)
 
-	// Dedicated Cantemo client for the VAULT preview proxy (same creds as the
-	// transcription tool).
-	cantemoClient := cantemo.NewClient(os.Getenv("CANTEMO_URL"), os.Getenv("CANTEMO_TOKEN"))
+	editorialDBPath := os.Getenv("EDITORIAL_DB_PATH")
+	if editorialDBPath == "" {
+		editorialDBPath = filepath.Join(os.Getenv("CONFIG_ROOT"), "editorial.db")
+	}
+	editorialStore, err := editorial.Open(editorialDBPath)
+	if err != nil {
+		panic(err)
+	}
+	defer editorialStore.Close()
+	editorialAPI := NewEditorialAPI(editorialStore, vidispineClient, cantemoClient)
 
 	api := &ApiServer{
 		PermissionsAPI:   permissionsApi,
@@ -142,6 +155,7 @@ func main() {
 		ExportAPI:        *exportAPI,
 		CantemoAPI:       *cantemoAPI,
 		VaultAPI:         *vaultAPI,
+		EditorialAPI:     *editorialAPI,
 	}
 
 	if os.Getenv("STATIC_FILE_PATH") != "" {

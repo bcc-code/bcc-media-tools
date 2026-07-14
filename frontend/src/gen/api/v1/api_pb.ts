@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file api/v1/api.proto.
  */
 export const file_api_v1_api: GenFile = /*@__PURE__*/
-  fileDesc("ChBhcGkvdjEvYXBpLnByb3RvEgZhcGkudjEiaAoNQk1NUGVybWlzc2lvbhIRCglsYW5ndWFnZXMYASADKAkSDgoGYWxidW1zGAIgAygJEhAKCHBvZGNhc3RzGAMgAygJEg0KBWFkbWluGAQgASgIEhMKC2ludGVncmF0aW9uGAUgASgIIj0KF1RyYW5zY3JpcHRpb25QZXJtaXNzaW9uEg0KBWFkbWluGAEgASgIEhMKC21lZGlhYmFua2VuGAIgASgIImQKEEV4cG9ydFBlcm1pc3Npb24SFAoMZGVzdGluYXRpb25zGAEgAygJEg0KBWFkbWluGAIgASgIEhYKDnRpbWVkX21ldGFkYXRhGAMgASgIEhMKC2J1bGtfZXhwb3J0GAQgASgIIk4KElZCRXhwb3J0UGVybWlzc2lvbhIUCgxkZXN0aW5hdGlvbnMYASADKAkSDQoFYWRtaW4YAiABKAgSEwoLYnVsa19leHBvcnQYAyABKAgiXgoRQ2FudGVtb1Blcm1pc3Npb24SDwoHcHJldmlldxgBIAEoCBISCgp0cmFuc2NyaWJlGAIgASgIEhEKCXN1YnRpdGxlcxgDIAEoCBIRCglyZWxhdGlvbnMYBCABKAgiIgoPVmF1bHRQZXJtaXNzaW9uEg8KB2VuYWJsZWQYASABKAgiIwoQU2hvcnRzUGVybWlzc2lvbhIPCgdlbmFibGVkGAEgASgIIt4CCgtQZXJtaXNzaW9ucxINCgVhZG1pbhgBIAEoCBIiCgNibW0YAiABKAsyFS5hcGkudjEuQk1NUGVybWlzc2lvbhINCgVlbWFpbBgDIAEoCRI2Cg10cmFuc2NyaXB0aW9uGAQgASgLMh8uYXBpLnYxLlRyYW5zY3JpcHRpb25QZXJtaXNzaW9uEigKBmV4cG9ydBgFIAEoCzIYLmFwaS52MS5FeHBvcnRQZXJtaXNzaW9uEi0KCXZiX2V4cG9ydBgGIAEoCzIaLmFwaS52MS5WQkV4cG9ydFBlcm1pc3Npb24SKgoHY2FudGVtbxgHIAEoCzIZLmFwaS52MS5DYW50ZW1vUGVybWlzc2lvbhImCgV2YXVsdBgIIAEoCzIXLmFwaS52MS5WYXVsdFBlcm1pc3Npb24SKAoGc2hvcnRzGAkgASgLMhguYXBpLnYxLlNob3J0c1Blcm1pc3Npb24iFwoVR2V0UGVybWlzc2lvbnNSZXF1ZXN0IlAKFVNldFBlcm1pc3Npb25zUmVxdWVzdBINCgVlbWFpbBgBIAEoCRIoCgtwZXJtaXNzaW9ucxgCIAEoCzITLmFwaS52MS5QZXJtaXNzaW9ucyIpChhEZWxldGVQZXJtaXNzaW9uc1JlcXVlc3QSDQoFZW1haWwYASABKAkimQEKD1Blcm1pc3Npb25zTGlzdBI9CgtwZXJtaXNzaW9ucxgBIAMoCzIoLmFwaS52MS5QZXJtaXNzaW9uc0xpc3QuUGVybWlzc2lvbnNFbnRyeRpHChBQZXJtaXNzaW9uc0VudHJ5EgsKA2tleRgBIAEoCRIiCgV2YWx1ZRgCIAEoCzITLmFwaS52MS5QZXJtaXNzaW9uczoCOAEiJgoHQk1NWWVhchIMCgR5ZWFyGAEgASgNEg0KBWNvdW50GAIgASgNIoIBChBHZXRZZWFyc1Jlc3BvbnNlEjAKBGRhdGEYASADKAsyIi5hcGkudjEuR2V0WWVhcnNSZXNwb25zZS5EYXRhRW50cnkaPAoJRGF0YUVudHJ5EgsKA2tleRgBIAEoDRIeCgV2YWx1ZRgCIAEoCzIPLmFwaS52MS5CTU1ZZWFyOgI4ASI+Cg9HZXRZZWFyc1JlcXVlc3QSKwoLZW52aXJvbm1lbnQYASABKA4yFi5hcGkudjEuQm1tRW52aXJvbm1lbnQiTQoQR2V0QWxidW1zUmVxdWVzdBIMCgR5ZWFyGAEgASgNEisKC2Vudmlyb25tZW50GAIgASgOMhYuYXBpLnYxLkJtbUVudmlyb25tZW50IkQKBUFsYnVtEgoKAmlkGAEgASgJEg0KBXRpdGxlGAIgASgJEg0KBWNvdmVyGAQgASgJEhEKCWxhbmd1YWdlcxgFIAMoCSIrCgpBbGJ1bXNMaXN0Eh0KBmFsYnVtcxgBIAMoCzINLmFwaS52MS5BbGJ1bSJWChVHZXRBbGJ1bVRyYWNrc1JlcXVlc3QSEAoIYWxidW1faWQYASABKAkSKwoLZW52aXJvbm1lbnQYAiABKA4yFi5hcGkudjEuQm1tRW52aXJvbm1lbnQiagoXR2V0UG9kY2FzdFRyYWNrc1JlcXVlc3QSEwoLcG9kY2FzdF90YWcYASABKAkSDQoFbGltaXQYAiABKA0SKwoLZW52aXJvbm1lbnQYAyABKA4yFi5hcGkudjEuQm1tRW52aXJvbm1lbnQiSwocR2V0QXZhaWxhYmxlTGFuZ3VhZ2VzUmVxdWVzdBIrCgtlbnZpcm9ubWVudBgBIAEoDjIWLmFwaS52MS5CbW1FbnZpcm9ubWVudCLIAQoIQk1NVHJhY2sSCgoCaWQYASABKAkSDQoFdGl0bGUYAiABKAkSLwoLcHVibGlzaGVkQXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEicKCWxhbmd1YWdlcxgEIAEoCzIULmFwaS52MS5MYW5ndWFnZUxpc3QSLAoOdHJhbnNjcmlwdGlvbnMYBSABKAsyFC5hcGkudjEuTGFuZ3VhZ2VMaXN0EhkKEWhhc1RyYW5zY3JpcHRpb25zGAYgASgIIi4KClRyYWNrc0xpc3QSIAoGdHJhY2tzGAEgAygLMhAuYXBpLnYxLkJNTVRyYWNrIjMKDExhbmd1YWdlTGlzdBIjCglMYW5ndWFnZXMYASADKAsyEC5hcGkudjEuTGFuZ3VhZ2UiKwoITGFuZ3VhZ2USDAoEY29kZRgBIAEoCRIRCglpY29uX2ZpbGUYAyABKAkiJgoWR2V0VHJhbnNjcmlwdGlvblJlcWVzdBIMCgRWWElEGAEgASgJIkEKDVRyYW5zY3JpcHRpb24SDAoEdGV4dBgBIAEoCRIiCghzZWdtZW50cxgCIAMoCzIQLmFwaS52MS5TZWdtZW50cyLtAQoIU2VnbWVudHMSCgoCaWQYASABKAESDAoEc2VlaxgCIAEoBRINCgVzdGFydBgDIAEoARILCgNlbmQYBCABKAESDAoEdGV4dBgFIAEoCRIOCgZ0b2tlbnMYBiADKAUSEwoLdGVtcGVyYXR1cmUYByABKAESEwoLYXZnX2xvZ3Byb2IYCCABKAESGQoRY29tcHJlc3Npb25fcmF0aW8YCSABKAESFgoObm9fc3BlZWNoX3Byb2IYCiABKAESEgoKY29uZmlkZW5jZRgLIAEoARIcCgV3b3JkcxgMIAMoCzINLmFwaS52MS5Xb3JkcyJFCgVXb3JkcxIMCgR0ZXh0GAEgASgJEg0KBXN0YXJ0GAIgASgBEgsKA2VuZBgDIAEoARISCgpjb25maWRlbmNlGAQgASgBIiEKEUdldFByZXZpZXdSZXF1ZXN0EgwKBFZYSUQYASABKAkiFgoHUHJldmlldxILCgN1cmwYASABKAkiawoaR2V0Qk1NVHJhbnNjcmlwdGlvblJlcXVlc3QSDgoGYm1tX2lkGAEgASgJEhAKCGxhbmd1YWdlGAIgASgJEisKC2Vudmlyb25tZW50GAMgASgOMhYuYXBpLnYxLkJtbUVudmlyb25tZW50IlgKGlN1Ym1pdFRyYW5zY3JpcHRpb25SZXF1ZXN0EgwKBFZYSUQYASABKAkSLAoNdHJhbnNjcmlwdGlvbhgCIAEoCzIVLmFwaS52MS5UcmFuc2NyaXB0aW9uIkkKElN1Ym1pdFNob3J0UmVxdWVzdBIMCgRWWElEGAEgASgJEhEKCUluU2Vjb25kcxgCIAEoARISCgpPdXRTZWNvbmRzGAMgASgBIjEKEEV4cG9ydFJlc29sdXRpb24SDQoFd2lkdGgYASABKAUSDgoGaGVpZ2h0GAIgASgFIkYKDkV4cG9ydExhbmd1YWdlEgwKBGNvZGUYASABKAkSDAoEbmFtZRgCIAEoCRILCgNtdTEYAyABKAgSCwoDbXUyGAQgASgIIh4KDUV4cG9ydFN1YmNsaXASDQoFdGl0bGUYASABKAkiJgoWR2V0RXhwb3J0Q29uZmlnUmVxdWVzdBIMCgRWWElEGAEgASgJItYCChdHZXRFeHBvcnRDb25maWdSZXNwb25zZRIMCgRWWElEGAEgASgJEg0KBXRpdGxlGAIgASgJEhQKDGRlc3RpbmF0aW9ucxgDIAMoCRIVCg1hdWRpb19zb3VyY2VzGAQgAygJEh0KFXNlbGVjdGVkX2F1ZGlvX3NvdXJjZRgFIAEoCRIpCglsYW5ndWFnZXMYBiADKAsyFi5hcGkudjEuRXhwb3J0TGFuZ3VhZ2USGgoSc2VsZWN0ZWRfbGFuZ3VhZ2VzGAcgAygJEi0KC3Jlc29sdXRpb25zGAggAygLMhguYXBpLnYxLkV4cG9ydFJlc29sdXRpb24SEAoIb3ZlcmxheXMYCSADKAkSJwoIc3ViY2xpcHMYCiADKAsyFS5hcGkudjEuRXhwb3J0U3ViY2xpcBIhChljYW5fZXhwb3J0X3RpbWVkX21ldGFkYXRhGAsgASgIIlAKGUV4cG9ydFJlc29sdXRpb25TZWxlY3Rpb24SDQoFd2lkdGgYASABKAUSDgoGaGVpZ2h0GAIgASgFEhQKDGRvd25sb2FkYWJsZRgDIAEoCCKDAgoSU3RhcnRFeHBvcnRSZXF1ZXN0EgwKBFZYSUQYASABKAkSFAoMZGVzdGluYXRpb25zGAIgAygJEhQKDGF1ZGlvX3NvdXJjZRgDIAEoCRIRCglsYW5ndWFnZXMYBCADKAkSNgoLcmVzb2x1dGlvbnMYBSADKAsyIS5hcGkudjEuRXhwb3J0UmVzb2x1dGlvblNlbGVjdGlvbhIPCgdvdmVybGF5GAYgASgJEhUKDXdpdGhfY2hhcHRlcnMYByABKAgSFgoOaWdub3JlX3NpbGVuY2UYCCABKAgSFgoOZXhwb3J0X2FpX3N1YnMYCSABKAgSEAoIc3ViY2xpcHMYCiADKAkiKwoTU3RhcnRFeHBvcnRSZXNwb25zZRIUCgx3b3JrZmxvd19pZHMYASADKAkiKgoaRXhwb3J0VGltZWRNZXRhZGF0YVJlcXVlc3QSDAoEVlhJRBgBIAEoCSIoChhHZXRWQkV4cG9ydENvbmZpZ1JlcXVlc3QSDAoEVlhJRBgBIAEoCSKAAQoZR2V0VkJFeHBvcnRDb25maWdSZXNwb25zZRIMCgRWWElEGAEgASgJEg0KBXRpdGxlGAIgASgJEhQKDGRlc3RpbmF0aW9ucxgDIAMoCRIXCg9zdWJ0aXRsZV9zaGFwZXMYBCADKAkSFwoPc3VidGl0bGVfc3R5bGVzGAUgAygJImoKFFN0YXJ0VkJFeHBvcnRSZXF1ZXN0EgwKBFZYSUQYASABKAkSFAoMZGVzdGluYXRpb25zGAIgAygJEhYKDnN1YnRpdGxlX3NoYXBlGAMgASgJEhYKDnN1YnRpdGxlX3N0eWxlGAQgASgJIiwKFVN0YXJ0VkJFeHBvcnRSZXNwb25zZRITCgt3b3JrZmxvd19pZBgBIAEoCSI0ChpFeHBvcnREZXN0aW5hdGlvbnNSZXNwb25zZRIKCgJ2eBgBIAMoCRIKCgJ2YhgCIAMoCSIlChRSZXNvbHZlQXNzZXRzUmVxdWVzdBINCgVWWElEcxgBIAMoCSI7Cg1SZXNvbHZlZEFzc2V0EgwKBFZYSUQYASABKAkSDQoFdGl0bGUYAiABKAkSDQoFZm91bmQYAyABKAgiPgoVUmVzb2x2ZUFzc2V0c1Jlc3BvbnNlEiUKBmFzc2V0cxgBIAMoCzIVLmFwaS52MS5SZXNvbHZlZEFzc2V0IlIKG1RyaWdnZXJDYW50ZW1vQWN0aW9uUmVxdWVzdBIMCgRWWElEGAEgASgJEiUKBmFjdGlvbhgCIAEoDjIVLmFwaS52MS5DYW50ZW1vQWN0aW9uIkYKElZhdWx0U2VhcmNoUmVxdWVzdBINCgVxdWVyeRgBIAEoCRITCgttZWRpYV90eXBlcxgCIAMoCRIMCgRwYWdlGAMgASgFIpgBCglWYXVsdEl0ZW0SDAoEVlhJRBgBIAEoCRINCgV0aXRsZRgCIAEoCRISCgptZWRpYV90eXBlGAMgASgJEg0KBWFkZGVkGAQgASgJEg4KBmZvcm1hdBgFIAEoCRIMCgRzaXplGAYgASgJEhgKEGR1cmF0aW9uX3NlY29uZHMYByABKAUSEwoLaGFzX3ByZXZpZXcYCCABKAgiLwoKVmF1bHRGYWNldBISCgptZWRpYV90eXBlGAEgASgJEg0KBWNvdW50GAIgASgFIpABChNWYXVsdFNlYXJjaFJlc3BvbnNlEiAKBWl0ZW1zGAEgAygLMhEuYXBpLnYxLlZhdWx0SXRlbRISCgp0b3RhbF9oaXRzGAIgASgFEgwKBHBhZ2UYAyABKAUSEQoJcGFnZV9zaXplGAQgASgFEiIKBmZhY2V0cxgFIAMoCzISLmFwaS52MS5WYXVsdEZhY2V0IiMKE0dldFZhdWx0SXRlbVJlcXVlc3QSDAoEVlhJRBgBIAEoCSI3ChRHZXRWYXVsdEl0ZW1SZXNwb25zZRIfCgRpdGVtGAEgASgLMhEuYXBpLnYxLlZhdWx0SXRlbSoxCg5CbW1FbnZpcm9ubWVudBIOCgpQcm9kdWN0aW9uEAASDwoLSW50ZWdyYXRpb24QASq6AQoNQ2FudGVtb0FjdGlvbhIeChpDQU5URU1PX0FDVElPTl9VTlNQRUNJRklFRBAAEhoKFkNBTlRFTU9fQUNUSU9OX1BSRVZJRVcQARIdChlDQU5URU1PX0FDVElPTl9UUkFOU0NSSUJFEAISKQolQ0FOVEVNT19BQ1RJT05fU1VCVElUTEVfRlJPTV9TVUJUUkFOUxADEiMKH0NBTlRFTU9fQUNUSU9OX1VQREFURV9SRUxBVElPTlMQBDLjDQoKQVBJU2VydmljZRI1Cg5HZXRQZXJtaXNzaW9ucxIMLmFwaS52MS5Wb2lkGhMuYXBpLnYxLlBlcm1pc3Npb25zIgASQgoRVXBkYXRlUGVybWlzc2lvbnMSHS5hcGkudjEuU2V0UGVybWlzc2lvbnNSZXF1ZXN0GgwuYXBpLnYxLlZvaWQiABJFChFEZWxldGVQZXJtaXNzaW9ucxIgLmFwaS52MS5EZWxldGVQZXJtaXNzaW9uc1JlcXVlc3QaDC5hcGkudjEuVm9pZCIAEjoKD0xpc3RQZXJtaXNzaW9ucxIMLmFwaS52MS5Wb2lkGhcuYXBpLnYxLlBlcm1pc3Npb25zTGlzdCIAEksKEEdldFRyYW5zY3JpcHRpb24SHi5hcGkudjEuR2V0VHJhbnNjcmlwdGlvblJlcWVzdBoVLmFwaS52MS5UcmFuc2NyaXB0aW9uIgASOgoKR2V0UHJldmlldxIZLmFwaS52MS5HZXRQcmV2aWV3UmVxdWVzdBoPLmFwaS52MS5QcmV2aWV3IgASSQoTU3VibWl0VHJhbnNjcmlwdGlvbhIiLmFwaS52MS5TdWJtaXRUcmFuc2NyaXB0aW9uUmVxdWVzdBoMLmFwaS52MS5Wb2lkIgASPwoIR2V0WWVhcnMSFy5hcGkudjEuR2V0WWVhcnNSZXF1ZXN0GhguYXBpLnYxLkdldFllYXJzUmVzcG9uc2UiABI7CglHZXRBbGJ1bXMSGC5hcGkudjEuR2V0QWxidW1zUmVxdWVzdBoSLmFwaS52MS5BbGJ1bXNMaXN0IgASRQoOR2V0QWxidW1UcmFja3MSHS5hcGkudjEuR2V0QWxidW1UcmFja3NSZXF1ZXN0GhIuYXBpLnYxLlRyYWNrc0xpc3QiABJJChBHZXRQb2RjYXN0VHJhY2tzEh8uYXBpLnYxLkdldFBvZGNhc3RUcmFja3NSZXF1ZXN0GhIuYXBpLnYxLlRyYWNrc0xpc3QiABJMCgxHZXRMYW5ndWFnZXMSJC5hcGkudjEuR2V0QXZhaWxhYmxlTGFuZ3VhZ2VzUmVxdWVzdBoULmFwaS52MS5MYW5ndWFnZUxpc3QiABJSChNHZXRCTU1UcmFuc2NyaXB0aW9uEiIuYXBpLnYxLkdldEJNTVRyYW5zY3JpcHRpb25SZXF1ZXN0GhUuYXBpLnYxLlRyYW5zY3JpcHRpb24iABI5CgtTdWJtaXRTaG9ydBIaLmFwaS52MS5TdWJtaXRTaG9ydFJlcXVlc3QaDC5hcGkudjEuVm9pZCIAElQKD0dldEV4cG9ydENvbmZpZxIeLmFwaS52MS5HZXRFeHBvcnRDb25maWdSZXF1ZXN0Gh8uYXBpLnYxLkdldEV4cG9ydENvbmZpZ1Jlc3BvbnNlIgASSAoLU3RhcnRFeHBvcnQSGi5hcGkudjEuU3RhcnRFeHBvcnRSZXF1ZXN0GhsuYXBpLnYxLlN0YXJ0RXhwb3J0UmVzcG9uc2UiABJJChNFeHBvcnRUaW1lZE1ldGFkYXRhEiIuYXBpLnYxLkV4cG9ydFRpbWVkTWV0YWRhdGFSZXF1ZXN0GgwuYXBpLnYxLlZvaWQiABJOCg1SZXNvbHZlQXNzZXRzEhwuYXBpLnYxLlJlc29sdmVBc3NldHNSZXF1ZXN0Gh0uYXBpLnYxLlJlc29sdmVBc3NldHNSZXNwb25zZSIAEloKEUdldFZCRXhwb3J0Q29uZmlnEiAuYXBpLnYxLkdldFZCRXhwb3J0Q29uZmlnUmVxdWVzdBohLmFwaS52MS5HZXRWQkV4cG9ydENvbmZpZ1Jlc3BvbnNlIgASTgoNU3RhcnRWQkV4cG9ydBIcLmFwaS52MS5TdGFydFZCRXhwb3J0UmVxdWVzdBodLmFwaS52MS5TdGFydFZCRXhwb3J0UmVzcG9uc2UiABJLChVHZXRFeHBvcnREZXN0aW5hdGlvbnMSDC5hcGkudjEuVm9pZBoiLmFwaS52MS5FeHBvcnREZXN0aW5hdGlvbnNSZXNwb25zZSIAEksKFFRyaWdnZXJDYW50ZW1vQWN0aW9uEiMuYXBpLnYxLlRyaWdnZXJDYW50ZW1vQWN0aW9uUmVxdWVzdBoMLmFwaS52MS5Wb2lkIgASSAoLVmF1bHRTZWFyY2gSGi5hcGkudjEuVmF1bHRTZWFyY2hSZXF1ZXN0GhsuYXBpLnYxLlZhdWx0U2VhcmNoUmVzcG9uc2UiABJLCgxHZXRWYXVsdEl0ZW0SGy5hcGkudjEuR2V0VmF1bHRJdGVtUmVxdWVzdBocLmFwaS52MS5HZXRWYXVsdEl0ZW1SZXNwb25zZSIAQh5aHGJjYy1tZWRpYS10b29scy9hcGkvdjE7YXBpdjFiBnByb3RvMw", [file_google_protobuf_timestamp, file_api_v1_common]);
+  fileDesc("ChBhcGkvdjEvYXBpLnByb3RvEgZhcGkudjEiaAoNQk1NUGVybWlzc2lvbhIRCglsYW5ndWFnZXMYASADKAkSDgoGYWxidW1zGAIgAygJEhAKCHBvZGNhc3RzGAMgAygJEg0KBWFkbWluGAQgASgIEhMKC2ludGVncmF0aW9uGAUgASgIIj0KF1RyYW5zY3JpcHRpb25QZXJtaXNzaW9uEg0KBWFkbWluGAEgASgIEhMKC21lZGlhYmFua2VuGAIgASgIImQKEEV4cG9ydFBlcm1pc3Npb24SFAoMZGVzdGluYXRpb25zGAEgAygJEg0KBWFkbWluGAIgASgIEhYKDnRpbWVkX21ldGFkYXRhGAMgASgIEhMKC2J1bGtfZXhwb3J0GAQgASgIIk4KElZCRXhwb3J0UGVybWlzc2lvbhIUCgxkZXN0aW5hdGlvbnMYASADKAkSDQoFYWRtaW4YAiABKAgSEwoLYnVsa19leHBvcnQYAyABKAgiXgoRQ2FudGVtb1Blcm1pc3Npb24SDwoHcHJldmlldxgBIAEoCBISCgp0cmFuc2NyaWJlGAIgASgIEhEKCXN1YnRpdGxlcxgDIAEoCBIRCglyZWxhdGlvbnMYBCABKAgiIgoPVmF1bHRQZXJtaXNzaW9uEg8KB2VuYWJsZWQYASABKAgiIwoQU2hvcnRzUGVybWlzc2lvbhIPCgdlbmFibGVkGAEgASgIIjUKE0VkaXRvcmlhbFBlcm1pc3Npb24SDwoHZW5hYmxlZBgBIAEoCBINCgVhZG1pbhgCIAEoCCKOAwoLUGVybWlzc2lvbnMSDQoFYWRtaW4YASABKAgSIgoDYm1tGAIgASgLMhUuYXBpLnYxLkJNTVBlcm1pc3Npb24SDQoFZW1haWwYAyABKAkSNgoNdHJhbnNjcmlwdGlvbhgEIAEoCzIfLmFwaS52MS5UcmFuc2NyaXB0aW9uUGVybWlzc2lvbhIoCgZleHBvcnQYBSABKAsyGC5hcGkudjEuRXhwb3J0UGVybWlzc2lvbhItCgl2Yl9leHBvcnQYBiABKAsyGi5hcGkudjEuVkJFeHBvcnRQZXJtaXNzaW9uEioKB2NhbnRlbW8YByABKAsyGS5hcGkudjEuQ2FudGVtb1Blcm1pc3Npb24SJgoFdmF1bHQYCCABKAsyFy5hcGkudjEuVmF1bHRQZXJtaXNzaW9uEigKBnNob3J0cxgJIAEoCzIYLmFwaS52MS5TaG9ydHNQZXJtaXNzaW9uEi4KCWVkaXRvcmlhbBgKIAEoCzIbLmFwaS52MS5FZGl0b3JpYWxQZXJtaXNzaW9uIhcKFUdldFBlcm1pc3Npb25zUmVxdWVzdCJQChVTZXRQZXJtaXNzaW9uc1JlcXVlc3QSDQoFZW1haWwYASABKAkSKAoLcGVybWlzc2lvbnMYAiABKAsyEy5hcGkudjEuUGVybWlzc2lvbnMiKQoYRGVsZXRlUGVybWlzc2lvbnNSZXF1ZXN0Eg0KBWVtYWlsGAEgASgJIpkBCg9QZXJtaXNzaW9uc0xpc3QSPQoLcGVybWlzc2lvbnMYASADKAsyKC5hcGkudjEuUGVybWlzc2lvbnNMaXN0LlBlcm1pc3Npb25zRW50cnkaRwoQUGVybWlzc2lvbnNFbnRyeRILCgNrZXkYASABKAkSIgoFdmFsdWUYAiABKAsyEy5hcGkudjEuUGVybWlzc2lvbnM6AjgBIiYKB0JNTVllYXISDAoEeWVhchgBIAEoDRINCgVjb3VudBgCIAEoDSKCAQoQR2V0WWVhcnNSZXNwb25zZRIwCgRkYXRhGAEgAygLMiIuYXBpLnYxLkdldFllYXJzUmVzcG9uc2UuRGF0YUVudHJ5GjwKCURhdGFFbnRyeRILCgNrZXkYASABKA0SHgoFdmFsdWUYAiABKAsyDy5hcGkudjEuQk1NWWVhcjoCOAEiPgoPR2V0WWVhcnNSZXF1ZXN0EisKC2Vudmlyb25tZW50GAEgASgOMhYuYXBpLnYxLkJtbUVudmlyb25tZW50Ik0KEEdldEFsYnVtc1JlcXVlc3QSDAoEeWVhchgBIAEoDRIrCgtlbnZpcm9ubWVudBgCIAEoDjIWLmFwaS52MS5CbW1FbnZpcm9ubWVudCJECgVBbGJ1bRIKCgJpZBgBIAEoCRINCgV0aXRsZRgCIAEoCRINCgVjb3ZlchgEIAEoCRIRCglsYW5ndWFnZXMYBSADKAkiKwoKQWxidW1zTGlzdBIdCgZhbGJ1bXMYASADKAsyDS5hcGkudjEuQWxidW0iVgoVR2V0QWxidW1UcmFja3NSZXF1ZXN0EhAKCGFsYnVtX2lkGAEgASgJEisKC2Vudmlyb25tZW50GAIgASgOMhYuYXBpLnYxLkJtbUVudmlyb25tZW50ImoKF0dldFBvZGNhc3RUcmFja3NSZXF1ZXN0EhMKC3BvZGNhc3RfdGFnGAEgASgJEg0KBWxpbWl0GAIgASgNEisKC2Vudmlyb25tZW50GAMgASgOMhYuYXBpLnYxLkJtbUVudmlyb25tZW50IksKHEdldEF2YWlsYWJsZUxhbmd1YWdlc1JlcXVlc3QSKwoLZW52aXJvbm1lbnQYASABKA4yFi5hcGkudjEuQm1tRW52aXJvbm1lbnQiyAEKCEJNTVRyYWNrEgoKAmlkGAEgASgJEg0KBXRpdGxlGAIgASgJEi8KC3B1Ymxpc2hlZEF0GAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBInCglsYW5ndWFnZXMYBCABKAsyFC5hcGkudjEuTGFuZ3VhZ2VMaXN0EiwKDnRyYW5zY3JpcHRpb25zGAUgASgLMhQuYXBpLnYxLkxhbmd1YWdlTGlzdBIZChFoYXNUcmFuc2NyaXB0aW9ucxgGIAEoCCIuCgpUcmFja3NMaXN0EiAKBnRyYWNrcxgBIAMoCzIQLmFwaS52MS5CTU1UcmFjayIzCgxMYW5ndWFnZUxpc3QSIwoJTGFuZ3VhZ2VzGAEgAygLMhAuYXBpLnYxLkxhbmd1YWdlIisKCExhbmd1YWdlEgwKBGNvZGUYASABKAkSEQoJaWNvbl9maWxlGAMgASgJIiYKFkdldFRyYW5zY3JpcHRpb25SZXFlc3QSDAoEVlhJRBgBIAEoCSJBCg1UcmFuc2NyaXB0aW9uEgwKBHRleHQYASABKAkSIgoIc2VnbWVudHMYAiADKAsyEC5hcGkudjEuU2VnbWVudHMi7QEKCFNlZ21lbnRzEgoKAmlkGAEgASgBEgwKBHNlZWsYAiABKAUSDQoFc3RhcnQYAyABKAESCwoDZW5kGAQgASgBEgwKBHRleHQYBSABKAkSDgoGdG9rZW5zGAYgAygFEhMKC3RlbXBlcmF0dXJlGAcgASgBEhMKC2F2Z19sb2dwcm9iGAggASgBEhkKEWNvbXByZXNzaW9uX3JhdGlvGAkgASgBEhYKDm5vX3NwZWVjaF9wcm9iGAogASgBEhIKCmNvbmZpZGVuY2UYCyABKAESHAoFd29yZHMYDCADKAsyDS5hcGkudjEuV29yZHMiRQoFV29yZHMSDAoEdGV4dBgBIAEoCRINCgVzdGFydBgCIAEoARILCgNlbmQYAyABKAESEgoKY29uZmlkZW5jZRgEIAEoASIhChFHZXRQcmV2aWV3UmVxdWVzdBIMCgRWWElEGAEgASgJIhYKB1ByZXZpZXcSCwoDdXJsGAEgASgJImsKGkdldEJNTVRyYW5zY3JpcHRpb25SZXF1ZXN0Eg4KBmJtbV9pZBgBIAEoCRIQCghsYW5ndWFnZRgCIAEoCRIrCgtlbnZpcm9ubWVudBgDIAEoDjIWLmFwaS52MS5CbW1FbnZpcm9ubWVudCJYChpTdWJtaXRUcmFuc2NyaXB0aW9uUmVxdWVzdBIMCgRWWElEGAEgASgJEiwKDXRyYW5zY3JpcHRpb24YAiABKAsyFS5hcGkudjEuVHJhbnNjcmlwdGlvbiJJChJTdWJtaXRTaG9ydFJlcXVlc3QSDAoEVlhJRBgBIAEoCRIRCglJblNlY29uZHMYAiABKAESEgoKT3V0U2Vjb25kcxgDIAEoASIxChBFeHBvcnRSZXNvbHV0aW9uEg0KBXdpZHRoGAEgASgFEg4KBmhlaWdodBgCIAEoBSJGCg5FeHBvcnRMYW5ndWFnZRIMCgRjb2RlGAEgASgJEgwKBG5hbWUYAiABKAkSCwoDbXUxGAMgASgIEgsKA211MhgEIAEoCCIeCg1FeHBvcnRTdWJjbGlwEg0KBXRpdGxlGAEgASgJIiYKFkdldEV4cG9ydENvbmZpZ1JlcXVlc3QSDAoEVlhJRBgBIAEoCSLWAgoXR2V0RXhwb3J0Q29uZmlnUmVzcG9uc2USDAoEVlhJRBgBIAEoCRINCgV0aXRsZRgCIAEoCRIUCgxkZXN0aW5hdGlvbnMYAyADKAkSFQoNYXVkaW9fc291cmNlcxgEIAMoCRIdChVzZWxlY3RlZF9hdWRpb19zb3VyY2UYBSABKAkSKQoJbGFuZ3VhZ2VzGAYgAygLMhYuYXBpLnYxLkV4cG9ydExhbmd1YWdlEhoKEnNlbGVjdGVkX2xhbmd1YWdlcxgHIAMoCRItCgtyZXNvbHV0aW9ucxgIIAMoCzIYLmFwaS52MS5FeHBvcnRSZXNvbHV0aW9uEhAKCG92ZXJsYXlzGAkgAygJEicKCHN1YmNsaXBzGAogAygLMhUuYXBpLnYxLkV4cG9ydFN1YmNsaXASIQoZY2FuX2V4cG9ydF90aW1lZF9tZXRhZGF0YRgLIAEoCCJQChlFeHBvcnRSZXNvbHV0aW9uU2VsZWN0aW9uEg0KBXdpZHRoGAEgASgFEg4KBmhlaWdodBgCIAEoBRIUCgxkb3dubG9hZGFibGUYAyABKAgigwIKElN0YXJ0RXhwb3J0UmVxdWVzdBIMCgRWWElEGAEgASgJEhQKDGRlc3RpbmF0aW9ucxgCIAMoCRIUCgxhdWRpb19zb3VyY2UYAyABKAkSEQoJbGFuZ3VhZ2VzGAQgAygJEjYKC3Jlc29sdXRpb25zGAUgAygLMiEuYXBpLnYxLkV4cG9ydFJlc29sdXRpb25TZWxlY3Rpb24SDwoHb3ZlcmxheRgGIAEoCRIVCg13aXRoX2NoYXB0ZXJzGAcgASgIEhYKDmlnbm9yZV9zaWxlbmNlGAggASgIEhYKDmV4cG9ydF9haV9zdWJzGAkgASgIEhAKCHN1YmNsaXBzGAogAygJIisKE1N0YXJ0RXhwb3J0UmVzcG9uc2USFAoMd29ya2Zsb3dfaWRzGAEgAygJIioKGkV4cG9ydFRpbWVkTWV0YWRhdGFSZXF1ZXN0EgwKBFZYSUQYASABKAkiKAoYR2V0VkJFeHBvcnRDb25maWdSZXF1ZXN0EgwKBFZYSUQYASABKAkigAEKGUdldFZCRXhwb3J0Q29uZmlnUmVzcG9uc2USDAoEVlhJRBgBIAEoCRINCgV0aXRsZRgCIAEoCRIUCgxkZXN0aW5hdGlvbnMYAyADKAkSFwoPc3VidGl0bGVfc2hhcGVzGAQgAygJEhcKD3N1YnRpdGxlX3N0eWxlcxgFIAMoCSJqChRTdGFydFZCRXhwb3J0UmVxdWVzdBIMCgRWWElEGAEgASgJEhQKDGRlc3RpbmF0aW9ucxgCIAMoCRIWCg5zdWJ0aXRsZV9zaGFwZRgDIAEoCRIWCg5zdWJ0aXRsZV9zdHlsZRgEIAEoCSIsChVTdGFydFZCRXhwb3J0UmVzcG9uc2USEwoLd29ya2Zsb3dfaWQYASABKAkiNAoaRXhwb3J0RGVzdGluYXRpb25zUmVzcG9uc2USCgoCdngYASADKAkSCgoCdmIYAiADKAkiJQoUUmVzb2x2ZUFzc2V0c1JlcXVlc3QSDQoFVlhJRHMYASADKAkiOwoNUmVzb2x2ZWRBc3NldBIMCgRWWElEGAEgASgJEg0KBXRpdGxlGAIgASgJEg0KBWZvdW5kGAMgASgIIj4KFVJlc29sdmVBc3NldHNSZXNwb25zZRIlCgZhc3NldHMYASADKAsyFS5hcGkudjEuUmVzb2x2ZWRBc3NldCJSChtUcmlnZ2VyQ2FudGVtb0FjdGlvblJlcXVlc3QSDAoEVlhJRBgBIAEoCRIlCgZhY3Rpb24YAiABKA4yFS5hcGkudjEuQ2FudGVtb0FjdGlvbiJGChJWYXVsdFNlYXJjaFJlcXVlc3QSDQoFcXVlcnkYASABKAkSEwoLbWVkaWFfdHlwZXMYAiADKAkSDAoEcGFnZRgDIAEoBSKYAQoJVmF1bHRJdGVtEgwKBFZYSUQYASABKAkSDQoFdGl0bGUYAiABKAkSEgoKbWVkaWFfdHlwZRgDIAEoCRINCgVhZGRlZBgEIAEoCRIOCgZmb3JtYXQYBSABKAkSDAoEc2l6ZRgGIAEoCRIYChBkdXJhdGlvbl9zZWNvbmRzGAcgASgFEhMKC2hhc19wcmV2aWV3GAggASgIIi8KClZhdWx0RmFjZXQSEgoKbWVkaWFfdHlwZRgBIAEoCRINCgVjb3VudBgCIAEoBSKQAQoTVmF1bHRTZWFyY2hSZXNwb25zZRIgCgVpdGVtcxgBIAMoCzIRLmFwaS52MS5WYXVsdEl0ZW0SEgoKdG90YWxfaGl0cxgCIAEoBRIMCgRwYWdlGAMgASgFEhEKCXBhZ2Vfc2l6ZRgEIAEoBRIiCgZmYWNldHMYBSADKAsyEi5hcGkudjEuVmF1bHRGYWNldCIjChNHZXRWYXVsdEl0ZW1SZXF1ZXN0EgwKBFZYSUQYASABKAkiNwoUR2V0VmF1bHRJdGVtUmVzcG9uc2USHwoEaXRlbRgBIAEoCzIRLmFwaS52MS5WYXVsdEl0ZW0ikAEKD0VkaXRvcmlhbE1hcmtlchIKCgJpZBgBIAEoCRISCgpzb3J0X29yZGVyGAIgASgFEgwKBG5hbWUYAyABKAkSDAoEdHlwZRgEIAEoCRIQCghzdGFydF9tcxgFIAEoAxIOCgZlbmRfbXMYBiABKAMSDwoHcHVibGlzaBgHIAEoCBIOCgZzb3VyY2UYCCABKAki/gEKEEVkaXRvcmlhbFNlc3Npb24SCgoCaWQYASABKAkSDAoEVlhJRBgCIAEoCRINCgV0aXRsZRgDIAEoCRIOCgZzdGF0dXMYBCABKAkSEgoKY3JlYXRlZF9ieRgFIAEoCRIuCgpjcmVhdGVkX2F0GAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX2F0GAcgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIoCgdtYXJrZXJzGAkgAygLMhcuYXBpLnYxLkVkaXRvcmlhbE1hcmtlchITCgtwcmV2aWV3X3VybBgKIAEoCSJLCh1MaXN0RWRpdG9yaWFsU2Vzc2lvbnNSZXNwb25zZRIqCghzZXNzaW9ucxgBIAMoCzIYLmFwaS52MS5FZGl0b3JpYWxTZXNzaW9uIjwKHUNyZWF0ZUVkaXRvcmlhbFNlc3Npb25SZXF1ZXN0EgwKBFZYSUQYASABKAkSDQoFdGl0bGUYAiABKAkiKAoaR2V0RWRpdG9yaWFsU2Vzc2lvblJlcXVlc3QSCgoCaWQYASABKAkiYgobU2F2ZUVkaXRvcmlhbFNlc3Npb25SZXF1ZXN0EgoKAmlkGAEgASgJEg0KBXRpdGxlGAIgASgJEigKB21hcmtlcnMYAyADKAsyFy5hcGkudjEuRWRpdG9yaWFsTWFya2VyIisKHURlbGV0ZUVkaXRvcmlhbFNlc3Npb25SZXF1ZXN0EgoKAmlkGAEgASgJIisKHUltcG9ydEVkaXRvcmlhbE1hcmtlcnNSZXF1ZXN0EgoKAmlkGAEgASgJIkoKHkltcG9ydEVkaXRvcmlhbE1hcmtlcnNSZXNwb25zZRIoCgdtYXJrZXJzGAEgAygLMhcuYXBpLnYxLkVkaXRvcmlhbE1hcmtlciJUChpTZXRFZGl0b3JpYWxQdWJsaXNoUmVxdWVzdBISCgpzZXNzaW9uX2lkGAEgASgJEhEKCW1hcmtlcl9pZBgCIAEoCRIPCgdwdWJsaXNoGAMgASgIKjEKDkJtbUVudmlyb25tZW50Eg4KClByb2R1Y3Rpb24QABIPCgtJbnRlZ3JhdGlvbhABKroBCg1DYW50ZW1vQWN0aW9uEh4KGkNBTlRFTU9fQUNUSU9OX1VOU1BFQ0lGSUVEEAASGgoWQ0FOVEVNT19BQ1RJT05fUFJFVklFVxABEh0KGUNBTlRFTU9fQUNUSU9OX1RSQU5TQ1JJQkUQAhIpCiVDQU5URU1PX0FDVElPTl9TVUJUSVRMRV9GUk9NX1NVQlRSQU5TEAMSIwofQ0FOVEVNT19BQ1RJT05fVVBEQVRFX1JFTEFUSU9OUxAEMpYTCgpBUElTZXJ2aWNlEjUKDkdldFBlcm1pc3Npb25zEgwuYXBpLnYxLlZvaWQaEy5hcGkudjEuUGVybWlzc2lvbnMiABJCChFVcGRhdGVQZXJtaXNzaW9ucxIdLmFwaS52MS5TZXRQZXJtaXNzaW9uc1JlcXVlc3QaDC5hcGkudjEuVm9pZCIAEkUKEURlbGV0ZVBlcm1pc3Npb25zEiAuYXBpLnYxLkRlbGV0ZVBlcm1pc3Npb25zUmVxdWVzdBoMLmFwaS52MS5Wb2lkIgASOgoPTGlzdFBlcm1pc3Npb25zEgwuYXBpLnYxLlZvaWQaFy5hcGkudjEuUGVybWlzc2lvbnNMaXN0IgASSwoQR2V0VHJhbnNjcmlwdGlvbhIeLmFwaS52MS5HZXRUcmFuc2NyaXB0aW9uUmVxZXN0GhUuYXBpLnYxLlRyYW5zY3JpcHRpb24iABJHChdHZXRUcmFuc2NyaXB0aW9uUHJldmlldxIZLmFwaS52MS5HZXRQcmV2aWV3UmVxdWVzdBoPLmFwaS52MS5QcmV2aWV3IgASQAoQR2V0U2hvcnRzUHJldmlldxIZLmFwaS52MS5HZXRQcmV2aWV3UmVxdWVzdBoPLmFwaS52MS5QcmV2aWV3IgASSQoTU3VibWl0VHJhbnNjcmlwdGlvbhIiLmFwaS52MS5TdWJtaXRUcmFuc2NyaXB0aW9uUmVxdWVzdBoMLmFwaS52MS5Wb2lkIgASPwoIR2V0WWVhcnMSFy5hcGkudjEuR2V0WWVhcnNSZXF1ZXN0GhguYXBpLnYxLkdldFllYXJzUmVzcG9uc2UiABI7CglHZXRBbGJ1bXMSGC5hcGkudjEuR2V0QWxidW1zUmVxdWVzdBoSLmFwaS52MS5BbGJ1bXNMaXN0IgASRQoOR2V0QWxidW1UcmFja3MSHS5hcGkudjEuR2V0QWxidW1UcmFja3NSZXF1ZXN0GhIuYXBpLnYxLlRyYWNrc0xpc3QiABJJChBHZXRQb2RjYXN0VHJhY2tzEh8uYXBpLnYxLkdldFBvZGNhc3RUcmFja3NSZXF1ZXN0GhIuYXBpLnYxLlRyYWNrc0xpc3QiABJMCgxHZXRMYW5ndWFnZXMSJC5hcGkudjEuR2V0QXZhaWxhYmxlTGFuZ3VhZ2VzUmVxdWVzdBoULmFwaS52MS5MYW5ndWFnZUxpc3QiABJSChNHZXRCTU1UcmFuc2NyaXB0aW9uEiIuYXBpLnYxLkdldEJNTVRyYW5zY3JpcHRpb25SZXF1ZXN0GhUuYXBpLnYxLlRyYW5zY3JpcHRpb24iABI5CgtTdWJtaXRTaG9ydBIaLmFwaS52MS5TdWJtaXRTaG9ydFJlcXVlc3QaDC5hcGkudjEuVm9pZCIAElQKD0dldEV4cG9ydENvbmZpZxIeLmFwaS52MS5HZXRFeHBvcnRDb25maWdSZXF1ZXN0Gh8uYXBpLnYxLkdldEV4cG9ydENvbmZpZ1Jlc3BvbnNlIgASSAoLU3RhcnRFeHBvcnQSGi5hcGkudjEuU3RhcnRFeHBvcnRSZXF1ZXN0GhsuYXBpLnYxLlN0YXJ0RXhwb3J0UmVzcG9uc2UiABJJChNFeHBvcnRUaW1lZE1ldGFkYXRhEiIuYXBpLnYxLkV4cG9ydFRpbWVkTWV0YWRhdGFSZXF1ZXN0GgwuYXBpLnYxLlZvaWQiABJOCg1SZXNvbHZlQXNzZXRzEhwuYXBpLnYxLlJlc29sdmVBc3NldHNSZXF1ZXN0Gh0uYXBpLnYxLlJlc29sdmVBc3NldHNSZXNwb25zZSIAEloKEUdldFZCRXhwb3J0Q29uZmlnEiAuYXBpLnYxLkdldFZCRXhwb3J0Q29uZmlnUmVxdWVzdBohLmFwaS52MS5HZXRWQkV4cG9ydENvbmZpZ1Jlc3BvbnNlIgASTgoNU3RhcnRWQkV4cG9ydBIcLmFwaS52MS5TdGFydFZCRXhwb3J0UmVxdWVzdBodLmFwaS52MS5TdGFydFZCRXhwb3J0UmVzcG9uc2UiABJLChVHZXRFeHBvcnREZXN0aW5hdGlvbnMSDC5hcGkudjEuVm9pZBoiLmFwaS52MS5FeHBvcnREZXN0aW5hdGlvbnNSZXNwb25zZSIAEksKFFRyaWdnZXJDYW50ZW1vQWN0aW9uEiMuYXBpLnYxLlRyaWdnZXJDYW50ZW1vQWN0aW9uUmVxdWVzdBoMLmFwaS52MS5Wb2lkIgASSAoLVmF1bHRTZWFyY2gSGi5hcGkudjEuVmF1bHRTZWFyY2hSZXF1ZXN0GhsuYXBpLnYxLlZhdWx0U2VhcmNoUmVzcG9uc2UiABJLCgxHZXRWYXVsdEl0ZW0SGy5hcGkudjEuR2V0VmF1bHRJdGVtUmVxdWVzdBocLmFwaS52MS5HZXRWYXVsdEl0ZW1SZXNwb25zZSIAEk4KFUxpc3RFZGl0b3JpYWxTZXNzaW9ucxIMLmFwaS52MS5Wb2lkGiUuYXBpLnYxLkxpc3RFZGl0b3JpYWxTZXNzaW9uc1Jlc3BvbnNlIgASWwoWQ3JlYXRlRWRpdG9yaWFsU2Vzc2lvbhIlLmFwaS52MS5DcmVhdGVFZGl0b3JpYWxTZXNzaW9uUmVxdWVzdBoYLmFwaS52MS5FZGl0b3JpYWxTZXNzaW9uIgASVQoTR2V0RWRpdG9yaWFsU2Vzc2lvbhIiLmFwaS52MS5HZXRFZGl0b3JpYWxTZXNzaW9uUmVxdWVzdBoYLmFwaS52MS5FZGl0b3JpYWxTZXNzaW9uIgASVwoUU2F2ZUVkaXRvcmlhbFNlc3Npb24SIy5hcGkudjEuU2F2ZUVkaXRvcmlhbFNlc3Npb25SZXF1ZXN0GhguYXBpLnYxLkVkaXRvcmlhbFNlc3Npb24iABJJChNTZXRFZGl0b3JpYWxQdWJsaXNoEiIuYXBpLnYxLlNldEVkaXRvcmlhbFB1Ymxpc2hSZXF1ZXN0GgwuYXBpLnYxLlZvaWQiABJPChZEZWxldGVFZGl0b3JpYWxTZXNzaW9uEiUuYXBpLnYxLkRlbGV0ZUVkaXRvcmlhbFNlc3Npb25SZXF1ZXN0GgwuYXBpLnYxLlZvaWQiABJpChZJbXBvcnRFZGl0b3JpYWxNYXJrZXJzEiUuYXBpLnYxLkltcG9ydEVkaXRvcmlhbE1hcmtlcnNSZXF1ZXN0GiYuYXBpLnYxLkltcG9ydEVkaXRvcmlhbE1hcmtlcnNSZXNwb25zZSIAQh5aHGJjYy1tZWRpYS10b29scy9hcGkvdjE7YXBpdjFiBnByb3RvMw", [file_google_protobuf_timestamp, file_api_v1_common]);
 
 /**
  * @generated from message api.v1.BMMPermission
@@ -234,6 +234,36 @@ export const ShortsPermissionSchema: GenMessage<ShortsPermission> = /*@__PURE__*
   messageDesc(file_api_v1_api, 6);
 
 /**
+ * Permission for the Editorial approval tool (review markers for publishing).
+ *
+ * @generated from message api.v1.EditorialPermission
+ */
+export type EditorialPermission = Message<"api.v1.EditorialPermission"> & {
+  /**
+   * can open the tool, see all sessions, and accept/reject markers for
+   * publishing (the "Enkel" / simple view)
+   *
+   * @generated from field: bool enabled = 1;
+   */
+  enabled: boolean;
+
+  /**
+   * can additionally add, remove and edit markers and sessions (the "Rediger"
+   * / edit view); implies enabled
+   *
+   * @generated from field: bool admin = 2;
+   */
+  admin: boolean;
+};
+
+/**
+ * Describes the message api.v1.EditorialPermission.
+ * Use `create(EditorialPermissionSchema)` to create a new message.
+ */
+export const EditorialPermissionSchema: GenMessage<EditorialPermission> = /*@__PURE__*/
+  messageDesc(file_api_v1_api, 7);
+
+/**
  * @generated from message api.v1.Permissions
  */
 export type Permissions = Message<"api.v1.Permissions"> & {
@@ -281,6 +311,11 @@ export type Permissions = Message<"api.v1.Permissions"> & {
    * @generated from field: api.v1.ShortsPermission shorts = 9;
    */
   shorts?: ShortsPermission | undefined;
+
+  /**
+   * @generated from field: api.v1.EditorialPermission editorial = 10;
+   */
+  editorial?: EditorialPermission | undefined;
 };
 
 /**
@@ -288,7 +323,7 @@ export type Permissions = Message<"api.v1.Permissions"> & {
  * Use `create(PermissionsSchema)` to create a new message.
  */
 export const PermissionsSchema: GenMessage<Permissions> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 7);
+  messageDesc(file_api_v1_api, 8);
 
 /**
  * @generated from message api.v1.GetPermissionsRequest
@@ -301,7 +336,7 @@ export type GetPermissionsRequest = Message<"api.v1.GetPermissionsRequest"> & {
  * Use `create(GetPermissionsRequestSchema)` to create a new message.
  */
 export const GetPermissionsRequestSchema: GenMessage<GetPermissionsRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 8);
+  messageDesc(file_api_v1_api, 9);
 
 /**
  * @generated from message api.v1.SetPermissionsRequest
@@ -323,7 +358,7 @@ export type SetPermissionsRequest = Message<"api.v1.SetPermissionsRequest"> & {
  * Use `create(SetPermissionsRequestSchema)` to create a new message.
  */
 export const SetPermissionsRequestSchema: GenMessage<SetPermissionsRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 9);
+  messageDesc(file_api_v1_api, 10);
 
 /**
  * @generated from message api.v1.DeletePermissionsRequest
@@ -340,7 +375,7 @@ export type DeletePermissionsRequest = Message<"api.v1.DeletePermissionsRequest"
  * Use `create(DeletePermissionsRequestSchema)` to create a new message.
  */
 export const DeletePermissionsRequestSchema: GenMessage<DeletePermissionsRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 10);
+  messageDesc(file_api_v1_api, 11);
 
 /**
  * @generated from message api.v1.PermissionsList
@@ -357,7 +392,7 @@ export type PermissionsList = Message<"api.v1.PermissionsList"> & {
  * Use `create(PermissionsListSchema)` to create a new message.
  */
 export const PermissionsListSchema: GenMessage<PermissionsList> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 11);
+  messageDesc(file_api_v1_api, 12);
 
 /**
  * @generated from message api.v1.BMMYear
@@ -379,7 +414,7 @@ export type BMMYear = Message<"api.v1.BMMYear"> & {
  * Use `create(BMMYearSchema)` to create a new message.
  */
 export const BMMYearSchema: GenMessage<BMMYear> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 12);
+  messageDesc(file_api_v1_api, 13);
 
 /**
  * @generated from message api.v1.GetYearsResponse
@@ -396,7 +431,7 @@ export type GetYearsResponse = Message<"api.v1.GetYearsResponse"> & {
  * Use `create(GetYearsResponseSchema)` to create a new message.
  */
 export const GetYearsResponseSchema: GenMessage<GetYearsResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 13);
+  messageDesc(file_api_v1_api, 14);
 
 /**
  * @generated from message api.v1.GetYearsRequest
@@ -413,7 +448,7 @@ export type GetYearsRequest = Message<"api.v1.GetYearsRequest"> & {
  * Use `create(GetYearsRequestSchema)` to create a new message.
  */
 export const GetYearsRequestSchema: GenMessage<GetYearsRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 14);
+  messageDesc(file_api_v1_api, 15);
 
 /**
  * @generated from message api.v1.GetAlbumsRequest
@@ -435,7 +470,7 @@ export type GetAlbumsRequest = Message<"api.v1.GetAlbumsRequest"> & {
  * Use `create(GetAlbumsRequestSchema)` to create a new message.
  */
 export const GetAlbumsRequestSchema: GenMessage<GetAlbumsRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 15);
+  messageDesc(file_api_v1_api, 16);
 
 /**
  * @generated from message api.v1.Album
@@ -467,7 +502,7 @@ export type Album = Message<"api.v1.Album"> & {
  * Use `create(AlbumSchema)` to create a new message.
  */
 export const AlbumSchema: GenMessage<Album> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 16);
+  messageDesc(file_api_v1_api, 17);
 
 /**
  * @generated from message api.v1.AlbumsList
@@ -484,7 +519,7 @@ export type AlbumsList = Message<"api.v1.AlbumsList"> & {
  * Use `create(AlbumsListSchema)` to create a new message.
  */
 export const AlbumsListSchema: GenMessage<AlbumsList> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 17);
+  messageDesc(file_api_v1_api, 18);
 
 /**
  * @generated from message api.v1.GetAlbumTracksRequest
@@ -506,7 +541,7 @@ export type GetAlbumTracksRequest = Message<"api.v1.GetAlbumTracksRequest"> & {
  * Use `create(GetAlbumTracksRequestSchema)` to create a new message.
  */
 export const GetAlbumTracksRequestSchema: GenMessage<GetAlbumTracksRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 18);
+  messageDesc(file_api_v1_api, 19);
 
 /**
  * @generated from message api.v1.GetPodcastTracksRequest
@@ -533,7 +568,7 @@ export type GetPodcastTracksRequest = Message<"api.v1.GetPodcastTracksRequest"> 
  * Use `create(GetPodcastTracksRequestSchema)` to create a new message.
  */
 export const GetPodcastTracksRequestSchema: GenMessage<GetPodcastTracksRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 19);
+  messageDesc(file_api_v1_api, 20);
 
 /**
  * @generated from message api.v1.GetAvailableLanguagesRequest
@@ -550,7 +585,7 @@ export type GetAvailableLanguagesRequest = Message<"api.v1.GetAvailableLanguages
  * Use `create(GetAvailableLanguagesRequestSchema)` to create a new message.
  */
 export const GetAvailableLanguagesRequestSchema: GenMessage<GetAvailableLanguagesRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 20);
+  messageDesc(file_api_v1_api, 21);
 
 /**
  * @generated from message api.v1.BMMTrack
@@ -592,7 +627,7 @@ export type BMMTrack = Message<"api.v1.BMMTrack"> & {
  * Use `create(BMMTrackSchema)` to create a new message.
  */
 export const BMMTrackSchema: GenMessage<BMMTrack> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 21);
+  messageDesc(file_api_v1_api, 22);
 
 /**
  * @generated from message api.v1.TracksList
@@ -609,7 +644,7 @@ export type TracksList = Message<"api.v1.TracksList"> & {
  * Use `create(TracksListSchema)` to create a new message.
  */
 export const TracksListSchema: GenMessage<TracksList> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 22);
+  messageDesc(file_api_v1_api, 23);
 
 /**
  * @generated from message api.v1.LanguageList
@@ -626,7 +661,7 @@ export type LanguageList = Message<"api.v1.LanguageList"> & {
  * Use `create(LanguageListSchema)` to create a new message.
  */
 export const LanguageListSchema: GenMessage<LanguageList> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 23);
+  messageDesc(file_api_v1_api, 24);
 
 /**
  * @generated from message api.v1.Language
@@ -648,7 +683,7 @@ export type Language = Message<"api.v1.Language"> & {
  * Use `create(LanguageSchema)` to create a new message.
  */
 export const LanguageSchema: GenMessage<Language> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 24);
+  messageDesc(file_api_v1_api, 25);
 
 /**
  * @generated from message api.v1.GetTranscriptionReqest
@@ -665,7 +700,7 @@ export type GetTranscriptionReqest = Message<"api.v1.GetTranscriptionReqest"> & 
  * Use `create(GetTranscriptionReqestSchema)` to create a new message.
  */
 export const GetTranscriptionReqestSchema: GenMessage<GetTranscriptionReqest> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 25);
+  messageDesc(file_api_v1_api, 26);
 
 /**
  * @generated from message api.v1.Transcription
@@ -687,7 +722,7 @@ export type Transcription = Message<"api.v1.Transcription"> & {
  * Use `create(TranscriptionSchema)` to create a new message.
  */
 export const TranscriptionSchema: GenMessage<Transcription> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 26);
+  messageDesc(file_api_v1_api, 27);
 
 /**
  * @generated from message api.v1.Segments
@@ -759,7 +794,7 @@ export type Segments = Message<"api.v1.Segments"> & {
  * Use `create(SegmentsSchema)` to create a new message.
  */
 export const SegmentsSchema: GenMessage<Segments> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 27);
+  messageDesc(file_api_v1_api, 28);
 
 /**
  * @generated from message api.v1.Words
@@ -791,7 +826,7 @@ export type Words = Message<"api.v1.Words"> & {
  * Use `create(WordsSchema)` to create a new message.
  */
 export const WordsSchema: GenMessage<Words> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 28);
+  messageDesc(file_api_v1_api, 29);
 
 /**
  * @generated from message api.v1.GetPreviewRequest
@@ -808,7 +843,7 @@ export type GetPreviewRequest = Message<"api.v1.GetPreviewRequest"> & {
  * Use `create(GetPreviewRequestSchema)` to create a new message.
  */
 export const GetPreviewRequestSchema: GenMessage<GetPreviewRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 29);
+  messageDesc(file_api_v1_api, 30);
 
 /**
  * @generated from message api.v1.Preview
@@ -825,7 +860,7 @@ export type Preview = Message<"api.v1.Preview"> & {
  * Use `create(PreviewSchema)` to create a new message.
  */
 export const PreviewSchema: GenMessage<Preview> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 30);
+  messageDesc(file_api_v1_api, 31);
 
 /**
  * @generated from message api.v1.GetBMMTranscriptionRequest
@@ -852,7 +887,7 @@ export type GetBMMTranscriptionRequest = Message<"api.v1.GetBMMTranscriptionRequ
  * Use `create(GetBMMTranscriptionRequestSchema)` to create a new message.
  */
 export const GetBMMTranscriptionRequestSchema: GenMessage<GetBMMTranscriptionRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 31);
+  messageDesc(file_api_v1_api, 32);
 
 /**
  * @generated from message api.v1.SubmitTranscriptionRequest
@@ -874,7 +909,7 @@ export type SubmitTranscriptionRequest = Message<"api.v1.SubmitTranscriptionRequ
  * Use `create(SubmitTranscriptionRequestSchema)` to create a new message.
  */
 export const SubmitTranscriptionRequestSchema: GenMessage<SubmitTranscriptionRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 32);
+  messageDesc(file_api_v1_api, 33);
 
 /**
  * @generated from message api.v1.SubmitShortRequest
@@ -901,7 +936,7 @@ export type SubmitShortRequest = Message<"api.v1.SubmitShortRequest"> & {
  * Use `create(SubmitShortRequestSchema)` to create a new message.
  */
 export const SubmitShortRequestSchema: GenMessage<SubmitShortRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 33);
+  messageDesc(file_api_v1_api, 34);
 
 /**
  * @generated from message api.v1.ExportResolution
@@ -923,7 +958,7 @@ export type ExportResolution = Message<"api.v1.ExportResolution"> & {
  * Use `create(ExportResolutionSchema)` to create a new message.
  */
 export const ExportResolutionSchema: GenMessage<ExportResolution> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 34);
+  messageDesc(file_api_v1_api, 35);
 
 /**
  * @generated from message api.v1.ExportLanguage
@@ -957,7 +992,7 @@ export type ExportLanguage = Message<"api.v1.ExportLanguage"> & {
  * Use `create(ExportLanguageSchema)` to create a new message.
  */
 export const ExportLanguageSchema: GenMessage<ExportLanguage> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 35);
+  messageDesc(file_api_v1_api, 36);
 
 /**
  * @generated from message api.v1.ExportSubclip
@@ -974,7 +1009,7 @@ export type ExportSubclip = Message<"api.v1.ExportSubclip"> & {
  * Use `create(ExportSubclipSchema)` to create a new message.
  */
 export const ExportSubclipSchema: GenMessage<ExportSubclip> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 36);
+  messageDesc(file_api_v1_api, 37);
 
 /**
  * @generated from message api.v1.GetExportConfigRequest
@@ -991,7 +1026,7 @@ export type GetExportConfigRequest = Message<"api.v1.GetExportConfigRequest"> & 
  * Use `create(GetExportConfigRequestSchema)` to create a new message.
  */
 export const GetExportConfigRequestSchema: GenMessage<GetExportConfigRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 37);
+  messageDesc(file_api_v1_api, 38);
 
 /**
  * @generated from message api.v1.GetExportConfigResponse
@@ -1066,7 +1101,7 @@ export type GetExportConfigResponse = Message<"api.v1.GetExportConfigResponse"> 
  * Use `create(GetExportConfigResponseSchema)` to create a new message.
  */
 export const GetExportConfigResponseSchema: GenMessage<GetExportConfigResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 38);
+  messageDesc(file_api_v1_api, 39);
 
 /**
  * @generated from message api.v1.ExportResolutionSelection
@@ -1093,7 +1128,7 @@ export type ExportResolutionSelection = Message<"api.v1.ExportResolutionSelectio
  * Use `create(ExportResolutionSelectionSchema)` to create a new message.
  */
 export const ExportResolutionSelectionSchema: GenMessage<ExportResolutionSelection> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 39);
+  messageDesc(file_api_v1_api, 40);
 
 /**
  * @generated from message api.v1.StartExportRequest
@@ -1159,7 +1194,7 @@ export type StartExportRequest = Message<"api.v1.StartExportRequest"> & {
  * Use `create(StartExportRequestSchema)` to create a new message.
  */
 export const StartExportRequestSchema: GenMessage<StartExportRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 40);
+  messageDesc(file_api_v1_api, 41);
 
 /**
  * @generated from message api.v1.StartExportResponse
@@ -1176,7 +1211,7 @@ export type StartExportResponse = Message<"api.v1.StartExportResponse"> & {
  * Use `create(StartExportResponseSchema)` to create a new message.
  */
 export const StartExportResponseSchema: GenMessage<StartExportResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 41);
+  messageDesc(file_api_v1_api, 42);
 
 /**
  * @generated from message api.v1.ExportTimedMetadataRequest
@@ -1193,7 +1228,7 @@ export type ExportTimedMetadataRequest = Message<"api.v1.ExportTimedMetadataRequ
  * Use `create(ExportTimedMetadataRequestSchema)` to create a new message.
  */
 export const ExportTimedMetadataRequestSchema: GenMessage<ExportTimedMetadataRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 42);
+  messageDesc(file_api_v1_api, 43);
 
 /**
  * @generated from message api.v1.GetVBExportConfigRequest
@@ -1210,7 +1245,7 @@ export type GetVBExportConfigRequest = Message<"api.v1.GetVBExportConfigRequest"
  * Use `create(GetVBExportConfigRequestSchema)` to create a new message.
  */
 export const GetVBExportConfigRequestSchema: GenMessage<GetVBExportConfigRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 43);
+  messageDesc(file_api_v1_api, 44);
 
 /**
  * @generated from message api.v1.GetVBExportConfigResponse
@@ -1253,7 +1288,7 @@ export type GetVBExportConfigResponse = Message<"api.v1.GetVBExportConfigRespons
  * Use `create(GetVBExportConfigResponseSchema)` to create a new message.
  */
 export const GetVBExportConfigResponseSchema: GenMessage<GetVBExportConfigResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 44);
+  messageDesc(file_api_v1_api, 45);
 
 /**
  * @generated from message api.v1.StartVBExportRequest
@@ -1287,7 +1322,7 @@ export type StartVBExportRequest = Message<"api.v1.StartVBExportRequest"> & {
  * Use `create(StartVBExportRequestSchema)` to create a new message.
  */
 export const StartVBExportRequestSchema: GenMessage<StartVBExportRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 45);
+  messageDesc(file_api_v1_api, 46);
 
 /**
  * @generated from message api.v1.StartVBExportResponse
@@ -1304,7 +1339,7 @@ export type StartVBExportResponse = Message<"api.v1.StartVBExportResponse"> & {
  * Use `create(StartVBExportResponseSchema)` to create a new message.
  */
 export const StartVBExportResponseSchema: GenMessage<StartVBExportResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 46);
+  messageDesc(file_api_v1_api, 47);
 
 /**
  * Canonical, full destination lists (every selectable value), used by the admin
@@ -1329,7 +1364,7 @@ export type ExportDestinationsResponse = Message<"api.v1.ExportDestinationsRespo
  * Use `create(ExportDestinationsResponseSchema)` to create a new message.
  */
 export const ExportDestinationsResponseSchema: GenMessage<ExportDestinationsResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 47);
+  messageDesc(file_api_v1_api, 48);
 
 /**
  * Resolve a list of VX-ids to their titles for the bulk-export asset list.
@@ -1348,7 +1383,7 @@ export type ResolveAssetsRequest = Message<"api.v1.ResolveAssetsRequest"> & {
  * Use `create(ResolveAssetsRequestSchema)` to create a new message.
  */
 export const ResolveAssetsRequestSchema: GenMessage<ResolveAssetsRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 48);
+  messageDesc(file_api_v1_api, 49);
 
 /**
  * @generated from message api.v1.ResolvedAsset
@@ -1377,7 +1412,7 @@ export type ResolvedAsset = Message<"api.v1.ResolvedAsset"> & {
  * Use `create(ResolvedAssetSchema)` to create a new message.
  */
 export const ResolvedAssetSchema: GenMessage<ResolvedAsset> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 49);
+  messageDesc(file_api_v1_api, 50);
 
 /**
  * @generated from message api.v1.ResolveAssetsResponse
@@ -1394,7 +1429,7 @@ export type ResolveAssetsResponse = Message<"api.v1.ResolveAssetsResponse"> & {
  * Use `create(ResolveAssetsResponseSchema)` to create a new message.
  */
 export const ResolveAssetsResponseSchema: GenMessage<ResolveAssetsResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 50);
+  messageDesc(file_api_v1_api, 51);
 
 /**
  * @generated from message api.v1.TriggerCantemoActionRequest
@@ -1416,7 +1451,7 @@ export type TriggerCantemoActionRequest = Message<"api.v1.TriggerCantemoActionRe
  * Use `create(TriggerCantemoActionRequestSchema)` to create a new message.
  */
 export const TriggerCantemoActionRequestSchema: GenMessage<TriggerCantemoActionRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 51);
+  messageDesc(file_api_v1_api, 52);
 
 /**
  * @generated from message api.v1.VaultSearchRequest
@@ -1449,7 +1484,7 @@ export type VaultSearchRequest = Message<"api.v1.VaultSearchRequest"> & {
  * Use `create(VaultSearchRequestSchema)` to create a new message.
  */
 export const VaultSearchRequestSchema: GenMessage<VaultSearchRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 52);
+  messageDesc(file_api_v1_api, 53);
 
 /**
  * @generated from message api.v1.VaultItem
@@ -1513,7 +1548,7 @@ export type VaultItem = Message<"api.v1.VaultItem"> & {
  * Use `create(VaultItemSchema)` to create a new message.
  */
 export const VaultItemSchema: GenMessage<VaultItem> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 53);
+  messageDesc(file_api_v1_api, 54);
 
 /**
  * @generated from message api.v1.VaultFacet
@@ -1535,7 +1570,7 @@ export type VaultFacet = Message<"api.v1.VaultFacet"> & {
  * Use `create(VaultFacetSchema)` to create a new message.
  */
 export const VaultFacetSchema: GenMessage<VaultFacet> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 54);
+  messageDesc(file_api_v1_api, 55);
 
 /**
  * @generated from message api.v1.VaultSearchResponse
@@ -1574,7 +1609,7 @@ export type VaultSearchResponse = Message<"api.v1.VaultSearchResponse"> & {
  * Use `create(VaultSearchResponseSchema)` to create a new message.
  */
 export const VaultSearchResponseSchema: GenMessage<VaultSearchResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 55);
+  messageDesc(file_api_v1_api, 56);
 
 /**
  * @generated from message api.v1.GetVaultItemRequest
@@ -1591,7 +1626,7 @@ export type GetVaultItemRequest = Message<"api.v1.GetVaultItemRequest"> & {
  * Use `create(GetVaultItemRequestSchema)` to create a new message.
  */
 export const GetVaultItemRequestSchema: GenMessage<GetVaultItemRequest> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 56);
+  messageDesc(file_api_v1_api, 57);
 
 /**
  * @generated from message api.v1.GetVaultItemResponse
@@ -1608,7 +1643,307 @@ export type GetVaultItemResponse = Message<"api.v1.GetVaultItemResponse"> & {
  * Use `create(GetVaultItemResponseSchema)` to create a new message.
  */
 export const GetVaultItemResponseSchema: GenMessage<GetVaultItemResponse> = /*@__PURE__*/
-  messageDesc(file_api_v1_api, 57);
+  messageDesc(file_api_v1_api, 58);
+
+/**
+ * A single reviewable marker/chapter within a session.
+ *
+ * @generated from message api.v1.EditorialMarker
+ */
+export type EditorialMarker = Message<"api.v1.EditorialMarker"> & {
+  /**
+   * empty on markers the client just added; the backend assigns an id on save
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * display order in the table (assigned server-side from list position on save)
+   *
+   * @generated from field: int32 sort_order = 2;
+   */
+  sortOrder: number;
+
+  /**
+   * "Hvem eller hva" — person/thing
+   *
+   * @generated from field: string name = 3;
+   */
+  name: string;
+
+  /**
+   * appell / vitnesbyrd / sang / ...
+   *
+   * @generated from field: string type = 4;
+   */
+  type: string;
+
+  /**
+   * @generated from field: int64 start_ms = 5;
+   */
+  startMs: bigint;
+
+  /**
+   * @generated from field: int64 end_ms = 6;
+   */
+  endMs: bigint;
+
+  /**
+   * Ja/Nei publish toggle
+   *
+   * @generated from field: bool publish = 7;
+   */
+  publish: boolean;
+
+  /**
+   * "import" (from Mediabanken chapters) or "manual"
+   *
+   * @generated from field: string source = 8;
+   */
+  source: string;
+};
+
+/**
+ * Describes the message api.v1.EditorialMarker.
+ * Use `create(EditorialMarkerSchema)` to create a new message.
+ */
+export const EditorialMarkerSchema: GenMessage<EditorialMarker> = /*@__PURE__*/
+  messageDesc(file_api_v1_api, 59);
+
+/**
+ * A review session tied to a single Mediabanken asset.
+ *
+ * @generated from message api.v1.EditorialSession
+ */
+export type EditorialSession = Message<"api.v1.EditorialSession"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: string VXID = 2;
+   */
+  VXID: string;
+
+  /**
+   * @generated from field: string title = 3;
+   */
+  title: string;
+
+  /**
+   * "draft"
+   *
+   * @generated from field: string status = 4;
+   */
+  status: string;
+
+  /**
+   * @generated from field: string created_by = 5;
+   */
+  createdBy: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp created_at = 6;
+   */
+  createdAt?: Timestamp | undefined;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_at = 7;
+   */
+  updatedAt?: Timestamp | undefined;
+
+  /**
+   * only populated by GetEditorialSession
+   *
+   * @generated from field: repeated api.v1.EditorialMarker markers = 9;
+   */
+  markers: EditorialMarker[];
+
+  /**
+   * source-video preview URL, resolved server-side; only set by GetEditorialSession
+   *
+   * @generated from field: string preview_url = 10;
+   */
+  previewUrl: string;
+};
+
+/**
+ * Describes the message api.v1.EditorialSession.
+ * Use `create(EditorialSessionSchema)` to create a new message.
+ */
+export const EditorialSessionSchema: GenMessage<EditorialSession> = /*@__PURE__*/
+  messageDesc(file_api_v1_api, 60);
+
+/**
+ * @generated from message api.v1.ListEditorialSessionsResponse
+ */
+export type ListEditorialSessionsResponse = Message<"api.v1.ListEditorialSessionsResponse"> & {
+  /**
+   * @generated from field: repeated api.v1.EditorialSession sessions = 1;
+   */
+  sessions: EditorialSession[];
+};
+
+/**
+ * Describes the message api.v1.ListEditorialSessionsResponse.
+ * Use `create(ListEditorialSessionsResponseSchema)` to create a new message.
+ */
+export const ListEditorialSessionsResponseSchema: GenMessage<ListEditorialSessionsResponse> = /*@__PURE__*/
+  messageDesc(file_api_v1_api, 61);
+
+/**
+ * @generated from message api.v1.CreateEditorialSessionRequest
+ */
+export type CreateEditorialSessionRequest = Message<"api.v1.CreateEditorialSessionRequest"> & {
+  /**
+   * @generated from field: string VXID = 1;
+   */
+  VXID: string;
+
+  /**
+   * @generated from field: string title = 2;
+   */
+  title: string;
+};
+
+/**
+ * Describes the message api.v1.CreateEditorialSessionRequest.
+ * Use `create(CreateEditorialSessionRequestSchema)` to create a new message.
+ */
+export const CreateEditorialSessionRequestSchema: GenMessage<CreateEditorialSessionRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_api, 62);
+
+/**
+ * @generated from message api.v1.GetEditorialSessionRequest
+ */
+export type GetEditorialSessionRequest = Message<"api.v1.GetEditorialSessionRequest"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+};
+
+/**
+ * Describes the message api.v1.GetEditorialSessionRequest.
+ * Use `create(GetEditorialSessionRequestSchema)` to create a new message.
+ */
+export const GetEditorialSessionRequestSchema: GenMessage<GetEditorialSessionRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_api, 63);
+
+/**
+ * Full replace of the session's markers + title on save.
+ *
+ * @generated from message api.v1.SaveEditorialSessionRequest
+ */
+export type SaveEditorialSessionRequest = Message<"api.v1.SaveEditorialSessionRequest"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: string title = 2;
+   */
+  title: string;
+
+  /**
+   * @generated from field: repeated api.v1.EditorialMarker markers = 3;
+   */
+  markers: EditorialMarker[];
+};
+
+/**
+ * Describes the message api.v1.SaveEditorialSessionRequest.
+ * Use `create(SaveEditorialSessionRequestSchema)` to create a new message.
+ */
+export const SaveEditorialSessionRequestSchema: GenMessage<SaveEditorialSessionRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_api, 64);
+
+/**
+ * @generated from message api.v1.DeleteEditorialSessionRequest
+ */
+export type DeleteEditorialSessionRequest = Message<"api.v1.DeleteEditorialSessionRequest"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+};
+
+/**
+ * Describes the message api.v1.DeleteEditorialSessionRequest.
+ * Use `create(DeleteEditorialSessionRequestSchema)` to create a new message.
+ */
+export const DeleteEditorialSessionRequestSchema: GenMessage<DeleteEditorialSessionRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_api, 65);
+
+/**
+ * Pull chapter markers from Mediabanken (Vidispine) for the session's asset.
+ * Does not save; returns candidate rows for the client to merge into the table.
+ *
+ * @generated from message api.v1.ImportEditorialMarkersRequest
+ */
+export type ImportEditorialMarkersRequest = Message<"api.v1.ImportEditorialMarkersRequest"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+};
+
+/**
+ * Describes the message api.v1.ImportEditorialMarkersRequest.
+ * Use `create(ImportEditorialMarkersRequestSchema)` to create a new message.
+ */
+export const ImportEditorialMarkersRequestSchema: GenMessage<ImportEditorialMarkersRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_api, 66);
+
+/**
+ * @generated from message api.v1.ImportEditorialMarkersResponse
+ */
+export type ImportEditorialMarkersResponse = Message<"api.v1.ImportEditorialMarkersResponse"> & {
+  /**
+   * @generated from field: repeated api.v1.EditorialMarker markers = 1;
+   */
+  markers: EditorialMarker[];
+};
+
+/**
+ * Describes the message api.v1.ImportEditorialMarkersResponse.
+ * Use `create(ImportEditorialMarkersResponseSchema)` to create a new message.
+ */
+export const ImportEditorialMarkersResponseSchema: GenMessage<ImportEditorialMarkersResponse> = /*@__PURE__*/
+  messageDesc(file_api_v1_api, 67);
+
+/**
+ * Toggle a single marker's publish flag (Ja/Nei). This is the write path for
+ * reviewers who may accept/reject but not edit markers (the simple view).
+ *
+ * @generated from message api.v1.SetEditorialPublishRequest
+ */
+export type SetEditorialPublishRequest = Message<"api.v1.SetEditorialPublishRequest"> & {
+  /**
+   * @generated from field: string session_id = 1;
+   */
+  sessionId: string;
+
+  /**
+   * @generated from field: string marker_id = 2;
+   */
+  markerId: string;
+
+  /**
+   * @generated from field: bool publish = 3;
+   */
+  publish: boolean;
+};
+
+/**
+ * Describes the message api.v1.SetEditorialPublishRequest.
+ * Use `create(SetEditorialPublishRequestSchema)` to create a new message.
+ */
+export const SetEditorialPublishRequestSchema: GenMessage<SetEditorialPublishRequest> = /*@__PURE__*/
+  messageDesc(file_api_v1_api, 68);
 
 /**
  * @generated from enum api.v1.BmmEnvironment
@@ -1716,9 +2051,21 @@ export const APIService: GenService<{
     output: typeof TranscriptionSchema;
   },
   /**
-   * @generated from rpc api.v1.APIService.GetPreview
+   * Per-tool preview endpoints: each enforces its own tool permission, so there
+   * is no generic "preview any asset" endpoint. Editorial delivers its preview
+   * URL inside GetEditorialSession instead.
+   *
+   * @generated from rpc api.v1.APIService.GetTranscriptionPreview
    */
-  getPreview: {
+  getTranscriptionPreview: {
+    methodKind: "unary";
+    input: typeof GetPreviewRequestSchema;
+    output: typeof PreviewSchema;
+  },
+  /**
+   * @generated from rpc api.v1.APIService.GetShortsPreview
+   */
+  getShortsPreview: {
     methodKind: "unary";
     input: typeof GetPreviewRequestSchema;
     output: typeof PreviewSchema;
@@ -1882,6 +2229,64 @@ export const APIService: GenService<{
     methodKind: "unary";
     input: typeof GetVaultItemRequestSchema;
     output: typeof GetVaultItemResponseSchema;
+  },
+  /**
+   * Editorial approval
+   *
+   * @generated from rpc api.v1.APIService.ListEditorialSessions
+   */
+  listEditorialSessions: {
+    methodKind: "unary";
+    input: typeof VoidSchema;
+    output: typeof ListEditorialSessionsResponseSchema;
+  },
+  /**
+   * @generated from rpc api.v1.APIService.CreateEditorialSession
+   */
+  createEditorialSession: {
+    methodKind: "unary";
+    input: typeof CreateEditorialSessionRequestSchema;
+    output: typeof EditorialSessionSchema;
+  },
+  /**
+   * @generated from rpc api.v1.APIService.GetEditorialSession
+   */
+  getEditorialSession: {
+    methodKind: "unary";
+    input: typeof GetEditorialSessionRequestSchema;
+    output: typeof EditorialSessionSchema;
+  },
+  /**
+   * @generated from rpc api.v1.APIService.SaveEditorialSession
+   */
+  saveEditorialSession: {
+    methodKind: "unary";
+    input: typeof SaveEditorialSessionRequestSchema;
+    output: typeof EditorialSessionSchema;
+  },
+  /**
+   * @generated from rpc api.v1.APIService.SetEditorialPublish
+   */
+  setEditorialPublish: {
+    methodKind: "unary";
+    input: typeof SetEditorialPublishRequestSchema;
+    output: typeof VoidSchema;
+  },
+  /**
+   * @generated from rpc api.v1.APIService.DeleteEditorialSession
+   */
+  deleteEditorialSession: {
+    methodKind: "unary";
+    input: typeof DeleteEditorialSessionRequestSchema;
+    output: typeof VoidSchema;
+  },
+  /**
+   * @generated from rpc api.v1.APIService.ImportEditorialMarkers
+   */
+  importEditorialMarkers: {
+    methodKind: "unary";
+    input: typeof ImportEditorialMarkersRequestSchema;
+    output: typeof ImportEditorialMarkersResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_api_v1_api, 0);

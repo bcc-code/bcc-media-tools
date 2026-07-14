@@ -1,2 +1,4 @@
 # Debug files vscode
 __debug*
+
+*.db*

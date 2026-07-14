@@ -192,7 +192,50 @@
         "vault": {
             "title": "Vault",
             "description": "Søk i Mediabanken og forhåndsvis elementer"
+        },
+        "editorial": {
+            "title": "Redaksjonell gjennomgang",
+            "description": "Gå gjennom markører og merk dem for publisering"
         }
+    },
+    "editorial": {
+        "newSession": "Ny gjennomgang",
+        "createTitle": "Ny redaksjonell gjennomgang",
+        "vxidLabel": "Mediabanken-ressurs (VX ID)",
+        "titleLabel": "Tittel (valgfritt)",
+        "create": "Opprett",
+        "cancel": "Avbryt",
+        "noSessions": "Ingen gjennomganger ennå",
+        "loadFailed": "Kunne ikke laste gjennomgangen",
+        "backToList": "Tilbake til gjennomganger",
+        "viewSimple": "Enkel",
+        "viewEdit": "Rediger",
+        "moreActions": "Flere handlinger",
+        "import": "Importer markører",
+        "importedCount": "Importerte {n} markør(er)",
+        "importFailed": "Kunne ikke importere markører",
+        "save": "Lagre",
+        "saved": "Lagret",
+        "saveFailed": "Kunne ikke lagre",
+        "delete": "Slett gjennomgang",
+        "deleteConfirmTitle": "Slette denne gjennomgangen?",
+        "deleteConfirmMessage": "Dette fjerner gjennomgangen og alle markørene permanent.",
+        "deleted": "Gjennomgang slettet",
+        "addRow": "Legg til rad",
+        "removeRow": "Fjern",
+        "noMarkers": "Ingen markører ennå — importer fra Mediabanken eller legg til en rad.",
+        "unsavedWarning": "Du har ulagrede endringer",
+        "preview": "Forhåndsvis",
+        "col": {
+            "name": "Hvem eller hva",
+            "type": "Type",
+            "start": "Start",
+            "duration": "Varighet",
+            "preview": "Forhåndsvis",
+            "publish": "Publiseres?"
+        },
+        "publishYes": "Ja",
+        "publishNo": "Nei"
     },
     "vault": {
         "searchPlaceholder": "Søk i vault",

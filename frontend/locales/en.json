@@ -192,7 +192,50 @@
         "vault": {
             "title": "Vault",
             "description": "Search Mediabanken and preview items"
+        },
+        "editorial": {
+            "title": "Editorial review",
+            "description": "Review markers and mark them for publishing"
         }
+    },
+    "editorial": {
+        "newSession": "New review",
+        "createTitle": "New editorial review",
+        "vxidLabel": "Mediabanken asset (VX ID)",
+        "titleLabel": "Title (optional)",
+        "create": "Create",
+        "cancel": "Cancel",
+        "noSessions": "No reviews yet",
+        "loadFailed": "Could not load the review",
+        "backToList": "Back to reviews",
+        "viewSimple": "Simple",
+        "viewEdit": "Edit",
+        "moreActions": "More actions",
+        "import": "Import markers",
+        "importedCount": "Imported {n} marker(s)",
+        "importFailed": "Could not import markers",
+        "save": "Save",
+        "saved": "Saved",
+        "saveFailed": "Could not save",
+        "delete": "Delete review",
+        "deleteConfirmTitle": "Delete this review?",
+        "deleteConfirmMessage": "This permanently removes the review and all its markers.",
+        "deleted": "Review deleted",
+        "addRow": "Add row",
+        "removeRow": "Remove",
+        "noMarkers": "No markers yet — import from Mediabanken or add a row.",
+        "unsavedWarning": "You have unsaved changes",
+        "preview": "Preview",
+        "col": {
+            "name": "Who or what",
+            "type": "Type",
+            "start": "Start",
+            "duration": "Duration",
+            "preview": "Preview",
+            "publish": "Publish?"
+        },
+        "publishYes": "Yes",
+        "publishNo": "No"
     },
     "vault": {
         "searchPlaceholder": "Search the vault",

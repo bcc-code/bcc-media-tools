@@ -121,7 +121,9 @@ onMounted(async () => {
     const saved = localStorage[key.value];
     error.value = null;
     try {
-        video.value = (await api.getPreview({ VXID: routeId })).url;
+        video.value = (
+            await api.getTranscriptionPreview({ VXID: routeId })
+        ).url;
     } catch (e: any) {
         error.value = e?.message || e?.toString() || "Unknown error";
         loading.value = false;

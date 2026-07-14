@@ -46,7 +46,13 @@ export function usePermissions() {
     const canVbBulkExport = cap((m) => !!m.vbExport?.bulkExport);
 
     const canUseShorts = cap((m) => !!m.shorts?.enabled);
+
     const canUseVault = cap((m) => !!m.vault?.enabled);
+
+    const canUseEditorial = cap(
+        (m) => !!m.editorial && (m.editorial.enabled || m.editorial.admin),
+    );
+    const canEditEditorial = cap((m) => !!m.editorial?.admin);
 
     const canCantemoPreview = cap((m) => !!m.cantemo?.preview);
     const canCantemoTranscribe = cap((m) => !!m.cantemo?.transcribe);
@@ -68,6 +74,8 @@ export function usePermissions() {
         canVbBulkExport,
         canUseShorts,
         canUseVault,
+        canUseEditorial,
+        canEditEditorial,
         canCantemoPreview,
         canCantemoTranscribe,
         canCantemoSubtitles,
