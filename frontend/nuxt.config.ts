@@ -79,7 +79,7 @@ export default defineNuxtConfig({
                 "@zag-js/vue",
                 "cva",
                 "dayjs",
-                "rudder-sdk-js",
+                "@rudderstack/analytics-js",
                 "zod",
             ],
         },

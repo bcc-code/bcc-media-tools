@@ -1,4 +1,4 @@
-import { identify, page as rpage, track } from "rudder-sdk-js";
+import type { RudderAnalytics } from "@rudderstack/analytics-js";
 import { useAPI } from "~/utils/api";
 
 export class Analytics {
@@ -7,6 +7,8 @@ export class Analytics {
 
     private pageQueue: Array<any> = [];
     private trackQueue: Array<any> = [];
+
+    constructor(private rudder: RudderAnalytics) {}
 
     public getUser() {
         return this.user;
@@ -17,7 +19,7 @@ export class Analytics {
         const data = Object.assign({}, user) as any;
         this.user = data;
         delete data["id"];
-        identify(user.Email, data);
+        this.rudder.identify(user.Email, data);
     }
 
     public page(page: {
@@ -35,7 +37,7 @@ export class Analytics {
 
         const data = Object.assign({}, page) as any;
         delete data["id"];
-        rpage(page.id, data);
+        this.rudder.page(page.id, data);
     }
 
     public track<T extends keyof Events>(event: T, data: Events[T]) {
@@ -44,14 +46,9 @@ export class Analytics {
             return;
         }
 
-        track(
-            event,
-            {
-                ...data,
-            },
-            undefined,
-            undefined,
-        );
+        this.rudder.track(event, {
+            ...data,
+        });
     }
 
     public async initialize() {

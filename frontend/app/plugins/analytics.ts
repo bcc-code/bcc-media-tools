@@ -1,15 +1,17 @@
-import { load, ready } from "rudder-sdk-js";
+import { RudderAnalytics } from "@rudderstack/analytics-js";
 
 export default defineNuxtPlugin(() => {
     const config = useRuntimeConfig();
-    const analytics = new Analytics();
 
-    load(
+    const rudder = new RudderAnalytics();
+    rudder.load(
         config.public.rudderstack.writeKey,
         config.public.rudderstack.dataPlaneUrl,
     );
 
-    ready(() => {
+    const analytics = new Analytics(rudder);
+
+    rudder.ready(() => {
         analytics.initialize();
     });
 

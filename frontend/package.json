@@ -31,6 +31,7 @@
         "@connectrpc/connect-web": "^2.1.2",
         "@nuxt/fonts": "^0.14.0",
         "@nuxtjs/color-mode": "^4.0.1",
+        "@rudderstack/analytics-js": "^3.31.4",
         "@vueuse/core": "^14.3.0",
         "@vueuse/nuxt": "^14.3.0",
         "@zag-js/splitter": "^1.41.2",
@@ -39,7 +40,6 @@
         "dayjs": "^1.11.21",
         "motion-v": "^2.3.0",
         "nuxt": "^4.4.8",
-        "rudder-sdk-js": "^2.52.14",
         "vue": "^3.5.38",
         "vue-router": "^5.1.0",
         "zod": "^4.4.3"

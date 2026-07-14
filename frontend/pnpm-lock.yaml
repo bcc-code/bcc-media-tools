@@ -26,6 +26,9 @@ importers:
       '@nuxtjs/color-mode':
         specifier: ^4.0.1
         version: 4.0.1(magicast@0.5.3)
+      '@rudderstack/analytics-js':
+        specifier: ^3.31.4
+        version: 3.31.4
       '@vueuse/core':
         specifier: ^14.3.0
         version: 14.3.0(vue@3.5.38(typescript@6.0.3))
@@ -50,9 +53,6 @@ importers:
       nuxt:
         specifier: ^4.4.8
         version: 4.4.8(@babel/plugin-syntax-jsx@7.28.6(@babel/core@7.29.0))(@babel/plugin-syntax-typescript@7.28.6(@babel/core@7.29.0))(@parcel/watcher@2.5.6)(@vue/compiler-sfc@3.5.34)(cac@6.7.14)(db0@0.3.4)(eslint@9.34.0(jiti@2.7.0))(ioredis@5.10.1)(lightningcss@1.32.0)(magicast@0.5.3)(optionator@0.9.4)(rollup-plugin-visualizer@7.0.1(rollup@4.60.4))(rollup@4.60.4)(srvx@0.11.15)(terser@5.47.1)(typescript@6.0.3)(vite@7.3.3(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.1)(yaml@2.9.0))(vue-tsc@3.3.5(typescript@6.0.3))(yaml@2.9.0)
-      rudder-sdk-js:
-        specifier: ^2.52.14
-        version: 2.52.14
       vue:
         specifier: ^3.5.38
         version: 3.5.38(typescript@6.0.3)
@@ -2201,6 +2201,9 @@ packages:
     resolution: {integrity: sha512-QVTUovf40zgTqlFVrKA1uXMVvU2QWEFWfAH8Wdc48IxLvrJMQVMBRjuQyUpzZCDkakImib9eVazbWlC6ksWtJw==}
     cpu: [x64]
     os: [win32]
+
+  '@rudderstack/analytics-js@3.31.4':
+    resolution: {integrity: sha512-dqjdzUwstrKem+wbQyadvr7BnCEhmczFaZ3NIrlkaErVXMO51FnUG1DC3YdCrybLsxi4/ys+wbs3p5TcQZ60hg==}
 
   '@simple-git/args-pathspec@1.0.3':
     resolution: {integrity: sha512-ngJMaHlsWDTfjyq9F3VIQ8b7NXbBLq5j9i5bJ6XLYtD6qlDXT7fdKY2KscWWUF8t18xx052Y/PUO1K1TRc9yKA==}
@@ -4638,9 +4641,6 @@ packages:
 
   rou3@0.8.1:
     resolution: {integrity: sha512-ePa+XGk00/3HuCqrEnK3LxJW7I0SdNg6EFzKUJG73hMAdDcOUC/i/aSz7LSDwLrGr33kal/rqOGydzwl6U7zBA==}
-
-  rudder-sdk-js@2.52.14:
-    resolution: {integrity: sha512-HgSkN4xuB4C1AVLSwUad+31e2c780AHulEzSPgRwbAfzX3pv0K+qFxNrURu+9Ni8XJpe2sXopbflI6HFuynGXA==}
 
   run-applescript@7.1.0:
     resolution: {integrity: sha512-DPe5pVFaAsinSaV6QjQ6gdiedWDcRCbUuiQfQa2wmWV7+xC9bGulGI8+TdRmoFkAPaBXk8CrAbnlY2ISniJ47Q==}
@@ -7265,6 +7265,8 @@ snapshots:
 
   '@rollup/rollup-win32-x64-msvc@4.60.4':
     optional: true
+
+  '@rudderstack/analytics-js@3.31.4': {}
 
   '@simple-git/args-pathspec@1.0.3': {}
 
@@ -10371,8 +10373,6 @@ snapshots:
       fsevents: 2.3.3
 
   rou3@0.8.1: {}
-
-  rudder-sdk-js@2.52.14: {}
 
   run-applescript@7.1.0: {}
 
