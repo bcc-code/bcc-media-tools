@@ -113,19 +113,22 @@ func allowedDestinations(perms *apiv1.Permissions) []string {
 	return out
 }
 
-// dirFilenames returns the (sorted) file names in dir, or nil if it can't be read.
-func dirFilenames(dir string) []string {
+// subtitleStyleFilenames returns the (sorted) subtitle style files in
+// SUBTITLE_STYLES_DIR. Preview images (.png) paired with the styles live in the
+// same directory and are excluded from the list.
+func subtitleStyleFilenames() []string {
+	dir := os.Getenv("SUBTITLE_STYLES_DIR")
 	if dir == "" {
 		return nil
 	}
 	files, err := os.ReadDir(dir)
 	if err != nil {
-		log.L.Warn().Err(err).Str("dir", dir).Msg("could not read directory")
+		log.L.Warn().Err(err).Str("dir", dir).Msg("could not read SUBTITLE_STYLES_DIR")
 		return nil
 	}
 	var names []string
 	for _, f := range files {
-		if f.IsDir() {
+		if f.IsDir() || strings.EqualFold(filepath.Ext(f.Name()), ".png") {
 			continue
 		}
 		names = append(names, f.Name())
@@ -492,7 +495,7 @@ func (e ExportAPI) GetVBExportConfig(ctx context.Context, req *connect.Request[a
 		return connect.NewResponse(&apiv1.GetVBExportConfigResponse{
 			Destinations:   allowedVBDestinations(perms),
 			SubtitleShapes: []string{"None"},
-			SubtitleStyles: dirFilenames(os.Getenv("SUBTITLE_STYLES_DIR")),
+			SubtitleStyles: subtitleStyleFilenames(),
 		}), nil
 	}
 
@@ -522,7 +525,7 @@ func (e ExportAPI) GetVBExportConfig(ctx context.Context, req *connect.Request[a
 		Title:          title,
 		Destinations:   allowedVBDestinations(perms),
 		SubtitleShapes: subtitleShapes,
-		SubtitleStyles: dirFilenames(os.Getenv("SUBTITLE_STYLES_DIR")),
+		SubtitleStyles: subtitleStyleFilenames(),
 	}
 
 	return connect.NewResponse(resp), nil

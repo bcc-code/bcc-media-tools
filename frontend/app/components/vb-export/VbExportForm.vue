@@ -30,6 +30,9 @@ const destChecked = reactive<Record<string, boolean>>(
 const subtitleShape = ref(props.config.subtitleShapes[0] ?? "None");
 const subtitleStyle = ref(props.config.subtitleStyles[0] ?? "");
 
+// Backend base URL, where the /subtitle-style-preview handler lives.
+const base = useRuntimeConfig().public.grpcUrl;
+
 /* ----------------------------------------------------------- asset list --- */
 
 const pasteText = ref("");
@@ -268,13 +271,14 @@ function startExport() {
                 </div>
 
                 <!-- Subtitles burn in style -->
-                <div class="space-y-1">
+                <div class="space-y-2">
                     <label class="text-body-3 text-text-muted block">
                         {{ $t("vbExport.subtitlesBurnInStyle") }}
                     </label>
-                    <DesignSelect
+                    <VbExportSubtitleStylePicker
                         v-model="subtitleStyle"
-                        :items="config.subtitleStyles"
+                        :styles="config.subtitleStyles"
+                        :base="base"
                     />
                 </div>
             </template>
