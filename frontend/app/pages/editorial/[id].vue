@@ -594,21 +594,23 @@ onBeforeRouteLeave(() => {
                                     {{ activeMarker.type }}
                                 </DesignBadge>
                             </div>
-                            <div class="mt-2 flex items-center gap-3">
+                            <DesignSlider
+                                v-model="scrubMs"
+                                :min="parseTc(activeMarker.start)"
+                                :max="parseTc(activeMarker.end)"
+                                :step="100"
+                                class="mt-3 mb-2 flex-1"
+                            />
+                            <div
+                                class="flex items-center justify-between gap-2"
+                            >
                                 <span
                                     class="text-caption-1 text-text-muted tabular-nums"
                                 >
                                     {{ formatMs(scrubMs) }}
                                 </span>
-                                <DesignSlider
-                                    v-model="scrubMs"
-                                    :min="parseTc(activeMarker.start)"
-                                    :max="parseTc(activeMarker.end)"
-                                    :step="100"
-                                    class="flex-1"
-                                />
                                 <span
-                                    class="text-caption-1 text-text-hint tabular-nums"
+                                    class="text-caption-1 text-text-muted tabular-nums"
                                 >
                                     {{ activeMarker.end }}
                                 </span>
