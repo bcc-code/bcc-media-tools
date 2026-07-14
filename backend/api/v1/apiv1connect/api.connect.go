@@ -48,8 +48,12 @@ const (
 	// APIServiceGetTranscriptionProcedure is the fully-qualified name of the APIService's
 	// GetTranscription RPC.
 	APIServiceGetTranscriptionProcedure = "/api.v1.APIService/GetTranscription"
-	// APIServiceGetPreviewProcedure is the fully-qualified name of the APIService's GetPreview RPC.
-	APIServiceGetPreviewProcedure = "/api.v1.APIService/GetPreview"
+	// APIServiceGetTranscriptionPreviewProcedure is the fully-qualified name of the APIService's
+	// GetTranscriptionPreview RPC.
+	APIServiceGetTranscriptionPreviewProcedure = "/api.v1.APIService/GetTranscriptionPreview"
+	// APIServiceGetShortsPreviewProcedure is the fully-qualified name of the APIService's
+	// GetShortsPreview RPC.
+	APIServiceGetShortsPreviewProcedure = "/api.v1.APIService/GetShortsPreview"
 	// APIServiceSubmitTranscriptionProcedure is the fully-qualified name of the APIService's
 	// SubmitTranscription RPC.
 	APIServiceSubmitTranscriptionProcedure = "/api.v1.APIService/SubmitTranscription"
@@ -129,7 +133,11 @@ type APIServiceClient interface {
 	ListPermissions(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.PermissionsList], error)
 	// Transcriptions
 	GetTranscription(context.Context, *connect.Request[v1.GetTranscriptionReqest]) (*connect.Response[v1.Transcription], error)
-	GetPreview(context.Context, *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error)
+	// Per-tool preview endpoints: each enforces its own tool permission, so there
+	// is no generic "preview any asset" endpoint. Editorial delivers its preview
+	// URL inside GetEditorialSession instead.
+	GetTranscriptionPreview(context.Context, *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error)
+	GetShortsPreview(context.Context, *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error)
 	SubmitTranscription(context.Context, *connect.Request[v1.SubmitTranscriptionRequest]) (*connect.Response[v1.Void], error)
 	// BMM
 	GetYears(context.Context, *connect.Request[v1.GetYearsRequest]) (*connect.Response[v1.GetYearsResponse], error)
@@ -207,10 +215,16 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(aPIServiceMethods.ByName("GetTranscription")),
 			connect.WithClientOptions(opts...),
 		),
-		getPreview: connect.NewClient[v1.GetPreviewRequest, v1.Preview](
+		getTranscriptionPreview: connect.NewClient[v1.GetPreviewRequest, v1.Preview](
 			httpClient,
-			baseURL+APIServiceGetPreviewProcedure,
-			connect.WithSchema(aPIServiceMethods.ByName("GetPreview")),
+			baseURL+APIServiceGetTranscriptionPreviewProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("GetTranscriptionPreview")),
+			connect.WithClientOptions(opts...),
+		),
+		getShortsPreview: connect.NewClient[v1.GetPreviewRequest, v1.Preview](
+			httpClient,
+			baseURL+APIServiceGetShortsPreviewProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("GetShortsPreview")),
 			connect.WithClientOptions(opts...),
 		),
 		submitTranscription: connect.NewClient[v1.SubmitTranscriptionRequest, v1.Void](
@@ -368,37 +382,38 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 
 // aPIServiceClient implements APIServiceClient.
 type aPIServiceClient struct {
-	getPermissions         *connect.Client[v1.Void, v1.Permissions]
-	updatePermissions      *connect.Client[v1.SetPermissionsRequest, v1.Void]
-	deletePermissions      *connect.Client[v1.DeletePermissionsRequest, v1.Void]
-	listPermissions        *connect.Client[v1.Void, v1.PermissionsList]
-	getTranscription       *connect.Client[v1.GetTranscriptionReqest, v1.Transcription]
-	getPreview             *connect.Client[v1.GetPreviewRequest, v1.Preview]
-	submitTranscription    *connect.Client[v1.SubmitTranscriptionRequest, v1.Void]
-	getYears               *connect.Client[v1.GetYearsRequest, v1.GetYearsResponse]
-	getAlbums              *connect.Client[v1.GetAlbumsRequest, v1.AlbumsList]
-	getAlbumTracks         *connect.Client[v1.GetAlbumTracksRequest, v1.TracksList]
-	getPodcastTracks       *connect.Client[v1.GetPodcastTracksRequest, v1.TracksList]
-	getLanguages           *connect.Client[v1.GetAvailableLanguagesRequest, v1.LanguageList]
-	getBMMTranscription    *connect.Client[v1.GetBMMTranscriptionRequest, v1.Transcription]
-	submitShort            *connect.Client[v1.SubmitShortRequest, v1.Void]
-	getExportConfig        *connect.Client[v1.GetExportConfigRequest, v1.GetExportConfigResponse]
-	startExport            *connect.Client[v1.StartExportRequest, v1.StartExportResponse]
-	exportTimedMetadata    *connect.Client[v1.ExportTimedMetadataRequest, v1.Void]
-	resolveAssets          *connect.Client[v1.ResolveAssetsRequest, v1.ResolveAssetsResponse]
-	getVBExportConfig      *connect.Client[v1.GetVBExportConfigRequest, v1.GetVBExportConfigResponse]
-	startVBExport          *connect.Client[v1.StartVBExportRequest, v1.StartVBExportResponse]
-	getExportDestinations  *connect.Client[v1.Void, v1.ExportDestinationsResponse]
-	triggerCantemoAction   *connect.Client[v1.TriggerCantemoActionRequest, v1.Void]
-	vaultSearch            *connect.Client[v1.VaultSearchRequest, v1.VaultSearchResponse]
-	getVaultItem           *connect.Client[v1.GetVaultItemRequest, v1.GetVaultItemResponse]
-	listEditorialSessions  *connect.Client[v1.Void, v1.ListEditorialSessionsResponse]
-	createEditorialSession *connect.Client[v1.CreateEditorialSessionRequest, v1.EditorialSession]
-	getEditorialSession    *connect.Client[v1.GetEditorialSessionRequest, v1.EditorialSession]
-	saveEditorialSession   *connect.Client[v1.SaveEditorialSessionRequest, v1.EditorialSession]
-	setEditorialPublish    *connect.Client[v1.SetEditorialPublishRequest, v1.Void]
-	deleteEditorialSession *connect.Client[v1.DeleteEditorialSessionRequest, v1.Void]
-	importEditorialMarkers *connect.Client[v1.ImportEditorialMarkersRequest, v1.ImportEditorialMarkersResponse]
+	getPermissions          *connect.Client[v1.Void, v1.Permissions]
+	updatePermissions       *connect.Client[v1.SetPermissionsRequest, v1.Void]
+	deletePermissions       *connect.Client[v1.DeletePermissionsRequest, v1.Void]
+	listPermissions         *connect.Client[v1.Void, v1.PermissionsList]
+	getTranscription        *connect.Client[v1.GetTranscriptionReqest, v1.Transcription]
+	getTranscriptionPreview *connect.Client[v1.GetPreviewRequest, v1.Preview]
+	getShortsPreview        *connect.Client[v1.GetPreviewRequest, v1.Preview]
+	submitTranscription     *connect.Client[v1.SubmitTranscriptionRequest, v1.Void]
+	getYears                *connect.Client[v1.GetYearsRequest, v1.GetYearsResponse]
+	getAlbums               *connect.Client[v1.GetAlbumsRequest, v1.AlbumsList]
+	getAlbumTracks          *connect.Client[v1.GetAlbumTracksRequest, v1.TracksList]
+	getPodcastTracks        *connect.Client[v1.GetPodcastTracksRequest, v1.TracksList]
+	getLanguages            *connect.Client[v1.GetAvailableLanguagesRequest, v1.LanguageList]
+	getBMMTranscription     *connect.Client[v1.GetBMMTranscriptionRequest, v1.Transcription]
+	submitShort             *connect.Client[v1.SubmitShortRequest, v1.Void]
+	getExportConfig         *connect.Client[v1.GetExportConfigRequest, v1.GetExportConfigResponse]
+	startExport             *connect.Client[v1.StartExportRequest, v1.StartExportResponse]
+	exportTimedMetadata     *connect.Client[v1.ExportTimedMetadataRequest, v1.Void]
+	resolveAssets           *connect.Client[v1.ResolveAssetsRequest, v1.ResolveAssetsResponse]
+	getVBExportConfig       *connect.Client[v1.GetVBExportConfigRequest, v1.GetVBExportConfigResponse]
+	startVBExport           *connect.Client[v1.StartVBExportRequest, v1.StartVBExportResponse]
+	getExportDestinations   *connect.Client[v1.Void, v1.ExportDestinationsResponse]
+	triggerCantemoAction    *connect.Client[v1.TriggerCantemoActionRequest, v1.Void]
+	vaultSearch             *connect.Client[v1.VaultSearchRequest, v1.VaultSearchResponse]
+	getVaultItem            *connect.Client[v1.GetVaultItemRequest, v1.GetVaultItemResponse]
+	listEditorialSessions   *connect.Client[v1.Void, v1.ListEditorialSessionsResponse]
+	createEditorialSession  *connect.Client[v1.CreateEditorialSessionRequest, v1.EditorialSession]
+	getEditorialSession     *connect.Client[v1.GetEditorialSessionRequest, v1.EditorialSession]
+	saveEditorialSession    *connect.Client[v1.SaveEditorialSessionRequest, v1.EditorialSession]
+	setEditorialPublish     *connect.Client[v1.SetEditorialPublishRequest, v1.Void]
+	deleteEditorialSession  *connect.Client[v1.DeleteEditorialSessionRequest, v1.Void]
+	importEditorialMarkers  *connect.Client[v1.ImportEditorialMarkersRequest, v1.ImportEditorialMarkersResponse]
 }
 
 // GetPermissions calls api.v1.APIService.GetPermissions.
@@ -426,9 +441,14 @@ func (c *aPIServiceClient) GetTranscription(ctx context.Context, req *connect.Re
 	return c.getTranscription.CallUnary(ctx, req)
 }
 
-// GetPreview calls api.v1.APIService.GetPreview.
-func (c *aPIServiceClient) GetPreview(ctx context.Context, req *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error) {
-	return c.getPreview.CallUnary(ctx, req)
+// GetTranscriptionPreview calls api.v1.APIService.GetTranscriptionPreview.
+func (c *aPIServiceClient) GetTranscriptionPreview(ctx context.Context, req *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error) {
+	return c.getTranscriptionPreview.CallUnary(ctx, req)
+}
+
+// GetShortsPreview calls api.v1.APIService.GetShortsPreview.
+func (c *aPIServiceClient) GetShortsPreview(ctx context.Context, req *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error) {
+	return c.getShortsPreview.CallUnary(ctx, req)
 }
 
 // SubmitTranscription calls api.v1.APIService.SubmitTranscription.
@@ -565,7 +585,11 @@ type APIServiceHandler interface {
 	ListPermissions(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.PermissionsList], error)
 	// Transcriptions
 	GetTranscription(context.Context, *connect.Request[v1.GetTranscriptionReqest]) (*connect.Response[v1.Transcription], error)
-	GetPreview(context.Context, *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error)
+	// Per-tool preview endpoints: each enforces its own tool permission, so there
+	// is no generic "preview any asset" endpoint. Editorial delivers its preview
+	// URL inside GetEditorialSession instead.
+	GetTranscriptionPreview(context.Context, *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error)
+	GetShortsPreview(context.Context, *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error)
 	SubmitTranscription(context.Context, *connect.Request[v1.SubmitTranscriptionRequest]) (*connect.Response[v1.Void], error)
 	// BMM
 	GetYears(context.Context, *connect.Request[v1.GetYearsRequest]) (*connect.Response[v1.GetYearsResponse], error)
@@ -639,10 +663,16 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(aPIServiceMethods.ByName("GetTranscription")),
 		connect.WithHandlerOptions(opts...),
 	)
-	aPIServiceGetPreviewHandler := connect.NewUnaryHandler(
-		APIServiceGetPreviewProcedure,
-		svc.GetPreview,
-		connect.WithSchema(aPIServiceMethods.ByName("GetPreview")),
+	aPIServiceGetTranscriptionPreviewHandler := connect.NewUnaryHandler(
+		APIServiceGetTranscriptionPreviewProcedure,
+		svc.GetTranscriptionPreview,
+		connect.WithSchema(aPIServiceMethods.ByName("GetTranscriptionPreview")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aPIServiceGetShortsPreviewHandler := connect.NewUnaryHandler(
+		APIServiceGetShortsPreviewProcedure,
+		svc.GetShortsPreview,
+		connect.WithSchema(aPIServiceMethods.ByName("GetShortsPreview")),
 		connect.WithHandlerOptions(opts...),
 	)
 	aPIServiceSubmitTranscriptionHandler := connect.NewUnaryHandler(
@@ -807,8 +837,10 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceListPermissionsHandler.ServeHTTP(w, r)
 		case APIServiceGetTranscriptionProcedure:
 			aPIServiceGetTranscriptionHandler.ServeHTTP(w, r)
-		case APIServiceGetPreviewProcedure:
-			aPIServiceGetPreviewHandler.ServeHTTP(w, r)
+		case APIServiceGetTranscriptionPreviewProcedure:
+			aPIServiceGetTranscriptionPreviewHandler.ServeHTTP(w, r)
+		case APIServiceGetShortsPreviewProcedure:
+			aPIServiceGetShortsPreviewHandler.ServeHTTP(w, r)
 		case APIServiceSubmitTranscriptionProcedure:
 			aPIServiceSubmitTranscriptionHandler.ServeHTTP(w, r)
 		case APIServiceGetYearsProcedure:
@@ -888,8 +920,12 @@ func (UnimplementedAPIServiceHandler) GetTranscription(context.Context, *connect
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetTranscription is not implemented"))
 }
 
-func (UnimplementedAPIServiceHandler) GetPreview(context.Context, *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetPreview is not implemented"))
+func (UnimplementedAPIServiceHandler) GetTranscriptionPreview(context.Context, *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetTranscriptionPreview is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) GetShortsPreview(context.Context, *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetShortsPreview is not implemented"))
 }
 
 func (UnimplementedAPIServiceHandler) SubmitTranscription(context.Context, *connect.Request[v1.SubmitTranscriptionRequest]) (*connect.Response[v1.Void], error) {

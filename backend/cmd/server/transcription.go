@@ -24,6 +24,48 @@ func NewTranscriptionAPI(baseURL, token string, temporalClient client.Client) *T
 	}
 }
 
+// GetTranscriptionPreview resolves the source-video preview URL for the
+// transcription editor. Admins see everything; a volunteer may only preview a
+// video while it is shared for transcription editing.
+func (t TranscriptionAPI) GetTranscriptionPreview(ctx context.Context, req *connect.Request[apiv1.GetPreviewRequest]) (*connect.Response[apiv1.Preview], error) {
+	email := getEmail(req)
+	if email == "" {
+		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("missing email header"))
+	}
+	perms := PermissionsForEmail(email)
+	if perms.Transcription == nil || (!perms.Transcription.Admin && !perms.Transcription.Mediabanken) {
+		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("not enough permissions for transcription"))
+	}
+	allowed := perms.Admin || perms.Transcription.Admin || t.inTranscriptionCollection(req.Msg.VXID)
+	if !allowed {
+		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("not enough permissions for preview"))
+	}
+
+	url, err := t.cantemoClient.GetPreviewUrl(req.Msg.VXID)
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(&apiv1.Preview{Url: url}), nil
+}
+
+// inTranscriptionCollection reports whether the asset is currently shared for
+// volunteer transcription editing — i.e. it inherits ACLs from the
+// _AccessibleByTools collection (VX-2677). Videos are added there so volunteers
+// can fix auto-transcriptions without admin access, and removed on submit so a
+// volunteer can no longer reach that item.
+func (t TranscriptionAPI) inTranscriptionCollection(vxid string) bool {
+	m, err := t.cantemoClient.GetACL(vxid)
+	if err != nil || m == nil {
+		return false
+	}
+	for _, acl := range m.ACLs {
+		if acl.InheritedFrom != nil && acl.InheritedFrom.ID == "VX-2677" {
+			return true
+		}
+	}
+	return false
+}
+
 func (t TranscriptionAPI) GetTranscription(ctx context.Context, req *connect.Request[apiv1.GetTranscriptionReqest]) (*connect.Response[apiv1.Transcription], error) {
 	email := getEmail(req)
 	if email == "" {
@@ -73,54 +115,6 @@ func (t TranscriptionAPI) GetTranscription(ctx context.Context, req *connect.Req
 	}
 
 	return connect.NewResponse(&tr), nil
-}
-
-func (t TranscriptionAPI) GetPreview(ctx context.Context, req *connect.Request[apiv1.GetPreviewRequest]) (*connect.Response[apiv1.Preview], error) {
-	email := getEmail(req)
-	if email == "" {
-		return nil, connect.NewError(401, fmt.Errorf("missing email header"))
-	}
-
-	perms := PermissionsForEmail(email)
-	transcriptionAccess := perms.Transcription != nil && (perms.Transcription.Admin || perms.Transcription.Mediabanken)
-	// Shorts creators reuse the preview endpoint to load the source video into
-	// the editor; they are ACL-gated like Mediabanken transcribers below.
-	if !transcriptionAccess && !perms.CanShorts() {
-		return nil, connect.NewError(403, fmt.Errorf("not enough permissions for preview"))
-	}
-
-	// Global and transcription admins see everything; everyone else (Mediabanken
-	// transcribers and shorts creators) is limited to items shared with the
-	// tools collection.
-	accessAllowed := perms.Admin || (perms.Transcription != nil && perms.Transcription.Admin)
-
-	if !accessAllowed {
-		m, err := t.cantemoClient.GetACL(req.Msg.VXID)
-		if err != nil {
-			return nil, err
-		}
-
-		if m != nil {
-			for _, acl := range m.ACLs {
-				if acl.InheritedFrom != nil && acl.InheritedFrom.ID == "VX-2677" {
-					// VX-2677 == "collection_name": "_AccessibleByTools"
-					accessAllowed = true
-					break
-				}
-			}
-		}
-	}
-
-	if !accessAllowed {
-		return nil, connect.NewError(403, fmt.Errorf("not enough permissions for preview"))
-	}
-
-	preview, err := t.cantemoClient.GetPreviewUrl(req.Msg.VXID)
-	if err != nil {
-		return nil, err
-	}
-
-	return connect.NewResponse(&apiv1.Preview{Url: preview}), nil
 }
 
 func (t TranscriptionAPI) SubmitTranscription(ctx context.Context, req *connect.Request[apiv1.SubmitTranscriptionRequest]) (*connect.Response[apiv1.Void], error) {

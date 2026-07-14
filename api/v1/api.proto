@@ -448,6 +448,8 @@ message EditorialSession {
   google.protobuf.Timestamp updated_at = 7;
   // only populated by GetEditorialSession
   repeated EditorialMarker markers = 9;
+  // source-video preview URL, resolved server-side; only set by GetEditorialSession
+  string preview_url = 10;
 }
 
 message ListEditorialSessionsResponse {
@@ -501,7 +503,11 @@ service APIService {
 
   // Transcriptions
   rpc GetTranscription(GetTranscriptionReqest) returns (Transcription) {}
-  rpc GetPreview(GetPreviewRequest) returns (Preview) {}
+  // Per-tool preview endpoints: each enforces its own tool permission, so there
+  // is no generic "preview any asset" endpoint. Editorial delivers its preview
+  // URL inside GetEditorialSession instead.
+  rpc GetTranscriptionPreview(GetPreviewRequest) returns (Preview) {}
+  rpc GetShortsPreview(GetPreviewRequest) returns (Preview) {}
   rpc SubmitTranscription(SubmitTranscriptionRequest) returns (Void) {}
 
 	// BMM

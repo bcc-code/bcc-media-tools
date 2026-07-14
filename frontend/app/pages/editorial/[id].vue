@@ -116,14 +116,6 @@ function typeVariant(
 const previewUrl = ref<string>();
 const videoEl = useTemplateRef<HTMLVideoElement>("videoEl");
 
-async function loadPreview(vxid: string) {
-    try {
-        previewUrl.value = (await api.getPreview({ VXID: vxid })).url;
-    } catch {
-        previewUrl.value = undefined;
-    }
-}
-
 function preview(row: Row) {
     const el = videoEl.value;
     if (!el) return;
@@ -173,7 +165,7 @@ async function load() {
         session.value = s;
         title.value = s.title;
         rows.value = s.markers.map(toRow);
-        void loadPreview(s.VXID);
+        previewUrl.value = s.previewUrl || undefined;
     } catch {
         notFound.value = true;
     } finally {

@@ -30,11 +30,11 @@ var ErrNotFound = errors.New("editorial: session not found")
 
 // Session is a review session tied to a single Mediabanken asset.
 type Session struct {
-	ID         string
-	VXID       string
-	Title      string
-	Status     string
-	CreatedBy  string
+	ID        string
+	VXID      string
+	Title     string
+	Status    string
+	CreatedBy string
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	// Markers is only populated by Get; List leaves it nil.

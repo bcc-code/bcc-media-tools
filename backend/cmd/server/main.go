@@ -122,7 +122,11 @@ func main() {
 	permissionsApi := PermissionsAPI{}
 	bmmApi := NewBMMApi(os.Getenv("BMM_BASE_URL"), bmmToken)
 	transcriptionAPI := NewTranscriptionAPI(os.Getenv("CANTEMO_URL"), os.Getenv("CANTEMO_TOKEN"), temporalClient)
-	shortsAPI := NewShortsAPI(temporalClient)
+
+	// Shared Cantemo client for tool previews and the VAULT proxy handlers.
+	cantemoClient := cantemo.NewClient(os.Getenv("CANTEMO_URL"), os.Getenv("CANTEMO_TOKEN"))
+
+	shortsAPI := NewShortsAPI(temporalClient, cantemoClient)
 	exportAPI := NewExportAPI(vidispineClient, temporalClient)
 	cantemoAPI := NewCantemoAPI(temporalClient)
 	vaultAPI := NewVaultAPI(
@@ -141,11 +145,7 @@ func main() {
 		panic(err)
 	}
 	defer editorialStore.Close()
-	editorialAPI := NewEditorialAPI(editorialStore, vidispineClient)
-
-	// Dedicated Cantemo client for the VAULT preview proxy (same creds as the
-	// transcription tool).
-	cantemoClient := cantemo.NewClient(os.Getenv("CANTEMO_URL"), os.Getenv("CANTEMO_TOKEN"))
+	editorialAPI := NewEditorialAPI(editorialStore, vidispineClient, cantemoClient)
 
 	api := &ApiServer{
 		PermissionsAPI:   permissionsApi,

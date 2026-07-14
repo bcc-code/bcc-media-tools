@@ -6,18 +6,39 @@ import (
 	"fmt"
 
 	"connectrpc.com/connect"
+	"github.com/bcc-code/bcc-media-flows/services/cantemo"
 	exportworkflows "github.com/bcc-code/bcc-media-flows/workflows/export"
 	"go.temporal.io/sdk/client"
 )
 
 type ShortsAPI struct {
 	temporalClient client.Client
+	cantemoClient  *cantemo.Client
 }
 
-func NewShortsAPI(temporalClient client.Client) *ShortsAPI {
+func NewShortsAPI(temporalClient client.Client, cantemoClient *cantemo.Client) *ShortsAPI {
 	return &ShortsAPI{
 		temporalClient: temporalClient,
+		cantemoClient:  cantemoClient,
 	}
+}
+
+// GetShortsPreview resolves the source-video preview URL for the shorts editor.
+// Access is gated by shorts permission alone.
+func (s ShortsAPI) GetShortsPreview(ctx context.Context, req *connect.Request[apiv1.GetPreviewRequest]) (*connect.Response[apiv1.Preview], error) {
+	email := getEmail(req)
+	if email == "" {
+		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("missing email header"))
+	}
+	if !PermissionsForEmail(email).CanShorts() {
+		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("not enough permissions to create shorts"))
+	}
+
+	url, err := s.cantemoClient.GetPreviewUrl(req.Msg.VXID)
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(&apiv1.Preview{Url: url}), nil
 }
 
 func (s ShortsAPI) SubmitShort(ctx context.Context, req *connect.Request[apiv1.SubmitShortRequest]) (*connect.Response[apiv1.Void], error) {

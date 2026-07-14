@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"connectrpc.com/connect"
+	"github.com/bcc-code/bcc-media-flows/services/cantemo"
 	"github.com/bcc-code/bcc-media-flows/services/vidispine"
 	"github.com/bcc-code/bcc-media-flows/services/vidispine/vscommon"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -19,10 +20,11 @@ import (
 type EditorialAPI struct {
 	store     *editorial.Store
 	vidispine vidispine.Client
+	cantemo   *cantemo.Client
 }
 
-func NewEditorialAPI(store *editorial.Store, vs vidispine.Client) *EditorialAPI {
-	return &EditorialAPI{store: store, vidispine: vs}
+func NewEditorialAPI(store *editorial.Store, vs vidispine.Client, cantemoClient *cantemo.Client) *EditorialAPI {
+	return &EditorialAPI{store: store, vidispine: vs, cantemo: cantemoClient}
 }
 
 // requireEditorial authenticates the caller and checks editorial access. When
@@ -91,7 +93,14 @@ func (e EditorialAPI) GetEditorialSession(ctx context.Context, req *connect.Requ
 	if err != nil {
 		return nil, editorialErr(err)
 	}
-	return connect.NewResponse(editorialSessionToProto(sess)), nil
+	out := editorialSessionToProto(sess)
+	// The session (which the caller is authorized to see) is the authorization
+	// for its preview — resolve the URL here so the client never asks for a
+	// video by VXID. Best-effort: a preview failure shouldn't block the review.
+	if url, err := e.cantemo.GetPreviewUrl(sess.VXID); err == nil {
+		out.PreviewUrl = url
+	}
+	return connect.NewResponse(out), nil
 }
 
 func (e EditorialAPI) SaveEditorialSession(ctx context.Context, req *connect.Request[apiv1.SaveEditorialSessionRequest]) (*connect.Response[apiv1.EditorialSession], error) {
