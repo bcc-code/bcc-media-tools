@@ -587,10 +587,10 @@ onBeforeRouteLeave(() => {
 
                 <div>
                     <div
-                        class="sticky top-[calc(var(--header-height)+1rem)] flex flex-col gap-3"
+                        class="gradient-border sticky top-[calc(var(--header-height)+1rem)] overflow-hidden rounded-2xl"
                     >
                         <div
-                            class="bg-surface-indent gradient-border aspect-video overflow-hidden rounded-2xl"
+                            class="bg-surface-indent aspect-video overflow-hidden"
                         >
                             <video
                                 v-if="previewUrl"
@@ -607,10 +607,9 @@ onBeforeRouteLeave(() => {
                                 <Icon name="tabler:video-off" class="size-8" />
                             </div>
                         </div>
-
                         <div
                             v-if="activeMarker"
-                            class="gradient-border bg-surface-default shadow-resting rounded-2xl px-4 py-3"
+                            class="bg-surface-default border-border-1 border-t px-4 py-4"
                         >
                             <div
                                 class="flex items-center justify-between gap-3"
