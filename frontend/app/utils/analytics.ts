@@ -1,4 +1,4 @@
-import type { RudderAnalytics } from "@rudderstack/analytics-js";
+import type { RudderAnalytics } from "@rudderstack/analytics-js/bundled";
 import { useAPI } from "~/utils/api";
 
 export class Analytics {

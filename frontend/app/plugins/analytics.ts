@@ -1,4 +1,4 @@
-import { RudderAnalytics } from "@rudderstack/analytics-js";
+import { RudderAnalytics } from "@rudderstack/analytics-js/bundled";
 
 export default defineNuxtPlugin(() => {
     const config = useRuntimeConfig();
