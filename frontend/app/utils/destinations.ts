@@ -17,6 +17,7 @@ const DestinationNames = new Map<string, string>([
     ["raw-abekas", "Raw Abekas"],
     ["b-stage", "B-Stage"],
     ["gfx", "GFX"],
+    ["hippo", "Hippo"],
     ["hippo_v2", "Hippo v2"],
     ["hippo_hap", "Hippo HAP"],
     ["dubbing", "Dubbing"],

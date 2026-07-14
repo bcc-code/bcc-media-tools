@@ -117,20 +117,34 @@ func dirFilenames(dir string) []string {
 	return names
 }
 
-// vbUIDestinations returns the VB export destinations shown in the UI: the
-// canonical list minus the legacy "hippo" (v1) destination (matching trigger_ui).
+var vbUIDestinationOrder = []vbexportworkflows.Destination{
+	vbexportworkflows.DestinationAbekas,
+	vbexportworkflows.DestinationRawAbekas,
+	vbexportworkflows.DestinationBStage,
+	vbexportworkflows.DestinationHippoV2,
+	vbexportworkflows.DestinationHippoHap,
+	vbexportworkflows.DestinationDubbing,
+	vbexportworkflows.DestinationHyperdeck,
+	vbexportworkflows.DestinationCasparCG,
+}
+
 func vbUIDestinations() []string {
-	return lo.Filter(vbexportworkflows.Destinations.Values(), func(d string, _ int) bool {
-		return d != vbexportworkflows.DestinationHippo.Value
+	return lo.Map(vbUIDestinationOrder, func(d vbexportworkflows.Destination, _ int) string {
+		return d.Value
 	})
 }
 
-// allowedVBDestinations returns the UI VB destinations the user is permitted to
-// export to.
-func allowedVBDestinations(perms *apiv1.Permissions) []string {
-	return lo.Filter(vbUIDestinations(), func(d string, _ int) bool {
-		return perms.CanVBExportTo(d)
-	})
+func allowedVBDestinations(perms *apiv1.Permissions) []*apiv1.VBDestination {
+	out := []*apiv1.VBDestination{}
+	for _, d := range vbUIDestinationOrder {
+		if perms.CanVBExportTo(d.Value) {
+			out = append(out, &apiv1.VBDestination{
+				Id:          d.Value,
+				Description: d.Description(),
+			})
+		}
+	}
+	return out
 }
 
 // assetTitle extracts the display title from asset metadata, preferring the
