@@ -210,6 +210,7 @@
         "backToList": "Back to reviews",
         "viewSimple": "Simple",
         "viewEdit": "Edit",
+        "moreActions": "More actions",
         "import": "Import markers",
         "importedCount": "Imported {n} marker(s)",
         "importFailed": "Could not import markers",

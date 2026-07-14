@@ -48,6 +48,17 @@ const notFound = ref(false);
 const mode = ref<"simple" | "edit">("simple");
 const effectiveMode = computed(() => (canEdit.value ? mode.value : "simple"));
 
+// Fixed-width segmented control for the view/edit mode, so switching modes
+// never shifts the surrounding layout.
+const modeItems = computed(() => [
+    { label: t("editorial.viewSimple"), value: "simple" },
+    { label: t("editorial.viewEdit"), value: "edit" },
+]);
+const modeModel = computed<string>({
+    get: () => mode.value,
+    set: (v) => (mode.value = v === "edit" ? "edit" : "simple"),
+});
+
 const dirty = ref(false);
 let hydrated = false;
 
@@ -229,6 +240,31 @@ const importing = ref(false);
 const saving = ref(false);
 const deleteOpen = ref(false);
 
+// Secondary/destructive actions live in an overflow menu, leaving Save as the
+// only primary button. Import is only relevant while editing.
+const menuItems = computed(() => [
+    ...(effectiveMode.value === "edit"
+        ? [
+              {
+                  value: "import",
+                  label: t("editorial.import"),
+                  icon: "tabler:download",
+                  disabled: importing.value,
+              },
+          ]
+        : []),
+    {
+        value: "delete",
+        label: t("editorial.delete"),
+        icon: "tabler:trash",
+        intent: "danger" as const,
+    },
+]);
+function onMenuSelect(value: string) {
+    if (value === "delete") deleteOpen.value = true;
+    else if (value === "import") void importMarkers();
+}
+
 async function importMarkers() {
     importing.value = true;
     try {
@@ -321,45 +357,38 @@ onBeforeRouteLeave(() => {
         </p>
 
         <template v-else>
-            <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
-                <div class="min-w-0">
-                    <DesignInput
-                        v-if="effectiveMode === 'edit'"
-                        v-model="title"
-                        :label="t('editorial.titleLabel')"
-                        :placeholder="session?.VXID"
-                    />
-                    <h1
-                        v-else
-                        class="text-heading-3 text-text-default truncate"
-                    >
-                        {{ title || session?.VXID }}
-                    </h1>
-                    <p
-                        v-if="title && title !== session?.VXID"
-                        class="text-caption-1 text-text-hint mt-1"
-                    >
-                        {{ session?.VXID }}
-                    </p>
-                </div>
+            <div class="mb-4 max-w-xl">
+                <DesignInput
+                    v-if="effectiveMode === 'edit'"
+                    v-model="title"
+                    :placeholder="session?.VXID"
+                />
+                <h1 v-else class="text-heading-2 text-text-default truncate">
+                    {{ title || session?.VXID }}
+                </h1>
+                <p
+                    v-if="title && title !== session?.VXID"
+                    class="text-caption-1 text-text-hint mt-1"
+                >
+                    {{ session?.VXID }}
+                </p>
+            </div>
 
-                <div class="flex flex-wrap items-center gap-3">
-                    <DesignSwitch
-                        v-if="canEdit"
-                        :model-value="mode === 'edit'"
-                        :label="t('editorial.viewEdit')"
-                        @update:model-value="mode = $event ? 'edit' : 'simple'"
+            <div
+                v-if="canEdit"
+                class="mb-6 flex items-center justify-between gap-3"
+            >
+                <DesignSegmentGroup
+                    v-model="modeModel"
+                    :items="modeItems"
+                    class="border-border-1 border"
+                />
+                <div class="flex items-center gap-2">
+                    <DesignMenu
+                        :items="menuItems"
+                        :trigger-label="t('editorial.moreActions')"
+                        @select="onMenuSelect"
                     />
-
-                    <DesignButton
-                        v-if="effectiveMode === 'edit'"
-                        variant="secondary"
-                        icon="tabler:download"
-                        :loading="importing"
-                        @click="importMarkers"
-                    >
-                        {{ t("editorial.import") }}
-                    </DesignButton>
                     <DesignButton
                         v-if="effectiveMode === 'edit'"
                         icon="tabler:device-floppy"
@@ -368,13 +397,6 @@ onBeforeRouteLeave(() => {
                     >
                         {{ t("editorial.save") }}
                     </DesignButton>
-                    <DesignButton
-                        v-if="canEdit"
-                        variant="tertiary"
-                        intent="danger"
-                        icon="tabler:trash"
-                        @click="deleteOpen = true"
-                    />
                 </div>
             </div>
 
@@ -554,7 +576,7 @@ onBeforeRouteLeave(() => {
 
                 <div>
                     <div
-                        class="gradient-border sticky top-[calc(var(--header-height)+1rem)] overflow-hidden rounded-2xl"
+                        class="gradient-border shadow-resting sticky top-[calc(var(--header-height)+1rem)] overflow-hidden rounded-2xl"
                     >
                         <div
                             class="bg-surface-indent aspect-video overflow-hidden"
