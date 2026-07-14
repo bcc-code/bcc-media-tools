@@ -1248,22 +1248,15 @@ export const GetVBExportConfigRequestSchema: GenMessage<GetVBExportConfigRequest
   messageDesc(file_api_v1_api, 44);
 
 /**
- * A VB export destination shown in the UI, with a short human-written
- * description of what it's used for.
- *
  * @generated from message api.v1.VBDestination
  */
 export type VBDestination = Message<"api.v1.VBDestination"> & {
   /**
-   * technical destination value (e.g. "abekas") used by the workflows
-   *
    * @generated from field: string id = 1;
    */
   id: string;
 
   /**
-   * short description of what this destination is used for; may be empty
-   *
    * @generated from field: string description = 2;
    */
   description: string;

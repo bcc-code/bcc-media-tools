@@ -88,12 +88,29 @@ func exportLanguages() []*apiv1.ExportLanguage {
 	})
 }
 
-// allowedDestinations returns the canonical export destinations the given user
-// is permitted to export to.
-func allowedDestinations(perms *apiv1.Permissions) []string {
-	return lo.Filter(exportworkflows.AssetExportDestinations.Values(), func(d string, _ int) bool {
-		return perms.CanExportTo(d)
+var vxUIDestinationOrder = []exportworkflows.AssetExportDestination{
+	exportworkflows.AssetExportDestinationVOD,
+	exportworkflows.AssetExportDestinationBMM,
+	exportworkflows.AssetExportDestinationBMMIntegration,
+	exportworkflows.AssetExportDestinationIsilon,
+}
+
+func vxUIDestinations() []string {
+	return lo.Map(vxUIDestinationOrder, func(d exportworkflows.AssetExportDestination, _ int) string {
+		return d.Value
 	})
+}
+
+// allowedDestinations returns the UI export destinations the given user is
+// permitted to export to.
+func allowedDestinations(perms *apiv1.Permissions) []string {
+	out := []string{}
+	for _, d := range vxUIDestinationOrder {
+		if perms.CanExportTo(d.Value) {
+			out = append(out, d.Value)
+		}
+	}
+	return out
 }
 
 // dirFilenames returns the (sorted) file names in dir, or nil if it can't be read.
@@ -574,7 +591,7 @@ func (e ExportAPI) GetExportDestinations(ctx context.Context, req *connect.Reque
 		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("not authorized"))
 	}
 	return connect.NewResponse(&apiv1.ExportDestinationsResponse{
-		Vx: exportworkflows.AssetExportDestinations.Values(),
+		Vx: vxUIDestinations(),
 		Vb: vbUIDestinations(),
 	}), nil
 }

@@ -332,23 +332,13 @@ function startExport() {
                 <h3 class="text-title-3 text-text-default font-semibold">
                     {{ $t("export.destinations") }}
                 </h3>
-                <div class="flex flex-col gap-2">
+                <div class="flex flex-col gap-3">
                     <DesignCheckbox
                         v-for="d in config.destinations"
                         :key="d"
                         v-model="destChecked[d]"
-                    >
-                        <template #label>
-                            <span class="text-sm">{{
-                                destinationName(d)
-                            }}</span>
-                            <span
-                                class="text-text-muted ml-2 font-mono text-xs"
-                            >
-                                {{ d }}</span
-                            >
-                        </template>
-                    </DesignCheckbox>
+                        :label="destinationName(d)"
+                    />
                     <p
                         v-if="config.destinations.length === 0"
                         class="text-text-muted text-xs"

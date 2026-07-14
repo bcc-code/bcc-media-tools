@@ -305,12 +305,8 @@ message GetVBExportConfigRequest {
   string VXID = 1;
 }
 
-// A VB export destination shown in the UI, with a short human-written
-// description of what it's used for.
 message VBDestination {
-  // technical destination value (e.g. "abekas") used by the workflows
   string id = 1;
-  // short description of what this destination is used for; may be empty
   string description = 2;
 }
 

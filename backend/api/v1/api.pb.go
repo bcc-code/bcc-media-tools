@@ -2787,14 +2787,10 @@ func (x *GetVBExportConfigRequest) GetVXID() string {
 	return ""
 }
 
-// A VB export destination shown in the UI, with a short human-written
-// description of what it's used for.
 type VBDestination struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// technical destination value (e.g. "abekas") used by the workflows
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// short description of what this destination is used for; may be empty
-	Description   string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Description   string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
