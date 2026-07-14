@@ -13,7 +13,7 @@ export interface MenuItem {
 interface Props {
     items: MenuItem[];
     placement?: Placement;
-    // Icon shown on the default trigger button (overridden by the #trigger slot).
+    // Default trigger icon; overridden by the #trigger slot.
     triggerIcon?: string;
     triggerLabel?: string;
 }

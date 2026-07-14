@@ -48,8 +48,7 @@ const notFound = ref(false);
 const mode = ref<"simple" | "edit">("simple");
 const effectiveMode = computed(() => (canEdit.value ? mode.value : "simple"));
 
-// Fixed-width segmented control for the view/edit mode, so switching modes
-// never shifts the surrounding layout.
+// Fixed-width mode control, so switching modes doesn't shift the layout.
 const modeItems = computed(() => [
     { label: t("editorial.viewSimple"), value: "simple" },
     { label: t("editorial.viewEdit"), value: "edit" },
@@ -240,8 +239,7 @@ const importing = ref(false);
 const saving = ref(false);
 const deleteOpen = ref(false);
 
-// Secondary/destructive actions live in an overflow menu, leaving Save as the
-// only primary button. Import is only relevant while editing.
+// Secondary/destructive actions live in the overflow menu; Save stays primary.
 const menuItems = computed(() => [
     ...(effectiveMode.value === "edit"
         ? [

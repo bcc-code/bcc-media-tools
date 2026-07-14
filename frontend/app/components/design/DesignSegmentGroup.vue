@@ -8,7 +8,7 @@ export interface SegmentItem {
 }
 
 interface Props {
-    // Accepts plain strings (label === value) or {label, value, icon?} objects.
+    // Plain strings (label === value) or {label, value, icon?} objects.
     items: (string | SegmentItem)[];
     disabled?: boolean;
 }
