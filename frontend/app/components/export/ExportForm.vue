@@ -292,7 +292,6 @@ function startExport() {
 
 <template>
     <div class="mx-auto w-full max-w-3xl px-6 py-8">
-        <!-- Bulk paste: detect VX-ids from arbitrary text -->
         <section v-if="bulkMode" class="mb-6 space-y-2">
             <h3 class="text-title-3 text-text-default font-semibold">
                 {{ $t("export.bulkTitle") }}
@@ -305,7 +304,6 @@ function startExport() {
             />
         </section>
 
-        <!-- Assets to export -->
         <section class="mb-6 space-y-2">
             <div class="flex items-center justify-between gap-2">
                 <h3 class="text-title-3 text-text-default font-semibold">
@@ -364,7 +362,6 @@ function startExport() {
             </p>
         </section>
 
-        <!-- Other actions: metadata-only export, independent of the selection below -->
         <section
             v-if="!bulkMode && config.canExportTimedMetadata"
             class="gradient-border bg-surface-raise mb-6 flex flex-col gap-3 rounded-2xl p-4 sm:flex-row sm:items-center sm:justify-between"
@@ -389,7 +386,6 @@ function startExport() {
         </section>
 
         <div class="space-y-6">
-            <!-- Destinations -->
             <section class="space-y-2">
                 <h3 class="text-title-3 text-text-default font-semibold">
                     {{ $t("export.destinations") }}
@@ -410,7 +406,6 @@ function startExport() {
                 </div>
             </section>
 
-            <!-- Audio source -->
             <div class="space-y-1">
                 <label class="text-body-3 text-text-muted block">
                     {{ $t("export.audioSource") }}
@@ -421,7 +416,6 @@ function startExport() {
                 />
             </div>
 
-            <!-- Subclips (per-asset; hidden in bulk mode) -->
             <section v-if="!bulkMode" class="space-y-2">
                 <h3 class="text-title-3 text-text-default font-semibold">
                     {{ $t("export.subclips") }}
@@ -442,7 +436,6 @@ function startExport() {
                 </div>
             </section>
 
-            <!-- Language exports -->
             <section class="space-y-3">
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <h3 class="text-title-3 text-text-default font-semibold">
@@ -502,7 +495,6 @@ function startExport() {
                 </div>
             </section>
 
-            <!-- Resolutions -->
             <section class="space-y-2">
                 <h3 class="text-title-3 text-text-default font-semibold">
                     {{ $t("export.resolutions")
@@ -536,7 +528,6 @@ function startExport() {
                 </div>
             </section>
 
-            <!-- Overlay -->
             <div class="space-y-1">
                 <label class="text-body-3 text-text-muted block">
                     {{ $t("export.overlay") }}
@@ -544,7 +535,6 @@ function startExport() {
                 <DesignSelect v-model="overlay" :items="config.overlays" />
             </div>
 
-            <!-- Options -->
             <section class="flex flex-col gap-3">
                 <h3 class="text-title-3 text-text-default font-semibold">
                     {{ $t("export.options") }}
@@ -564,7 +554,6 @@ function startExport() {
             </section>
         </div>
 
-        <!-- Sticky action bar -->
         <div
             class="bg-surface-raise gradient-border shadow-floating sticky bottom-6 -mx-6 mt-6 space-y-3 rounded-2xl px-6 py-4"
         >
@@ -613,7 +602,6 @@ function startExport() {
             </div>
         </div>
 
-        <!-- Export confirmation (both single-asset and bulk) -->
         <DesignDialog v-model:open="confirmOpen" :title="confirmTitle">
             <div class="space-y-4">
                 <p class="text-body-3 text-text-muted">{{ confirmMessage }}</p>

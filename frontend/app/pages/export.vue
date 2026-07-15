@@ -177,7 +177,6 @@ const triggers: Trigger[] = [
 </script>
 
 <template>
-    <!-- Asset selected: show the VX export form -->
     <div v-if="vxId">
         <ExportForm
             v-if="status === 'success' && config"
@@ -207,7 +206,6 @@ const triggers: Trigger[] = [
         </div>
     </div>
 
-    <!-- No asset: bulk export (if permitted) + how to open the tool + links -->
     <div v-else>
         <template v-if="canBulkExport">
             <ExportForm
