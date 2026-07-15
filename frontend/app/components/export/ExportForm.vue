@@ -12,12 +12,14 @@ const props = defineProps<{
     initialAssets?: AssetRef[];
     // Resolves pasted VX-ids to titles (bulk mode only).
     resolveTitles?: (ids: string[]) => Promise<AssetRef[]>;
+    // Live progress of the running export (the page owns the run loop).
+    progress?: { total: number; done: number };
 }>();
 
 const emit = defineEmits<{
     (
         e: "start-export",
-        payload: { vxIds: string[]; selection: ExportSelection },
+        payload: { assets: AssetRef[]; selection: ExportSelection },
     ): void;
     (e: "export-timed-metadata"): void;
 }>();
@@ -119,9 +121,8 @@ const selectedDestCount = computed(
     () => props.config.destinations.filter((d) => destChecked[d]).length,
 );
 
-const selectedResCount = computed(
-    () => resolutions.filter((r) => r.enabled).length,
-);
+const enabledResolutions = computed(() => resolutions.filter((r) => r.enabled));
+const selectedResCount = computed(() => enabledResolutions.value.length);
 
 // Assets that actually resolved; "not found" pastes are excluded from export.
 const exportableAssets = computed(() =>
@@ -147,6 +148,15 @@ const selectionSummary = computed(() =>
     ].join(" · "),
 );
 
+// Overlay preview: the overlay file itself is the image, served by the backend
+// /overlay-preview handler. "None" has no preview.
+const base = useRuntimeConfig().public.grpcUrl;
+const overlayPreviewUrl = computed(
+    () => `${base}/overlay-preview?name=${encodeURIComponent(overlay.value)}`,
+);
+const overlayPreviewFailed = ref(false);
+watch(overlay, () => (overlayPreviewFailed.value = false));
+
 // Aspect ratio of the first resolution, e.g. "16:9".
 const aspectRatio = computed(() => {
     const first = resolutions[0];
@@ -163,6 +173,20 @@ function setLangs(codes: string[]) {
         (l) => (langChecked[l.code] = codes.includes(l.code)),
     );
 }
+
+const toggleLang = (code: string) => (langChecked[code] = !langChecked[code]);
+
+// Filter the language chips by code or name (case-insensitive).
+const langFilter = ref("");
+const filteredLanguages = computed(() => {
+    const q = langFilter.value.trim().toLowerCase();
+    if (!q) return props.config.languages;
+    return props.config.languages.filter(
+        (l) =>
+            l.code.toLowerCase().includes(q) ||
+            l.name.toLowerCase().includes(q),
+    );
+});
 const selectAllLangs = () =>
     setLangs(props.config.languages.map((l) => l.code));
 const clearLangs = () => setLangs([]);
@@ -188,6 +212,64 @@ const confirmMessage = computed(() =>
         : t("export.confirmMessage", { d: selectedDestCount.value }),
 );
 
+// Full breakdown of what will be exported, shown in the confirmation dialog so
+// an irreversible (and potentially bulk) run can be reviewed before launching.
+const confirmRows = computed(() => {
+    const rows: { label: string; value: string }[] = [];
+
+    rows.push({
+        label: t("export.assets"),
+        value:
+            props.bulkMode || exportableAssets.value.length !== 1
+                ? formatNumber(exportableAssets.value.length)
+                : (exportableAssets.value[0]?.title ?? ""),
+    });
+    rows.push({
+        label: t("export.destinations"),
+        value: props.config.destinations
+            .filter((d) => destChecked[d])
+            .map(destinationName)
+            .join(", "),
+    });
+    rows.push({ label: t("export.audioSource"), value: audioSource.value });
+    if (selectedLangCount.value > 0)
+        rows.push({
+            label: t("export.languageExports"),
+            value: props.config.languages
+                .filter((l) => langChecked[l.code])
+                .map((l) => l.code)
+                .join(", "),
+        });
+    const res = resolutions.filter((r) => r.enabled);
+    if (res.length > 0)
+        rows.push({
+            label: t("export.resolutions"),
+            value: res
+                .map(
+                    (r) =>
+                        `${r.width}x${r.height}${r.downloadable ? " ↓" : ""}`,
+                )
+                .join(", "),
+        });
+    if (overlay.value && overlay.value !== "None")
+        rows.push({ label: t("export.overlay"), value: overlay.value });
+    if (!props.bulkMode) {
+        const subs = props.config.subclips
+            .filter((s) => subclipChecked[s.title])
+            .map((s) => s.title);
+        if (subs.length > 0)
+            rows.push({ label: t("export.subclips"), value: subs.join(", ") });
+    }
+    const opts: string[] = [];
+    if (withChapters.value) opts.push(t("export.withChapters"));
+    if (ignoreSilence.value) opts.push(t("export.ignoreSilence"));
+    if (exportAiSubs.value) opts.push(t("export.exportAiSubsShort"));
+    if (opts.length > 0)
+        rows.push({ label: t("export.options"), value: opts.join(", ") });
+
+    return rows;
+});
+
 function attemptExport() {
     confirmOpen.value = true;
 }
@@ -199,7 +281,7 @@ function confirmExport() {
 
 function startExport() {
     emit("start-export", {
-        vxIds: exportableAssets.value.map((a) => a.vxId),
+        assets: exportableAssets.value,
         selection: {
             destinations: props.config.destinations.filter(
                 (d) => destChecked[d],
@@ -232,7 +314,6 @@ function startExport() {
 
 <template>
     <div class="mx-auto w-full max-w-3xl px-6 py-8">
-        <!-- Bulk paste: detect VX-ids from arbitrary text -->
         <section v-if="bulkMode" class="mb-6 space-y-2">
             <h3 class="text-title-3 text-text-default font-semibold">
                 {{ $t("export.bulkTitle") }}
@@ -245,7 +326,6 @@ function startExport() {
             />
         </section>
 
-        <!-- Assets to export -->
         <section class="mb-6 space-y-2">
             <div class="flex items-center justify-between gap-2">
                 <h3 class="text-title-3 text-text-default font-semibold">
@@ -304,51 +384,41 @@ function startExport() {
             </p>
         </section>
 
-        <div class="space-y-6">
-            <!-- Alternative actions -->
-            <div
-                v-if="config.canExportTimedMetadata"
-                class="bg-surface-indent space-y-2 rounded-2xl p-4"
-            >
+        <section
+            v-if="!bulkMode && config.canExportTimedMetadata"
+            class="gradient-border bg-surface-raise mb-6 flex flex-col gap-3 rounded-2xl p-4 sm:flex-row sm:items-center sm:justify-between"
+        >
+            <div class="space-y-1">
                 <h3 class="text-title-3 text-text-default font-semibold">
                     {{ $t("export.alternativeActions") }}
                 </h3>
-                <DesignButton
-                    variant="secondary"
-                    size="small"
-                    icon="tabler:file-export"
-                    :disabled="submitting"
-                    @click="emit('export-timed-metadata')"
-                >
-                    {{ $t("export.exportTimedMetadata") }}
-                </DesignButton>
                 <p class="text-text-muted text-xs">
                     {{ $t("export.exportTimedMetadataHint") }}
                 </p>
             </div>
+            <DesignButton
+                variant="secondary"
+                icon="tabler:file-export"
+                :disabled="submitting"
+                class="border-border-1 shrink-0 border"
+                @click="emit('export-timed-metadata')"
+            >
+                {{ $t("export.exportTimedMetadata") }}
+            </DesignButton>
+        </section>
 
-            <!-- Destinations -->
+        <div class="space-y-6">
             <section class="space-y-2">
                 <h3 class="text-title-3 text-text-default font-semibold">
                     {{ $t("export.destinations") }}
                 </h3>
-                <div class="flex flex-col gap-2">
+                <div class="flex flex-col gap-3">
                     <DesignCheckbox
                         v-for="d in config.destinations"
                         :key="d"
                         v-model="destChecked[d]"
-                    >
-                        <template #label>
-                            <span class="text-sm">{{
-                                destinationName(d)
-                            }}</span>
-                            <span
-                                class="text-text-muted ml-2 font-mono text-xs"
-                            >
-                                {{ d }}</span
-                            >
-                        </template>
-                    </DesignCheckbox>
+                        :label="destinationName(d)"
+                    />
                     <p
                         v-if="config.destinations.length === 0"
                         class="text-text-muted text-xs"
@@ -358,7 +428,6 @@ function startExport() {
                 </div>
             </section>
 
-            <!-- Audio source -->
             <div class="space-y-1">
                 <label class="text-body-3 text-text-muted block">
                     {{ $t("export.audioSource") }}
@@ -369,7 +438,6 @@ function startExport() {
                 />
             </div>
 
-            <!-- Subclips (per-asset; hidden in bulk mode) -->
             <section v-if="!bulkMode" class="space-y-2">
                 <h3 class="text-title-3 text-text-default font-semibold">
                     {{ $t("export.subclips") }}
@@ -388,9 +456,16 @@ function startExport() {
                         :label="s.title"
                     />
                 </div>
+                <DesignBanner
+                    v-else
+                    variant="neutral"
+                    icon="tabler:scissors"
+                    class="border-border-1 border"
+                >
+                    {{ $t("export.noSubclips") }}
+                </DesignBanner>
             </section>
 
-            <!-- Language exports -->
             <section class="space-y-3">
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <h3 class="text-title-3 text-text-default font-semibold">
@@ -436,63 +511,119 @@ function startExport() {
                         </DesignButton>
                     </div>
                 </div>
-                <div class="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
-                    <DesignCheckbox
-                        v-for="l in config.languages"
+                <DesignInput
+                    v-model="langFilter"
+                    type="search"
+                    leading-icon="tabler:search"
+                    :placeholder="$t('export.filterLanguages')"
+                />
+                <div class="flex flex-wrap gap-2">
+                    <button
+                        v-for="l in filteredLanguages"
                         :key="l.code"
-                        v-model="langChecked[l.code]"
+                        type="button"
+                        class="ds-focus-ring shadow-resting inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm"
+                        :class="
+                            langChecked[l.code]
+                                ? 'ring-primary-default bg-primary-default/15 text-text-default ring-2'
+                                : 'gradient-border bg-surface-default text-text-default hover:bg-surface-raise'
+                        "
+                        :aria-pressed="langChecked[l.code]"
+                        @click="toggleLang(l.code)"
                     >
-                        <template #label>
-                            <span class="font-mono text-sm">{{ l.code }}</span>
-                            <span class="text-text-muted"> · {{ l.name }}</span>
-                        </template>
-                    </DesignCheckbox>
+                        <Icon
+                            :name="
+                                langChecked[l.code]
+                                    ? 'tabler:check'
+                                    : 'tabler:plus'
+                            "
+                            class="size-3.5 shrink-0"
+                            :class="
+                                langChecked[l.code]
+                                    ? 'text-primary-default'
+                                    : 'text-text-muted'
+                            "
+                        />
+                        <span class="font-mono">{{ l.code }}</span>
+                        <span class="text-text-muted">· {{ l.name }}</span>
+                    </button>
+                    <p
+                        v-if="filteredLanguages.length === 0"
+                        class="text-text-muted text-xs"
+                    >
+                        {{ $t("export.noLanguageMatches") }}
+                    </p>
                 </div>
             </section>
 
-            <!-- Resolutions -->
             <section class="space-y-2">
                 <h3 class="text-title-3 text-text-default font-semibold">
                     {{ $t("export.resolutions")
                     }}<span v-if="aspectRatio"> — {{ aspectRatio }}</span>
                 </h3>
-                <div class="space-y-2">
-                    <div
-                        class="text-text-muted grid grid-cols-[7rem_1fr] gap-6 text-xs"
-                    >
-                        <span></span>
-                        <span>{{ $t("export.downloadableHeader") }}</span>
-                    </div>
+                <div class="flex flex-col gap-2">
                     <div
                         v-for="r in resolutions"
                         :key="`${r.width}x${r.height}`"
-                        class="grid grid-cols-[7rem_1fr] items-center gap-6"
+                        class="flex items-center gap-4"
                     >
-                        <DesignCheckbox v-model="r.enabled">
+                        <div class="w-32">
+                            <DesignCheckbox v-model="r.enabled">
+                                <template #label>
+                                    <span class="font-mono text-sm">
+                                        {{ r.width }}x{{ r.height }}
+                                    </span>
+                                </template>
+                            </DesignCheckbox>
+                        </div>
+                        <DesignCheckbox
+                            v-if="r.enabled"
+                            v-model="r.downloadable"
+                        >
                             <template #label>
-                                <span class="font-mono text-sm">
-                                    {{ r.width }}x{{ r.height }}
+                                <span
+                                    class="text-text-muted inline-flex items-center gap-1 text-sm"
+                                >
+                                    <Icon
+                                        name="tabler:download"
+                                        class="size-3.5"
+                                    />
+                                    {{ $t("export.downloadableHeader") }}
                                 </span>
                             </template>
                         </DesignCheckbox>
-                        <DesignCheckbox
-                            v-model="r.downloadable"
-                            :disabled="!r.enabled"
-                            :aria-label="$t('export.downloadable')"
-                        />
                     </div>
                 </div>
             </section>
 
-            <!-- Overlay -->
             <div class="space-y-1">
                 <label class="text-body-3 text-text-muted block">
                     {{ $t("export.overlay") }}
                 </label>
                 <DesignSelect v-model="overlay" :items="config.overlays" />
+                <div
+                    v-if="overlay && overlay !== 'None'"
+                    class="bg-surface-default gradient-border mt-2 aspect-video w-full max-w-md overflow-hidden rounded-xl"
+                >
+                    <img
+                        v-if="!overlayPreviewFailed"
+                        :src="overlayPreviewUrl"
+                        :alt="overlay"
+                        class="h-full w-full object-contain"
+                        @error="overlayPreviewFailed = true"
+                    />
+                    <div
+                        v-else
+                        class="text-text-hint flex h-full w-full flex-col items-center justify-center gap-1"
+                    >
+                        <Icon name="tabler:photo-off" class="size-6" />
+                        <span class="text-caption-1">
+                            {{ $t("export.overlayPreviewUnavailable") }}
+                        </span>
+                    </div>
+                </div>
             </div>
 
-            <!-- Options -->
             <section class="flex flex-col gap-3">
                 <h3 class="text-title-3 text-text-default font-semibold">
                     {{ $t("export.options") }}
@@ -512,10 +643,26 @@ function startExport() {
             </section>
         </div>
 
-        <!-- Sticky action bar -->
         <div
-            class="bg-surface-raise gradient-border shadow-floating sticky bottom-6 -mx-6 mt-6 rounded-2xl px-6 py-4"
+            class="bg-surface-raise gradient-border shadow-floating sticky bottom-6 -mx-6 mt-6 space-y-3 rounded-2xl px-6 py-4"
         >
+            <div
+                v-if="submitting && (progress?.total ?? 0) > 1"
+                class="space-y-1"
+            >
+                <DesignProgress
+                    :model-value="progress?.done ?? 0"
+                    :max="progress?.total ?? 1"
+                />
+                <p class="text-text-muted text-xs tabular-nums">
+                    {{
+                        $t("export.bulkProgress", {
+                            done: formatNumber(progress?.done ?? 0),
+                            total: formatNumber(progress?.total ?? 0),
+                        })
+                    }}
+                </p>
+            </div>
             <div class="flex items-center justify-between gap-4">
                 <p
                     class="text-xs"
@@ -544,27 +691,42 @@ function startExport() {
             </div>
         </div>
 
-        <!-- Export confirmation (both single-asset and bulk) -->
-        <DesignDialog
-            v-model:open="confirmOpen"
-            :title="confirmTitle"
-            :description="confirmMessage"
-        >
-            <div class="flex w-full justify-end gap-2">
-                <DesignButton variant="tertiary" @click="confirmOpen = false">
-                    {{ $t("export.cancel") }}
-                </DesignButton>
-                <DesignButton
-                    variant="primary"
-                    icon="tabler:file-export"
-                    @click="confirmExport"
+        <DesignDialog v-model:open="confirmOpen" :title="confirmTitle">
+            <div class="space-y-4">
+                <p class="text-body-3 text-text-muted">{{ confirmMessage }}</p>
+                <dl
+                    class="border-border-1 divide-border-1 divide-y rounded-xl border text-sm"
                 >
-                    {{
-                        bulkMode
-                            ? $t("export.bulkStart")
-                            : $t("export.startExport")
-                    }}
-                </DesignButton>
+                    <div
+                        v-for="row in confirmRows"
+                        :key="row.label"
+                        class="grid grid-cols-[8rem_1fr] gap-3 px-3 py-2"
+                    >
+                        <dt class="text-text-muted">{{ row.label }}</dt>
+                        <dd class="text-text-default break-words">
+                            {{ row.value || "—" }}
+                        </dd>
+                    </div>
+                </dl>
+                <div class="flex w-full justify-end gap-2">
+                    <DesignButton
+                        variant="tertiary"
+                        @click="confirmOpen = false"
+                    >
+                        {{ $t("export.cancel") }}
+                    </DesignButton>
+                    <DesignButton
+                        variant="primary"
+                        icon="tabler:file-export"
+                        @click="confirmExport"
+                    >
+                        {{
+                            bulkMode
+                                ? $t("export.bulkStart")
+                                : $t("export.startExport")
+                        }}
+                    </DesignButton>
+                </div>
             </div>
         </DesignDialog>
     </div>

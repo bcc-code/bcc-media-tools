@@ -24,11 +24,14 @@ const emit = defineEmits<{
 /* ------------------------------------------------------------------ state --- */
 
 const destChecked = reactive<Record<string, boolean>>(
-    Object.fromEntries(props.config.destinations.map((d) => [d, false])),
+    Object.fromEntries(props.config.destinations.map((d) => [d.id, false])),
 );
 
 const subtitleShape = ref(props.config.subtitleShapes[0] ?? "None");
 const subtitleStyle = ref(props.config.subtitleStyles[0] ?? "");
+
+// Backend base URL, where the /subtitle-style-preview handler lives.
+const base = useRuntimeConfig().public.grpcUrl;
 
 /* ----------------------------------------------------------- asset list --- */
 
@@ -77,7 +80,7 @@ function removeAsset(vxId: string) {
 /* --------------------------------------------------------------- computed --- */
 
 const selectedDestCount = computed(
-    () => props.config.destinations.filter((d) => destChecked[d]).length,
+    () => props.config.destinations.filter((d) => destChecked[d.id]).length,
 );
 
 const { t } = useI18n();
@@ -140,9 +143,9 @@ function startExport() {
     emit("start-export", {
         vxIds: exportableAssets.value.map((a) => a.vxId),
         selection: {
-            destinations: props.config.destinations.filter(
-                (d) => destChecked[d],
-            ),
+            destinations: props.config.destinations
+                .filter((d) => destChecked[d.id])
+                .map((d) => d.id),
             subtitleShape: subtitleShape.value,
             subtitleStyle: subtitleStyle.value,
         },
@@ -230,23 +233,14 @@ function startExport() {
                 <h3 class="text-title-3 text-text-default font-semibold">
                     {{ $t("vbExport.destinations") }}
                 </h3>
-                <div class="flex flex-col gap-2">
+                <div class="flex flex-col gap-3">
                     <DesignCheckbox
                         v-for="d in config.destinations"
-                        :key="d"
-                        v-model="destChecked[d]"
-                    >
-                        <template #label>
-                            <span class="text-sm">
-                                {{ destinationName(d) }}
-                            </span>
-                            <span
-                                class="text-text-muted ml-2 font-mono text-xs"
-                            >
-                                {{ d }}
-                            </span>
-                        </template>
-                    </DesignCheckbox>
+                        :key="d.id"
+                        v-model="destChecked[d.id]"
+                        :label="destinationName(d.id)"
+                        :description="d.description"
+                    />
                     <p
                         v-if="config.destinations.length === 0"
                         class="text-text-muted text-xs"
@@ -256,27 +250,38 @@ function startExport() {
                 </div>
             </section>
 
-            <!-- Subtitles (burn-in) -->
-            <div class="space-y-1">
-                <label class="text-body-3 text-text-muted block">
-                    {{ $t("vbExport.subtitlesBurnIn") }}
-                </label>
-                <DesignSelect
-                    v-model="subtitleShape"
-                    :items="config.subtitleShapes"
-                />
-            </div>
+            <!-- Subtitle burn-in — per-asset, so not configurable in bulk mode -->
+            <DesignBanner
+                v-if="bulkMode"
+                variant="info"
+                icon="tabler:info-circle"
+            >
+                {{ $t("vbExport.subtitlesBurnInBulkNote") }}
+            </DesignBanner>
+            <template v-else>
+                <!-- Subtitles (burn-in) -->
+                <div class="space-y-1">
+                    <label class="text-body-3 text-text-muted block">
+                        {{ $t("vbExport.subtitlesBurnIn") }}
+                    </label>
+                    <DesignSelect
+                        v-model="subtitleShape"
+                        :items="config.subtitleShapes"
+                    />
+                </div>
 
-            <!-- Subtitles burn in style -->
-            <div class="space-y-1">
-                <label class="text-body-3 text-text-muted block">
-                    {{ $t("vbExport.subtitlesBurnInStyle") }}
-                </label>
-                <DesignSelect
-                    v-model="subtitleStyle"
-                    :items="config.subtitleStyles"
-                />
-            </div>
+                <!-- Subtitles burn in style -->
+                <div class="space-y-2">
+                    <label class="text-body-3 text-text-muted block">
+                        {{ $t("vbExport.subtitlesBurnInStyle") }}
+                    </label>
+                    <VbExportSubtitleStylePicker
+                        v-model="subtitleStyle"
+                        :styles="config.subtitleStyles"
+                        :base="base"
+                    />
+                </div>
+            </template>
         </div>
 
         <!-- Sticky action bar -->

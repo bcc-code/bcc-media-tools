@@ -182,6 +182,9 @@ func main() {
 	mux.Handle("/vault/image", newVaultImageHandler(cantemoClient, os.Getenv("CANTEMO_TOKEN")))
 	mux.Handle("/vault/waveform", newVaultWaveformHandler(vaultAPI))
 
+	mux.Handle("/subtitle-style-preview", subtitleStylePreviewHandler{})
+	mux.Handle("/overlay-preview", overlayPreviewHandler{})
+
 	mux.Handle("/", http.HandlerFunc(serveFiles))
 
 	log.L.Debug().Msg("Starting server on http://localhost:8080/")

@@ -12,7 +12,7 @@ withDefaults(defineProps<Props>(), {
 });
 
 const classes = cva({
-    base: "flex items-center gap-3 rounded-xl px-4 py-3 text-body-3",
+    base: "flex items-start gap-3 rounded-xl px-4 py-3 text-body-3",
     variants: {
         variant: {
             success: "bg-semantic-success/15 text-semantic-success",
@@ -27,7 +27,7 @@ const classes = cva({
 
 <template>
     <div :class="classes({ variant })">
-        <Icon v-if="icon" :name="icon" class="size-5 shrink-0" />
+        <Icon v-if="icon" :name="icon" class="shrink-0 text-base" />
         <slot />
     </div>
 </template>

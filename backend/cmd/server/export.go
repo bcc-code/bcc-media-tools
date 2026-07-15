@@ -88,27 +88,47 @@ func exportLanguages() []*apiv1.ExportLanguage {
 	})
 }
 
-// allowedDestinations returns the canonical export destinations the given user
-// is permitted to export to.
-func allowedDestinations(perms *apiv1.Permissions) []string {
-	return lo.Filter(exportworkflows.AssetExportDestinations.Values(), func(d string, _ int) bool {
-		return perms.CanExportTo(d)
+var vxUIDestinationOrder = []exportworkflows.AssetExportDestination{
+	exportworkflows.AssetExportDestinationVOD,
+	exportworkflows.AssetExportDestinationBMM,
+	exportworkflows.AssetExportDestinationBMMIntegration,
+	exportworkflows.AssetExportDestinationIsilon,
+}
+
+func vxUIDestinations() []string {
+	return lo.Map(vxUIDestinationOrder, func(d exportworkflows.AssetExportDestination, _ int) string {
+		return d.Value
 	})
 }
 
-// dirFilenames returns the (sorted) file names in dir, or nil if it can't be read.
-func dirFilenames(dir string) []string {
+// allowedDestinations returns the UI export destinations the given user is
+// permitted to export to.
+func allowedDestinations(perms *apiv1.Permissions) []string {
+	out := []string{}
+	for _, d := range vxUIDestinationOrder {
+		if perms.CanExportTo(d.Value) {
+			out = append(out, d.Value)
+		}
+	}
+	return out
+}
+
+// subtitleStyleFilenames returns the (sorted) subtitle style files in
+// SUBTITLE_STYLES_DIR. Preview images (.png) paired with the styles live in the
+// same directory and are excluded from the list.
+func subtitleStyleFilenames() []string {
+	dir := os.Getenv("SUBTITLE_STYLES_DIR")
 	if dir == "" {
 		return nil
 	}
 	files, err := os.ReadDir(dir)
 	if err != nil {
-		log.L.Warn().Err(err).Str("dir", dir).Msg("could not read directory")
+		log.L.Warn().Err(err).Str("dir", dir).Msg("could not read SUBTITLE_STYLES_DIR")
 		return nil
 	}
 	var names []string
 	for _, f := range files {
-		if f.IsDir() {
+		if f.IsDir() || strings.EqualFold(filepath.Ext(f.Name()), ".png") {
 			continue
 		}
 		names = append(names, f.Name())
@@ -117,20 +137,34 @@ func dirFilenames(dir string) []string {
 	return names
 }
 
-// vbUIDestinations returns the VB export destinations shown in the UI: the
-// canonical list minus the legacy "hippo" (v1) destination (matching trigger_ui).
+var vbUIDestinationOrder = []vbexportworkflows.Destination{
+	vbexportworkflows.DestinationAbekas,
+	vbexportworkflows.DestinationRawAbekas,
+	vbexportworkflows.DestinationBStage,
+	vbexportworkflows.DestinationHippoV2,
+	vbexportworkflows.DestinationHippoHap,
+	vbexportworkflows.DestinationDubbing,
+	vbexportworkflows.DestinationHyperdeck,
+	vbexportworkflows.DestinationCasparCG,
+}
+
 func vbUIDestinations() []string {
-	return lo.Filter(vbexportworkflows.Destinations.Values(), func(d string, _ int) bool {
-		return d != vbexportworkflows.DestinationHippo.Value
+	return lo.Map(vbUIDestinationOrder, func(d vbexportworkflows.Destination, _ int) string {
+		return d.Value
 	})
 }
 
-// allowedVBDestinations returns the UI VB destinations the user is permitted to
-// export to.
-func allowedVBDestinations(perms *apiv1.Permissions) []string {
-	return lo.Filter(vbUIDestinations(), func(d string, _ int) bool {
-		return perms.CanVBExportTo(d)
-	})
+func allowedVBDestinations(perms *apiv1.Permissions) []*apiv1.VBDestination {
+	out := []*apiv1.VBDestination{}
+	for _, d := range vbUIDestinationOrder {
+		if perms.CanVBExportTo(d.Value) {
+			out = append(out, &apiv1.VBDestination{
+				Id:          d.Value,
+				Description: d.Description(),
+			})
+		}
+	}
+	return out
 }
 
 // assetTitle extracts the display title from asset metadata, preferring the
@@ -461,7 +495,7 @@ func (e ExportAPI) GetVBExportConfig(ctx context.Context, req *connect.Request[a
 		return connect.NewResponse(&apiv1.GetVBExportConfigResponse{
 			Destinations:   allowedVBDestinations(perms),
 			SubtitleShapes: []string{"None"},
-			SubtitleStyles: dirFilenames(os.Getenv("SUBTITLE_STYLES_DIR")),
+			SubtitleStyles: subtitleStyleFilenames(),
 		}), nil
 	}
 
@@ -491,7 +525,7 @@ func (e ExportAPI) GetVBExportConfig(ctx context.Context, req *connect.Request[a
 		Title:          title,
 		Destinations:   allowedVBDestinations(perms),
 		SubtitleShapes: subtitleShapes,
-		SubtitleStyles: dirFilenames(os.Getenv("SUBTITLE_STYLES_DIR")),
+		SubtitleStyles: subtitleStyleFilenames(),
 	}
 
 	return connect.NewResponse(resp), nil
@@ -560,7 +594,7 @@ func (e ExportAPI) GetExportDestinations(ctx context.Context, req *connect.Reque
 		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("not authorized"))
 	}
 	return connect.NewResponse(&apiv1.ExportDestinationsResponse{
-		Vx: exportworkflows.AssetExportDestinations.Values(),
+		Vx: vxUIDestinations(),
 		Vb: vbUIDestinations(),
 	}), nil
 }

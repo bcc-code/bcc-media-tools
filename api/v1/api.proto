@@ -305,11 +305,16 @@ message GetVBExportConfigRequest {
   string VXID = 1;
 }
 
+message VBDestination {
+  string id = 1;
+  string description = 2;
+}
+
 message GetVBExportConfigResponse {
   string VXID = 1;
   string title = 2;
   // destinations filtered to what this user is allowed to export to
-  repeated string destinations = 3;
+  repeated VBDestination destinations = 3;
   // subtitle shape tags available on the asset (for burn-in)
   repeated string subtitle_shapes = 4;
   // available subtitle burn-in style files

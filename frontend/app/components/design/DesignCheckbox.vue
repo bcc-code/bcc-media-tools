@@ -10,12 +10,14 @@ import { Checkbox } from "@ark-ui/vue";
  */
 interface Props {
     label?: string;
+    description?: string;
     disabled?: boolean;
     ariaLabel?: string;
 }
 
 withDefaults(defineProps<Props>(), {
     label: undefined,
+    description: undefined,
     ariaLabel: undefined,
 });
 
@@ -27,7 +29,7 @@ const model = defineModel<boolean>({ default: false });
         v-model:checked="model"
         :disabled="disabled"
         :aria-label="ariaLabel"
-        class="inline-flex cursor-pointer items-center gap-2.5 disabled:cursor-not-allowed disabled:opacity-50"
+        class="inline-grid cursor-pointer grid-cols-[auto_1fr] items-center gap-x-2.5 gap-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
     >
         <Checkbox.Control
             class="border-border-1 data-[state=checked]:bg-primary-default data-[state=checked]:border-primary-default ds-focus-ring flex size-5 shrink-0 items-center justify-center rounded-md border"
@@ -42,6 +44,12 @@ const model = defineModel<boolean>({ default: false });
         >
             <slot name="label">{{ label }}</slot>
         </Checkbox.Label>
+        <p
+            v-if="description || $slots.description"
+            class="text-caption-1 text-text-muted col-start-2 select-none"
+        >
+            <slot name="description">{{ description }}</slot>
+        </p>
         <Checkbox.HiddenInput />
     </Checkbox.Root>
 </template>
