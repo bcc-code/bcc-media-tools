@@ -121,9 +121,8 @@ const selectedDestCount = computed(
     () => props.config.destinations.filter((d) => destChecked[d]).length,
 );
 
-const selectedResCount = computed(
-    () => resolutions.filter((r) => r.enabled).length,
-);
+const enabledResolutions = computed(() => resolutions.filter((r) => r.enabled));
+const selectedResCount = computed(() => enabledResolutions.value.length);
 
 // Assets that actually resolved; "not found" pastes are excluded from export.
 const exportableAssets = computed(() =>
@@ -553,30 +552,37 @@ function startExport() {
                     {{ $t("export.resolutions")
                     }}<span v-if="aspectRatio"> — {{ aspectRatio }}</span>
                 </h3>
-                <div class="space-y-2">
-                    <div
-                        class="text-text-muted grid grid-cols-[7rem_1fr] gap-6 text-xs"
-                    >
-                        <span></span>
-                        <span>{{ $t("export.downloadableHeader") }}</span>
-                    </div>
+                <div class="flex flex-col gap-2">
                     <div
                         v-for="r in resolutions"
                         :key="`${r.width}x${r.height}`"
-                        class="grid grid-cols-[7rem_1fr] items-center gap-6"
+                        class="flex items-center gap-4"
                     >
-                        <DesignCheckbox v-model="r.enabled">
+                        <div class="w-32">
+                            <DesignCheckbox v-model="r.enabled">
+                                <template #label>
+                                    <span class="font-mono text-sm">
+                                        {{ r.width }}x{{ r.height }}
+                                    </span>
+                                </template>
+                            </DesignCheckbox>
+                        </div>
+                        <DesignCheckbox
+                            v-if="r.enabled"
+                            v-model="r.downloadable"
+                        >
                             <template #label>
-                                <span class="font-mono text-sm">
-                                    {{ r.width }}x{{ r.height }}
+                                <span
+                                    class="text-text-muted inline-flex items-center gap-1 text-sm"
+                                >
+                                    <Icon
+                                        name="tabler:download"
+                                        class="size-3.5"
+                                    />
+                                    {{ $t("export.downloadableHeader") }}
                                 </span>
                             </template>
                         </DesignCheckbox>
-                        <DesignCheckbox
-                            v-model="r.downloadable"
-                            :disabled="!r.enabled"
-                            :aria-label="$t('export.downloadable')"
-                        />
                     </div>
                 </div>
             </section>
