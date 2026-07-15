@@ -601,27 +601,28 @@ function startExport() {
                     {{ $t("export.overlay") }}
                 </label>
                 <DesignSelect v-model="overlay" :items="config.overlays" />
-                <div
-                    v-if="overlay && overlay !== 'None'"
-                    class="bg-surface-default gradient-border mt-2 aspect-video w-full max-w-md overflow-hidden rounded-xl"
-                >
-                    <img
+                <template v-if="overlay && overlay !== 'None'">
+                    <div
                         v-if="!overlayPreviewFailed"
-                        :src="overlayPreviewUrl"
-                        :alt="overlay"
-                        class="h-full w-full object-contain"
-                        @error="overlayPreviewFailed = true"
-                    />
+                        class="bg-surface-default gradient-border mt-2 inline-block overflow-hidden rounded-xl"
+                    >
+                        <img
+                            :src="overlayPreviewUrl"
+                            :alt="overlay"
+                            class="block max-h-80 w-auto max-w-full object-contain"
+                            @error="overlayPreviewFailed = true"
+                        />
+                    </div>
                     <div
                         v-else
-                        class="text-text-hint flex h-full w-full flex-col items-center justify-center gap-1"
+                        class="bg-surface-default gradient-border text-text-hint mt-2 flex aspect-video w-full max-w-md flex-col items-center justify-center gap-1 overflow-hidden rounded-xl"
                     >
                         <Icon name="tabler:photo-off" class="size-6" />
                         <span class="text-caption-1">
                             {{ $t("export.overlayPreviewUnavailable") }}
                         </span>
                     </div>
-                </div>
+                </template>
             </div>
 
             <section class="flex flex-col gap-3">
