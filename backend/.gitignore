@@ -5,3 +5,4 @@ __debug*
 
 # Local subtitle style fixtures (.ass files and generated .png previews)
 subs/
+overlays/

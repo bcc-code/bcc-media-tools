@@ -112,6 +112,7 @@
         "none": "None",
         "resolutions": "Resolutions",
         "overlay": "Overlay",
+        "overlayPreviewUnavailable": "No preview available",
         "withChapters": "With chapters",
         "ignoreSilence": "Ignore silence",
         "exportAiSubs": "Export AI generated subs (if other subs are not available)",

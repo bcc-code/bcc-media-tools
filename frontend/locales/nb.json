@@ -112,6 +112,7 @@
         "none": "Ingen",
         "resolutions": "Oppløsninger",
         "overlay": "Overlegg",
+        "overlayPreviewUnavailable": "Ingen forhåndsvisning tilgjengelig",
         "withChapters": "Med kapitler",
         "ignoreSilence": "Ignorer stillhet",
         "exportAiSubs": "Eksporter AI-genererte undertekster (hvis andre undertekster ikke er tilgjengelige)",

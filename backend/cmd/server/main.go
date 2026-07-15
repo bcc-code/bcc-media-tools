@@ -183,6 +183,7 @@ func main() {
 	mux.Handle("/vault/waveform", newVaultWaveformHandler(vaultAPI))
 
 	mux.Handle("/subtitle-style-preview", subtitleStylePreviewHandler{})
+	mux.Handle("/overlay-preview", overlayPreviewHandler{})
 
 	mux.Handle("/", http.HandlerFunc(serveFiles))
 

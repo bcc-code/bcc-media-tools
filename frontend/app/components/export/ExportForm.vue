@@ -148,6 +148,15 @@ const selectionSummary = computed(() =>
     ].join(" · "),
 );
 
+// Overlay preview: the overlay file itself is the image, served by the backend
+// /overlay-preview handler. "None" has no preview.
+const base = useRuntimeConfig().public.grpcUrl;
+const overlayPreviewUrl = computed(
+    () => `${base}/overlay-preview?name=${encodeURIComponent(overlay.value)}`,
+);
+const overlayPreviewFailed = ref(false);
+watch(overlay, () => (overlayPreviewFailed.value = false));
+
 // Aspect ratio of the first resolution, e.g. "16:9".
 const aspectRatio = computed(() => {
     const first = resolutions[0];
@@ -592,6 +601,27 @@ function startExport() {
                     {{ $t("export.overlay") }}
                 </label>
                 <DesignSelect v-model="overlay" :items="config.overlays" />
+                <div
+                    v-if="overlay && overlay !== 'None'"
+                    class="bg-surface-default gradient-border mt-2 aspect-video w-full max-w-md overflow-hidden rounded-xl"
+                >
+                    <img
+                        v-if="!overlayPreviewFailed"
+                        :src="overlayPreviewUrl"
+                        :alt="overlay"
+                        class="h-full w-full object-contain"
+                        @error="overlayPreviewFailed = true"
+                    />
+                    <div
+                        v-else
+                        class="text-text-hint flex h-full w-full flex-col items-center justify-center gap-1"
+                    >
+                        <Icon name="tabler:photo-off" class="size-6" />
+                        <span class="text-caption-1">
+                            {{ $t("export.overlayPreviewUnavailable") }}
+                        </span>
+                    </div>
+                </div>
             </div>
 
             <section class="flex flex-col gap-3">
