@@ -97,6 +97,8 @@
         "subclipsHint": "La stå tom for å eksportere hele elementet",
         "languageExports": "Språkeksport",
         "nSelected": "{n} valgt",
+        "filterLanguages": "Filtrer språk …",
+        "noLanguageMatches": "Ingen språk samsvarer med filteret",
         "downloadableHeader": "Nedlastbar",
         "options": "Alternativer",
         "summaryAssets": "{n} elementer",

@@ -97,6 +97,8 @@
         "subclipsHint": "Leave empty to export the entire asset",
         "languageExports": "Language exports",
         "nSelected": "{n} selected",
+        "filterLanguages": "Filter languages…",
+        "noLanguageMatches": "No languages match your filter",
         "downloadableHeader": "Downloadable",
         "options": "Options",
         "summaryAssets": "{n} assets",

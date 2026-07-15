@@ -165,6 +165,20 @@ function setLangs(codes: string[]) {
         (l) => (langChecked[l.code] = codes.includes(l.code)),
     );
 }
+
+const toggleLang = (code: string) => (langChecked[code] = !langChecked[code]);
+
+// Filter the language chips by code or name (case-insensitive).
+const langFilter = ref("");
+const filteredLanguages = computed(() => {
+    const q = langFilter.value.trim().toLowerCase();
+    if (!q) return props.config.languages;
+    return props.config.languages.filter(
+        (l) =>
+            l.code.toLowerCase().includes(q) ||
+            l.name.toLowerCase().includes(q),
+    );
+});
 const selectAllLangs = () =>
     setLangs(props.config.languages.map((l) => l.code));
 const clearLangs = () => setLangs([]);
@@ -481,17 +495,48 @@ function startExport() {
                         </DesignButton>
                     </div>
                 </div>
-                <div class="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
-                    <DesignCheckbox
-                        v-for="l in config.languages"
+                <DesignInput
+                    v-model="langFilter"
+                    type="search"
+                    leading-icon="tabler:search"
+                    :placeholder="$t('export.filterLanguages')"
+                />
+                <div class="flex flex-wrap gap-2">
+                    <button
+                        v-for="l in filteredLanguages"
                         :key="l.code"
-                        v-model="langChecked[l.code]"
+                        type="button"
+                        class="ds-focus-ring shadow-resting inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm"
+                        :class="
+                            langChecked[l.code]
+                                ? 'ring-primary-default bg-primary-default/15 text-text-default ring-2'
+                                : 'gradient-border bg-surface-default text-text-default hover:bg-surface-raise'
+                        "
+                        :aria-pressed="langChecked[l.code]"
+                        @click="toggleLang(l.code)"
                     >
-                        <template #label>
-                            <span class="font-mono text-sm">{{ l.code }}</span>
-                            <span class="text-text-muted"> · {{ l.name }}</span>
-                        </template>
-                    </DesignCheckbox>
+                        <Icon
+                            :name="
+                                langChecked[l.code]
+                                    ? 'tabler:check'
+                                    : 'tabler:plus'
+                            "
+                            class="size-3.5 shrink-0"
+                            :class="
+                                langChecked[l.code]
+                                    ? 'text-primary-default'
+                                    : 'text-text-muted'
+                            "
+                        />
+                        <span class="font-mono">{{ l.code }}</span>
+                        <span class="text-text-muted">· {{ l.name }}</span>
+                    </button>
+                    <p
+                        v-if="filteredLanguages.length === 0"
+                        class="text-text-muted text-xs"
+                    >
+                        {{ $t("export.noLanguageMatches") }}
+                    </p>
                 </div>
             </section>
 
