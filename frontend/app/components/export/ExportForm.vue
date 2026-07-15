@@ -364,29 +364,31 @@ function startExport() {
             </p>
         </section>
 
-        <div class="space-y-6">
-            <!-- Alternative actions -->
-            <div
-                v-if="config.canExportTimedMetadata"
-                class="bg-surface-indent space-y-2 rounded-2xl p-4"
-            >
+        <!-- Other actions: metadata-only export, independent of the selection below -->
+        <section
+            v-if="!bulkMode && config.canExportTimedMetadata"
+            class="gradient-border bg-surface-raise mb-6 flex flex-col gap-3 rounded-2xl p-4 sm:flex-row sm:items-center sm:justify-between"
+        >
+            <div class="space-y-1">
                 <h3 class="text-title-3 text-text-default font-semibold">
                     {{ $t("export.alternativeActions") }}
                 </h3>
-                <DesignButton
-                    variant="secondary"
-                    size="small"
-                    icon="tabler:file-export"
-                    :disabled="submitting"
-                    @click="emit('export-timed-metadata')"
-                >
-                    {{ $t("export.exportTimedMetadata") }}
-                </DesignButton>
                 <p class="text-text-muted text-xs">
                     {{ $t("export.exportTimedMetadataHint") }}
                 </p>
             </div>
+            <DesignButton
+                variant="secondary"
+                icon="tabler:file-export"
+                :disabled="submitting"
+                class="border-border-1 shrink-0 border"
+                @click="emit('export-timed-metadata')"
+            >
+                {{ $t("export.exportTimedMetadata") }}
+            </DesignButton>
+        </section>
 
+        <div class="space-y-6">
             <!-- Destinations -->
             <section class="space-y-2">
                 <h3 class="text-title-3 text-text-default font-semibold">
