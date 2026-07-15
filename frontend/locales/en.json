@@ -95,6 +95,7 @@
         "audioSource": "Audio source",
         "subclips": "Subclips to export",
         "subclipsHint": "Leave empty to export the entire asset",
+        "noSubclips": "This asset has no subclips. The entire asset will be exported.",
         "languageExports": "Language exports",
         "nSelected": "{n} selected",
         "filterLanguages": "Filter languages…",

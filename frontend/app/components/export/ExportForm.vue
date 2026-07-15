@@ -448,6 +448,14 @@ function startExport() {
                         :label="s.title"
                     />
                 </div>
+                <DesignBanner
+                    v-else
+                    variant="neutral"
+                    icon="tabler:scissors"
+                    class="border-border-1 border"
+                >
+                    {{ $t("export.noSubclips") }}
+                </DesignBanner>
             </section>
 
             <section class="space-y-3">

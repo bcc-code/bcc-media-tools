@@ -95,6 +95,7 @@
         "audioSource": "Lydkilde",
         "subclips": "Underklipp å eksportere",
         "subclipsHint": "La stå tom for å eksportere hele elementet",
+        "noSubclips": "Dette elementet har ingen underklipp. Hele elementet blir eksportert.",
         "languageExports": "Språkeksport",
         "nSelected": "{n} valgt",
         "filterLanguages": "Filtrer språk …",
