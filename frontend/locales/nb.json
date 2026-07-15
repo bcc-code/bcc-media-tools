@@ -133,7 +133,9 @@
         "confirmMessage": "Dette starter eksporten til {d} destinasjon(er).",
         "cancel": "Avbryt",
         "bulkStartedCount": "Startet eksport for {n} element(er)",
-        "bulkFailedCount": "{n} feilet"
+        "bulkFailedCount": "{n} feilet",
+        "bulkProgress": "Starter {done} av {total} …",
+        "exportAiSubsShort": "AI-undertekster"
     },
     "vbExport": {
         "title": "VB-eksport",

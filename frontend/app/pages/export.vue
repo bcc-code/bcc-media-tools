@@ -62,26 +62,49 @@ async function resolveTitles(ids: string[]): Promise<AssetRef[]> {
 
 const submitting = ref(false);
 
+// Live progress of the current run (bound into ExportForm's action bar).
+const exportProgress = reactive({ total: 0, done: 0 });
+
+// Run `worker` over `items` with at most `limit` in flight at once.
+async function runPool<T>(
+    items: T[],
+    limit: number,
+    worker: (item: T) => Promise<void>,
+) {
+    let next = 0;
+    await Promise.all(
+        Array.from({ length: Math.min(limit, items.length) }, async () => {
+            while (next < items.length) {
+                await worker(items[next++]!);
+            }
+        }),
+    );
+}
+
 async function onStartExport({
-    vxIds,
+    assets,
     selection,
 }: {
-    vxIds: string[];
+    assets: AssetRef[];
     selection: ExportSelection;
 }) {
-    if (vxIds.length === 0) return;
+    if (assets.length === 0) return;
     submitting.value = true;
-    const failed: string[] = [];
+    exportProgress.total = assets.length;
+    exportProgress.done = 0;
+    let failed = 0;
     try {
-        for (const id of vxIds) {
+        await runPool(assets, 5, async (a) => {
             try {
-                await api.startExport({ VXID: id, ...selection });
+                await api.startExport({ VXID: a.vxId, ...selection });
             } catch {
-                failed.push(id);
+                failed++;
+            } finally {
+                exportProgress.done++;
             }
-        }
-        const started = vxIds.length - failed.length;
-        if (failed.length === 0) {
+        });
+        const started = assets.length - failed;
+        if (failed === 0) {
             toaster.create({
                 title: t("export.exportStarted"),
                 description: t("export.bulkStartedCount", {
@@ -91,8 +114,11 @@ async function onStartExport({
             });
         } else {
             toaster.create({
-                title: t("export.exportStarted"),
-                description: `${t("export.bulkStartedCount", { n: formatNumber(started) })} · ${t("export.bulkFailedCount", { n: formatNumber(failed.length) })}`,
+                title:
+                    started === 0
+                        ? t("export.exportFailed")
+                        : t("export.exportStarted"),
+                description: `${t("export.bulkStartedCount", { n: formatNumber(started) })} · ${t("export.bulkFailedCount", { n: formatNumber(failed) })}`,
                 type: started === 0 ? "error" : "warning",
             });
         }
@@ -158,6 +184,7 @@ const triggers: Trigger[] = [
             :config="config"
             :initial-assets="[{ vxId: config.VXID, title: config.title }]"
             :submitting="submitting"
+            :progress="exportProgress"
             @start-export="onStartExport"
             @export-timed-metadata="onExportTimedMetadata"
         />
@@ -189,6 +216,7 @@ const triggers: Trigger[] = [
                 bulk-mode
                 :resolve-titles="resolveTitles"
                 :submitting="submitting"
+                :progress="exportProgress"
                 @start-export="onStartExport"
             />
             <div

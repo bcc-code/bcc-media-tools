@@ -12,12 +12,14 @@ const props = defineProps<{
     initialAssets?: AssetRef[];
     // Resolves pasted VX-ids to titles (bulk mode only).
     resolveTitles?: (ids: string[]) => Promise<AssetRef[]>;
+    // Live progress of the running export (the page owns the run loop).
+    progress?: { total: number; done: number };
 }>();
 
 const emit = defineEmits<{
     (
         e: "start-export",
-        payload: { vxIds: string[]; selection: ExportSelection },
+        payload: { assets: AssetRef[]; selection: ExportSelection },
     ): void;
     (e: "export-timed-metadata"): void;
 }>();
@@ -188,6 +190,64 @@ const confirmMessage = computed(() =>
         : t("export.confirmMessage", { d: selectedDestCount.value }),
 );
 
+// Full breakdown of what will be exported, shown in the confirmation dialog so
+// an irreversible (and potentially bulk) run can be reviewed before launching.
+const confirmRows = computed(() => {
+    const rows: { label: string; value: string }[] = [];
+
+    rows.push({
+        label: t("export.assets"),
+        value:
+            props.bulkMode || exportableAssets.value.length !== 1
+                ? formatNumber(exportableAssets.value.length)
+                : (exportableAssets.value[0]?.title ?? ""),
+    });
+    rows.push({
+        label: t("export.destinations"),
+        value: props.config.destinations
+            .filter((d) => destChecked[d])
+            .map(destinationName)
+            .join(", "),
+    });
+    rows.push({ label: t("export.audioSource"), value: audioSource.value });
+    if (selectedLangCount.value > 0)
+        rows.push({
+            label: t("export.languageExports"),
+            value: props.config.languages
+                .filter((l) => langChecked[l.code])
+                .map((l) => l.code)
+                .join(", "),
+        });
+    const res = resolutions.filter((r) => r.enabled);
+    if (res.length > 0)
+        rows.push({
+            label: t("export.resolutions"),
+            value: res
+                .map(
+                    (r) =>
+                        `${r.width}x${r.height}${r.downloadable ? " ↓" : ""}`,
+                )
+                .join(", "),
+        });
+    if (overlay.value && overlay.value !== "None")
+        rows.push({ label: t("export.overlay"), value: overlay.value });
+    if (!props.bulkMode) {
+        const subs = props.config.subclips
+            .filter((s) => subclipChecked[s.title])
+            .map((s) => s.title);
+        if (subs.length > 0)
+            rows.push({ label: t("export.subclips"), value: subs.join(", ") });
+    }
+    const opts: string[] = [];
+    if (withChapters.value) opts.push(t("export.withChapters"));
+    if (ignoreSilence.value) opts.push(t("export.ignoreSilence"));
+    if (exportAiSubs.value) opts.push(t("export.exportAiSubsShort"));
+    if (opts.length > 0)
+        rows.push({ label: t("export.options"), value: opts.join(", ") });
+
+    return rows;
+});
+
 function attemptExport() {
     confirmOpen.value = true;
 }
@@ -199,7 +259,7 @@ function confirmExport() {
 
 function startExport() {
     emit("start-export", {
-        vxIds: exportableAssets.value.map((a) => a.vxId),
+        assets: exportableAssets.value,
         selection: {
             destinations: props.config.destinations.filter(
                 (d) => destChecked[d],
@@ -504,8 +564,25 @@ function startExport() {
 
         <!-- Sticky action bar -->
         <div
-            class="bg-surface-raise gradient-border shadow-floating sticky bottom-6 -mx-6 mt-6 rounded-2xl px-6 py-4"
+            class="bg-surface-raise gradient-border shadow-floating sticky bottom-6 -mx-6 mt-6 space-y-3 rounded-2xl px-6 py-4"
         >
+            <div
+                v-if="submitting && (progress?.total ?? 0) > 1"
+                class="space-y-1"
+            >
+                <DesignProgress
+                    :model-value="progress?.done ?? 0"
+                    :max="progress?.total ?? 1"
+                />
+                <p class="text-text-muted text-xs tabular-nums">
+                    {{
+                        $t("export.bulkProgress", {
+                            done: formatNumber(progress?.done ?? 0),
+                            total: formatNumber(progress?.total ?? 0),
+                        })
+                    }}
+                </p>
+            </div>
             <div class="flex items-center justify-between gap-4">
                 <p
                     class="text-xs"
@@ -535,26 +612,42 @@ function startExport() {
         </div>
 
         <!-- Export confirmation (both single-asset and bulk) -->
-        <DesignDialog
-            v-model:open="confirmOpen"
-            :title="confirmTitle"
-            :description="confirmMessage"
-        >
-            <div class="flex w-full justify-end gap-2">
-                <DesignButton variant="tertiary" @click="confirmOpen = false">
-                    {{ $t("export.cancel") }}
-                </DesignButton>
-                <DesignButton
-                    variant="primary"
-                    icon="tabler:file-export"
-                    @click="confirmExport"
+        <DesignDialog v-model:open="confirmOpen" :title="confirmTitle">
+            <div class="space-y-4">
+                <p class="text-body-3 text-text-muted">{{ confirmMessage }}</p>
+                <dl
+                    class="border-border-1 divide-border-1 divide-y rounded-xl border text-sm"
                 >
-                    {{
-                        bulkMode
-                            ? $t("export.bulkStart")
-                            : $t("export.startExport")
-                    }}
-                </DesignButton>
+                    <div
+                        v-for="row in confirmRows"
+                        :key="row.label"
+                        class="grid grid-cols-[8rem_1fr] gap-3 px-3 py-2"
+                    >
+                        <dt class="text-text-muted">{{ row.label }}</dt>
+                        <dd class="text-text-default break-words">
+                            {{ row.value || "—" }}
+                        </dd>
+                    </div>
+                </dl>
+                <div class="flex w-full justify-end gap-2">
+                    <DesignButton
+                        variant="tertiary"
+                        @click="confirmOpen = false"
+                    >
+                        {{ $t("export.cancel") }}
+                    </DesignButton>
+                    <DesignButton
+                        variant="primary"
+                        icon="tabler:file-export"
+                        @click="confirmExport"
+                    >
+                        {{
+                            bulkMode
+                                ? $t("export.bulkStart")
+                                : $t("export.startExport")
+                        }}
+                    </DesignButton>
+                </div>
             </div>
         </DesignDialog>
     </div>

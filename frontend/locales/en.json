@@ -133,7 +133,9 @@
         "confirmMessage": "This will start the export to {d} destination(s).",
         "cancel": "Cancel",
         "bulkStartedCount": "Started export for {n} asset(s)",
-        "bulkFailedCount": "{n} failed"
+        "bulkFailedCount": "{n} failed",
+        "bulkProgress": "Starting {done} of {total}…",
+        "exportAiSubsShort": "AI subtitles"
     },
     "vbExport": {
         "title": "VB Export",
