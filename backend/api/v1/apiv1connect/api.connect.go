@@ -97,6 +97,9 @@ const (
 	// APIServiceTriggerCantemoActionProcedure is the fully-qualified name of the APIService's
 	// TriggerCantemoAction RPC.
 	APIServiceTriggerCantemoActionProcedure = "/api.v1.APIService/TriggerCantemoAction"
+	// APIServiceFinishLiveIngestProcedure is the fully-qualified name of the APIService's
+	// FinishLiveIngest RPC.
+	APIServiceFinishLiveIngestProcedure = "/api.v1.APIService/FinishLiveIngest"
 	// APIServiceVaultSearchProcedure is the fully-qualified name of the APIService's VaultSearch RPC.
 	APIServiceVaultSearchProcedure = "/api.v1.APIService/VaultSearch"
 	// APIServiceGetVaultItemProcedure is the fully-qualified name of the APIService's GetVaultItem RPC.
@@ -161,6 +164,8 @@ type APIServiceClient interface {
 	GetExportDestinations(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.ExportDestinationsResponse], error)
 	// Cantemo action panel
 	TriggerCantemoAction(context.Context, *connect.Request[v1.TriggerCantemoActionRequest]) (*connect.Response[v1.Void], error)
+	// Live ingest
+	FinishLiveIngest(context.Context, *connect.Request[v1.FinishLiveIngestRequest]) (*connect.Response[v1.FinishLiveIngestResponse], error)
 	// VAULT (Vidispine search)
 	VaultSearch(context.Context, *connect.Request[v1.VaultSearchRequest]) (*connect.Response[v1.VaultSearchResponse], error)
 	GetVaultItem(context.Context, *connect.Request[v1.GetVaultItemRequest]) (*connect.Response[v1.GetVaultItemResponse], error)
@@ -323,6 +328,12 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(aPIServiceMethods.ByName("TriggerCantemoAction")),
 			connect.WithClientOptions(opts...),
 		),
+		finishLiveIngest: connect.NewClient[v1.FinishLiveIngestRequest, v1.FinishLiveIngestResponse](
+			httpClient,
+			baseURL+APIServiceFinishLiveIngestProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("FinishLiveIngest")),
+			connect.WithClientOptions(opts...),
+		),
 		vaultSearch: connect.NewClient[v1.VaultSearchRequest, v1.VaultSearchResponse](
 			httpClient,
 			baseURL+APIServiceVaultSearchProcedure,
@@ -405,6 +416,7 @@ type aPIServiceClient struct {
 	startVBExport           *connect.Client[v1.StartVBExportRequest, v1.StartVBExportResponse]
 	getExportDestinations   *connect.Client[v1.Void, v1.ExportDestinationsResponse]
 	triggerCantemoAction    *connect.Client[v1.TriggerCantemoActionRequest, v1.Void]
+	finishLiveIngest        *connect.Client[v1.FinishLiveIngestRequest, v1.FinishLiveIngestResponse]
 	vaultSearch             *connect.Client[v1.VaultSearchRequest, v1.VaultSearchResponse]
 	getVaultItem            *connect.Client[v1.GetVaultItemRequest, v1.GetVaultItemResponse]
 	listEditorialSessions   *connect.Client[v1.Void, v1.ListEditorialSessionsResponse]
@@ -531,6 +543,11 @@ func (c *aPIServiceClient) TriggerCantemoAction(ctx context.Context, req *connec
 	return c.triggerCantemoAction.CallUnary(ctx, req)
 }
 
+// FinishLiveIngest calls api.v1.APIService.FinishLiveIngest.
+func (c *aPIServiceClient) FinishLiveIngest(ctx context.Context, req *connect.Request[v1.FinishLiveIngestRequest]) (*connect.Response[v1.FinishLiveIngestResponse], error) {
+	return c.finishLiveIngest.CallUnary(ctx, req)
+}
+
 // VaultSearch calls api.v1.APIService.VaultSearch.
 func (c *aPIServiceClient) VaultSearch(ctx context.Context, req *connect.Request[v1.VaultSearchRequest]) (*connect.Response[v1.VaultSearchResponse], error) {
 	return c.vaultSearch.CallUnary(ctx, req)
@@ -613,6 +630,8 @@ type APIServiceHandler interface {
 	GetExportDestinations(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.ExportDestinationsResponse], error)
 	// Cantemo action panel
 	TriggerCantemoAction(context.Context, *connect.Request[v1.TriggerCantemoActionRequest]) (*connect.Response[v1.Void], error)
+	// Live ingest
+	FinishLiveIngest(context.Context, *connect.Request[v1.FinishLiveIngestRequest]) (*connect.Response[v1.FinishLiveIngestResponse], error)
 	// VAULT (Vidispine search)
 	VaultSearch(context.Context, *connect.Request[v1.VaultSearchRequest]) (*connect.Response[v1.VaultSearchResponse], error)
 	GetVaultItem(context.Context, *connect.Request[v1.GetVaultItemRequest]) (*connect.Response[v1.GetVaultItemResponse], error)
@@ -771,6 +790,12 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(aPIServiceMethods.ByName("TriggerCantemoAction")),
 		connect.WithHandlerOptions(opts...),
 	)
+	aPIServiceFinishLiveIngestHandler := connect.NewUnaryHandler(
+		APIServiceFinishLiveIngestProcedure,
+		svc.FinishLiveIngest,
+		connect.WithSchema(aPIServiceMethods.ByName("FinishLiveIngest")),
+		connect.WithHandlerOptions(opts...),
+	)
 	aPIServiceVaultSearchHandler := connect.NewUnaryHandler(
 		APIServiceVaultSearchProcedure,
 		svc.VaultSearch,
@@ -873,6 +898,8 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceGetExportDestinationsHandler.ServeHTTP(w, r)
 		case APIServiceTriggerCantemoActionProcedure:
 			aPIServiceTriggerCantemoActionHandler.ServeHTTP(w, r)
+		case APIServiceFinishLiveIngestProcedure:
+			aPIServiceFinishLiveIngestHandler.ServeHTTP(w, r)
 		case APIServiceVaultSearchProcedure:
 			aPIServiceVaultSearchHandler.ServeHTTP(w, r)
 		case APIServiceGetVaultItemProcedure:
@@ -990,6 +1017,10 @@ func (UnimplementedAPIServiceHandler) GetExportDestinations(context.Context, *co
 
 func (UnimplementedAPIServiceHandler) TriggerCantemoAction(context.Context, *connect.Request[v1.TriggerCantemoActionRequest]) (*connect.Response[v1.Void], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.TriggerCantemoAction is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) FinishLiveIngest(context.Context, *connect.Request[v1.FinishLiveIngestRequest]) (*connect.Response[v1.FinishLiveIngestResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.FinishLiveIngest is not implemented"))
 }
 
 func (UnimplementedAPIServiceHandler) VaultSearch(context.Context, *connect.Request[v1.VaultSearchRequest]) (*connect.Response[v1.VaultSearchResponse], error) {

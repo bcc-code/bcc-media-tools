@@ -54,6 +54,8 @@ export function usePermissions() {
     );
     const canEditEditorial = cap((m) => !!m.editorial?.admin);
 
+    const canUseLiveIngest = cap((m) => !!m.liveIngest?.enabled);
+
     const canCantemoPreview = cap((m) => !!m.cantemo?.preview);
     const canCantemoTranscribe = cap((m) => !!m.cantemo?.transcribe);
     const canCantemoSubtitles = cap((m) => !!m.cantemo?.subtitles);
@@ -76,6 +78,7 @@ export function usePermissions() {
         canUseVault,
         canUseEditorial,
         canEditEditorial,
+        canUseLiveIngest,
         canCantemoPreview,
         canCantemoTranscribe,
         canCantemoSubtitles,

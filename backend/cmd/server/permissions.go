@@ -148,10 +148,11 @@ func PermissionsForEmail(email string) *apiv1.Permissions {
 			Destinations: make([]string, 0),
 			Admin:        false,
 		},
-		Cantemo:   &apiv1.CantemoPermission{},
-		Vault:     &apiv1.VaultPermission{},
-		Shorts:    &apiv1.ShortsPermission{},
-		Editorial: &apiv1.EditorialPermission{},
+		Cantemo:    &apiv1.CantemoPermission{},
+		Vault:      &apiv1.VaultPermission{},
+		Shorts:     &apiv1.ShortsPermission{},
+		Editorial:  &apiv1.EditorialPermission{},
+		LiveIngest: &apiv1.LiveIngestPermission{},
 	}
 }
 

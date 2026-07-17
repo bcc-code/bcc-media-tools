@@ -204,7 +204,22 @@
         "editorial": {
             "title": "Redaksjonell gjennomgang",
             "description": "Gå gjennom markører og merk dem for publisering"
+        },
+        "liveIngest": {
+            "title": "Direkteinnlesing",
+            "description": "Fullfør den pågående direkteinnlesingen"
         }
+    },
+    "liveIngest": {
+        "title": "Direkteinnlesing",
+        "description": "Send fullførsignalet til den pågående direkteinnlesingen slik at den slutter å kopiere og fullføres.",
+        "finish": "Fullfør direkteinnlesing",
+        "confirmTitle": "Fullføre direkteinnlesingen?",
+        "confirmMessage": "Dette sender fullførsignalet til den pågående direkteinnlesingen slik at den slutter å kopiere kildefilen og fullføres.",
+        "cancel": "Avbryt",
+        "confirmSubmit": "Ja, fullfør",
+        "finished": "Fullførsignal sendt",
+        "finishFailed": "Kunne ikke fullføre direkteinnlesingen"
     },
     "editorial": {
         "newSession": "Ny gjennomgang",

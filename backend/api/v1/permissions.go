@@ -95,6 +95,12 @@ func (p *Permissions) CanEditorial() bool {
 	return p.Admin || (p.Editorial != nil && (p.Editorial.Enabled || p.Editorial.Admin))
 }
 
+// CanLiveIngest reports whether the user may open the Live ingest tool and send
+// the finish signal to a running live ingest.
+func (p *Permissions) CanLiveIngest() bool {
+	return p.Admin || (p.LiveIngest != nil && p.LiveIngest.Enabled)
+}
+
 // CanEditorialEdit reports whether the user may add, remove and edit markers
 // and sessions (the edit view). Users without this may only accept/reject.
 func (p *Permissions) CanEditorialEdit() bool {

@@ -204,7 +204,22 @@
         "editorial": {
             "title": "Editorial review",
             "description": "Review markers and mark them for publishing"
+        },
+        "liveIngest": {
+            "title": "Live ingest",
+            "description": "Finish the currently running live ingest"
         }
+    },
+    "liveIngest": {
+        "title": "Live ingest",
+        "description": "Send the finish signal to the currently running live ingest so it stops copying and completes.",
+        "finish": "Finish live ingest",
+        "confirmTitle": "Finish the live ingest?",
+        "confirmMessage": "This sends the finish signal to the running live ingest so it stops copying the source file and completes.",
+        "cancel": "Cancel",
+        "confirmSubmit": "Yes, finish",
+        "finished": "Finish signal sent",
+        "finishFailed": "Could not finish the live ingest"
     },
     "editorial": {
         "newSession": "New review",

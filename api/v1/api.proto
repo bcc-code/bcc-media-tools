@@ -65,6 +65,12 @@ message ShortsPermission {
   bool enabled = 1;
 }
 
+// Permission for the Live ingest tool (send the finish signal to a running ingest).
+message LiveIngestPermission {
+  // can open the tool and send the finish signal to the running live ingest
+  bool enabled = 1;
+}
+
 // Permission for the Editorial approval tool (review markers for publishing).
 message EditorialPermission {
   // can open the tool, see all sessions, and accept/reject markers for
@@ -86,6 +92,7 @@ message Permissions {
   VaultPermission vault = 8;
   ShortsPermission shorts = 9;
   EditorialPermission editorial = 10;
+  LiveIngestPermission live_ingest = 11;
 }
 
 message GetPermissionsRequest {}
@@ -371,6 +378,20 @@ message TriggerCantemoActionRequest {
   CantemoAction action = 2;
 }
 
+// ---- Live ingest ----
+
+message FinishLiveIngestRequest {}
+
+// One running live ingest that received the finish signal.
+message FinishedIngest {
+  string workflow_id = 1;
+  string filename = 2;
+}
+
+message FinishLiveIngestResponse {
+  repeated FinishedIngest finished = 1;
+}
+
 // ---- VAULT (Vidispine search) ----
 
 message VaultSearchRequest {
@@ -542,6 +563,9 @@ service APIService {
 
   // Cantemo action panel
   rpc TriggerCantemoAction(TriggerCantemoActionRequest) returns (Void) {}
+
+  // Live ingest
+  rpc FinishLiveIngest(FinishLiveIngestRequest) returns (FinishLiveIngestResponse) {}
 
   // VAULT (Vidispine search)
   rpc VaultSearch(VaultSearchRequest) returns (VaultSearchResponse) {}

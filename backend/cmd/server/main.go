@@ -58,6 +58,7 @@ type ApiServer struct {
 	CantemoAPI
 	VaultAPI
 	EditorialAPI
+	LiveIngestAPI
 }
 
 func withCORS(connectHandler http.Handler) http.Handler {
@@ -129,6 +130,7 @@ func main() {
 	shortsAPI := NewShortsAPI(temporalClient, cantemoClient)
 	exportAPI := NewExportAPI(vidispineClient, temporalClient)
 	cantemoAPI := NewCantemoAPI(temporalClient)
+	liveIngestAPI := NewLiveIngestAPI(temporalClient)
 	vaultAPI := NewVaultAPI(
 		vidispineClient,
 		os.Getenv("VIDISPINE_BASE_URL"),
@@ -156,6 +158,7 @@ func main() {
 		CantemoAPI:       *cantemoAPI,
 		VaultAPI:         *vaultAPI,
 		EditorialAPI:     *editorialAPI,
+		LiveIngestAPI:    *liveIngestAPI,
 	}
 
 	if os.Getenv("STATIC_FILE_PATH") != "" {

@@ -65,6 +65,13 @@ export function useTools() {
             enabled: perms.canUseEditorial.value,
         },
         {
+            label: t("tools.liveIngest.title"),
+            icon: "tabler:antenna-bars-5",
+            description: t("tools.liveIngest.description"),
+            to: "/live-ingest/",
+            enabled: perms.canUseLiveIngest.value,
+        },
+        {
             label: t("tools.admin.title"),
             icon: "tabler:settings",
             description: t("tools.admin.description"),

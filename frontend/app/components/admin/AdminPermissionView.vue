@@ -5,6 +5,7 @@ import {
     CantemoPermissionSchema,
     EditorialPermissionSchema,
     ExportPermissionSchema,
+    LiveIngestPermissionSchema,
     PermissionsSchema,
     ShortsPermissionSchema,
     TranscriptionPermissionSchema,
@@ -38,6 +39,7 @@ function withDefaultPermissions(p: Permissions): Permissions {
         vault: p.vault ?? create(VaultPermissionSchema),
         shorts: p.shorts ?? create(ShortsPermissionSchema),
         editorial: p.editorial ?? create(EditorialPermissionSchema),
+        liveIngest: p.liveIngest ?? create(LiveIngestPermissionSchema),
         email: p.email ?? "",
     });
 }
@@ -268,6 +270,16 @@ const isOpen = ref(false);
                             v-model="perms.shorts.enabled"
                             label="Shorts generation"
                             description="Can open the shorts editor and submit shorts for generation"
+                        />
+                    </AdminPermissionViewSection>
+                    <AdminPermissionViewSection
+                        v-if="perms.liveIngest"
+                        title="Live ingest"
+                    >
+                        <DesignSwitch
+                            v-model="perms.liveIngest.enabled"
+                            label="Live ingest"
+                            description="Can send the finish signal to a running live ingest"
                         />
                     </AdminPermissionViewSection>
                     <AdminPermissionViewSection
