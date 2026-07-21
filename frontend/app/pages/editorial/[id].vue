@@ -122,10 +122,6 @@ function toRow(m: EditorialMarker): Row {
     };
 }
 
-function durationOf(row: Row): string {
-    return formatMs(parseTc(row.end) - parseTc(row.start));
-}
-
 const previewUrl = ref<string>();
 const videoEl = useTemplateRef<HTMLVideoElement>("videoEl");
 
@@ -474,11 +470,6 @@ onBeforeRouteLeave(() => {
                                     <th
                                         class="border-border-1 border-b px-2 py-2 font-normal"
                                     >
-                                        {{ t("editorial.col.duration") }}
-                                    </th>
-                                    <th
-                                        class="border-border-1 border-b px-2 py-2 font-normal"
-                                    >
                                         {{ t("editorial.col.comment") }}
                                     </th>
                                     <th
@@ -509,6 +500,7 @@ onBeforeRouteLeave(() => {
                                             size="small"
                                             icon="tabler:player-play"
                                             :disabled="!previewUrl"
+                                            class="border-border-1 border"
                                             @click="preview(row)"
                                         />
                                     </td>
@@ -575,11 +567,6 @@ onBeforeRouteLeave(() => {
                                             >
                                             <DesignInput v-model="row.end" />
                                         </div>
-                                    </td>
-                                    <td
-                                        class="text-body-3 text-text-muted px-2 py-2 tabular-nums"
-                                    >
-                                        {{ durationOf(row) }}
                                     </td>
                                     <td
                                         class="px-2 py-2"
