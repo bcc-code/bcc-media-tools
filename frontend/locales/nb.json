@@ -255,6 +255,7 @@
             "type": "Type",
             "start": "Start",
             "duration": "Varighet",
+            "comment": "Kommentar",
             "preview": "Forhåndsvis",
             "publish": "Publiseres?"
         },

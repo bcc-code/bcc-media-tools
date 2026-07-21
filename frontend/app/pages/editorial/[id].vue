@@ -57,6 +57,7 @@ interface Row {
     id: string;
     name: string;
     contributors: string;
+    comment: string;
     type: string;
     start: string;
     end: string;
@@ -112,6 +113,7 @@ function toRow(m: EditorialMarker): Row {
         id: m.id,
         name: m.name,
         contributors: m.contributors,
+        comment: m.comment,
         type: m.type,
         start: formatMs(Number(m.startMs)),
         end: formatMs(Number(m.endMs)),
@@ -219,6 +221,7 @@ function addRow() {
         id: "",
         name: "",
         contributors: "",
+        comment: "",
         type: "",
         start: "00:00:00",
         end: "00:00:00",
@@ -295,6 +298,7 @@ async function save() {
                 sortOrder: i,
                 name: r.name,
                 contributors: r.contributors,
+                comment: r.comment,
                 type: r.type,
                 startMs: BigInt(parseTc(r.start)),
                 endMs: BigInt(parseTc(r.end)),
@@ -447,6 +451,11 @@ onBeforeRouteLeave(() => {
                                         {{ t("editorial.col.duration") }}
                                     </th>
                                     <th
+                                        class="border-border-1 border-b px-2 py-2 font-normal"
+                                    >
+                                        {{ t("editorial.col.comment") }}
+                                    </th>
+                                    <th
                                         class="border-border-1 border-b px-2 py-2 text-center font-normal"
                                     >
                                         {{ t("editorial.col.publish") }}
@@ -533,6 +542,18 @@ onBeforeRouteLeave(() => {
                                         class="text-body-3 text-text-muted px-2 py-2 tabular-nums"
                                     >
                                         {{ durationOf(row) }}
+                                    </td>
+                                    <td class="px-2 py-2">
+                                        <DesignInput
+                                            v-if="effectiveMode === 'edit'"
+                                            v-model="row.comment"
+                                        />
+                                        <span
+                                            v-else
+                                            class="text-body-3 text-text-muted"
+                                        >
+                                            {{ row.comment || "—" }}
+                                        </span>
                                     </td>
                                     <td class="px-2 py-2">
                                         <div class="flex justify-center">

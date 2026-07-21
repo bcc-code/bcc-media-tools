@@ -462,6 +462,8 @@ message EditorialMarker {
   string source = 8;
   // "Medvirkende" — who takes part in the marker
   string contributors = 9;
+  // optional free-text editorial comment
+  string comment = 10;
 }
 
 // A review session tied to a single Mediabanken asset.

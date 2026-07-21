@@ -255,6 +255,7 @@
             "type": "Type",
             "start": "Start",
             "duration": "Duration",
+            "comment": "Comment",
             "preview": "Preview",
             "publish": "Publish?"
         },
