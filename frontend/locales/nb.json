@@ -252,6 +252,7 @@
         "col": {
             "title": "Tittel",
             "contributors": "Medvirkende",
+            "bibleVerses": "Bibelvers",
             "type": "Type",
             "start": "Start",
             "duration": "Varighet",

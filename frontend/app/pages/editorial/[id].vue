@@ -57,6 +57,7 @@ interface Row {
     id: string;
     name: string;
     contributors: string;
+    bibleVerses: string;
     comment: string;
     type: string;
     start: string;
@@ -113,6 +114,7 @@ function toRow(m: EditorialMarker): Row {
         id: m.id,
         name: m.name,
         contributors: m.contributors,
+        bibleVerses: m.bibleVerses,
         comment: m.comment,
         type: m.type,
         start: formatMs(Number(m.startMs)),
@@ -221,6 +223,7 @@ function addRow() {
         id: "",
         name: "",
         contributors: "",
+        bibleVerses: "",
         comment: "",
         type: "",
         start: "00:00:00",
@@ -298,6 +301,7 @@ async function save() {
                 sortOrder: i,
                 name: r.name,
                 contributors: r.contributors,
+                bibleVerses: r.bibleVerses,
                 comment: r.comment,
                 type: r.type,
                 startMs: BigInt(parseTc(r.start)),
@@ -437,6 +441,11 @@ onBeforeRouteLeave(() => {
                                     <th
                                         class="border-border-1 border-b px-2 py-2 font-normal"
                                     >
+                                        {{ t("editorial.col.bibleVerses") }}
+                                    </th>
+                                    <th
+                                        class="border-border-1 border-b px-2 py-2 font-normal"
+                                    >
                                         {{ t("editorial.col.type") }}
                                     </th>
                                     <th
@@ -508,6 +517,18 @@ onBeforeRouteLeave(() => {
                                             class="text-body-3 text-text-muted"
                                         >
                                             {{ row.contributors || "—" }}
+                                        </span>
+                                    </td>
+                                    <td class="px-2 py-2">
+                                        <DesignInput
+                                            v-if="effectiveMode === 'edit'"
+                                            v-model="row.bibleVerses"
+                                        />
+                                        <span
+                                            v-else
+                                            class="text-body-3 text-text-muted tabular-nums"
+                                        >
+                                            {{ row.bibleVerses || "—" }}
                                         </span>
                                     </td>
                                     <td class="px-2 py-2">

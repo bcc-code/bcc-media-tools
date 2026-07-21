@@ -252,6 +252,7 @@
         "col": {
             "title": "Title",
             "contributors": "Contributors",
+            "bibleVerses": "Bible verses",
             "type": "Type",
             "start": "Start",
             "duration": "Duration",

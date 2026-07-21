@@ -48,6 +48,7 @@ type Marker struct {
 	Name         string
 	Contributors string
 	Comment      string
+	BibleVerses  string
 	Type         string
 	StartMS      int64
 	EndMS        int64
@@ -105,6 +106,7 @@ CREATE TABLE IF NOT EXISTS markers (
     name        TEXT NOT NULL DEFAULT '',
     contributors TEXT NOT NULL DEFAULT '',
     comment     TEXT NOT NULL DEFAULT '',
+    bible_verses TEXT NOT NULL DEFAULT '',
     type        TEXT NOT NULL DEFAULT '',
     start_ms    INTEGER NOT NULL,
     end_ms      INTEGER NOT NULL,
@@ -129,6 +131,9 @@ func (s *Store) migrate(ctx context.Context) error {
 		return err
 	}
 	if err := s.addColumnIfMissing(ctx, "markers", "comment", "TEXT NOT NULL DEFAULT ''"); err != nil {
+		return err
+	}
+	if err := s.addColumnIfMissing(ctx, "markers", "bible_verses", "TEXT NOT NULL DEFAULT ''"); err != nil {
 		return err
 	}
 	return nil
@@ -247,7 +252,7 @@ func (s *Store) GetSession(ctx context.Context, id string) (*Session, error) {
 
 func (s *Store) markersForSession(ctx context.Context, sessionID string) ([]Marker, error) {
 	rows, err := s.db.QueryContext(ctx,
-		`SELECT id, sort_order, name, contributors, comment, type, start_ms, end_ms, publish, source, created_at, updated_at
+		`SELECT id, sort_order, name, contributors, comment, bible_verses, type, start_ms, end_ms, publish, source, created_at, updated_at
 		 FROM markers WHERE session_id = ? ORDER BY sort_order ASC`, sessionID)
 	if err != nil {
 		return nil, fmt.Errorf("editorial: list markers: %w", err)
@@ -258,7 +263,7 @@ func (s *Store) markersForSession(ctx context.Context, sessionID string) ([]Mark
 	for rows.Next() {
 		var m Marker
 		var createdAt, updatedAt int64
-		if err := rows.Scan(&m.ID, &m.SortOrder, &m.Name, &m.Contributors, &m.Comment, &m.Type, &m.StartMS, &m.EndMS,
+		if err := rows.Scan(&m.ID, &m.SortOrder, &m.Name, &m.Contributors, &m.Comment, &m.BibleVerses, &m.Type, &m.StartMS, &m.EndMS,
 			&m.Publish, &m.Source, &createdAt, &updatedAt); err != nil {
 			return nil, fmt.Errorf("editorial: scan marker: %w", err)
 		}
@@ -297,8 +302,8 @@ func (s *Store) SaveSession(ctx context.Context, id, title string, markers []Mar
 	}
 
 	stmt, err := tx.PrepareContext(ctx,
-		`INSERT INTO markers (id, session_id, sort_order, name, contributors, comment, type, start_ms, end_ms, publish, source, created_at, updated_at)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+		`INSERT INTO markers (id, session_id, sort_order, name, contributors, comment, bible_verses, type, start_ms, end_ms, publish, source, created_at, updated_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
 	if err != nil {
 		return nil, fmt.Errorf("editorial: prepare marker insert: %w", err)
 	}
@@ -314,7 +319,7 @@ func (s *Store) SaveSession(ctx context.Context, id, title string, markers []Mar
 			source = SourceManual
 		}
 		if _, err := stmt.ExecContext(ctx,
-			mid, id, int32(i), m.Name, m.Contributors, m.Comment, m.Type, m.StartMS, m.EndMS, m.Publish, source,
+			mid, id, int32(i), m.Name, m.Contributors, m.Comment, m.BibleVerses, m.Type, m.StartMS, m.EndMS, m.Publish, source,
 			toMillis(now), toMillis(now),
 		); err != nil {
 			return nil, fmt.Errorf("editorial: insert marker: %w", err)

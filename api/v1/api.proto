@@ -464,6 +464,8 @@ message EditorialMarker {
   string contributors = 9;
   // optional free-text editorial comment
   string comment = 10;
+  // optional free-text bible verse references (e.g. "John 3:16; Rom 8:1-4")
+  string bible_verses = 11;
 }
 
 // A review session tied to a single Mediabanken asset.
