@@ -250,7 +250,8 @@
         "unsavedWarning": "You have unsaved changes",
         "preview": "Preview",
         "col": {
-            "name": "Who or what",
+            "title": "Title",
+            "contributors": "Contributors",
             "type": "Type",
             "start": "Start",
             "duration": "Duration",

@@ -56,6 +56,7 @@ const typeItems = computed(() =>
 interface Row {
     id: string;
     name: string;
+    contributors: string;
     type: string;
     start: string;
     end: string;
@@ -110,6 +111,7 @@ function toRow(m: EditorialMarker): Row {
     return {
         id: m.id,
         name: m.name,
+        contributors: m.contributors,
         type: m.type,
         start: formatMs(Number(m.startMs)),
         end: formatMs(Number(m.endMs)),
@@ -216,6 +218,7 @@ function addRow() {
     rows.value.push({
         id: "",
         name: "",
+        contributors: "",
         type: "",
         start: "00:00:00",
         end: "00:00:00",
@@ -291,6 +294,7 @@ async function save() {
                 id: r.id,
                 sortOrder: i,
                 name: r.name,
+                contributors: r.contributors,
                 type: r.type,
                 startMs: BigInt(parseTc(r.start)),
                 endMs: BigInt(parseTc(r.end)),
@@ -419,7 +423,12 @@ onBeforeRouteLeave(() => {
                                     <th
                                         class="border-border-1 border-b py-2 pr-2 pl-3 font-normal"
                                     >
-                                        {{ t("editorial.col.name") }}
+                                        {{ t("editorial.col.title") }}
+                                    </th>
+                                    <th
+                                        class="border-border-1 border-b px-2 py-2 font-normal"
+                                    >
+                                        {{ t("editorial.col.contributors") }}
                                     </th>
                                     <th
                                         class="border-border-1 border-b px-2 py-2 font-normal"
@@ -478,6 +487,18 @@ onBeforeRouteLeave(() => {
                                             class="text-body-3 text-text-default"
                                         >
                                             {{ row.name || "—" }}
+                                        </span>
+                                    </td>
+                                    <td class="px-2 py-2">
+                                        <DesignInput
+                                            v-if="effectiveMode === 'edit'"
+                                            v-model="row.contributors"
+                                        />
+                                        <span
+                                            v-else
+                                            class="text-body-3 text-text-muted"
+                                        >
+                                            {{ row.contributors || "—" }}
                                         </span>
                                     </td>
                                     <td class="px-2 py-2">
@@ -607,6 +628,12 @@ onBeforeRouteLeave(() => {
                                     {{ typeLabel(activeMarker.type) }}
                                 </DesignBadge>
                             </div>
+                            <p
+                                v-if="activeMarker.contributors"
+                                class="text-body-3 text-text-muted mt-1 truncate"
+                            >
+                                {{ activeMarker.contributors }}
+                            </p>
                             <DesignSlider
                                 v-model="scrubMs"
                                 :min="parseTc(activeMarker.start)"

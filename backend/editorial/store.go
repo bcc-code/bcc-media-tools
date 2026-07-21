@@ -43,16 +43,17 @@ type Session struct {
 
 // Marker is a single reviewable timestamp/chapter within a session.
 type Marker struct {
-	ID        string
-	SortOrder int32
-	Name      string
-	Type      string
-	StartMS   int64
-	EndMS     int64
-	Publish   bool
-	Source    string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID           string
+	SortOrder    int32
+	Name         string
+	Contributors string
+	Type         string
+	StartMS      int64
+	EndMS        int64
+	Publish      bool
+	Source       string
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }
 
 // Store owns the SQLite connection pool.
@@ -101,6 +102,7 @@ CREATE TABLE IF NOT EXISTS markers (
     session_id  TEXT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
     sort_order  INTEGER NOT NULL,
     name        TEXT NOT NULL DEFAULT '',
+    contributors TEXT NOT NULL DEFAULT '',
     type        TEXT NOT NULL DEFAULT '',
     start_ms    INTEGER NOT NULL,
     end_ms      INTEGER NOT NULL,
@@ -117,6 +119,41 @@ CREATE INDEX IF NOT EXISTS idx_sessions_vxid   ON sessions(vxid);
 func (s *Store) migrate(ctx context.Context) error {
 	if _, err := s.db.ExecContext(ctx, schema); err != nil {
 		return fmt.Errorf("editorial: migrate: %w", err)
+	}
+	// Additive column migrations for tables that predate them. CREATE TABLE IF
+	// NOT EXISTS above won't add columns to an existing markers table, so add
+	// them here; ignore the "duplicate column" error when already present.
+	if err := s.addColumnIfMissing(ctx, "markers", "contributors", "TEXT NOT NULL DEFAULT ''"); err != nil {
+		return err
+	}
+	return nil
+}
+
+// addColumnIfMissing runs ALTER TABLE ADD COLUMN only when the column is absent,
+// making the migration idempotent across restarts.
+func (s *Store) addColumnIfMissing(ctx context.Context, table, column, def string) error {
+	rows, err := s.db.QueryContext(ctx, fmt.Sprintf("PRAGMA table_info(%s)", table))
+	if err != nil {
+		return fmt.Errorf("editorial: inspect %s: %w", table, err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var cid, notnull, pk int
+		var name, ctype string
+		var dflt sql.NullString
+		if err := rows.Scan(&cid, &name, &ctype, &notnull, &dflt, &pk); err != nil {
+			return fmt.Errorf("editorial: scan %s columns: %w", table, err)
+		}
+		if name == column {
+			return nil
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return err
+	}
+	if _, err := s.db.ExecContext(ctx,
+		fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s %s", table, column, def)); err != nil {
+		return fmt.Errorf("editorial: add column %s.%s: %w", table, column, err)
 	}
 	return nil
 }
@@ -205,7 +242,7 @@ func (s *Store) GetSession(ctx context.Context, id string) (*Session, error) {
 
 func (s *Store) markersForSession(ctx context.Context, sessionID string) ([]Marker, error) {
 	rows, err := s.db.QueryContext(ctx,
-		`SELECT id, sort_order, name, type, start_ms, end_ms, publish, source, created_at, updated_at
+		`SELECT id, sort_order, name, contributors, type, start_ms, end_ms, publish, source, created_at, updated_at
 		 FROM markers WHERE session_id = ? ORDER BY sort_order ASC`, sessionID)
 	if err != nil {
 		return nil, fmt.Errorf("editorial: list markers: %w", err)
@@ -216,7 +253,7 @@ func (s *Store) markersForSession(ctx context.Context, sessionID string) ([]Mark
 	for rows.Next() {
 		var m Marker
 		var createdAt, updatedAt int64
-		if err := rows.Scan(&m.ID, &m.SortOrder, &m.Name, &m.Type, &m.StartMS, &m.EndMS,
+		if err := rows.Scan(&m.ID, &m.SortOrder, &m.Name, &m.Contributors, &m.Type, &m.StartMS, &m.EndMS,
 			&m.Publish, &m.Source, &createdAt, &updatedAt); err != nil {
 			return nil, fmt.Errorf("editorial: scan marker: %w", err)
 		}
@@ -255,8 +292,8 @@ func (s *Store) SaveSession(ctx context.Context, id, title string, markers []Mar
 	}
 
 	stmt, err := tx.PrepareContext(ctx,
-		`INSERT INTO markers (id, session_id, sort_order, name, type, start_ms, end_ms, publish, source, created_at, updated_at)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+		`INSERT INTO markers (id, session_id, sort_order, name, contributors, type, start_ms, end_ms, publish, source, created_at, updated_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
 	if err != nil {
 		return nil, fmt.Errorf("editorial: prepare marker insert: %w", err)
 	}
@@ -272,7 +309,7 @@ func (s *Store) SaveSession(ctx context.Context, id, title string, markers []Mar
 			source = SourceManual
 		}
 		if _, err := stmt.ExecContext(ctx,
-			mid, id, int32(i), m.Name, m.Type, m.StartMS, m.EndMS, m.Publish, source,
+			mid, id, int32(i), m.Name, m.Contributors, m.Type, m.StartMS, m.EndMS, m.Publish, source,
 			toMillis(now), toMillis(now),
 		); err != nil {
 			return nil, fmt.Errorf("editorial: insert marker: %w", err)

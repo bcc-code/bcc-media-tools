@@ -72,7 +72,7 @@ func TestSaveSessionReplacesMarkers(t *testing.T) {
 
 	// First save: two new markers (empty IDs → generated).
 	saved, err := s.SaveSession(ctx, sess.ID, "renamed", []Marker{
-		{Name: "Speaker A", Type: "appell", StartMS: 1000, EndMS: 5000, Publish: true, Source: SourceImport},
+		{Name: "Speaker A", Contributors: "Alice, Bob", Type: "tale", StartMS: 1000, EndMS: 5000, Publish: true, Source: SourceImport},
 		{Name: "Song", Type: "sang", StartMS: 6000, EndMS: 9000},
 	})
 	require.NoError(t, err)
@@ -81,6 +81,7 @@ func TestSaveSessionReplacesMarkers(t *testing.T) {
 	assert.NotEmpty(t, saved.Markers[0].ID)
 	assert.Equal(t, int32(0), saved.Markers[0].SortOrder)
 	assert.Equal(t, int32(1), saved.Markers[1].SortOrder)
+	assert.Equal(t, "Alice, Bob", saved.Markers[0].Contributors)
 	assert.True(t, saved.Markers[0].Publish)
 	assert.Equal(t, SourceImport, saved.Markers[0].Source)
 	// Missing source defaults to manual.

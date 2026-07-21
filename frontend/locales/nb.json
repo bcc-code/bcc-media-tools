@@ -250,7 +250,8 @@
         "unsavedWarning": "Du har ulagrede endringer",
         "preview": "Forhåndsvis",
         "col": {
-            "name": "Hvem eller hva",
+            "title": "Tittel",
+            "contributors": "Medvirkende",
             "type": "Type",
             "start": "Start",
             "duration": "Varighet",

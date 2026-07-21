@@ -211,14 +211,15 @@ func editorialSessionToProto(s *editorial.Session) *apiv1.EditorialSession {
 
 func editorialMarkerToProto(m editorial.Marker) *apiv1.EditorialMarker {
 	return &apiv1.EditorialMarker{
-		Id:        m.ID,
-		SortOrder: m.SortOrder,
-		Name:      m.Name,
-		Type:      m.Type,
-		StartMs:   m.StartMS,
-		EndMs:     m.EndMS,
-		Publish:   m.Publish,
-		Source:    m.Source,
+		Id:           m.ID,
+		SortOrder:    m.SortOrder,
+		Name:         m.Name,
+		Contributors: m.Contributors,
+		Type:         m.Type,
+		StartMs:      m.StartMS,
+		EndMs:        m.EndMS,
+		Publish:      m.Publish,
+		Source:       m.Source,
 	}
 }
 
@@ -226,12 +227,13 @@ func editorialMarkerToProto(m editorial.Marker) *apiv1.EditorialMarker {
 // assigned by the store from list position, so any incoming value is ignored.
 func protoToEditorialMarker(m *apiv1.EditorialMarker) editorial.Marker {
 	return editorial.Marker{
-		ID:      m.GetId(),
-		Name:    m.GetName(),
-		Type:    m.GetType(),
-		StartMS: m.GetStartMs(),
-		EndMS:   m.GetEndMs(),
-		Publish: m.GetPublish(),
-		Source:  m.GetSource(),
+		ID:           m.GetId(),
+		Name:         m.GetName(),
+		Contributors: m.GetContributors(),
+		Type:         m.GetType(),
+		StartMS:      m.GetStartMs(),
+		EndMS:        m.GetEndMs(),
+		Publish:      m.GetPublish(),
+		Source:       m.GetSource(),
 	}
 }

@@ -450,9 +450,9 @@ message EditorialMarker {
   string id = 1;
   // display order in the table (assigned server-side from list position on save)
   int32 sort_order = 2;
-  // "Hvem eller hva" — person/thing
+  // "Tittel" — the marker title (chapter title on import)
   string name = 3;
-  // appell / vitnesbyrd / sang / ...
+  // vitnesbyrd / sang / tale / ...
   string type = 4;
   int64 start_ms = 5;
   int64 end_ms = 6;
@@ -460,6 +460,8 @@ message EditorialMarker {
   bool publish = 7;
   // "import" (from Mediabanken chapters) or "manual"
   string source = 8;
+  // "Medvirkende" — who takes part in the marker
+  string contributors = 9;
 }
 
 // A review session tied to a single Mediabanken asset.
