@@ -25,7 +25,18 @@ onMounted(() =>
     }),
 );
 
-const TYPE_OPTIONS = ["appell", "vitnesbyrd", "sang", "tale", "bønn", "annet"];
+const TYPE_OPTIONS = [
+    "vitnesbyrd",
+    "sang",
+    "allsang",
+    "tale",
+    "bønn",
+    "tydning",
+    "programleder",
+    "video",
+    "intervju",
+    "annet",
+];
 
 // A single editable row. Start/End are kept as "HH:MM:SS" strings so text
 // editing is natural; they're parsed to milliseconds only at save/preview.
@@ -96,21 +107,6 @@ function toRow(m: EditorialMarker): Row {
 
 function durationOf(row: Row): string {
     return formatMs(parseTc(row.end) - parseTc(row.start));
-}
-
-function typeVariant(
-    type: string,
-): "success" | "warning" | "info" | "error" | "neutral" {
-    switch (type) {
-        case "appell":
-            return "info";
-        case "vitnesbyrd":
-            return "success";
-        case "sang":
-            return "warning";
-        default:
-            return "neutral";
-    }
 }
 
 const previewUrl = ref<string>();
@@ -479,7 +475,6 @@ onBeforeRouteLeave(() => {
                                         />
                                         <DesignBadge
                                             v-else-if="row.type"
-                                            :variant="typeVariant(row.type)"
                                             class="capitalize"
                                         >
                                             {{ row.type }}
@@ -600,7 +595,6 @@ onBeforeRouteLeave(() => {
                                 </span>
                                 <DesignBadge
                                     v-if="activeMarker.type"
-                                    :variant="typeVariant(activeMarker.type)"
                                     class="capitalize"
                                 >
                                     {{ activeMarker.type }}
