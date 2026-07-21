@@ -257,7 +257,8 @@
             "start": "Start",
             "comment": "Kommentar",
             "preview": "Forhåndsvis",
-            "publish": "Publiseres?"
+            "publishBmm": "BMM",
+            "publishBcc": "BCC Media"
         },
         "types": {
             "vitnesbyrd": "Vitnesbyrd",

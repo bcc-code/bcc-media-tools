@@ -72,7 +72,7 @@ func TestSaveSessionReplacesMarkers(t *testing.T) {
 
 	// First save: two new markers (empty IDs → generated).
 	saved, err := s.SaveSession(ctx, sess.ID, "renamed", []Marker{
-		{Name: "Speaker A", Contributors: "Alice, Bob", Comment: "double-check timing", BibleVerses: "John 3:16; Rom 8:1-4", Type: "tale", StartMS: 1000, EndMS: 5000, Publish: true, Source: SourceImport},
+		{Name: "Speaker A", Contributors: "Alice, Bob", Comment: "double-check timing", BibleVerses: "John 3:16; Rom 8:1-4", Type: "tale", StartMS: 1000, EndMS: 5000, PublishBMM: true, Source: SourceImport},
 		{Name: "Song", Type: "sang", StartMS: 6000, EndMS: 9000},
 	})
 	require.NoError(t, err)
@@ -84,7 +84,8 @@ func TestSaveSessionReplacesMarkers(t *testing.T) {
 	assert.Equal(t, "Alice, Bob", saved.Markers[0].Contributors)
 	assert.Equal(t, "double-check timing", saved.Markers[0].Comment)
 	assert.Equal(t, "John 3:16; Rom 8:1-4", saved.Markers[0].BibleVerses)
-	assert.True(t, saved.Markers[0].Publish)
+	assert.True(t, saved.Markers[0].PublishBMM)
+	assert.False(t, saved.Markers[0].PublishBCC)
 	assert.Equal(t, SourceImport, saved.Markers[0].Source)
 	// Missing source defaults to manual.
 	assert.Equal(t, SourceManual, saved.Markers[1].Source)
@@ -131,18 +132,20 @@ func TestSetPublish(t *testing.T) {
 	require.NoError(t, err)
 	saved, err := s.SaveSession(ctx, sess.ID, "t", []Marker{
 		{Name: "m1", StartMS: 0, EndMS: 1},
-		{Name: "m2", StartMS: 2, EndMS: 3, Publish: true},
+		{Name: "m2", StartMS: 2, EndMS: 3, PublishBMM: true, PublishBCC: true},
 	})
 	require.NoError(t, err)
 	m1ID := saved.Markers[0].ID
 
-	require.NoError(t, s.SetPublish(ctx, sess.ID, m1ID, true))
+	require.NoError(t, s.SetPublish(ctx, sess.ID, m1ID, true, false))
 
 	got, err := s.GetSession(ctx, sess.ID)
 	require.NoError(t, err)
-	assert.True(t, got.Markers[0].Publish)
+	assert.True(t, got.Markers[0].PublishBMM)
+	assert.False(t, got.Markers[0].PublishBCC)
 	// The other marker is untouched.
-	assert.True(t, got.Markers[1].Publish)
+	assert.True(t, got.Markers[1].PublishBMM)
+	assert.True(t, got.Markers[1].PublishBCC)
 	assert.Equal(t, "m1", got.Markers[0].Name)
 }
 
@@ -151,7 +154,7 @@ func TestSetPublishNotFound(t *testing.T) {
 	ctx := context.Background()
 	sess, err := s.CreateSession(ctx, "VX-9", "stream", "e@bcc.media")
 	require.NoError(t, err)
-	assert.ErrorIs(t, s.SetPublish(ctx, sess.ID, "no-such-marker", true), ErrNotFound)
+	assert.ErrorIs(t, s.SetPublish(ctx, sess.ID, "no-such-marker", true, true), ErrNotFound)
 }
 
 func TestDeleteSessionCascadesMarkers(t *testing.T) {

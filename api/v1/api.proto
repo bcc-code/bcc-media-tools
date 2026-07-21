@@ -456,8 +456,8 @@ message EditorialMarker {
   string type = 4;
   int64 start_ms = 5;
   int64 end_ms = 6;
-  // Ja/Nei publish toggle
-  bool publish = 7;
+  reserved 7; // was: bool publish — split into publish_bmm / publish_bcc
+  reserved "publish";
   // "import" (from Mediabanken chapters) or "manual"
   string source = 8;
   // "Medvirkende" — who takes part in the marker
@@ -466,6 +466,9 @@ message EditorialMarker {
   string comment = 10;
   // optional free-text bible verse references (e.g. "John 3:16; Rom 8:1-4")
   string bible_verses = 11;
+  // Ja/Nei publish toggles, one per publishing target
+  bool publish_bmm = 12;
+  bool publish_bcc = 13;
 }
 
 // A review session tied to a single Mediabanken asset.
@@ -518,12 +521,13 @@ message ImportEditorialMarkersResponse {
   repeated EditorialMarker markers = 1;
 }
 
-// Toggle a single marker's publish flag (Ja/Nei). This is the write path for
-// reviewers who may accept/reject but not edit markers (the simple view).
+// Set a single marker's publish flags (Ja/Nei per target). This is the write
+// path for reviewers who may accept/reject but not edit markers (simple view).
 message SetEditorialPublishRequest {
   string session_id = 1;
   string marker_id = 2;
-  bool publish = 3;
+  bool publish_bmm = 3;
+  bool publish_bcc = 4;
 }
 
 // Update a single marker's free-text comment. Like SetEditorialPublish this is

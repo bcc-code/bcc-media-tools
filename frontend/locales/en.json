@@ -257,7 +257,8 @@
             "start": "Start",
             "comment": "Comment",
             "preview": "Preview",
-            "publish": "Publish?"
+            "publishBmm": "BMM",
+            "publishBcc": "BCC Media"
         },
         "types": {
             "vitnesbyrd": "Testimony",

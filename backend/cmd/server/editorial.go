@@ -125,7 +125,7 @@ func (e EditorialAPI) SetEditorialPublish(ctx context.Context, req *connect.Requ
 	if req.Msg.GetSessionId() == "" || req.Msg.GetMarkerId() == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("missing session_id or marker_id"))
 	}
-	if err := e.store.SetPublish(ctx, req.Msg.GetSessionId(), req.Msg.GetMarkerId(), req.Msg.GetPublish()); err != nil {
+	if err := e.store.SetPublish(ctx, req.Msg.GetSessionId(), req.Msg.GetMarkerId(), req.Msg.GetPublishBmm(), req.Msg.GetPublishBcc()); err != nil {
 		return nil, editorialErr(err)
 	}
 	return connect.NewResponse(&apiv1.Void{}), nil
@@ -233,7 +233,8 @@ func editorialMarkerToProto(m editorial.Marker) *apiv1.EditorialMarker {
 		Type:         m.Type,
 		StartMs:      m.StartMS,
 		EndMs:        m.EndMS,
-		Publish:      m.Publish,
+		PublishBmm:   m.PublishBMM,
+		PublishBcc:   m.PublishBCC,
 		Source:       m.Source,
 	}
 }
@@ -250,7 +251,8 @@ func protoToEditorialMarker(m *apiv1.EditorialMarker) editorial.Marker {
 		Type:         m.GetType(),
 		StartMS:      m.GetStartMs(),
 		EndMS:        m.GetEndMs(),
-		Publish:      m.GetPublish(),
+		PublishBMM:   m.GetPublishBmm(),
+		PublishBCC:   m.GetPublishBcc(),
 		Source:       m.GetSource(),
 	}
 }

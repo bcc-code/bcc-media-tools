@@ -60,7 +60,8 @@ interface Row {
     type: string;
     start: string;
     end: string;
-    publish: boolean;
+    publishBmm: boolean;
+    publishBcc: boolean;
     source: string;
 }
 
@@ -117,7 +118,8 @@ function toRow(m: EditorialMarker): Row {
         type: m.type,
         start: formatMs(Number(m.startMs)),
         end: formatMs(Number(m.endMs)),
-        publish: m.publish,
+        publishBmm: m.publishBmm,
+        publishBcc: m.publishBcc,
         source: m.source || "manual",
     };
 }
@@ -194,19 +196,22 @@ watch(
 );
 
 // ── Publish toggle ────────────────────────────────────────
-async function onPublishToggle(row: Row, value: boolean) {
-    row.publish = value;
+async function onPublishToggle(row: Row, target: "bmm" | "bcc", value: boolean) {
+    if (target === "bmm") row.publishBmm = value;
+    else row.publishBcc = value;
     // In edit mode the change is persisted on Save. In simple mode there is no
-    // Save button, so persist the single toggle immediately.
+    // Save button, so persist immediately (both flags, from the row's state).
     if (effectiveMode.value === "edit") return;
     try {
         await api.setEditorialPublish({
             sessionId: sessionId.value,
             markerId: row.id,
-            publish: value,
+            publishBmm: row.publishBmm,
+            publishBcc: row.publishBcc,
         });
     } catch {
-        row.publish = !value;
+        if (target === "bmm") row.publishBmm = !value;
+        else row.publishBcc = !value;
         toaster.create({ title: t("editorial.saveFailed"), type: "error" });
     }
 }
@@ -241,7 +246,8 @@ function addRow() {
         type: "",
         start: "00:00:00",
         end: "00:00:00",
-        publish: false,
+        publishBmm: false,
+        publishBcc: false,
         source: "manual",
     });
 }
@@ -319,7 +325,8 @@ async function save() {
                 type: r.type,
                 startMs: BigInt(parseTc(r.start)),
                 endMs: BigInt(parseTc(r.end)),
-                publish: r.publish,
+                publishBmm: r.publishBmm,
+                publishBcc: r.publishBcc,
                 source: r.source,
             })),
         });
@@ -475,7 +482,12 @@ onBeforeRouteLeave(() => {
                                     <th
                                         class="border-border-1 border-b px-2 py-2 text-center font-normal"
                                     >
-                                        {{ t("editorial.col.publish") }}
+                                        {{ t("editorial.col.publishBmm") }}
+                                    </th>
+                                    <th
+                                        class="border-border-1 border-b px-2 py-2 text-center font-normal"
+                                    >
+                                        {{ t("editorial.col.publishBcc") }}
                                     </th>
                                     <th
                                         v-if="effectiveMode === 'edit'"
@@ -580,9 +592,27 @@ onBeforeRouteLeave(() => {
                                     <td class="px-2 py-2">
                                         <div class="flex justify-center">
                                             <DesignSwitch
-                                                :model-value="row.publish"
+                                                :model-value="row.publishBmm"
                                                 @update:model-value="
-                                                    onPublishToggle(row, $event)
+                                                    onPublishToggle(
+                                                        row,
+                                                        'bmm',
+                                                        $event,
+                                                    )
+                                                "
+                                            />
+                                        </div>
+                                    </td>
+                                    <td class="px-2 py-2">
+                                        <div class="flex justify-center">
+                                            <DesignSwitch
+                                                :model-value="row.publishBcc"
+                                                @update:model-value="
+                                                    onPublishToggle(
+                                                        row,
+                                                        'bcc',
+                                                        $event,
+                                                    )
                                                 "
                                             />
                                         </div>

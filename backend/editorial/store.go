@@ -52,7 +52,8 @@ type Marker struct {
 	Type         string
 	StartMS      int64
 	EndMS        int64
-	Publish      bool
+	PublishBMM   bool
+	PublishBCC   bool
 	Source       string
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
@@ -110,7 +111,8 @@ CREATE TABLE IF NOT EXISTS markers (
     type        TEXT NOT NULL DEFAULT '',
     start_ms    INTEGER NOT NULL,
     end_ms      INTEGER NOT NULL,
-    publish     INTEGER NOT NULL DEFAULT 0,
+    publish_bmm INTEGER NOT NULL DEFAULT 0,
+    publish_bcc INTEGER NOT NULL DEFAULT 0,
     source      TEXT NOT NULL DEFAULT 'manual',
     created_at  INTEGER NOT NULL,
     updated_at  INTEGER NOT NULL
@@ -133,6 +135,12 @@ func (s *Store) migrate(ctx context.Context) error {
 		return err
 	}
 	if err := s.addColumnIfMissing(ctx, "markers", "bible_verses", "TEXT NOT NULL DEFAULT ''"); err != nil {
+		return err
+	}
+	if err := s.addColumnIfMissing(ctx, "markers", "publish_bmm", "INTEGER NOT NULL DEFAULT 0"); err != nil {
+		return err
+	}
+	if err := s.addColumnIfMissing(ctx, "markers", "publish_bcc", "INTEGER NOT NULL DEFAULT 0"); err != nil {
 		return err
 	}
 	return nil
@@ -250,7 +258,7 @@ func (s *Store) GetSession(ctx context.Context, id string) (*Session, error) {
 
 func (s *Store) markersForSession(ctx context.Context, sessionID string) ([]Marker, error) {
 	rows, err := s.db.QueryContext(ctx,
-		`SELECT id, sort_order, name, contributors, comment, bible_verses, type, start_ms, end_ms, publish, source, created_at, updated_at
+		`SELECT id, sort_order, name, contributors, comment, bible_verses, type, start_ms, end_ms, publish_bmm, publish_bcc, source, created_at, updated_at
 		 FROM markers WHERE session_id = ? ORDER BY sort_order ASC`, sessionID)
 	if err != nil {
 		return nil, fmt.Errorf("editorial: list markers: %w", err)
@@ -262,7 +270,7 @@ func (s *Store) markersForSession(ctx context.Context, sessionID string) ([]Mark
 		var m Marker
 		var createdAt, updatedAt int64
 		if err := rows.Scan(&m.ID, &m.SortOrder, &m.Name, &m.Contributors, &m.Comment, &m.BibleVerses, &m.Type, &m.StartMS, &m.EndMS,
-			&m.Publish, &m.Source, &createdAt, &updatedAt); err != nil {
+			&m.PublishBMM, &m.PublishBCC, &m.Source, &createdAt, &updatedAt); err != nil {
 			return nil, fmt.Errorf("editorial: scan marker: %w", err)
 		}
 		m.CreatedAt = fromMillis(createdAt)
@@ -300,8 +308,8 @@ func (s *Store) SaveSession(ctx context.Context, id, title string, markers []Mar
 	}
 
 	stmt, err := tx.PrepareContext(ctx,
-		`INSERT INTO markers (id, session_id, sort_order, name, contributors, comment, bible_verses, type, start_ms, end_ms, publish, source, created_at, updated_at)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+		`INSERT INTO markers (id, session_id, sort_order, name, contributors, comment, bible_verses, type, start_ms, end_ms, publish_bmm, publish_bcc, source, created_at, updated_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
 	if err != nil {
 		return nil, fmt.Errorf("editorial: prepare marker insert: %w", err)
 	}
@@ -317,7 +325,7 @@ func (s *Store) SaveSession(ctx context.Context, id, title string, markers []Mar
 			source = SourceManual
 		}
 		if _, err := stmt.ExecContext(ctx,
-			mid, id, int32(i), m.Name, m.Contributors, m.Comment, m.BibleVerses, m.Type, m.StartMS, m.EndMS, m.Publish, source,
+			mid, id, int32(i), m.Name, m.Contributors, m.Comment, m.BibleVerses, m.Type, m.StartMS, m.EndMS, m.PublishBMM, m.PublishBCC, source,
 			toMillis(now), toMillis(now),
 		); err != nil {
 			return nil, fmt.Errorf("editorial: insert marker: %w", err)
@@ -334,7 +342,7 @@ func (s *Store) SaveSession(ctx context.Context, id, title string, markers []Mar
 // else. This is the write path for reviewers who may accept/reject but not edit
 // markers (the simple view). Returns ErrNotFound if the marker does not exist in
 // the session.
-func (s *Store) SetPublish(ctx context.Context, sessionID, markerID string, publish bool) error {
+func (s *Store) SetPublish(ctx context.Context, sessionID, markerID string, bmm, bcc bool) error {
 	now := time.Now().UTC()
 
 	tx, err := s.db.BeginTx(ctx, nil)
@@ -344,8 +352,8 @@ func (s *Store) SetPublish(ctx context.Context, sessionID, markerID string, publ
 	defer func() { _ = tx.Rollback() }()
 
 	res, err := tx.ExecContext(ctx,
-		`UPDATE markers SET publish = ?, updated_at = ? WHERE id = ? AND session_id = ?`,
-		publish, toMillis(now), markerID, sessionID)
+		`UPDATE markers SET publish_bmm = ?, publish_bcc = ?, updated_at = ? WHERE id = ? AND session_id = ?`,
+		bmm, bcc, toMillis(now), markerID, sessionID)
 	if err != nil {
 		return fmt.Errorf("editorial: set publish: %w", err)
 	}

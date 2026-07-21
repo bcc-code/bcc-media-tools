@@ -3873,8 +3873,6 @@ type EditorialMarker struct {
 	Type    string `protobuf:"bytes,4,opt,name=type,proto3" json:"type,omitempty"`
 	StartMs int64  `protobuf:"varint,5,opt,name=start_ms,json=startMs,proto3" json:"start_ms,omitempty"`
 	EndMs   int64  `protobuf:"varint,6,opt,name=end_ms,json=endMs,proto3" json:"end_ms,omitempty"`
-	// Ja/Nei publish toggle
-	Publish bool `protobuf:"varint,7,opt,name=publish,proto3" json:"publish,omitempty"`
 	// "import" (from Mediabanken chapters) or "manual"
 	Source string `protobuf:"bytes,8,opt,name=source,proto3" json:"source,omitempty"`
 	// "Medvirkende" — who takes part in the marker
@@ -3882,7 +3880,10 @@ type EditorialMarker struct {
 	// optional free-text editorial comment
 	Comment string `protobuf:"bytes,10,opt,name=comment,proto3" json:"comment,omitempty"`
 	// optional free-text bible verse references (e.g. "John 3:16; Rom 8:1-4")
-	BibleVerses   string `protobuf:"bytes,11,opt,name=bible_verses,json=bibleVerses,proto3" json:"bible_verses,omitempty"`
+	BibleVerses string `protobuf:"bytes,11,opt,name=bible_verses,json=bibleVerses,proto3" json:"bible_verses,omitempty"`
+	// Ja/Nei publish toggles, one per publishing target
+	PublishBmm    bool `protobuf:"varint,12,opt,name=publish_bmm,json=publishBmm,proto3" json:"publish_bmm,omitempty"`
+	PublishBcc    bool `protobuf:"varint,13,opt,name=publish_bcc,json=publishBcc,proto3" json:"publish_bcc,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3959,13 +3960,6 @@ func (x *EditorialMarker) GetEndMs() int64 {
 	return 0
 }
 
-func (x *EditorialMarker) GetPublish() bool {
-	if x != nil {
-		return x.Publish
-	}
-	return false
-}
-
 func (x *EditorialMarker) GetSource() string {
 	if x != nil {
 		return x.Source
@@ -3992,6 +3986,20 @@ func (x *EditorialMarker) GetBibleVerses() string {
 		return x.BibleVerses
 	}
 	return ""
+}
+
+func (x *EditorialMarker) GetPublishBmm() bool {
+	if x != nil {
+		return x.PublishBmm
+	}
+	return false
+}
+
+func (x *EditorialMarker) GetPublishBcc() bool {
+	if x != nil {
+		return x.PublishBcc
+	}
+	return false
 }
 
 // A review session tied to a single Mediabanken asset.
@@ -4441,13 +4449,14 @@ func (x *ImportEditorialMarkersResponse) GetMarkers() []*EditorialMarker {
 	return nil
 }
 
-// Toggle a single marker's publish flag (Ja/Nei). This is the write path for
-// reviewers who may accept/reject but not edit markers (the simple view).
+// Set a single marker's publish flags (Ja/Nei per target). This is the write
+// path for reviewers who may accept/reject but not edit markers (simple view).
 type SetEditorialPublishRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	MarkerId      string                 `protobuf:"bytes,2,opt,name=marker_id,json=markerId,proto3" json:"marker_id,omitempty"`
-	Publish       bool                   `protobuf:"varint,3,opt,name=publish,proto3" json:"publish,omitempty"`
+	PublishBmm    bool                   `protobuf:"varint,3,opt,name=publish_bmm,json=publishBmm,proto3" json:"publish_bmm,omitempty"`
+	PublishBcc    bool                   `protobuf:"varint,4,opt,name=publish_bcc,json=publishBcc,proto3" json:"publish_bcc,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4496,9 +4505,16 @@ func (x *SetEditorialPublishRequest) GetMarkerId() string {
 	return ""
 }
 
-func (x *SetEditorialPublishRequest) GetPublish() bool {
+func (x *SetEditorialPublishRequest) GetPublishBmm() bool {
 	if x != nil {
-		return x.Publish
+		return x.PublishBmm
+	}
+	return false
+}
+
+func (x *SetEditorialPublishRequest) GetPublishBcc() bool {
+	if x != nil {
+		return x.PublishBcc
 	}
 	return false
 }
@@ -4839,7 +4855,7 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\x13GetVaultItemRequest\x12\x12\n" +
 	"\x04VXID\x18\x01 \x01(\tR\x04VXID\"=\n" +
 	"\x14GetVaultItemResponse\x12%\n" +
-	"\x04item\x18\x01 \x01(\v2\x11.api.v1.VaultItemR\x04item\"\xad\x02\n" +
+	"\x04item\x18\x01 \x01(\v2\x11.api.v1.VaultItemR\x04item\"\xe4\x02\n" +
 	"\x0fEditorialMarker\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
 	"\n" +
@@ -4847,13 +4863,16 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12\x12\n" +
 	"\x04type\x18\x04 \x01(\tR\x04type\x12\x19\n" +
 	"\bstart_ms\x18\x05 \x01(\x03R\astartMs\x12\x15\n" +
-	"\x06end_ms\x18\x06 \x01(\x03R\x05endMs\x12\x18\n" +
-	"\apublish\x18\a \x01(\bR\apublish\x12\x16\n" +
+	"\x06end_ms\x18\x06 \x01(\x03R\x05endMs\x12\x16\n" +
 	"\x06source\x18\b \x01(\tR\x06source\x12\"\n" +
 	"\fcontributors\x18\t \x01(\tR\fcontributors\x12\x18\n" +
 	"\acomment\x18\n" +
 	" \x01(\tR\acomment\x12!\n" +
-	"\fbible_verses\x18\v \x01(\tR\vbibleVerses\"\xcd\x02\n" +
+	"\fbible_verses\x18\v \x01(\tR\vbibleVerses\x12\x1f\n" +
+	"\vpublish_bmm\x18\f \x01(\bR\n" +
+	"publishBmm\x12\x1f\n" +
+	"\vpublish_bcc\x18\r \x01(\bR\n" +
+	"publishBccJ\x04\b\a\x10\bR\apublish\"\xcd\x02\n" +
 	"\x10EditorialSession\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04VXID\x18\x02 \x01(\tR\x04VXID\x12\x14\n" +
@@ -4885,12 +4904,15 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\x1dImportEditorialMarkersRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"S\n" +
 	"\x1eImportEditorialMarkersResponse\x121\n" +
-	"\amarkers\x18\x01 \x03(\v2\x17.api.v1.EditorialMarkerR\amarkers\"r\n" +
+	"\amarkers\x18\x01 \x03(\v2\x17.api.v1.EditorialMarkerR\amarkers\"\x9a\x01\n" +
 	"\x1aSetEditorialPublishRequest\x12\x1d\n" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x1b\n" +
-	"\tmarker_id\x18\x02 \x01(\tR\bmarkerId\x12\x18\n" +
-	"\apublish\x18\x03 \x01(\bR\apublish\"r\n" +
+	"\tmarker_id\x18\x02 \x01(\tR\bmarkerId\x12\x1f\n" +
+	"\vpublish_bmm\x18\x03 \x01(\bR\n" +
+	"publishBmm\x12\x1f\n" +
+	"\vpublish_bcc\x18\x04 \x01(\bR\n" +
+	"publishBcc\"r\n" +
 	"\x1aSetEditorialCommentRequest\x12\x1d\n" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x1b\n" +
