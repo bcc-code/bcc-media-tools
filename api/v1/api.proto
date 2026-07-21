@@ -526,6 +526,14 @@ message SetEditorialPublishRequest {
   bool publish = 3;
 }
 
+// Update a single marker's free-text comment. Like SetEditorialPublish this is
+// a write path available in the simple view (no edit rights required).
+message SetEditorialCommentRequest {
+  string session_id = 1;
+  string marker_id = 2;
+  string comment = 3;
+}
+
 service APIService {
 	// Permissions
 	rpc GetPermissions (Void) returns (Permissions) {}
@@ -583,6 +591,7 @@ service APIService {
   rpc GetEditorialSession(GetEditorialSessionRequest) returns (EditorialSession) {}
   rpc SaveEditorialSession(SaveEditorialSessionRequest) returns (EditorialSession) {}
   rpc SetEditorialPublish(SetEditorialPublishRequest) returns (Void) {}
+  rpc SetEditorialComment(SetEditorialCommentRequest) returns (Void) {}
   rpc DeleteEditorialSession(DeleteEditorialSessionRequest) returns (Void) {}
   rpc ImportEditorialMarkers(ImportEditorialMarkersRequest) returns (ImportEditorialMarkersResponse) {}
 }

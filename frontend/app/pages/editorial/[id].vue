@@ -38,15 +38,13 @@ const TYPE_OPTIONS = [
     "annet",
 ];
 
-// Translated label for a stored type value. Falls back to the raw value
-// (capitalized) so legacy types no longer in TYPE_OPTIONS still render.
+// Translated type label; falls back to the raw value for legacy types.
 function typeLabel(type: string): string {
     const key = `editorial.types.${type}`;
     if (te(key)) return t(key);
     return type ? type.charAt(0).toUpperCase() + type.slice(1) : type;
 }
 
-// Select options with translated labels; values stay the stored lowercase keys.
 const typeItems = computed(() =>
     TYPE_OPTIONS.map((value) => ({ label: typeLabel(value), value })),
 );
@@ -213,6 +211,25 @@ async function onPublishToggle(row: Row, value: boolean) {
         });
     } catch {
         row.publish = !value;
+        toaster.create({ title: t("editorial.saveFailed"), type: "error" });
+    }
+}
+
+// ── Comment (editable in both views) ──────────────────────
+const commentBeforeEdit = ref("");
+
+// Edit mode persists on the batch Save; simple mode writes immediately.
+async function persistComment(row: Row) {
+    if (effectiveMode.value === "edit") return;
+    if (!row.id || row.comment === commentBeforeEdit.value) return;
+    try {
+        await api.setEditorialComment({
+            sessionId: sessionId.value,
+            markerId: row.id,
+            comment: row.comment,
+        });
+    } catch {
+        row.comment = commentBeforeEdit.value;
         toaster.create({ title: t("editorial.saveFailed"), type: "error" });
     }
 }
@@ -564,17 +581,14 @@ onBeforeRouteLeave(() => {
                                     >
                                         {{ durationOf(row) }}
                                     </td>
-                                    <td class="px-2 py-2">
-                                        <DesignInput
-                                            v-if="effectiveMode === 'edit'"
-                                            v-model="row.comment"
-                                        />
-                                        <span
-                                            v-else
-                                            class="text-body-3 text-text-muted"
-                                        >
-                                            {{ row.comment || "—" }}
-                                        </span>
+                                    <td
+                                        class="px-2 py-2"
+                                        @focusin="
+                                            commentBeforeEdit = row.comment
+                                        "
+                                        @change="persistComment(row)"
+                                    >
+                                        <DesignInput v-model="row.comment" />
                                     </td>
                                     <td class="px-2 py-2">
                                         <div class="flex justify-center">

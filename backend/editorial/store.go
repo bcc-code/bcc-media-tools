@@ -124,9 +124,8 @@ func (s *Store) migrate(ctx context.Context) error {
 	if _, err := s.db.ExecContext(ctx, schema); err != nil {
 		return fmt.Errorf("editorial: migrate: %w", err)
 	}
-	// Additive column migrations for tables that predate them. CREATE TABLE IF
-	// NOT EXISTS above won't add columns to an existing markers table, so add
-	// them here; ignore the "duplicate column" error when already present.
+	// CREATE TABLE IF NOT EXISTS won't add columns to a pre-existing markers
+	// table, so newer columns are added here.
 	if err := s.addColumnIfMissing(ctx, "markers", "contributors", "TEXT NOT NULL DEFAULT ''"); err != nil {
 		return err
 	}
@@ -139,8 +138,7 @@ func (s *Store) migrate(ctx context.Context) error {
 	return nil
 }
 
-// addColumnIfMissing runs ALTER TABLE ADD COLUMN only when the column is absent,
-// making the migration idempotent across restarts.
+// addColumnIfMissing adds the column only when absent, so migration is idempotent.
 func (s *Store) addColumnIfMissing(ctx context.Context, table, column, def string) error {
 	rows, err := s.db.QueryContext(ctx, fmt.Sprintf("PRAGMA table_info(%s)", table))
 	if err != nil {
@@ -350,6 +348,36 @@ func (s *Store) SetPublish(ctx context.Context, sessionID, markerID string, publ
 		publish, toMillis(now), markerID, sessionID)
 	if err != nil {
 		return fmt.Errorf("editorial: set publish: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return ErrNotFound
+	}
+
+	if _, err := tx.ExecContext(ctx,
+		`UPDATE sessions SET updated_at = ? WHERE id = ?`, toMillis(now), sessionID); err != nil {
+		return fmt.Errorf("editorial: touch session: %w", err)
+	}
+
+	return tx.Commit()
+}
+
+// SetComment updates a single marker's free-text comment without touching
+// anything else. Like SetPublish this is a write path for the simple view.
+// Returns ErrNotFound if the marker does not exist in the session.
+func (s *Store) SetComment(ctx context.Context, sessionID, markerID, comment string) error {
+	now := time.Now().UTC()
+
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("editorial: begin tx: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	res, err := tx.ExecContext(ctx,
+		`UPDATE markers SET comment = ?, updated_at = ? WHERE id = ? AND session_id = ?`,
+		comment, toMillis(now), markerID, sessionID)
+	if err != nil {
+		return fmt.Errorf("editorial: set comment: %w", err)
 	}
 	if n, _ := res.RowsAffected(); n == 0 {
 		return ErrNotFound

@@ -119,6 +119,9 @@ const (
 	// APIServiceSetEditorialPublishProcedure is the fully-qualified name of the APIService's
 	// SetEditorialPublish RPC.
 	APIServiceSetEditorialPublishProcedure = "/api.v1.APIService/SetEditorialPublish"
+	// APIServiceSetEditorialCommentProcedure is the fully-qualified name of the APIService's
+	// SetEditorialComment RPC.
+	APIServiceSetEditorialCommentProcedure = "/api.v1.APIService/SetEditorialComment"
 	// APIServiceDeleteEditorialSessionProcedure is the fully-qualified name of the APIService's
 	// DeleteEditorialSession RPC.
 	APIServiceDeleteEditorialSessionProcedure = "/api.v1.APIService/DeleteEditorialSession"
@@ -175,6 +178,7 @@ type APIServiceClient interface {
 	GetEditorialSession(context.Context, *connect.Request[v1.GetEditorialSessionRequest]) (*connect.Response[v1.EditorialSession], error)
 	SaveEditorialSession(context.Context, *connect.Request[v1.SaveEditorialSessionRequest]) (*connect.Response[v1.EditorialSession], error)
 	SetEditorialPublish(context.Context, *connect.Request[v1.SetEditorialPublishRequest]) (*connect.Response[v1.Void], error)
+	SetEditorialComment(context.Context, *connect.Request[v1.SetEditorialCommentRequest]) (*connect.Response[v1.Void], error)
 	DeleteEditorialSession(context.Context, *connect.Request[v1.DeleteEditorialSessionRequest]) (*connect.Response[v1.Void], error)
 	ImportEditorialMarkers(context.Context, *connect.Request[v1.ImportEditorialMarkersRequest]) (*connect.Response[v1.ImportEditorialMarkersResponse], error)
 }
@@ -376,6 +380,12 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(aPIServiceMethods.ByName("SetEditorialPublish")),
 			connect.WithClientOptions(opts...),
 		),
+		setEditorialComment: connect.NewClient[v1.SetEditorialCommentRequest, v1.Void](
+			httpClient,
+			baseURL+APIServiceSetEditorialCommentProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("SetEditorialComment")),
+			connect.WithClientOptions(opts...),
+		),
 		deleteEditorialSession: connect.NewClient[v1.DeleteEditorialSessionRequest, v1.Void](
 			httpClient,
 			baseURL+APIServiceDeleteEditorialSessionProcedure,
@@ -424,6 +434,7 @@ type aPIServiceClient struct {
 	getEditorialSession     *connect.Client[v1.GetEditorialSessionRequest, v1.EditorialSession]
 	saveEditorialSession    *connect.Client[v1.SaveEditorialSessionRequest, v1.EditorialSession]
 	setEditorialPublish     *connect.Client[v1.SetEditorialPublishRequest, v1.Void]
+	setEditorialComment     *connect.Client[v1.SetEditorialCommentRequest, v1.Void]
 	deleteEditorialSession  *connect.Client[v1.DeleteEditorialSessionRequest, v1.Void]
 	importEditorialMarkers  *connect.Client[v1.ImportEditorialMarkersRequest, v1.ImportEditorialMarkersResponse]
 }
@@ -583,6 +594,11 @@ func (c *aPIServiceClient) SetEditorialPublish(ctx context.Context, req *connect
 	return c.setEditorialPublish.CallUnary(ctx, req)
 }
 
+// SetEditorialComment calls api.v1.APIService.SetEditorialComment.
+func (c *aPIServiceClient) SetEditorialComment(ctx context.Context, req *connect.Request[v1.SetEditorialCommentRequest]) (*connect.Response[v1.Void], error) {
+	return c.setEditorialComment.CallUnary(ctx, req)
+}
+
 // DeleteEditorialSession calls api.v1.APIService.DeleteEditorialSession.
 func (c *aPIServiceClient) DeleteEditorialSession(ctx context.Context, req *connect.Request[v1.DeleteEditorialSessionRequest]) (*connect.Response[v1.Void], error) {
 	return c.deleteEditorialSession.CallUnary(ctx, req)
@@ -641,6 +657,7 @@ type APIServiceHandler interface {
 	GetEditorialSession(context.Context, *connect.Request[v1.GetEditorialSessionRequest]) (*connect.Response[v1.EditorialSession], error)
 	SaveEditorialSession(context.Context, *connect.Request[v1.SaveEditorialSessionRequest]) (*connect.Response[v1.EditorialSession], error)
 	SetEditorialPublish(context.Context, *connect.Request[v1.SetEditorialPublishRequest]) (*connect.Response[v1.Void], error)
+	SetEditorialComment(context.Context, *connect.Request[v1.SetEditorialCommentRequest]) (*connect.Response[v1.Void], error)
 	DeleteEditorialSession(context.Context, *connect.Request[v1.DeleteEditorialSessionRequest]) (*connect.Response[v1.Void], error)
 	ImportEditorialMarkers(context.Context, *connect.Request[v1.ImportEditorialMarkersRequest]) (*connect.Response[v1.ImportEditorialMarkersResponse], error)
 }
@@ -838,6 +855,12 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(aPIServiceMethods.ByName("SetEditorialPublish")),
 		connect.WithHandlerOptions(opts...),
 	)
+	aPIServiceSetEditorialCommentHandler := connect.NewUnaryHandler(
+		APIServiceSetEditorialCommentProcedure,
+		svc.SetEditorialComment,
+		connect.WithSchema(aPIServiceMethods.ByName("SetEditorialComment")),
+		connect.WithHandlerOptions(opts...),
+	)
 	aPIServiceDeleteEditorialSessionHandler := connect.NewUnaryHandler(
 		APIServiceDeleteEditorialSessionProcedure,
 		svc.DeleteEditorialSession,
@@ -914,6 +937,8 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceSaveEditorialSessionHandler.ServeHTTP(w, r)
 		case APIServiceSetEditorialPublishProcedure:
 			aPIServiceSetEditorialPublishHandler.ServeHTTP(w, r)
+		case APIServiceSetEditorialCommentProcedure:
+			aPIServiceSetEditorialCommentHandler.ServeHTTP(w, r)
 		case APIServiceDeleteEditorialSessionProcedure:
 			aPIServiceDeleteEditorialSessionHandler.ServeHTTP(w, r)
 		case APIServiceImportEditorialMarkersProcedure:
@@ -1049,6 +1074,10 @@ func (UnimplementedAPIServiceHandler) SaveEditorialSession(context.Context, *con
 
 func (UnimplementedAPIServiceHandler) SetEditorialPublish(context.Context, *connect.Request[v1.SetEditorialPublishRequest]) (*connect.Response[v1.Void], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.SetEditorialPublish is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) SetEditorialComment(context.Context, *connect.Request[v1.SetEditorialCommentRequest]) (*connect.Response[v1.Void], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.SetEditorialComment is not implemented"))
 }
 
 func (UnimplementedAPIServiceHandler) DeleteEditorialSession(context.Context, *connect.Request[v1.DeleteEditorialSessionRequest]) (*connect.Response[v1.Void], error) {

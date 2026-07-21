@@ -131,6 +131,19 @@ func (e EditorialAPI) SetEditorialPublish(ctx context.Context, req *connect.Requ
 	return connect.NewResponse(&apiv1.Void{}), nil
 }
 
+func (e EditorialAPI) SetEditorialComment(ctx context.Context, req *connect.Request[apiv1.SetEditorialCommentRequest]) (*connect.Response[apiv1.Void], error) {
+	if _, err := requireEditorial(req, false); err != nil {
+		return nil, err
+	}
+	if req.Msg.GetSessionId() == "" || req.Msg.GetMarkerId() == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("missing session_id or marker_id"))
+	}
+	if err := e.store.SetComment(ctx, req.Msg.GetSessionId(), req.Msg.GetMarkerId(), req.Msg.GetComment()); err != nil {
+		return nil, editorialErr(err)
+	}
+	return connect.NewResponse(&apiv1.Void{}), nil
+}
+
 func (e EditorialAPI) DeleteEditorialSession(ctx context.Context, req *connect.Request[apiv1.DeleteEditorialSessionRequest]) (*connect.Response[apiv1.Void], error) {
 	if _, err := requireEditorial(req, true); err != nil {
 		return nil, err
