@@ -257,6 +257,18 @@
             "preview": "Forhåndsvis",
             "publish": "Publiseres?"
         },
+        "types": {
+            "vitnesbyrd": "Vitnesbyrd",
+            "sang": "Sang",
+            "allsang": "Allsang",
+            "tale": "Tale",
+            "bønn": "Bønn",
+            "tydning": "Tydning",
+            "programleder": "Programleder",
+            "video": "Video",
+            "intervju": "Intervju",
+            "annet": "Annet"
+        },
         "publishYes": "Ja",
         "publishNo": "Nei"
     },

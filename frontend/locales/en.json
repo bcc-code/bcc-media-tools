@@ -257,6 +257,18 @@
             "preview": "Preview",
             "publish": "Publish?"
         },
+        "types": {
+            "vitnesbyrd": "Testimony",
+            "sang": "Song",
+            "allsang": "Singsong",
+            "tale": "Speech",
+            "bønn": "Prayer",
+            "tydning": "Interpretation",
+            "programleder": "Host",
+            "video": "Video",
+            "intervju": "Interview",
+            "annet": "Other"
+        },
         "publishYes": "Yes",
         "publishNo": "No"
     },

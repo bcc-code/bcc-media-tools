@@ -7,7 +7,7 @@ import type {
 const route = useRoute("editorial-id");
 const sessionId = computed(() => route.params.id as string);
 
-const { t } = useI18n();
+const { t, te } = useI18n();
 const api = useAPI();
 const perms = usePermissions();
 const toaster = useToast();
@@ -37,6 +37,19 @@ const TYPE_OPTIONS = [
     "intervju",
     "annet",
 ];
+
+// Translated label for a stored type value. Falls back to the raw value
+// (capitalized) so legacy types no longer in TYPE_OPTIONS still render.
+function typeLabel(type: string): string {
+    const key = `editorial.types.${type}`;
+    if (te(key)) return t(key);
+    return type ? type.charAt(0).toUpperCase() + type.slice(1) : type;
+}
+
+// Select options with translated labels; values stay the stored lowercase keys.
+const typeItems = computed(() =>
+    TYPE_OPTIONS.map((value) => ({ label: typeLabel(value), value })),
+);
 
 // A single editable row. Start/End are kept as "HH:MM:SS" strings so text
 // editing is natural; they're parsed to milliseconds only at save/preview.
@@ -471,13 +484,10 @@ onBeforeRouteLeave(() => {
                                         <DesignSelect
                                             v-if="effectiveMode === 'edit'"
                                             v-model="row.type"
-                                            :items="TYPE_OPTIONS"
+                                            :items="typeItems"
                                         />
-                                        <DesignBadge
-                                            v-else-if="row.type"
-                                            class="capitalize"
-                                        >
-                                            {{ row.type }}
+                                        <DesignBadge v-else-if="row.type">
+                                            {{ typeLabel(row.type) }}
                                         </DesignBadge>
                                         <span
                                             v-else
@@ -593,11 +603,8 @@ onBeforeRouteLeave(() => {
                                 >
                                     {{ activeMarker.name || "—" }}
                                 </span>
-                                <DesignBadge
-                                    v-if="activeMarker.type"
-                                    class="capitalize"
-                                >
-                                    {{ activeMarker.type }}
+                                <DesignBadge v-if="activeMarker.type">
+                                    {{ typeLabel(activeMarker.type) }}
                                 </DesignBadge>
                             </div>
                             <DesignSlider
