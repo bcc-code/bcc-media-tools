@@ -224,6 +224,25 @@ async function onPublishToggle(
     }
 }
 
+// ── Row title/name (editable in both views, edit rights required) ──
+const nameBeforeEdit = ref("");
+
+// Edit mode persists on the batch Save; simple mode writes immediately.
+async function persistName(row: Row) {
+    if (effectiveMode.value === "edit") return;
+    if (!row.id || row.name === nameBeforeEdit.value) return;
+    try {
+        await api.setEditorialName({
+            sessionId: sessionId.value,
+            markerId: row.id,
+            name: row.name,
+        });
+    } catch {
+        row.name = nameBeforeEdit.value;
+        toaster.create({ title: t("editorial.saveFailed"), type: "error" });
+    }
+}
+
 // ── Comment (editable in both views) ──────────────────────
 const commentBeforeEdit = ref("");
 
@@ -531,8 +550,10 @@ onBeforeRouteLeave(() => {
                                     </td>
                                     <td class="py-2 pr-2 pl-3">
                                         <DesignInput
-                                            v-if="effectiveMode === 'edit'"
+                                            v-if="canEdit"
                                             v-model="row.name"
+                                            @focusin="nameBeforeEdit = row.name"
+                                            @change="persistName(row)"
                                         />
                                         <span
                                             v-else

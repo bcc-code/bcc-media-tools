@@ -538,6 +538,15 @@ message SetEditorialCommentRequest {
   string comment = 3;
 }
 
+// Update a single marker's title/name without touching anything else. This is
+// the write path for editing a row's title from the simple view; unlike
+// comment/publish it requires edit rights.
+message SetEditorialNameRequest {
+  string session_id = 1;
+  string marker_id = 2;
+  string name = 3;
+}
+
 service APIService {
 	// Permissions
 	rpc GetPermissions (Void) returns (Permissions) {}
@@ -596,6 +605,7 @@ service APIService {
   rpc SaveEditorialSession(SaveEditorialSessionRequest) returns (EditorialSession) {}
   rpc SetEditorialPublish(SetEditorialPublishRequest) returns (Void) {}
   rpc SetEditorialComment(SetEditorialCommentRequest) returns (Void) {}
+  rpc SetEditorialName(SetEditorialNameRequest) returns (Void) {}
   rpc DeleteEditorialSession(DeleteEditorialSessionRequest) returns (Void) {}
   rpc ImportEditorialMarkers(ImportEditorialMarkersRequest) returns (ImportEditorialMarkersResponse) {}
 }

@@ -399,6 +399,36 @@ func (s *Store) SetComment(ctx context.Context, sessionID, markerID, comment str
 	return tx.Commit()
 }
 
+// SetName updates a single marker's title/name without touching anything else.
+// Like SetComment this is a write path for the simple view. Returns ErrNotFound
+// if the marker does not exist in the session.
+func (s *Store) SetName(ctx context.Context, sessionID, markerID, name string) error {
+	now := time.Now().UTC()
+
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("editorial: begin tx: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	res, err := tx.ExecContext(ctx,
+		`UPDATE markers SET name = ?, updated_at = ? WHERE id = ? AND session_id = ?`,
+		name, toMillis(now), markerID, sessionID)
+	if err != nil {
+		return fmt.Errorf("editorial: set name: %w", err)
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return ErrNotFound
+	}
+
+	if _, err := tx.ExecContext(ctx,
+		`UPDATE sessions SET updated_at = ? WHERE id = ?`, toMillis(now), sessionID); err != nil {
+		return fmt.Errorf("editorial: touch session: %w", err)
+	}
+
+	return tx.Commit()
+}
+
 // DeleteSession removes a session and (via cascade) its markers. Returns
 // ErrNotFound if the session did not exist.
 func (s *Store) DeleteSession(ctx context.Context, id string) error {
