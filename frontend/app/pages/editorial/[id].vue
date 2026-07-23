@@ -124,6 +124,10 @@ function toRow(m: EditorialMarker): Row {
     };
 }
 
+function durationOf(row: Row): string {
+    return formatMs(parseTc(row.end) - parseTc(row.start));
+}
+
 const previewUrl = ref<string>();
 const videoEl = useTemplateRef<HTMLVideoElement>("videoEl");
 
@@ -196,7 +200,11 @@ watch(
 );
 
 // ── Publish toggle ────────────────────────────────────────
-async function onPublishToggle(row: Row, target: "bmm" | "bcc", value: boolean) {
+async function onPublishToggle(
+    row: Row,
+    target: "bmm" | "bcc",
+    value: boolean,
+) {
     if (target === "bmm") row.publishBmm = value;
     else row.publishBcc = value;
     // In edit mode the change is persisted on Save. In simple mode there is no
@@ -466,6 +474,11 @@ onBeforeRouteLeave(() => {
                                     <th
                                         class="border-border-1 border-b px-2 py-2 font-normal"
                                     >
+                                        {{ t("editorial.col.duration") }}
+                                    </th>
+                                    <th
+                                        class="border-border-1 border-b px-2 py-2 font-normal"
+                                    >
                                         {{ t("editorial.col.type") }}
                                     </th>
                                     <th
@@ -551,6 +564,11 @@ onBeforeRouteLeave(() => {
                                         >
                                             {{ row.bibleVerses || "—" }}
                                         </span>
+                                    </td>
+                                    <td
+                                        class="text-body-3 text-text-muted px-2 py-2 tabular-nums"
+                                    >
+                                        {{ durationOf(row) }}
                                     </td>
                                     <td class="px-2 py-2">
                                         <DesignSelect

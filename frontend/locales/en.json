@@ -253,6 +253,7 @@
             "title": "Title",
             "contributors": "Contributors",
             "bibleVerses": "Bible verses",
+            "duration": "Duration",
             "type": "Type",
             "start": "Start",
             "comment": "Comment",

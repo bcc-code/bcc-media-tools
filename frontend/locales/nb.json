@@ -253,6 +253,7 @@
             "title": "Tittel",
             "contributors": "Medvirkende",
             "bibleVerses": "Bibelvers",
+            "duration": "Varighet",
             "type": "Type",
             "start": "Start",
             "comment": "Kommentar",
