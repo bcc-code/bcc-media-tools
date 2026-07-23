@@ -238,6 +238,7 @@
         "importedCount": "Importerte {n} markør(er)",
         "importFailed": "Kunne ikke importere markører",
         "save": "Lagre",
+        "saving": "Lagrer…",
         "saved": "Lagret",
         "saveFailed": "Kunne ikke lagre",
         "delete": "Slett gjennomgang",

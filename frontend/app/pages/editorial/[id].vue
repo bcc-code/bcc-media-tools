@@ -199,6 +199,45 @@ watch(
     { deep: true },
 );
 
+// ── Auto-save status ──────────────────────────────────────
+// Simple-mode edits persist immediately (no Save button), so surface an inline
+// "Saving…/Saved" indicator. `tracked` wraps each write; concurrent writes are
+// counted so the indicator only settles once the last one lands.
+type SaveStatus = "idle" | "saving" | "saved" | "error";
+const saveStatus = ref<SaveStatus>("idle");
+let inFlight = 0;
+let inFlightError = false;
+let saveResetTimer: ReturnType<typeof setTimeout> | undefined;
+
+async function tracked<T>(fn: () => Promise<T>): Promise<T> {
+    if (saveResetTimer) {
+        clearTimeout(saveResetTimer);
+        saveResetTimer = undefined;
+    }
+    inFlight++;
+    saveStatus.value = "saving";
+    try {
+        return await fn();
+    } catch (e) {
+        inFlightError = true;
+        throw e;
+    } finally {
+        inFlight--;
+        if (inFlight === 0) {
+            const errored = inFlightError;
+            inFlightError = false;
+            saveStatus.value = errored ? "error" : "saved";
+            saveResetTimer = setTimeout(
+                () => {
+                    saveStatus.value = "idle";
+                    saveResetTimer = undefined;
+                },
+                errored ? 4000 : 2000,
+            );
+        }
+    }
+}
+
 // ── Publish toggle ────────────────────────────────────────
 async function onPublishToggle(
     row: Row,
@@ -211,12 +250,14 @@ async function onPublishToggle(
     // Save button, so persist immediately (both flags, from the row's state).
     if (effectiveMode.value === "edit") return;
     try {
-        await api.setEditorialPublish({
-            sessionId: sessionId.value,
-            markerId: row.id,
-            publishBmm: row.publishBmm,
-            publishBcc: row.publishBcc,
-        });
+        await tracked(() =>
+            api.setEditorialPublish({
+                sessionId: sessionId.value,
+                markerId: row.id,
+                publishBmm: row.publishBmm,
+                publishBcc: row.publishBcc,
+            }),
+        );
     } catch {
         if (target === "bmm") row.publishBmm = !value;
         else row.publishBcc = !value;
@@ -232,11 +273,13 @@ async function persistName(row: Row) {
     if (effectiveMode.value === "edit") return;
     if (!row.id || row.name === nameBeforeEdit.value) return;
     try {
-        await api.setEditorialName({
-            sessionId: sessionId.value,
-            markerId: row.id,
-            name: row.name,
-        });
+        await tracked(() =>
+            api.setEditorialName({
+                sessionId: sessionId.value,
+                markerId: row.id,
+                name: row.name,
+            }),
+        );
     } catch {
         row.name = nameBeforeEdit.value;
         toaster.create({ title: t("editorial.saveFailed"), type: "error" });
@@ -251,11 +294,13 @@ async function persistComment(row: Row) {
     if (effectiveMode.value === "edit") return;
     if (!row.id || row.comment === commentBeforeEdit.value) return;
     try {
-        await api.setEditorialComment({
-            sessionId: sessionId.value,
-            markerId: row.id,
-            comment: row.comment,
-        });
+        await tracked(() =>
+            api.setEditorialComment({
+                sessionId: sessionId.value,
+                markerId: row.id,
+                comment: row.comment,
+            }),
+        );
     } catch {
         row.comment = commentBeforeEdit.value;
         toaster.create({ title: t("editorial.saveFailed"), type: "error" });
@@ -433,28 +478,59 @@ onBeforeRouteLeave(() => {
             </div>
 
             <div
-                v-if="canEdit"
-                class="mb-6 flex items-center justify-between gap-3"
+                v-if="canEdit || saveStatus !== 'idle'"
+                class="mb-6 flex items-center gap-3"
             >
                 <DesignSegmentGroup
+                    v-if="canEdit"
                     v-model="modeModel"
                     :items="modeItems"
                     class="border-border-1 border"
                 />
-                <div class="flex items-center gap-2">
-                    <DesignMenu
-                        :items="menuItems"
-                        :trigger-label="t('editorial.moreActions')"
-                        @select="onMenuSelect"
-                    />
-                    <DesignButton
-                        v-if="effectiveMode === 'edit'"
-                        icon="tabler:device-floppy"
-                        :loading="saving"
-                        @click="save"
+                <div class="ml-auto flex items-center gap-3">
+                    <span
+                        v-if="saveStatus !== 'idle'"
+                        class="text-caption-1 flex items-center gap-1.5"
+                        :class="
+                            saveStatus === 'error'
+                                ? 'text-semantic-error'
+                                : 'text-text-hint'
+                        "
                     >
-                        {{ t("editorial.save") }}
-                    </DesignButton>
+                        <template v-if="saveStatus === 'saving'">
+                            <Icon
+                                name="svg-spinners:ring-resize"
+                                class="size-4"
+                            />
+                            {{ t("editorial.saving") }}
+                        </template>
+                        <template v-else-if="saveStatus === 'saved'">
+                            <Icon
+                                name="tabler:check"
+                                class="text-semantic-success size-4"
+                            />
+                            {{ t("editorial.saved") }}
+                        </template>
+                        <template v-else>
+                            <Icon name="tabler:alert-triangle" class="size-4" />
+                            {{ t("editorial.saveFailed") }}
+                        </template>
+                    </span>
+                    <template v-if="canEdit">
+                        <DesignMenu
+                            :items="menuItems"
+                            :trigger-label="t('editorial.moreActions')"
+                            @select="onMenuSelect"
+                        />
+                        <DesignButton
+                            v-if="effectiveMode === 'edit'"
+                            icon="tabler:device-floppy"
+                            :loading="saving"
+                            @click="save"
+                        >
+                            {{ t("editorial.save") }}
+                        </DesignButton>
+                    </template>
                 </div>
             </div>
 

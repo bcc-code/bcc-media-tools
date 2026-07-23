@@ -238,6 +238,7 @@
         "importedCount": "Imported {n} marker(s)",
         "importFailed": "Could not import markers",
         "save": "Save",
+        "saving": "Saving…",
         "saved": "Saved",
         "saveFailed": "Could not save",
         "delete": "Delete review",
