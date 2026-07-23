@@ -248,6 +248,7 @@
         "addRow": "Legg til rad",
         "removeRow": "Fjern",
         "reorder": "Dra for å endre rekkefølge",
+        "lastUpdated": "Sist oppdatert {date}",
         "noMarkers": "Ingen markører ennå — importer fra Mediabanken eller legg til en rad.",
         "unsavedWarning": "Du har ulagrede endringer",
         "preview": "Forhåndsvis",

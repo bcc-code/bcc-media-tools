@@ -3,6 +3,8 @@ import type {
     EditorialSession,
     EditorialMarker,
 } from "~~/src/gen/api/v1/api_pb";
+import type { Timestamp } from "@bufbuild/protobuf/wkt";
+import { timestampDate, timestampFromDate } from "@bufbuild/protobuf/wkt";
 
 const route = useRoute("editorial-id");
 const sessionId = computed(() => route.params.id as string);
@@ -94,6 +96,16 @@ function formatMs(ms: number): string {
     const s = total % 60;
     const pad = (n: number) => String(n).padStart(2, "0");
     return `${pad(h)}:${pad(m)}:${pad(s)}`;
+}
+
+const dateTimeFormatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Oslo",
+    dateStyle: "medium",
+    timeStyle: "short",
+});
+function formatDateTime(ts?: Timestamp): string {
+    if (!ts) return "";
+    return dateTimeFormatter.format(timestampDate(ts));
 }
 
 // Parses "HH:MM:SS(.mmm)", "MM:SS" or "SS" into milliseconds; invalid → 0.
@@ -226,6 +238,11 @@ async function tracked<T>(fn: () => Promise<T>): Promise<T> {
         if (inFlight === 0) {
             const errored = inFlightError;
             inFlightError = false;
+            // These RPCs return Void; reflect the server's touch of updated_at
+            // locally so "Last updated" tracks simple-mode edits without a reload.
+            if (!errored && session.value) {
+                session.value.updatedAt = timestampFromDate(new Date());
+            }
             saveStatus.value = errored ? "error" : "saved";
             saveResetTimer = setTimeout(
                 () => {
@@ -499,6 +516,16 @@ onBeforeRouteLeave(() => {
                     class="text-caption-1 text-text-hint mt-1"
                 >
                     {{ session?.VXID }}
+                </p>
+                <p
+                    v-if="session?.updatedAt"
+                    class="text-caption-1 text-text-hint mt-1"
+                >
+                    {{
+                        t("editorial.lastUpdated", {
+                            date: formatDateTime(session.updatedAt),
+                        })
+                    }}
                 </p>
             </div>
 

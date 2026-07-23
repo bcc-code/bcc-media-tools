@@ -248,6 +248,7 @@
         "addRow": "Add row",
         "removeRow": "Remove",
         "reorder": "Drag to reorder",
+        "lastUpdated": "Last updated {date}",
         "noMarkers": "No markers yet — import from Mediabanken or add a row.",
         "unsavedWarning": "You have unsaved changes",
         "preview": "Preview",

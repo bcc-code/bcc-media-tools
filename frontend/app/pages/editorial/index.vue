@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import type { EditorialSession } from "~~/src/gen/api/v1/api_pb";
+import type { Timestamp } from "@bufbuild/protobuf/wkt";
+import { timestampDate } from "@bufbuild/protobuf/wkt";
 
 const { t } = useI18n();
 const api = useAPI();
@@ -24,6 +26,16 @@ async function load() {
     }
 }
 onMounted(load);
+
+const dateTimeFormatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Oslo",
+    dateStyle: "medium",
+    timeStyle: "short",
+});
+function formatDateTime(ts?: Timestamp): string {
+    if (!ts) return "";
+    return dateTimeFormatter.format(timestampDate(ts));
+}
 
 const createOpen = ref(false);
 const newVxid = ref("");
@@ -93,6 +105,14 @@ async function create() {
                         </p>
                         <p class="text-caption-1 text-text-hint truncate">
                             {{ s.VXID }} · {{ s.createdBy }}
+                            <template v-if="s.updatedAt">
+                                ·
+                                {{
+                                    t("editorial.lastUpdated", {
+                                        date: formatDateTime(s.updatedAt),
+                                    })
+                                }}
+                            </template>
                         </p>
                     </div>
                 </NuxtLink>
