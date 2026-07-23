@@ -247,6 +247,7 @@
         "deleted": "Review deleted",
         "addRow": "Add row",
         "removeRow": "Remove",
+        "reorder": "Drag to reorder",
         "noMarkers": "No markers yet — import from Mediabanken or add a row.",
         "unsavedWarning": "You have unsaved changes",
         "preview": "Preview",

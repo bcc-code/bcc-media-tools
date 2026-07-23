@@ -328,11 +328,36 @@ function removeRow(i: number) {
     rows.value.splice(i, 1);
 }
 
-function move(i: number, delta: number) {
-    const j = i + delta;
-    if (j < 0 || j >= rows.value.length) return;
-    const [item] = rows.value.splice(i, 1);
-    rows.value.splice(j, 0, item!);
+// Drag-to-reorder. Only the grip handle is draggable so the row's inputs stay
+// selectable; the whole row is used as the drag image for clear feedback.
+const dragIndex = ref<number | null>(null);
+const dragOverIndex = ref<number | null>(null);
+
+function onDragStart(i: number, e: DragEvent) {
+    dragIndex.value = i;
+    if (!e.dataTransfer) return;
+    e.dataTransfer.effectAllowed = "move";
+    // Firefox only starts a drag once data is set.
+    e.dataTransfer.setData("text/plain", String(i));
+    const tr = (e.target as HTMLElement).closest("tr");
+    if (tr) e.dataTransfer.setDragImage(tr, 24, 16);
+}
+
+function onDragOver(i: number) {
+    if (dragIndex.value !== null) dragOverIndex.value = i;
+}
+
+function onDrop(i: number) {
+    const from = dragIndex.value;
+    onDragEnd();
+    if (from === null || from === i) return;
+    const [item] = rows.value.splice(from, 1);
+    rows.value.splice(i, 0, item!);
+}
+
+function onDragEnd() {
+    dragIndex.value = null;
+    dragOverIndex.value = null;
 }
 
 // ── Backend actions ───────────────────────────────────────
@@ -608,11 +633,18 @@ onBeforeRouteLeave(() => {
                                     v-for="(row, i) in rows"
                                     :key="row.id || `new-${i}`"
                                     class="[&>td]:border-border-1/50 transition-colors [&>td]:border-b"
-                                    :class="
+                                    :class="[
                                         i === activeIndex
                                             ? 'bg-primary-default/10'
-                                            : ''
-                                    "
+                                            : '',
+                                        i === dragIndex ? 'opacity-40' : '',
+                                        dragOverIndex === i && dragIndex !== i
+                                            ? '[&>td]:border-t-primary-default [&>td]:border-t'
+                                            : '',
+                                    ]"
+                                    @dragover.prevent="onDragOver(i)"
+                                    @drop.prevent="onDrop(i)"
+                                    @dragend="onDragEnd"
                                 >
                                     <td class="py-2 pl-2">
                                         <DesignButton
@@ -737,22 +769,23 @@ onBeforeRouteLeave(() => {
                                         class="py-2 pl-2"
                                     >
                                         <div class="flex items-center gap-0.5">
-                                            <DesignButton
-                                                variant="tertiary"
-                                                size="small"
-                                                icon="tabler:chevron-up"
-                                                :disabled="i === 0"
-                                                @click="move(i, -1)"
-                                            />
-                                            <DesignButton
-                                                variant="tertiary"
-                                                size="small"
-                                                icon="tabler:chevron-down"
-                                                :disabled="
-                                                    i === rows.length - 1
+                                            <button
+                                                type="button"
+                                                :title="t('editorial.reorder')"
+                                                :aria-label="
+                                                    t('editorial.reorder')
                                                 "
-                                                @click="move(i, 1)"
-                                            />
+                                                draggable="true"
+                                                class="text-text-hint hover:text-text-default hover:bg-surface-indent flex cursor-grab items-center rounded-2xl p-1.5 active:cursor-grabbing"
+                                                @dragstart="
+                                                    onDragStart(i, $event)
+                                                "
+                                            >
+                                                <Icon
+                                                    name="tabler:grip-vertical"
+                                                    class="size-4"
+                                                />
+                                            </button>
                                             <DesignButton
                                                 variant="tertiary"
                                                 intent="danger"
