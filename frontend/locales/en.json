@@ -235,6 +235,8 @@
         "viewEdit": "Edit",
         "moreActions": "More actions",
         "import": "Import markers",
+        "importVidispine": "Import markers from Mediabanken",
+        "importPlayout": "Import markers from Playout",
         "importedCount": "Imported {n} marker(s)",
         "importFailed": "Could not import markers",
         "save": "Save",

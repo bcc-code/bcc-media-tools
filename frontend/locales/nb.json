@@ -235,6 +235,8 @@
         "viewEdit": "Rediger",
         "moreActions": "Flere handlinger",
         "import": "Importer markører",
+        "importVidispine": "Importer markører fra Mediabanken",
+        "importPlayout": "Importer markører fra Playout",
         "importedCount": "Importerte {n} markør(er)",
         "importFailed": "Kunne ikke importere markører",
         "save": "Lagre",

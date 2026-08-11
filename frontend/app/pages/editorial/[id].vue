@@ -379,8 +379,12 @@ function onDragEnd() {
 
 // ── Backend actions ───────────────────────────────────────
 const importing = ref(false);
+const importingPlayout = ref(false);
 const saving = ref(false);
 const deleteOpen = ref(false);
+
+// TODO: Replace this temporary hardcoded value by fetching the event ID from Playout.
+const PLAYOUT_EVENT_ID = "1013";
 
 // Secondary/destructive actions live in the overflow menu; Save stays primary.
 const menuItems = computed(() => [
@@ -388,9 +392,15 @@ const menuItems = computed(() => [
         ? [
               {
                   value: "import",
-                  label: t("editorial.import"),
+                  label: t("editorial.importVidispine"),
                   icon: "tabler:download",
                   disabled: importing.value,
+              },
+              {
+                  value: "import-playout",
+                  label: t("editorial.importPlayout"),
+                  icon: "tabler:download",
+                  disabled: importingPlayout.value,
               },
           ]
         : []),
@@ -404,6 +414,7 @@ const menuItems = computed(() => [
 function onMenuSelect(value: string) {
     if (value === "delete") deleteOpen.value = true;
     else if (value === "import") void importMarkers();
+    else if (value === "import-playout") void importPlayoutMarkers();
 }
 
 async function importMarkers() {
@@ -420,6 +431,26 @@ async function importMarkers() {
         toaster.create({ title: t("editorial.importFailed"), type: "error" });
     } finally {
         importing.value = false;
+    }
+}
+
+async function importPlayoutMarkers() {
+    importingPlayout.value = true;
+    try {
+        const res = await api.importEditorialMarkersFromPlayout({
+            id: sessionId.value,
+            eventId: PLAYOUT_EVENT_ID,
+        });
+        for (const m of res.markers) rows.value.push(toRow(m));
+        dirty.value = true;
+        toaster.create({
+            title: t("editorial.importedCount", { n: res.markers.length }),
+            type: "success",
+        });
+    } catch {
+        toaster.create({ title: t("editorial.importFailed"), type: "error" });
+    } finally {
+        importingPlayout.value = false;
     }
 }
 

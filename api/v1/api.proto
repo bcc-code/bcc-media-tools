@@ -521,6 +521,13 @@ message ImportEditorialMarkersResponse {
   repeated EditorialMarker markers = 1;
 }
 
+// Pull all content-manifest entries from Playout Studio for an event.
+// Does not save; returns candidate rows for the client to merge into the table.
+message ImportEditorialMarkersFromPlayoutRequest {
+  string id = 1;
+  string event_id = 2;
+}
+
 // Set a single marker's publish flags (Ja/Nei per target). This is the write
 // path for reviewers who may accept/reject but not edit markers (simple view).
 message SetEditorialPublishRequest {
@@ -608,4 +615,5 @@ service APIService {
   rpc SetEditorialName(SetEditorialNameRequest) returns (Void) {}
   rpc DeleteEditorialSession(DeleteEditorialSessionRequest) returns (Void) {}
   rpc ImportEditorialMarkers(ImportEditorialMarkersRequest) returns (ImportEditorialMarkersResponse) {}
+  rpc ImportEditorialMarkersFromPlayout(ImportEditorialMarkersFromPlayoutRequest) returns (ImportEditorialMarkersResponse) {}
 }

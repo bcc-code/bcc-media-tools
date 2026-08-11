@@ -131,6 +131,9 @@ const (
 	// APIServiceImportEditorialMarkersProcedure is the fully-qualified name of the APIService's
 	// ImportEditorialMarkers RPC.
 	APIServiceImportEditorialMarkersProcedure = "/api.v1.APIService/ImportEditorialMarkers"
+	// APIServiceImportEditorialMarkersFromPlayoutProcedure is the fully-qualified name of the
+	// APIService's ImportEditorialMarkersFromPlayout RPC.
+	APIServiceImportEditorialMarkersFromPlayoutProcedure = "/api.v1.APIService/ImportEditorialMarkersFromPlayout"
 )
 
 // APIServiceClient is a client for the api.v1.APIService service.
@@ -185,6 +188,7 @@ type APIServiceClient interface {
 	SetEditorialName(context.Context, *connect.Request[v1.SetEditorialNameRequest]) (*connect.Response[v1.Void], error)
 	DeleteEditorialSession(context.Context, *connect.Request[v1.DeleteEditorialSessionRequest]) (*connect.Response[v1.Void], error)
 	ImportEditorialMarkers(context.Context, *connect.Request[v1.ImportEditorialMarkersRequest]) (*connect.Response[v1.ImportEditorialMarkersResponse], error)
+	ImportEditorialMarkersFromPlayout(context.Context, *connect.Request[v1.ImportEditorialMarkersFromPlayoutRequest]) (*connect.Response[v1.ImportEditorialMarkersResponse], error)
 }
 
 // NewAPIServiceClient constructs a client for the api.v1.APIService service. By default, it uses
@@ -408,46 +412,53 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(aPIServiceMethods.ByName("ImportEditorialMarkers")),
 			connect.WithClientOptions(opts...),
 		),
+		importEditorialMarkersFromPlayout: connect.NewClient[v1.ImportEditorialMarkersFromPlayoutRequest, v1.ImportEditorialMarkersResponse](
+			httpClient,
+			baseURL+APIServiceImportEditorialMarkersFromPlayoutProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("ImportEditorialMarkersFromPlayout")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // aPIServiceClient implements APIServiceClient.
 type aPIServiceClient struct {
-	getPermissions          *connect.Client[v1.Void, v1.Permissions]
-	updatePermissions       *connect.Client[v1.SetPermissionsRequest, v1.Void]
-	deletePermissions       *connect.Client[v1.DeletePermissionsRequest, v1.Void]
-	listPermissions         *connect.Client[v1.Void, v1.PermissionsList]
-	getTranscription        *connect.Client[v1.GetTranscriptionReqest, v1.Transcription]
-	getTranscriptionPreview *connect.Client[v1.GetPreviewRequest, v1.Preview]
-	getShortsPreview        *connect.Client[v1.GetPreviewRequest, v1.Preview]
-	submitTranscription     *connect.Client[v1.SubmitTranscriptionRequest, v1.Void]
-	getYears                *connect.Client[v1.GetYearsRequest, v1.GetYearsResponse]
-	getAlbums               *connect.Client[v1.GetAlbumsRequest, v1.AlbumsList]
-	getAlbumTracks          *connect.Client[v1.GetAlbumTracksRequest, v1.TracksList]
-	getPodcastTracks        *connect.Client[v1.GetPodcastTracksRequest, v1.TracksList]
-	getLanguages            *connect.Client[v1.GetAvailableLanguagesRequest, v1.LanguageList]
-	getBMMTranscription     *connect.Client[v1.GetBMMTranscriptionRequest, v1.Transcription]
-	submitShort             *connect.Client[v1.SubmitShortRequest, v1.Void]
-	getExportConfig         *connect.Client[v1.GetExportConfigRequest, v1.GetExportConfigResponse]
-	startExport             *connect.Client[v1.StartExportRequest, v1.StartExportResponse]
-	exportTimedMetadata     *connect.Client[v1.ExportTimedMetadataRequest, v1.Void]
-	resolveAssets           *connect.Client[v1.ResolveAssetsRequest, v1.ResolveAssetsResponse]
-	getVBExportConfig       *connect.Client[v1.GetVBExportConfigRequest, v1.GetVBExportConfigResponse]
-	startVBExport           *connect.Client[v1.StartVBExportRequest, v1.StartVBExportResponse]
-	getExportDestinations   *connect.Client[v1.Void, v1.ExportDestinationsResponse]
-	triggerCantemoAction    *connect.Client[v1.TriggerCantemoActionRequest, v1.Void]
-	finishLiveIngest        *connect.Client[v1.FinishLiveIngestRequest, v1.FinishLiveIngestResponse]
-	vaultSearch             *connect.Client[v1.VaultSearchRequest, v1.VaultSearchResponse]
-	getVaultItem            *connect.Client[v1.GetVaultItemRequest, v1.GetVaultItemResponse]
-	listEditorialSessions   *connect.Client[v1.Void, v1.ListEditorialSessionsResponse]
-	createEditorialSession  *connect.Client[v1.CreateEditorialSessionRequest, v1.EditorialSession]
-	getEditorialSession     *connect.Client[v1.GetEditorialSessionRequest, v1.EditorialSession]
-	saveEditorialSession    *connect.Client[v1.SaveEditorialSessionRequest, v1.EditorialSession]
-	setEditorialPublish     *connect.Client[v1.SetEditorialPublishRequest, v1.Void]
-	setEditorialComment     *connect.Client[v1.SetEditorialCommentRequest, v1.Void]
-	setEditorialName        *connect.Client[v1.SetEditorialNameRequest, v1.Void]
-	deleteEditorialSession  *connect.Client[v1.DeleteEditorialSessionRequest, v1.Void]
-	importEditorialMarkers  *connect.Client[v1.ImportEditorialMarkersRequest, v1.ImportEditorialMarkersResponse]
+	getPermissions                    *connect.Client[v1.Void, v1.Permissions]
+	updatePermissions                 *connect.Client[v1.SetPermissionsRequest, v1.Void]
+	deletePermissions                 *connect.Client[v1.DeletePermissionsRequest, v1.Void]
+	listPermissions                   *connect.Client[v1.Void, v1.PermissionsList]
+	getTranscription                  *connect.Client[v1.GetTranscriptionReqest, v1.Transcription]
+	getTranscriptionPreview           *connect.Client[v1.GetPreviewRequest, v1.Preview]
+	getShortsPreview                  *connect.Client[v1.GetPreviewRequest, v1.Preview]
+	submitTranscription               *connect.Client[v1.SubmitTranscriptionRequest, v1.Void]
+	getYears                          *connect.Client[v1.GetYearsRequest, v1.GetYearsResponse]
+	getAlbums                         *connect.Client[v1.GetAlbumsRequest, v1.AlbumsList]
+	getAlbumTracks                    *connect.Client[v1.GetAlbumTracksRequest, v1.TracksList]
+	getPodcastTracks                  *connect.Client[v1.GetPodcastTracksRequest, v1.TracksList]
+	getLanguages                      *connect.Client[v1.GetAvailableLanguagesRequest, v1.LanguageList]
+	getBMMTranscription               *connect.Client[v1.GetBMMTranscriptionRequest, v1.Transcription]
+	submitShort                       *connect.Client[v1.SubmitShortRequest, v1.Void]
+	getExportConfig                   *connect.Client[v1.GetExportConfigRequest, v1.GetExportConfigResponse]
+	startExport                       *connect.Client[v1.StartExportRequest, v1.StartExportResponse]
+	exportTimedMetadata               *connect.Client[v1.ExportTimedMetadataRequest, v1.Void]
+	resolveAssets                     *connect.Client[v1.ResolveAssetsRequest, v1.ResolveAssetsResponse]
+	getVBExportConfig                 *connect.Client[v1.GetVBExportConfigRequest, v1.GetVBExportConfigResponse]
+	startVBExport                     *connect.Client[v1.StartVBExportRequest, v1.StartVBExportResponse]
+	getExportDestinations             *connect.Client[v1.Void, v1.ExportDestinationsResponse]
+	triggerCantemoAction              *connect.Client[v1.TriggerCantemoActionRequest, v1.Void]
+	finishLiveIngest                  *connect.Client[v1.FinishLiveIngestRequest, v1.FinishLiveIngestResponse]
+	vaultSearch                       *connect.Client[v1.VaultSearchRequest, v1.VaultSearchResponse]
+	getVaultItem                      *connect.Client[v1.GetVaultItemRequest, v1.GetVaultItemResponse]
+	listEditorialSessions             *connect.Client[v1.Void, v1.ListEditorialSessionsResponse]
+	createEditorialSession            *connect.Client[v1.CreateEditorialSessionRequest, v1.EditorialSession]
+	getEditorialSession               *connect.Client[v1.GetEditorialSessionRequest, v1.EditorialSession]
+	saveEditorialSession              *connect.Client[v1.SaveEditorialSessionRequest, v1.EditorialSession]
+	setEditorialPublish               *connect.Client[v1.SetEditorialPublishRequest, v1.Void]
+	setEditorialComment               *connect.Client[v1.SetEditorialCommentRequest, v1.Void]
+	setEditorialName                  *connect.Client[v1.SetEditorialNameRequest, v1.Void]
+	deleteEditorialSession            *connect.Client[v1.DeleteEditorialSessionRequest, v1.Void]
+	importEditorialMarkers            *connect.Client[v1.ImportEditorialMarkersRequest, v1.ImportEditorialMarkersResponse]
+	importEditorialMarkersFromPlayout *connect.Client[v1.ImportEditorialMarkersFromPlayoutRequest, v1.ImportEditorialMarkersResponse]
 }
 
 // GetPermissions calls api.v1.APIService.GetPermissions.
@@ -625,6 +636,11 @@ func (c *aPIServiceClient) ImportEditorialMarkers(ctx context.Context, req *conn
 	return c.importEditorialMarkers.CallUnary(ctx, req)
 }
 
+// ImportEditorialMarkersFromPlayout calls api.v1.APIService.ImportEditorialMarkersFromPlayout.
+func (c *aPIServiceClient) ImportEditorialMarkersFromPlayout(ctx context.Context, req *connect.Request[v1.ImportEditorialMarkersFromPlayoutRequest]) (*connect.Response[v1.ImportEditorialMarkersResponse], error) {
+	return c.importEditorialMarkersFromPlayout.CallUnary(ctx, req)
+}
+
 // APIServiceHandler is an implementation of the api.v1.APIService service.
 type APIServiceHandler interface {
 	// Permissions
@@ -677,6 +693,7 @@ type APIServiceHandler interface {
 	SetEditorialName(context.Context, *connect.Request[v1.SetEditorialNameRequest]) (*connect.Response[v1.Void], error)
 	DeleteEditorialSession(context.Context, *connect.Request[v1.DeleteEditorialSessionRequest]) (*connect.Response[v1.Void], error)
 	ImportEditorialMarkers(context.Context, *connect.Request[v1.ImportEditorialMarkersRequest]) (*connect.Response[v1.ImportEditorialMarkersResponse], error)
+	ImportEditorialMarkersFromPlayout(context.Context, *connect.Request[v1.ImportEditorialMarkersFromPlayoutRequest]) (*connect.Response[v1.ImportEditorialMarkersResponse], error)
 }
 
 // NewAPIServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -896,6 +913,12 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(aPIServiceMethods.ByName("ImportEditorialMarkers")),
 		connect.WithHandlerOptions(opts...),
 	)
+	aPIServiceImportEditorialMarkersFromPlayoutHandler := connect.NewUnaryHandler(
+		APIServiceImportEditorialMarkersFromPlayoutProcedure,
+		svc.ImportEditorialMarkersFromPlayout,
+		connect.WithSchema(aPIServiceMethods.ByName("ImportEditorialMarkersFromPlayout")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/api.v1.APIService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case APIServiceGetPermissionsProcedure:
@@ -968,6 +991,8 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceDeleteEditorialSessionHandler.ServeHTTP(w, r)
 		case APIServiceImportEditorialMarkersProcedure:
 			aPIServiceImportEditorialMarkersHandler.ServeHTTP(w, r)
+		case APIServiceImportEditorialMarkersFromPlayoutProcedure:
+			aPIServiceImportEditorialMarkersFromPlayoutHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -1115,4 +1140,8 @@ func (UnimplementedAPIServiceHandler) DeleteEditorialSession(context.Context, *c
 
 func (UnimplementedAPIServiceHandler) ImportEditorialMarkers(context.Context, *connect.Request[v1.ImportEditorialMarkersRequest]) (*connect.Response[v1.ImportEditorialMarkersResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.ImportEditorialMarkers is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) ImportEditorialMarkersFromPlayout(context.Context, *connect.Request[v1.ImportEditorialMarkersFromPlayoutRequest]) (*connect.Response[v1.ImportEditorialMarkersResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.ImportEditorialMarkersFromPlayout is not implemented"))
 }

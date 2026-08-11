@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"bcc-media-tools/playout"
 	"github.com/bcc-code/bcc-media-flows/services/cantemo"
 	"github.com/bcc-code/bcc-media-flows/services/vidispine/vsapi"
 	"github.com/bcc-code/mediabank-bridge/log"
@@ -126,6 +127,11 @@ func main() {
 
 	// Shared Cantemo client for tool previews and the VAULT proxy handlers.
 	cantemoClient := cantemo.NewClient(os.Getenv("CANTEMO_URL"), os.Getenv("CANTEMO_TOKEN"))
+	playoutClient := playout.NewClient(
+		os.Getenv("PLAYOUT_API_URL"),
+		os.Getenv("PLAYOUT_API_KEY"),
+		os.Getenv("PLAYOUT_TENANT_ID"),
+	)
 
 	shortsAPI := NewShortsAPI(temporalClient, cantemoClient)
 	exportAPI := NewExportAPI(vidispineClient, temporalClient)
@@ -147,7 +153,7 @@ func main() {
 		panic(err)
 	}
 	defer editorialStore.Close()
-	editorialAPI := NewEditorialAPI(editorialStore, vidispineClient, cantemoClient)
+	editorialAPI := NewEditorialAPI(editorialStore, vidispineClient, cantemoClient, playoutClient)
 
 	api := &ApiServer{
 		PermissionsAPI:   permissionsApi,
