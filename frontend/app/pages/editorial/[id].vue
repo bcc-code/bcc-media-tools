@@ -381,6 +381,9 @@ function onDragEnd() {
 const importing = ref(false);
 const importingPlayout = ref(false);
 const saving = ref(false);
+const mutationInProgress = computed(
+    () => importing.value || importingPlayout.value || saving.value,
+);
 const deleteOpen = ref(false);
 
 // TODO: Replace this temporary hardcoded value by fetching the event ID from Playout.
@@ -394,13 +397,13 @@ const menuItems = computed(() => [
                   value: "import",
                   label: t("editorial.importVidispine"),
                   icon: "tabler:download",
-                  disabled: importing.value,
+                  disabled: mutationInProgress.value,
               },
               {
                   value: "import-playout",
                   label: t("editorial.importPlayout"),
                   icon: "tabler:download",
-                  disabled: importingPlayout.value,
+                  disabled: mutationInProgress.value,
               },
           ]
         : []),
@@ -418,6 +421,7 @@ function onMenuSelect(value: string) {
 }
 
 async function importMarkers() {
+    if (mutationInProgress.value) return;
     importing.value = true;
     try {
         const res = await api.importEditorialMarkers({ id: sessionId.value });
@@ -435,6 +439,7 @@ async function importMarkers() {
 }
 
 async function importPlayoutMarkers() {
+    if (mutationInProgress.value) return;
     importingPlayout.value = true;
     try {
         const res = await api.importEditorialMarkersFromPlayout({
@@ -455,6 +460,7 @@ async function importPlayoutMarkers() {
 }
 
 async function save() {
+    if (mutationInProgress.value) return;
     saving.value = true;
     try {
         const s = await api.saveEditorialSession({
@@ -609,6 +615,7 @@ onBeforeRouteLeave(() => {
                             v-if="effectiveMode === 'edit'"
                             icon="tabler:device-floppy"
                             :loading="saving"
+                            :disabled="importing || importingPlayout"
                             @click="save"
                         >
                             {{ t("editorial.save") }}
