@@ -24,14 +24,15 @@ type EditorialAPI struct {
 	store     *editorial.Store
 	vidispine vidispine.Client
 	cantemo   *cantemo.Client
-	playout   playoutManifestClient
+	playout   playoutClient
 }
 
-type playoutManifestClient interface {
+type playoutClient interface {
 	GetManifest(context.Context, string, ...string) (*playout.Manifest, error)
+	ListEvents(context.Context) ([]playout.Event, error)
 }
 
-func NewEditorialAPI(store *editorial.Store, vs vidispine.Client, cantemoClient *cantemo.Client, playoutClient playoutManifestClient) *EditorialAPI {
+func NewEditorialAPI(store *editorial.Store, vs vidispine.Client, cantemoClient *cantemo.Client, playoutClient playoutClient) *EditorialAPI {
 	return &EditorialAPI{store: store, vidispine: vs, cantemo: cantemoClient, playout: playoutClient}
 }
 
@@ -213,6 +214,32 @@ func (e EditorialAPI) ImportEditorialMarkersFromPlayout(ctx context.Context, req
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("import Playout markers: %w", err))
 	}
 	return connect.NewResponse(&apiv1.ImportEditorialMarkersResponse{Markers: markers}), nil
+}
+
+// ListPlayoutEvents lists every event known to the tenant so the client can
+// offer a picker instead of requiring a Playout event id to be typed in.
+func (e EditorialAPI) ListPlayoutEvents(ctx context.Context, req *connect.Request[apiv1.ListPlayoutEventsRequest]) (*connect.Response[apiv1.ListPlayoutEventsResponse], error) {
+	if _, err := requireEditorial(req, true); err != nil {
+		return nil, err
+	}
+	if e.playout == nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("playout client is not configured"))
+	}
+	events, err := e.playout.ListEvents(ctx)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("list Playout events: %w", err))
+	}
+	resp := &apiv1.ListPlayoutEventsResponse{}
+	for _, ev := range events {
+		resp.Events = append(resp.Events, &apiv1.PlayoutEvent{
+			Id:             ev.ID,
+			Name:           ev.Name,
+			Date:           ev.Date,
+			Status:         ev.Status,
+			ProductionUnit: ev.ProductionUnit,
+		})
+	}
+	return connect.NewResponse(resp), nil
 }
 
 // importFromVidispine mirrors the export tool's chapter extraction

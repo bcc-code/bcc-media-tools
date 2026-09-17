@@ -528,6 +528,22 @@ message ImportEditorialMarkersFromPlayoutRequest {
   string event_id = 2;
 }
 
+// One event from Playout Studio's Event Discovery API. Date and
+// production_unit are empty when the API returns them as null.
+message PlayoutEvent {
+  string id = 1;
+  string name = 2;
+  string date = 3;
+  string status = 4;
+  string production_unit = 5;
+}
+
+message ListPlayoutEventsRequest {}
+
+message ListPlayoutEventsResponse {
+  repeated PlayoutEvent events = 1;
+}
+
 // Set a single marker's publish flags (Ja/Nei per target). This is the write
 // path for reviewers who may accept/reject but not edit markers (simple view).
 message SetEditorialPublishRequest {
@@ -616,4 +632,5 @@ service APIService {
   rpc DeleteEditorialSession(DeleteEditorialSessionRequest) returns (Void) {}
   rpc ImportEditorialMarkers(ImportEditorialMarkersRequest) returns (ImportEditorialMarkersResponse) {}
   rpc ImportEditorialMarkersFromPlayout(ImportEditorialMarkersFromPlayoutRequest) returns (ImportEditorialMarkersResponse) {}
+  rpc ListPlayoutEvents(ListPlayoutEventsRequest) returns (ListPlayoutEventsResponse) {}
 }

@@ -134,6 +134,9 @@ const (
 	// APIServiceImportEditorialMarkersFromPlayoutProcedure is the fully-qualified name of the
 	// APIService's ImportEditorialMarkersFromPlayout RPC.
 	APIServiceImportEditorialMarkersFromPlayoutProcedure = "/api.v1.APIService/ImportEditorialMarkersFromPlayout"
+	// APIServiceListPlayoutEventsProcedure is the fully-qualified name of the APIService's
+	// ListPlayoutEvents RPC.
+	APIServiceListPlayoutEventsProcedure = "/api.v1.APIService/ListPlayoutEvents"
 )
 
 // APIServiceClient is a client for the api.v1.APIService service.
@@ -189,6 +192,7 @@ type APIServiceClient interface {
 	DeleteEditorialSession(context.Context, *connect.Request[v1.DeleteEditorialSessionRequest]) (*connect.Response[v1.Void], error)
 	ImportEditorialMarkers(context.Context, *connect.Request[v1.ImportEditorialMarkersRequest]) (*connect.Response[v1.ImportEditorialMarkersResponse], error)
 	ImportEditorialMarkersFromPlayout(context.Context, *connect.Request[v1.ImportEditorialMarkersFromPlayoutRequest]) (*connect.Response[v1.ImportEditorialMarkersResponse], error)
+	ListPlayoutEvents(context.Context, *connect.Request[v1.ListPlayoutEventsRequest]) (*connect.Response[v1.ListPlayoutEventsResponse], error)
 }
 
 // NewAPIServiceClient constructs a client for the api.v1.APIService service. By default, it uses
@@ -418,6 +422,12 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(aPIServiceMethods.ByName("ImportEditorialMarkersFromPlayout")),
 			connect.WithClientOptions(opts...),
 		),
+		listPlayoutEvents: connect.NewClient[v1.ListPlayoutEventsRequest, v1.ListPlayoutEventsResponse](
+			httpClient,
+			baseURL+APIServiceListPlayoutEventsProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("ListPlayoutEvents")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -459,6 +469,7 @@ type aPIServiceClient struct {
 	deleteEditorialSession            *connect.Client[v1.DeleteEditorialSessionRequest, v1.Void]
 	importEditorialMarkers            *connect.Client[v1.ImportEditorialMarkersRequest, v1.ImportEditorialMarkersResponse]
 	importEditorialMarkersFromPlayout *connect.Client[v1.ImportEditorialMarkersFromPlayoutRequest, v1.ImportEditorialMarkersResponse]
+	listPlayoutEvents                 *connect.Client[v1.ListPlayoutEventsRequest, v1.ListPlayoutEventsResponse]
 }
 
 // GetPermissions calls api.v1.APIService.GetPermissions.
@@ -641,6 +652,11 @@ func (c *aPIServiceClient) ImportEditorialMarkersFromPlayout(ctx context.Context
 	return c.importEditorialMarkersFromPlayout.CallUnary(ctx, req)
 }
 
+// ListPlayoutEvents calls api.v1.APIService.ListPlayoutEvents.
+func (c *aPIServiceClient) ListPlayoutEvents(ctx context.Context, req *connect.Request[v1.ListPlayoutEventsRequest]) (*connect.Response[v1.ListPlayoutEventsResponse], error) {
+	return c.listPlayoutEvents.CallUnary(ctx, req)
+}
+
 // APIServiceHandler is an implementation of the api.v1.APIService service.
 type APIServiceHandler interface {
 	// Permissions
@@ -694,6 +710,7 @@ type APIServiceHandler interface {
 	DeleteEditorialSession(context.Context, *connect.Request[v1.DeleteEditorialSessionRequest]) (*connect.Response[v1.Void], error)
 	ImportEditorialMarkers(context.Context, *connect.Request[v1.ImportEditorialMarkersRequest]) (*connect.Response[v1.ImportEditorialMarkersResponse], error)
 	ImportEditorialMarkersFromPlayout(context.Context, *connect.Request[v1.ImportEditorialMarkersFromPlayoutRequest]) (*connect.Response[v1.ImportEditorialMarkersResponse], error)
+	ListPlayoutEvents(context.Context, *connect.Request[v1.ListPlayoutEventsRequest]) (*connect.Response[v1.ListPlayoutEventsResponse], error)
 }
 
 // NewAPIServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -919,6 +936,12 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(aPIServiceMethods.ByName("ImportEditorialMarkersFromPlayout")),
 		connect.WithHandlerOptions(opts...),
 	)
+	aPIServiceListPlayoutEventsHandler := connect.NewUnaryHandler(
+		APIServiceListPlayoutEventsProcedure,
+		svc.ListPlayoutEvents,
+		connect.WithSchema(aPIServiceMethods.ByName("ListPlayoutEvents")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/api.v1.APIService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case APIServiceGetPermissionsProcedure:
@@ -993,6 +1016,8 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceImportEditorialMarkersHandler.ServeHTTP(w, r)
 		case APIServiceImportEditorialMarkersFromPlayoutProcedure:
 			aPIServiceImportEditorialMarkersFromPlayoutHandler.ServeHTTP(w, r)
+		case APIServiceListPlayoutEventsProcedure:
+			aPIServiceListPlayoutEventsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -1144,4 +1169,8 @@ func (UnimplementedAPIServiceHandler) ImportEditorialMarkers(context.Context, *c
 
 func (UnimplementedAPIServiceHandler) ImportEditorialMarkersFromPlayout(context.Context, *connect.Request[v1.ImportEditorialMarkersFromPlayoutRequest]) (*connect.Response[v1.ImportEditorialMarkersResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.ImportEditorialMarkersFromPlayout is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) ListPlayoutEvents(context.Context, *connect.Request[v1.ListPlayoutEventsRequest]) (*connect.Response[v1.ListPlayoutEventsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.ListPlayoutEvents is not implemented"))
 }
