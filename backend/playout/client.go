@@ -43,9 +43,7 @@ type Event struct {
 }
 
 type eventsResponse struct {
-	Data       []Event `json:"data"`
-	Page       int     `json:"page"`
-	TotalPages int     `json:"totalPages"`
+	Data []Event `json:"data"`
 }
 
 type Client struct {
@@ -115,6 +113,42 @@ func (c *Client) GetManifest(ctx context.Context, eventID string, types ...strin
 // allows, minimizing the number of pages ListEvents has to fetch.
 const eventsPageSize = 100
 
+// fetchEventsPage fetches a single page of the Event Discovery API. Separate
+// from ListEvents so each page's body is closed as soon as that page is done.
+func (c *Client) fetchEventsPage(ctx context.Context, page int) (eventsResponse, error) {
+	endpoint := fmt.Sprintf("%s/%s/events", c.baseURL, url.PathEscape(c.tenantID))
+	u, err := url.Parse(endpoint)
+	if err != nil {
+		return eventsResponse{}, fmt.Errorf("build playout events URL: %w", err)
+	}
+	query := u.Query()
+	query.Set("page", fmt.Sprintf("%d", page))
+	query.Set("pageSize", fmt.Sprintf("%d", eventsPageSize))
+	u.RawQuery = query.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	if err != nil {
+		return eventsResponse{}, fmt.Errorf("create playout events request: %w", err)
+	}
+	req.Header.Set("X-Api-Key", c.apiKey)
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return eventsResponse{}, fmt.Errorf("list playout events: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return eventsResponse{}, fmt.Errorf("list playout events: unexpected status %s", resp.Status)
+	}
+
+	var body eventsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		return eventsResponse{}, fmt.Errorf("decode playout events: %w", err)
+	}
+	return body, nil
+}
+
 // ListEvents returns every event known to the tenant, fetching all pages.
 // There is no server-side name search, so callers filter the returned list
 // themselves.
@@ -125,40 +159,15 @@ func (c *Client) ListEvents(ctx context.Context) ([]Event, error) {
 
 	var events []Event
 	for page := 1; ; page++ {
-		endpoint := fmt.Sprintf("%s/%s/events", c.baseURL, url.PathEscape(c.tenantID))
-		u, err := url.Parse(endpoint)
+		body, err := c.fetchEventsPage(ctx, page)
 		if err != nil {
-			return nil, fmt.Errorf("build playout events URL: %w", err)
-		}
-		query := u.Query()
-		query.Set("page", fmt.Sprintf("%d", page))
-		query.Set("pageSize", fmt.Sprintf("%d", eventsPageSize))
-		u.RawQuery = query.Encode()
-
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
-		if err != nil {
-			return nil, fmt.Errorf("create playout events request: %w", err)
-		}
-		req.Header.Set("X-Api-Key", c.apiKey)
-		req.Header.Set("Accept", "application/json")
-
-		resp, err := c.httpClient.Do(req)
-		if err != nil {
-			return nil, fmt.Errorf("list playout events: %w", err)
-		}
-		var body eventsResponse
-		err = json.NewDecoder(resp.Body).Decode(&body)
-		status := resp.StatusCode
-		resp.Body.Close()
-		if status < http.StatusOK || status >= http.StatusMultipleChoices {
-			return nil, fmt.Errorf("list playout events: unexpected status %d", status)
-		}
-		if err != nil {
-			return nil, fmt.Errorf("decode playout events: %w", err)
+			return nil, err
 		}
 
 		events = append(events, body.Data...)
-		if page >= body.TotalPages || len(body.Data) == 0 {
+		// A page short of the requested size is the last one. This doesn't
+		// rely on the response's totalPages/page fields being accurate.
+		if len(body.Data) < eventsPageSize {
 			break
 		}
 	}
