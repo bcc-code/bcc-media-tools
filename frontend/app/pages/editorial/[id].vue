@@ -2,6 +2,7 @@
 import type {
     EditorialSession,
     EditorialMarker,
+    PlayoutEvent,
 } from "~~/src/gen/api/v1/api_pb";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
 import { timestampDate, timestampFromDate } from "@bufbuild/protobuf/wkt";
@@ -379,8 +380,22 @@ function onDragEnd() {
 
 // ── Backend actions ───────────────────────────────────────
 const importing = ref(false);
+const importingPlayout = ref(false);
 const saving = ref(false);
+const mutationInProgress = computed(
+    () => importing.value || importingPlayout.value || saving.value,
+);
 const deleteOpen = ref(false);
+
+const playoutPickerOpen = ref(false);
+const playoutEvents = ref<PlayoutEvent[]>([]);
+const loadingPlayoutEvents = ref(false);
+const playoutSearch = ref("");
+const filteredPlayoutEvents = computed(() => {
+    const q = playoutSearch.value.trim().toLowerCase();
+    if (!q) return playoutEvents.value;
+    return playoutEvents.value.filter((e) => e.name.toLowerCase().includes(q));
+});
 
 // Secondary/destructive actions live in the overflow menu; Save stays primary.
 const menuItems = computed(() => [
@@ -388,9 +403,15 @@ const menuItems = computed(() => [
         ? [
               {
                   value: "import",
-                  label: t("editorial.import"),
+                  label: t("editorial.importVidispine"),
                   icon: "tabler:download",
-                  disabled: importing.value,
+                  disabled: mutationInProgress.value,
+              },
+              {
+                  value: "import-playout",
+                  label: t("editorial.importPlayout"),
+                  icon: "tabler:download",
+                  disabled: mutationInProgress.value,
               },
           ]
         : []),
@@ -404,9 +425,32 @@ const menuItems = computed(() => [
 function onMenuSelect(value: string) {
     if (value === "delete") deleteOpen.value = true;
     else if (value === "import") void importMarkers();
+    else if (value === "import-playout") void openPlayoutPicker();
+}
+
+async function openPlayoutPicker() {
+    if (mutationInProgress.value) return;
+    playoutSearch.value = "";
+    playoutPickerOpen.value = true;
+    loadingPlayoutEvents.value = true;
+    try {
+        const res = await api.listPlayoutEvents({});
+        playoutEvents.value = res.events;
+    } catch {
+        toaster.create({ title: t("editorial.importFailed"), type: "error" });
+        playoutPickerOpen.value = false;
+    } finally {
+        loadingPlayoutEvents.value = false;
+    }
+}
+
+function selectPlayoutEvent(eventId: string) {
+    playoutPickerOpen.value = false;
+    void importPlayoutMarkers(eventId);
 }
 
 async function importMarkers() {
+    if (mutationInProgress.value) return;
     importing.value = true;
     try {
         const res = await api.importEditorialMarkers({ id: sessionId.value });
@@ -423,7 +467,29 @@ async function importMarkers() {
     }
 }
 
+async function importPlayoutMarkers(eventId: string) {
+    if (mutationInProgress.value) return;
+    importingPlayout.value = true;
+    try {
+        const res = await api.importEditorialMarkersFromPlayout({
+            id: sessionId.value,
+            eventId,
+        });
+        for (const m of res.markers) rows.value.push(toRow(m));
+        dirty.value = true;
+        toaster.create({
+            title: t("editorial.importedCount", { n: res.markers.length }),
+            type: "success",
+        });
+    } catch {
+        toaster.create({ title: t("editorial.importFailed"), type: "error" });
+    } finally {
+        importingPlayout.value = false;
+    }
+}
+
 async function save() {
+    if (mutationInProgress.value) return;
     saving.value = true;
     try {
         const s = await api.saveEditorialSession({
@@ -578,6 +644,7 @@ onBeforeRouteLeave(() => {
                             v-if="effectiveMode === 'edit'"
                             icon="tabler:device-floppy"
                             :loading="saving"
+                            :disabled="importing || importingPlayout"
                             @click="save"
                         >
                             {{ t("editorial.save") }}
@@ -922,6 +989,58 @@ onBeforeRouteLeave(() => {
             <DesignButton variant="primary" intent="danger" @click="remove">
                 {{ t("editorial.delete") }}
             </DesignButton>
+        </div>
+    </DesignDialog>
+
+    <DesignDialog
+        v-model:open="playoutPickerOpen"
+        :title="t('editorial.selectPlayoutEvent')"
+        size="lg"
+    >
+        <div class="flex flex-col gap-3">
+            <DesignInput
+                v-model="playoutSearch"
+                leading-icon="tabler:search"
+                :placeholder="t('editorial.searchPlayoutEvents')"
+            />
+
+            <div v-if="loadingPlayoutEvents" class="flex flex-col gap-2">
+                <DesignSkeleton
+                    v-for="i in 4"
+                    :key="i"
+                    class="h-14 rounded-xl"
+                />
+            </div>
+
+            <p
+                v-else-if="filteredPlayoutEvents.length === 0"
+                class="text-body-3 text-text-hint py-8 text-center"
+            >
+                {{ t("editorial.noPlayoutEvents") }}
+            </p>
+
+            <ul v-else class="flex max-h-96 flex-col gap-2 overflow-y-auto">
+                <li v-for="e in filteredPlayoutEvents" :key="e.id">
+                    <button
+                        type="button"
+                        class="bg-surface-raise gradient-border shadow-resting ds-focus-ring hover:bg-surface-indent flex w-full items-center justify-between gap-4 rounded-xl px-4 py-2.5 text-left transition-colors"
+                        @click="selectPlayoutEvent(e.id)"
+                    >
+                        <div class="min-w-0">
+                            <p class="text-title-2 text-text-default truncate">
+                                {{ e.name || e.id }}
+                            </p>
+                            <p class="text-caption-1 text-text-hint truncate">
+                                {{
+                                    [e.date, e.status, e.productionUnit]
+                                        .filter(Boolean)
+                                        .join(" · ")
+                                }}
+                            </p>
+                        </div>
+                    </button>
+                </li>
+            </ul>
         </div>
     </DesignDialog>
 </template>

@@ -3,9 +3,12 @@ package main
 import (
 	apiv1 "bcc-media-tools/api/v1"
 	"bcc-media-tools/editorial"
+	"bcc-media-tools/playout"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"connectrpc.com/connect"
 	"github.com/bcc-code/bcc-media-flows/services/cantemo"
@@ -21,10 +24,16 @@ type EditorialAPI struct {
 	store     *editorial.Store
 	vidispine vidispine.Client
 	cantemo   *cantemo.Client
+	playout   playoutClient
 }
 
-func NewEditorialAPI(store *editorial.Store, vs vidispine.Client, cantemoClient *cantemo.Client) *EditorialAPI {
-	return &EditorialAPI{store: store, vidispine: vs, cantemo: cantemoClient}
+type playoutClient interface {
+	GetManifest(context.Context, string, ...string) (*playout.Manifest, error)
+	ListEvents(context.Context) ([]playout.Event, error)
+}
+
+func NewEditorialAPI(store *editorial.Store, vs vidispine.Client, cantemoClient *cantemo.Client, playoutClient playoutClient) *EditorialAPI {
+	return &EditorialAPI{store: store, vidispine: vs, cantemo: cantemoClient, playout: playoutClient}
 }
 
 // requireEditorial authenticates the caller and checks editorial access. When
@@ -186,6 +195,53 @@ func (e EditorialAPI) ImportEditorialMarkers(ctx context.Context, req *connect.R
 	return connect.NewResponse(&apiv1.ImportEditorialMarkersResponse{Markers: markers}), nil
 }
 
+// ImportEditorialMarkersFromPlayout pulls every content-manifest entry for the
+// supplied Playout event. Like the Vidispine import, it only returns candidate
+// rows; the client decides whether to save them.
+func (e EditorialAPI) ImportEditorialMarkersFromPlayout(ctx context.Context, req *connect.Request[apiv1.ImportEditorialMarkersFromPlayoutRequest]) (*connect.Response[apiv1.ImportEditorialMarkersResponse], error) {
+	if _, err := requireEditorial(req, true); err != nil {
+		return nil, err
+	}
+	if req.Msg.GetId() == "" || req.Msg.GetEventId() == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("missing id or event_id"))
+	}
+	if _, err := e.store.GetSession(ctx, req.Msg.GetId()); err != nil {
+		return nil, editorialErr(err)
+	}
+
+	markers, err := e.importFromPlayout(ctx, req.Msg.GetEventId(), time.Time{})
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("import Playout markers: %w", err))
+	}
+	return connect.NewResponse(&apiv1.ImportEditorialMarkersResponse{Markers: markers}), nil
+}
+
+// ListPlayoutEvents lists every event known to the tenant so the client can
+// offer a picker instead of requiring a Playout event id to be typed in.
+func (e EditorialAPI) ListPlayoutEvents(ctx context.Context, req *connect.Request[apiv1.ListPlayoutEventsRequest]) (*connect.Response[apiv1.ListPlayoutEventsResponse], error) {
+	if _, err := requireEditorial(req, true); err != nil {
+		return nil, err
+	}
+	if e.playout == nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("playout client is not configured"))
+	}
+	events, err := e.playout.ListEvents(ctx)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("list Playout events: %w", err))
+	}
+	resp := &apiv1.ListPlayoutEventsResponse{}
+	for _, ev := range events {
+		resp.Events = append(resp.Events, &apiv1.PlayoutEvent{
+			Id:             ev.ID,
+			Name:           ev.Name,
+			Date:           ev.Date,
+			Status:         ev.Status,
+			ProductionUnit: ev.ProductionUnit,
+		})
+	}
+	return connect.NewResponse(resp), nil
+}
+
 // importFromVidispine mirrors the export tool's chapter extraction
 // (export.go getSubclips): fetch the asset's clips, then their chapter metadata,
 // mapping each chapter to an editorial marker (title → name, subclip-type →
@@ -217,6 +273,98 @@ func (e EditorialAPI) importFromVidispine(vxID string) ([]*apiv1.EditorialMarker
 		})
 	}
 	return out, nil
+}
+
+// importFromPlayout fetches every content action and maps it to an editorial
+// candidate. recordingStart should be the actual recording start; if it is
+// zero, the manifest's event start is used as a fallback.
+func (e EditorialAPI) importFromPlayout(ctx context.Context, eventID string, recordingStart time.Time) ([]*apiv1.EditorialMarker, error) {
+	if e.playout == nil {
+		return nil, fmt.Errorf("playout client is not configured")
+	}
+	// Omitting the type filter asks Playout for every available content type,
+	// including types added by the API in the future.
+	manifest, err := e.playout.GetManifest(ctx, eventID)
+	if err != nil {
+		return nil, err
+	}
+	if recordingStart.IsZero() {
+		if manifest.EventStart == nil {
+			return nil, fmt.Errorf("recording start is required when the manifest has no event start")
+		}
+		recordingStart = *manifest.EventStart
+	}
+
+	out := make([]*apiv1.EditorialMarker, 0, len(manifest.Entries))
+	var currentSpeaker *apiv1.EditorialMarker
+	var currentSpeakerVerses map[string]struct{}
+	for _, entry := range manifest.Entries {
+		if entry.Type == playout.ContentTypeScripture {
+			// Scripture actions belong to the current speaker segment rather
+			// than forming standalone editorial rows. A scripture before the
+			// first speaker has no segment to attach to and is ignored.
+			if currentSpeaker != nil && entry.Label != "" {
+				if _, exists := currentSpeakerVerses[entry.Label]; exists {
+					continue
+				}
+				if currentSpeaker.BibleVerses != "" {
+					currentSpeaker.BibleVerses += ", "
+				}
+				currentSpeaker.BibleVerses += entry.Label
+				currentSpeakerVerses[entry.Label] = struct{}{}
+			}
+			continue
+		}
+
+		marker := &apiv1.EditorialMarker{
+			Type:    editorialTypeFromPlayout(entry.Type),
+			StartMs: entry.Timestamp.Sub(recordingStart).Milliseconds(),
+			Source:  editorial.SourceImport,
+		}
+		// The next content action marks the end of the previous segment.
+		// Scripture entries are handled above and intentionally do not create
+		// a boundary of their own.
+		if len(out) > 0 {
+			out[len(out)-1].EndMs = marker.StartMs
+		}
+		switch entry.Type {
+		case playout.ContentTypeSpeaker:
+			var data struct {
+				Name string `json:"name"`
+			}
+			if json.Unmarshal(entry.Data, &data) == nil && data.Name != "" {
+				marker.Contributors = data.Name
+			} else {
+				marker.Contributors = entry.Label
+			}
+			currentSpeaker = marker
+			currentSpeakerVerses = map[string]struct{}{}
+		default:
+			// Non-speaker content, such as a song, uses the Playout label as
+			// its editorial title. Speaker names live in Contributors instead.
+			marker.Name = entry.Label
+			// A song or other content segment ends the active speaker segment;
+			// subsequent scripture must not be attributed to that speaker.
+			currentSpeaker = nil
+			currentSpeakerVerses = nil
+		}
+		out = append(out, marker)
+	}
+	return out, nil
+}
+
+// editorialTypeFromPlayout maps Playout's content types to the values used by
+// the editorial type selector. Unknown types are preserved so importing new
+// Playout content types remains forward-compatible.
+func editorialTypeFromPlayout(playoutType string) string {
+	switch playoutType {
+	case playout.ContentTypeSpeaker:
+		return "tale"
+	case playout.ContentTypeSong:
+		return "sang"
+	default:
+		return playoutType
+	}
 }
 
 func editorialSessionToProto(s *editorial.Session) *apiv1.EditorialSession {
