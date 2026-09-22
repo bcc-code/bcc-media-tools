@@ -282,7 +282,17 @@
             "annet": "Other"
         },
         "publishYes": "Yes",
-        "publishNo": "No"
+        "publishNo": "No",
+        "recordingWindow": "Recording window",
+        "recordingWindowFromMetadata": "from file name",
+        "recordingWindowManual": "set by hand",
+        "recordingWindowAdjust": "Adjust",
+        "recordingWindowUnknown": "Couldn't work out when this was recorded",
+        "recordingWindowHint": "Only Playout content inside this window is imported.",
+        "recordingWindowInvalid": "Enter a date and a start time.",
+        "recordingDate": "Date",
+        "recordingStartTime": "Start",
+        "recordingEndTime": "End"
     },
     "vault": {
         "searchPlaceholder": "Search the vault",

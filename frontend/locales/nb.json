@@ -282,7 +282,17 @@
             "annet": "Annet"
         },
         "publishYes": "Ja",
-        "publishNo": "Nei"
+        "publishNo": "Nei",
+        "recordingWindow": "Opptaksvindu",
+        "recordingWindowFromMetadata": "fra filnavnet",
+        "recordingWindowManual": "satt manuelt",
+        "recordingWindowAdjust": "Juster",
+        "recordingWindowUnknown": "Fant ikke ut når dette ble tatt opp",
+        "recordingWindowHint": "Bare Playout-innhold i dette vinduet importeres.",
+        "recordingWindowInvalid": "Fyll inn dato og starttidspunkt.",
+        "recordingDate": "Dato",
+        "recordingStartTime": "Start",
+        "recordingEndTime": "Slutt"
     },
     "vault": {
         "searchPlaceholder": "Søk i vault",

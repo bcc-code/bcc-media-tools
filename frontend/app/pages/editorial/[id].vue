@@ -3,6 +3,7 @@ import type {
     EditorialSession,
     EditorialMarker,
     PlayoutEvent,
+    GetRecordingWindowResponse,
 } from "~~/src/gen/api/v1/api_pb";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
 import { timestampDate, timestampFromDate } from "@bufbuild/protobuf/wkt";
@@ -397,6 +398,149 @@ const filteredPlayoutEvents = computed(() => {
     return playoutEvents.value.filter((e) => e.name.toLowerCase().includes(q));
 });
 
+// ── Recording window ──────────────────────────────────────
+// A Playout event covers a whole conference, so the import needs this
+// recording's span. The server derives it from the file name — a convention,
+// not a guarantee — so it's shown: a wrong window imports the wrong meeting.
+const recWindow = ref<GetRecordingWindowResponse>();
+const loadingRecWindow = ref(false);
+const recAdjusting = ref(false);
+const recDate = ref("");
+const recStartTime = ref("");
+const recEndTime = ref("");
+
+// No usable duration, so an end can't be inferred and must be entered.
+const recNeedsEnd = computed(() => (recWindow.value?.durationMs ?? 0n) === 0n);
+
+const osloTime = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Oslo",
+    timeStyle: "short",
+});
+
+// Europe/Oslo's offset at an instant: format it there, read it back as UTC,
+// and the gap is the offset. The inputs are wall-clock; the API is UTC.
+function osloOffsetMs(at: Date): number {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+        timeZone: "Europe/Oslo",
+        hourCycle: "h23",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+    }).formatToParts(at);
+    const n = (type: string) =>
+        Number(parts.find((p) => p.type === type)?.value ?? 0);
+    return (
+        Date.UTC(
+            n("year"),
+            n("month") - 1,
+            n("day"),
+            n("hour"),
+            n("minute"),
+            n("second"),
+        ) - at.getTime()
+    );
+}
+
+// Reads "YYYY-MM-DD" + "HH:MM" as Oslo wall-clock time. Resolved twice: the
+// first pass can land on the wrong side of a DST change.
+function osloToDate(date: string, time: string): Date | undefined {
+    const d = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date.trim());
+    const t = /^(\d{1,2}):(\d{2})$/.exec(time.trim());
+    if (!d || !t) return undefined;
+    const naive = Date.UTC(+d[1]!, +d[2]! - 1, +d[3]!, +t[1]!, +t[2]!);
+    const first = new Date(naive - osloOffsetMs(new Date(naive)));
+    return new Date(naive - osloOffsetMs(first));
+}
+
+function formatDuration(ms: number): string {
+    const minutes = Math.round(ms / 60000);
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return h > 0 ? `${h}h${String(m).padStart(2, "0")}m` : `${m}m`;
+}
+
+// "22 Sept 2026, 14:45–16:38 (1h53m)"
+const recWindowSummary = computed(() => {
+    const w = recWindow.value;
+    if (!w?.start || !w?.end) return "";
+    const start = timestampDate(w.start);
+    const end = timestampDate(w.end);
+    return `${formatDateTime(w.start)}\u2013${osloTime.format(end)} (${formatDuration(
+        end.getTime() - start.getTime(),
+    )})`;
+});
+
+// Until the editor sets an end themselves, it follows the start so moving the
+// start doesn't silently shorten the window.
+const recEndEdited = ref(false);
+let syncingEnd = false;
+function setEndTime(value: string) {
+    syncingEnd = true;
+    recEndTime.value = value;
+    syncingEnd = false;
+}
+watch(
+    recEndTime,
+    () => {
+        if (!syncingEnd) recEndEdited.value = true;
+    },
+    { flush: "sync" },
+);
+watch([recDate, recStartTime], () => {
+    const duration = Number(recWindow.value?.durationMs ?? 0n);
+    if (recEndEdited.value || !duration) return;
+    const start = osloToDate(recDate.value, recStartTime.value);
+    if (start)
+        setEndTime(osloTime.format(new Date(start.getTime() + duration)));
+});
+
+// Splits a window into the inputs, in Oslo time to match what's shown.
+function fillRecInputs(w?: GetRecordingWindowResponse) {
+    const start = w?.start ? timestampDate(w.start) : undefined;
+    const end = w?.end ? timestampDate(w.end) : undefined;
+    const osloDate = (d: Date) =>
+        new Intl.DateTimeFormat("en-CA", {
+            timeZone: "Europe/Oslo",
+        }).format(d);
+    recDate.value = start ? osloDate(start) : "";
+    recStartTime.value = start ? osloTime.format(start) : "";
+    setEndTime(end ? osloTime.format(end) : "");
+    // A stored end that isn't just start + duration was chosen deliberately;
+    // don't let the follow-the-start rule overwrite it.
+    const duration = Number(w?.durationMs ?? 0n);
+    recEndEdited.value = Boolean(
+        start &&
+        end &&
+        duration &&
+        Math.abs(end.getTime() - start.getTime() - duration) > 60_000,
+    );
+}
+
+async function loadRecordingWindow() {
+    loadingRecWindow.value = true;
+    recAdjusting.value = false;
+    recWindow.value = undefined;
+    try {
+        const w = await api.getRecordingWindow({ sessionId: sessionId.value });
+        recWindow.value = w;
+        fillRecInputs(w);
+        // Nothing to confirm without a window — ask straight away.
+        if (!w.start) recAdjusting.value = true;
+    } catch (e) {
+        toaster.create({
+            title: t("editorial.importFailed"),
+            description: e instanceof Error ? e.message : undefined,
+            type: "error",
+        });
+        recAdjusting.value = true;
+    } finally {
+        loadingRecWindow.value = false;
+    }
+}
+
 // Secondary/destructive actions live in the overflow menu; Save stays primary.
 const menuItems = computed(() => [
     ...(effectiveMode.value === "edit"
@@ -433,6 +577,7 @@ async function openPlayoutPicker() {
     playoutSearch.value = "";
     playoutPickerOpen.value = true;
     loadingPlayoutEvents.value = true;
+    void loadRecordingWindow();
     try {
         const res = await api.listPlayoutEvents({});
         playoutEvents.value = res.events;
@@ -445,8 +590,40 @@ async function openPlayoutPicker() {
 }
 
 function selectPlayoutEvent(eventId: string) {
+    // Only send a window if the inputs were opened; otherwise the server
+    // re-derives it, keeping the untouched case at two clicks.
+    let start: Date | undefined;
+    let end: Date | undefined;
+    if (recAdjusting.value) {
+        start = osloToDate(recDate.value, recStartTime.value);
+        if (!start) {
+            toaster.create({
+                title: t("editorial.recordingWindowInvalid"),
+                type: "error",
+            });
+            return;
+        }
+        if (recEndTime.value.trim()) {
+            end = osloToDate(recDate.value, recEndTime.value);
+            if (!end) {
+                toaster.create({
+                    title: t("editorial.recordingWindowInvalid"),
+                    type: "error",
+                });
+                return;
+            }
+            // An earlier end means the recording ran past midnight.
+            if (end <= start) end = new Date(end.getTime() + 86400000);
+        } else if (recNeedsEnd.value) {
+            toaster.create({
+                title: t("editorial.recordingWindowInvalid"),
+                type: "error",
+            });
+            return;
+        }
+    }
     playoutPickerOpen.value = false;
-    void importPlayoutMarkers(eventId);
+    void importPlayoutMarkers(eventId, start, end);
 }
 
 async function importMarkers() {
@@ -467,13 +644,23 @@ async function importMarkers() {
     }
 }
 
-async function importPlayoutMarkers(eventId: string) {
+async function importPlayoutMarkers(
+    eventId: string,
+    recordingStart?: Date,
+    recordingEnd?: Date,
+) {
     if (mutationInProgress.value) return;
     importingPlayout.value = true;
     try {
         const res = await api.importEditorialMarkersFromPlayout({
             id: sessionId.value,
             eventId,
+            recordingStart: recordingStart
+                ? timestampFromDate(recordingStart)
+                : undefined,
+            recordingEnd: recordingEnd
+                ? timestampFromDate(recordingEnd)
+                : undefined,
         });
         for (const m of res.markers) rows.value.push(toRow(m));
         dirty.value = true;
@@ -1004,6 +1191,101 @@ onBeforeRouteLeave(() => {
         size="lg"
     >
         <div class="flex flex-col gap-3">
+            <!--
+                The window the import will use. Above the list because picking
+                an event imports at once — the only moment to catch a bad one.
+            -->
+            <div class="flex flex-col gap-2">
+                <DesignSkeleton
+                    v-if="loadingRecWindow"
+                    class="h-16 rounded-xl"
+                />
+
+                <template v-else>
+                    <div
+                        v-if="recWindow?.start"
+                        class="bg-surface-raise gradient-border shadow-resting flex items-center justify-between gap-4 rounded-xl px-4 py-2.5"
+                    >
+                        <div class="flex min-w-0 items-center gap-3">
+                            <Icon
+                                name="tabler:clock"
+                                class="text-text-hint size-5 shrink-0"
+                            />
+                            <div class="min-w-0">
+                                <p
+                                    class="text-title-2 text-text-default truncate"
+                                >
+                                    {{ recWindowSummary }}
+                                </p>
+                                <p
+                                    class="text-caption-1 text-text-hint truncate"
+                                >
+                                    {{
+                                        recWindow.source === "manual"
+                                            ? t(
+                                                  "editorial.recordingWindowManual",
+                                              )
+                                            : t(
+                                                  "editorial.recordingWindowFromMetadata",
+                                              )
+                                    }}
+                                </p>
+                            </div>
+                        </div>
+                        <DesignButton
+                            v-if="!recAdjusting"
+                            variant="tertiary"
+                            size="small"
+                            @click="recAdjusting = true"
+                        >
+                            {{ t("editorial.recordingWindowAdjust") }}
+                        </DesignButton>
+                    </div>
+
+                    <DesignBanner
+                        v-else
+                        variant="warning"
+                        icon="tabler:alert-triangle"
+                    >
+                        <div class="min-w-0">
+                            <p>{{ t("editorial.recordingWindowUnknown") }}</p>
+                            <p v-if="recWindow?.error" class="opacity-80">
+                                {{ recWindow.error }}
+                            </p>
+                        </div>
+                    </DesignBanner>
+
+                    <div
+                        v-if="recAdjusting"
+                        class="bg-surface-indent flex flex-col gap-3 rounded-xl p-3"
+                    >
+                        <div class="flex flex-wrap gap-3">
+                            <DesignInput
+                                v-model="recDate"
+                                type="date"
+                                :label="t('editorial.recordingDate')"
+                                class="min-w-40 grow"
+                            />
+                            <DesignInput
+                                v-model="recStartTime"
+                                type="time"
+                                :label="t('editorial.recordingStartTime')"
+                                class="min-w-28 grow"
+                            />
+                            <DesignInput
+                                v-model="recEndTime"
+                                type="time"
+                                :label="t('editorial.recordingEndTime')"
+                                class="min-w-28 grow"
+                            />
+                        </div>
+                        <p class="text-caption-1 text-text-hint">
+                            {{ t("editorial.recordingWindowHint") }}
+                        </p>
+                    </div>
+                </template>
+            </div>
+
             <DesignInput
                 v-model="playoutSearch"
                 leading-icon="tabler:search"
