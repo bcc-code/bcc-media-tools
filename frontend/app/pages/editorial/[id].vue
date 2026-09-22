@@ -481,8 +481,14 @@ async function importPlayoutMarkers(eventId: string) {
             title: t("editorial.importedCount", { n: res.markers.length }),
             type: "success",
         });
-    } catch {
-        toaster.create({ title: t("editorial.importFailed"), type: "error" });
+    } catch (e) {
+        // Surface the server's specific reason, a bare "import failed" would
+        // leave the editor with no way to act on it.
+        toaster.create({
+            title: t("editorial.importFailed"),
+            description: e instanceof Error ? e.message : undefined,
+            type: "error",
+        });
     } finally {
         importingPlayout.value = false;
     }

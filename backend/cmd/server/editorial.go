@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"time"
 
 	"connectrpc.com/connect"
 	"github.com/bcc-code/bcc-media-flows/services/cantemo"
@@ -205,11 +204,21 @@ func (e EditorialAPI) ImportEditorialMarkersFromPlayout(ctx context.Context, req
 	if req.Msg.GetId() == "" || req.Msg.GetEventId() == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("missing id or event_id"))
 	}
-	if _, err := e.store.GetSession(ctx, req.Msg.GetId()); err != nil {
+	sess, err := e.store.GetSession(ctx, req.Msg.GetId())
+	if err != nil {
 		return nil, editorialErr(err)
 	}
 
-	markers, err := e.importFromPlayout(ctx, req.Msg.GetEventId(), time.Time{})
+	// A Playout event spans a whole conference, not one meeting, so without
+	// this recording's wall-clock window we can't tell which manifest
+	// entries are its — required, not best-effort.
+	window, err := recordingWindowForItem(e.vidispine, sess.VXID)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeFailedPrecondition,
+			fmt.Errorf("cannot place %s on the wall clock: %w", sess.VXID, err))
+	}
+
+	markers, err := e.importFromPlayout(ctx, req.Msg.GetEventId(), window)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("import Playout markers: %w", err))
 	}
@@ -275,12 +284,15 @@ func (e EditorialAPI) importFromVidispine(vxID string) ([]*apiv1.EditorialMarker
 	return out, nil
 }
 
-// importFromPlayout fetches every content action and maps it to an editorial
-// candidate. recordingStart should be the actual recording start; if it is
-// zero, the manifest's event start is used as a fallback.
-func (e EditorialAPI) importFromPlayout(ctx context.Context, eventID string, recordingStart time.Time) ([]*apiv1.EditorialMarker, error) {
+// importFromPlayout maps content actions inside the recording's wall-clock
+// window to editorial candidates, narrowing the conference-wide event down
+// to this one meeting; offsets are measured from the window start.
+func (e EditorialAPI) importFromPlayout(ctx context.Context, eventID string, window recordingWindow) ([]*apiv1.EditorialMarker, error) {
 	if e.playout == nil {
 		return nil, fmt.Errorf("playout client is not configured")
+	}
+	if window.IsZero() {
+		return nil, fmt.Errorf("recording window is required")
 	}
 	// Omitting the type filter asks Playout for every available content type,
 	// including types added by the API in the future.
@@ -288,17 +300,16 @@ func (e EditorialAPI) importFromPlayout(ctx context.Context, eventID string, rec
 	if err != nil {
 		return nil, err
 	}
-	if recordingStart.IsZero() {
-		if manifest.EventStart == nil {
-			return nil, fmt.Errorf("recording start is required when the manifest has no event start")
-		}
-		recordingStart = *manifest.EventStart
-	}
 
 	out := make([]*apiv1.EditorialMarker, 0, len(manifest.Entries))
 	var currentSpeaker *apiv1.EditorialMarker
 	var currentSpeakerVerses map[string]struct{}
 	for _, entry := range manifest.Entries {
+		// Entries from the event's other meetings are not part of this
+		// recording; mapping them would place markers past its end.
+		if !window.Contains(entry.Timestamp) {
+			continue
+		}
 		if entry.Type == playout.ContentTypeScripture {
 			// Scripture actions belong to the current speaker segment rather
 			// than forming standalone editorial rows. A scripture before the
@@ -318,7 +329,7 @@ func (e EditorialAPI) importFromPlayout(ctx context.Context, eventID string, rec
 
 		marker := &apiv1.EditorialMarker{
 			Type:    editorialTypeFromPlayout(entry.Type),
-			StartMs: entry.Timestamp.Sub(recordingStart).Milliseconds(),
+			StartMs: entry.Timestamp.Sub(window.Start).Milliseconds(),
 			Source:  editorial.SourceImport,
 		}
 		// The next content action marks the end of the previous segment.
@@ -349,6 +360,10 @@ func (e EditorialAPI) importFromPlayout(ctx context.Context, eventID string, rec
 			currentSpeakerVerses = nil
 		}
 		out = append(out, marker)
+	}
+	// Nothing follows the final segment to bound it, but the recording itself ends so the window's end is its end.
+	if len(out) > 0 {
+		out[len(out)-1].EndMs = window.End.Sub(window.Start).Milliseconds()
 	}
 	return out, nil
 }
