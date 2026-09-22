@@ -6,7 +6,10 @@ import (
 	"testing"
 	"time"
 
+	"bcc-media-tools/editorial"
 	"bcc-media-tools/playout"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type fakePlayout struct {
@@ -112,4 +115,52 @@ func TestImportFromPlayoutOutsideEveryMeeting(t *testing.T) {
 	if len(markers) != 0 {
 		t.Fatalf("got %d markers, want 0", len(markers))
 	}
+}
+
+// Priority: request override, then the stored window. The metadata branch
+// needs Vidispine and is covered by the recordingWindow tests.
+func TestResolveWindowPriority(t *testing.T) {
+	stored := editorial.Session{
+		VXID:           "VX-1",
+		RecordingStart: ts(t, "2026-07-26T12:00:00Z"),
+		RecordingEnd:   ts(t, "2026-07-26T13:45:00Z"),
+	}
+	api := EditorialAPI{}
+
+	t.Run("request overrides the stored window", func(t *testing.T) {
+		w, manual, err := api.resolveWindow(&stored,
+			timestamppb.New(ts(t, "2026-07-26T14:00:00Z")),
+			timestamppb.New(ts(t, "2026-07-26T15:00:00Z")))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if !manual {
+			t.Error("a supplied window is manual")
+		}
+		if got := w.Start.Format(time.RFC3339); got != "2026-07-26T14:00:00Z" {
+			t.Errorf("start: got %s", got)
+		}
+	})
+
+	t.Run("stored window is used when nothing is supplied", func(t *testing.T) {
+		w, manual, err := api.resolveWindow(&stored, nil, nil)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if manual {
+			t.Error("reusing a stored window should not re-save it")
+		}
+		if !w.Start.Equal(stored.RecordingStart) || !w.End.Equal(stored.RecordingEnd) {
+			t.Errorf("got %s–%s", w.Start, w.End)
+		}
+	})
+
+	t.Run("end must be after start", func(t *testing.T) {
+		_, _, err := api.resolveWindow(&stored,
+			timestamppb.New(ts(t, "2026-07-26T15:00:00Z")),
+			timestamppb.New(ts(t, "2026-07-26T14:00:00Z")))
+		if err == nil {
+			t.Fatal("expected an error for an end before the start")
+		}
+	})
 }

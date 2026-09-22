@@ -137,6 +137,9 @@ const (
 	// APIServiceListPlayoutEventsProcedure is the fully-qualified name of the APIService's
 	// ListPlayoutEvents RPC.
 	APIServiceListPlayoutEventsProcedure = "/api.v1.APIService/ListPlayoutEvents"
+	// APIServiceGetRecordingWindowProcedure is the fully-qualified name of the APIService's
+	// GetRecordingWindow RPC.
+	APIServiceGetRecordingWindowProcedure = "/api.v1.APIService/GetRecordingWindow"
 )
 
 // APIServiceClient is a client for the api.v1.APIService service.
@@ -193,6 +196,7 @@ type APIServiceClient interface {
 	ImportEditorialMarkers(context.Context, *connect.Request[v1.ImportEditorialMarkersRequest]) (*connect.Response[v1.ImportEditorialMarkersResponse], error)
 	ImportEditorialMarkersFromPlayout(context.Context, *connect.Request[v1.ImportEditorialMarkersFromPlayoutRequest]) (*connect.Response[v1.ImportEditorialMarkersResponse], error)
 	ListPlayoutEvents(context.Context, *connect.Request[v1.ListPlayoutEventsRequest]) (*connect.Response[v1.ListPlayoutEventsResponse], error)
+	GetRecordingWindow(context.Context, *connect.Request[v1.GetRecordingWindowRequest]) (*connect.Response[v1.GetRecordingWindowResponse], error)
 }
 
 // NewAPIServiceClient constructs a client for the api.v1.APIService service. By default, it uses
@@ -428,6 +432,12 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(aPIServiceMethods.ByName("ListPlayoutEvents")),
 			connect.WithClientOptions(opts...),
 		),
+		getRecordingWindow: connect.NewClient[v1.GetRecordingWindowRequest, v1.GetRecordingWindowResponse](
+			httpClient,
+			baseURL+APIServiceGetRecordingWindowProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("GetRecordingWindow")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -470,6 +480,7 @@ type aPIServiceClient struct {
 	importEditorialMarkers            *connect.Client[v1.ImportEditorialMarkersRequest, v1.ImportEditorialMarkersResponse]
 	importEditorialMarkersFromPlayout *connect.Client[v1.ImportEditorialMarkersFromPlayoutRequest, v1.ImportEditorialMarkersResponse]
 	listPlayoutEvents                 *connect.Client[v1.ListPlayoutEventsRequest, v1.ListPlayoutEventsResponse]
+	getRecordingWindow                *connect.Client[v1.GetRecordingWindowRequest, v1.GetRecordingWindowResponse]
 }
 
 // GetPermissions calls api.v1.APIService.GetPermissions.
@@ -657,6 +668,11 @@ func (c *aPIServiceClient) ListPlayoutEvents(ctx context.Context, req *connect.R
 	return c.listPlayoutEvents.CallUnary(ctx, req)
 }
 
+// GetRecordingWindow calls api.v1.APIService.GetRecordingWindow.
+func (c *aPIServiceClient) GetRecordingWindow(ctx context.Context, req *connect.Request[v1.GetRecordingWindowRequest]) (*connect.Response[v1.GetRecordingWindowResponse], error) {
+	return c.getRecordingWindow.CallUnary(ctx, req)
+}
+
 // APIServiceHandler is an implementation of the api.v1.APIService service.
 type APIServiceHandler interface {
 	// Permissions
@@ -711,6 +727,7 @@ type APIServiceHandler interface {
 	ImportEditorialMarkers(context.Context, *connect.Request[v1.ImportEditorialMarkersRequest]) (*connect.Response[v1.ImportEditorialMarkersResponse], error)
 	ImportEditorialMarkersFromPlayout(context.Context, *connect.Request[v1.ImportEditorialMarkersFromPlayoutRequest]) (*connect.Response[v1.ImportEditorialMarkersResponse], error)
 	ListPlayoutEvents(context.Context, *connect.Request[v1.ListPlayoutEventsRequest]) (*connect.Response[v1.ListPlayoutEventsResponse], error)
+	GetRecordingWindow(context.Context, *connect.Request[v1.GetRecordingWindowRequest]) (*connect.Response[v1.GetRecordingWindowResponse], error)
 }
 
 // NewAPIServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -942,6 +959,12 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(aPIServiceMethods.ByName("ListPlayoutEvents")),
 		connect.WithHandlerOptions(opts...),
 	)
+	aPIServiceGetRecordingWindowHandler := connect.NewUnaryHandler(
+		APIServiceGetRecordingWindowProcedure,
+		svc.GetRecordingWindow,
+		connect.WithSchema(aPIServiceMethods.ByName("GetRecordingWindow")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/api.v1.APIService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case APIServiceGetPermissionsProcedure:
@@ -1018,6 +1041,8 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceImportEditorialMarkersFromPlayoutHandler.ServeHTTP(w, r)
 		case APIServiceListPlayoutEventsProcedure:
 			aPIServiceListPlayoutEventsHandler.ServeHTTP(w, r)
+		case APIServiceGetRecordingWindowProcedure:
+			aPIServiceGetRecordingWindowHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -1173,4 +1198,8 @@ func (UnimplementedAPIServiceHandler) ImportEditorialMarkersFromPlayout(context.
 
 func (UnimplementedAPIServiceHandler) ListPlayoutEvents(context.Context, *connect.Request[v1.ListPlayoutEventsRequest]) (*connect.Response[v1.ListPlayoutEventsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.ListPlayoutEvents is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) GetRecordingWindow(context.Context, *connect.Request[v1.GetRecordingWindowRequest]) (*connect.Response[v1.GetRecordingWindowResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetRecordingWindow is not implemented"))
 }

@@ -521,11 +521,32 @@ message ImportEditorialMarkersResponse {
   repeated EditorialMarker markers = 1;
 }
 
-// Pull all content-manifest entries from Playout Studio for an event.
-// Does not save; returns candidate rows for the client to merge into the table.
+// Content-manifest entries inside the recording's wall-clock window. Does not
+// save; returns candidate rows. recording_start overrides the derived window
+// and is remembered; recording_end is only needed when duration is unknown.
 message ImportEditorialMarkersFromPlayoutRequest {
   string id = 1;
   string event_id = 2;
+  google.protobuf.Timestamp recording_start = 3;
+  google.protobuf.Timestamp recording_end = 4;
+}
+
+// The recording's wall-clock span, which picks one meeting out of a
+// conference-wide event. Fetched when the dialog opens so it can be corrected.
+message GetRecordingWindowRequest {
+  string session_id = 1;
+}
+
+message GetRecordingWindowResponse {
+  // Unset when undeterminable; `error` says why.
+  google.protobuf.Timestamp start = 1;
+  google.protobuf.Timestamp end = 2;
+  // "metadata" (from Vidispine) or "manual" (set by the editor).
+  string source = 3;
+  // Why the window could not be derived.
+  string error = 4;
+  // 0 when unknown, in which case a manual start needs an end too.
+  int64 duration_ms = 5;
 }
 
 // One event from Playout Studio's Event Discovery API. Date and
@@ -633,4 +654,5 @@ service APIService {
   rpc ImportEditorialMarkers(ImportEditorialMarkersRequest) returns (ImportEditorialMarkersResponse) {}
   rpc ImportEditorialMarkersFromPlayout(ImportEditorialMarkersFromPlayoutRequest) returns (ImportEditorialMarkersResponse) {}
   rpc ListPlayoutEvents(ListPlayoutEventsRequest) returns (ListPlayoutEventsResponse) {}
+  rpc GetRecordingWindow(GetRecordingWindowRequest) returns (GetRecordingWindowResponse) {}
 }

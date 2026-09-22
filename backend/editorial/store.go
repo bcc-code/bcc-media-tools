@@ -37,6 +37,11 @@ type Session struct {
 	CreatedBy string
 	CreatedAt time.Time
 	UpdatedAt time.Time
+	// Remembered from the last Playout import so a hand-corrected window
+	// isn't re-entered (and mistyped) next time. Zero when never set.
+	PlayoutEventID string
+	RecordingStart time.Time
+	RecordingEnd   time.Time
 	// Markers is only populated by Get; List leaves it nil.
 	Markers []Marker
 }
@@ -143,6 +148,15 @@ func (s *Store) migrate(ctx context.Context) error {
 	if err := s.addColumnIfMissing(ctx, "markers", "publish_bcc", "INTEGER NOT NULL DEFAULT 0"); err != nil {
 		return err
 	}
+	for _, col := range []struct{ name, def string }{
+		{"playout_event_id", "TEXT NOT NULL DEFAULT ''"},
+		{"recording_start_ms", "INTEGER NOT NULL DEFAULT 0"},
+		{"recording_end_ms", "INTEGER NOT NULL DEFAULT 0"},
+	} {
+		if err := s.addColumnIfMissing(ctx, "sessions", col.name, col.def); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -216,7 +230,8 @@ func (s *Store) CreateSession(ctx context.Context, vxid, title, createdBy string
 // ListSessions returns all sessions (newest first) without their markers.
 func (s *Store) ListSessions(ctx context.Context) ([]Session, error) {
 	rows, err := s.db.QueryContext(ctx,
-		`SELECT id, vxid, title, status, created_by, created_at, updated_at
+		`SELECT id, vxid, title, status, created_by, created_at, updated_at,
+		        playout_event_id, recording_start_ms, recording_end_ms
 		 FROM sessions ORDER BY created_at DESC`)
 	if err != nil {
 		return nil, fmt.Errorf("editorial: list sessions: %w", err)
@@ -238,7 +253,8 @@ func (s *Store) ListSessions(ctx context.Context) ([]Session, error) {
 // Returns ErrNotFound if the session does not exist.
 func (s *Store) GetSession(ctx context.Context, id string) (*Session, error) {
 	row := s.db.QueryRowContext(ctx,
-		`SELECT id, vxid, title, status, created_by, created_at, updated_at
+		`SELECT id, vxid, title, status, created_by, created_at, updated_at,
+		        playout_event_id, recording_start_ms, recording_end_ms
 		 FROM sessions WHERE id = ?`, id)
 	sess, err := scanSession(row)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -449,12 +465,39 @@ type scanner interface {
 
 func scanSession(sc scanner) (*Session, error) {
 	var sess Session
-	var createdAt, updatedAt int64
+	var createdAt, updatedAt, recStart, recEnd int64
 	if err := sc.Scan(&sess.ID, &sess.VXID, &sess.Title, &sess.Status, &sess.CreatedBy,
-		&createdAt, &updatedAt); err != nil {
+		&createdAt, &updatedAt, &sess.PlayoutEventID, &recStart, &recEnd); err != nil {
 		return nil, err
 	}
 	sess.CreatedAt = fromMillis(createdAt)
 	sess.UpdatedAt = fromMillis(updatedAt)
+	if recStart != 0 {
+		sess.RecordingStart = fromMillis(recStart)
+	}
+	if recEnd != 0 {
+		sess.RecordingEnd = fromMillis(recEnd)
+	}
 	return &sess, nil
+}
+
+// SetPlayoutWindow remembers the event and window used, so a hand-corrected
+// one survives a reload and is reused by the next import.
+func (s *Store) SetPlayoutWindow(ctx context.Context, sessionID, eventID string, start, end time.Time) error {
+	res, err := s.db.ExecContext(ctx,
+		`UPDATE sessions SET playout_event_id = ?, recording_start_ms = ?, recording_end_ms = ?,
+		        updated_at = ?
+		 WHERE id = ?`,
+		eventID, toMillis(start), toMillis(end), toMillis(time.Now().UTC()), sessionID)
+	if err != nil {
+		return fmt.Errorf("editorial: set playout window: %w", err)
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("editorial: set playout window: %w", err)
+	}
+	if n == 0 {
+		return ErrNotFound
+	}
+	return nil
 }

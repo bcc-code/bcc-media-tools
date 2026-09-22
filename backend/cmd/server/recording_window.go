@@ -86,6 +86,16 @@ func timecodeToSeconds(tc string) (float64, error) {
 	return samples / denominator, nil
 }
 
+// durationFromMetadata reads the asset's length in seconds.
+func durationFromMetadata(meta *vsapi.MetadataResult) (float64, error) {
+	raw := meta.Get(vscommon.FieldDurationSeconds, "")
+	seconds, err := strconv.ParseFloat(raw, 64)
+	if err != nil {
+		return 0, fmt.Errorf("parse duration %q: %w", raw, err)
+	}
+	return seconds, nil
+}
+
 // recordingWindowFromMetadata places a recording on the wall clock: date from
 // the file name, start from the start timecode, length from the duration.
 func recordingWindowFromMetadata(meta *vsapi.MetadataResult) (recordingWindow, error) {
@@ -107,10 +117,9 @@ func recordingWindowFromMetadata(meta *vsapi.MetadataResult) (recordingWindow, e
 		return recordingWindow{}, fmt.Errorf("parse start timecode: %w", err)
 	}
 
-	rawDuration := meta.Get(vscommon.FieldDurationSeconds, "")
-	durationSeconds, err := strconv.ParseFloat(rawDuration, 64)
+	durationSeconds, err := durationFromMetadata(meta)
 	if err != nil {
-		return recordingWindow{}, fmt.Errorf("parse duration %q: %w", rawDuration, err)
+		return recordingWindow{}, err
 	}
 
 	loc, err := time.LoadLocation(recordingTZ)
@@ -130,14 +139,13 @@ func recordingWindowFromMetadata(meta *vsapi.MetadataResult) (recordingWindow, e
 	}, nil
 }
 
-// recordingWindowForItem fetches just the metadata needed to place an item on
-// the wall clock.
+// fetchRecordingMetadata gets only the fields needed to place an item in time.
 //
 // Fields are joined into one comma-separated element on purpose:
 // GetMetadataFields turns each slice entry into its own &field= param, and
 // Vidispine honours only the first — fetching full metadata instead would
 // pull well over a megabyte per item.
-func recordingWindowForItem(vs vidispine.Client, vxID string) (recordingWindow, error) {
+func fetchRecordingMetadata(vs vidispine.Client, vxID string) (*vsapi.MetadataResult, error) {
 	meta, err := vs.GetMetadataFields(vxID, []string{strings.Join([]string{
 		fieldOriginalFilename.Value,
 		vscommon.FieldTitle.Value,
@@ -145,7 +153,40 @@ func recordingWindowForItem(vs vidispine.Client, vxID string) (recordingWindow, 
 		vscommon.FieldDurationSeconds.Value,
 	}, ",")})
 	if err != nil {
-		return recordingWindow{}, fmt.Errorf("get metadata for %s: %w", vxID, err)
+		return nil, fmt.Errorf("get metadata for %s: %w", vxID, err)
+	}
+	return meta, nil
+}
+
+// recordingWindowForItem derives an item's wall-clock span.
+func recordingWindowForItem(vs vidispine.Client, vxID string) (recordingWindow, error) {
+	meta, err := fetchRecordingMetadata(vs, vxID)
+	if err != nil {
+		return recordingWindow{}, err
 	}
 	return recordingWindowFromMetadata(meta)
+}
+
+// recordingInfo is what the import dialog needs to show and correct a window.
+type recordingInfo struct {
+	// Zero when underivable; WindowErr says why.
+	Window    recordingWindow
+	WindowErr error
+	// 0 when unknown, in which case a manual start needs an end too.
+	DurationMs int64
+}
+
+// recordingInfoForItem reports window and duration in one round trip. An
+// underivable window isn't an error here — the dialog prompts instead.
+func recordingInfoForItem(vs vidispine.Client, vxID string) (recordingInfo, error) {
+	meta, err := fetchRecordingMetadata(vs, vxID)
+	if err != nil {
+		return recordingInfo{}, err
+	}
+	info := recordingInfo{}
+	if seconds, err := durationFromMetadata(meta); err == nil {
+		info.DurationMs = int64(seconds * 1000)
+	}
+	info.Window, info.WindowErr = recordingWindowFromMetadata(meta)
+	return info, nil
 }

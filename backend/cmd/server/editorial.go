@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"connectrpc.com/connect"
 	"github.com/bcc-code/bcc-media-flows/services/cantemo"
@@ -212,7 +213,7 @@ func (e EditorialAPI) ImportEditorialMarkersFromPlayout(ctx context.Context, req
 	// A Playout event spans a whole conference, not one meeting, so without
 	// this recording's wall-clock window we can't tell which manifest
 	// entries are its — required, not best-effort.
-	window, err := recordingWindowForItem(e.vidispine, sess.VXID)
+	window, manual, err := e.resolveWindow(sess, req.Msg.GetRecordingStart(), req.Msg.GetRecordingEnd())
 	if err != nil {
 		return nil, connect.NewError(connect.CodeFailedPrecondition,
 			fmt.Errorf("cannot place %s on the wall clock: %w", sess.VXID, err))
@@ -221,6 +222,20 @@ func (e EditorialAPI) ImportEditorialMarkersFromPlayout(ctx context.Context, req
 	markers, err := e.importFromPlayout(ctx, req.Msg.GetEventId(), window)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("import Playout markers: %w", err))
+	}
+	// Empty is the symptom of a window on the wrong time; saying so beats
+	// returning nothing, which reads as "this event has no content".
+	if len(markers) == 0 {
+		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf(
+			"no Playout content between %s and %s",
+			window.Start.Format(time.RFC3339), window.End.Format(time.RFC3339)))
+	}
+	// Only hand-entered windows are worth keeping; derived ones are
+	// recomputed each time and would go stale.
+	if manual {
+		if err := e.store.SetPlayoutWindow(ctx, sess.ID, req.Msg.GetEventId(), window.Start, window.End); err != nil {
+			return nil, editorialErr(err)
+		}
 	}
 	return connect.NewResponse(&apiv1.ImportEditorialMarkersResponse{Markers: markers}), nil
 }
@@ -247,6 +262,76 @@ func (e EditorialAPI) ListPlayoutEvents(ctx context.Context, req *connect.Reques
 			Status:         ev.Status,
 			ProductionUnit: ev.ProductionUnit,
 		})
+	}
+	return connect.NewResponse(resp), nil
+}
+
+// resolveWindow picks the span to import against: supplied here, else stored
+// on the session, else derived from metadata. The bool means "came from a
+// human".
+func (e EditorialAPI) resolveWindow(sess *editorial.Session, start, end *timestamppb.Timestamp) (recordingWindow, bool, error) {
+	if start != nil {
+		return e.windowFromManualStart(sess.VXID, start.AsTime(), end)
+	}
+	if !sess.RecordingStart.IsZero() && !sess.RecordingEnd.IsZero() {
+		return recordingWindow{Start: sess.RecordingStart, End: sess.RecordingEnd}, false, nil
+	}
+	window, err := recordingWindowForItem(e.vidispine, sess.VXID)
+	return window, false, err
+}
+
+// windowFromManualStart builds a window around an editor-supplied start; the
+// end comes from the request, or failing that the asset's duration.
+func (e EditorialAPI) windowFromManualStart(vxID string, start time.Time, end *timestamppb.Timestamp) (recordingWindow, bool, error) {
+	if end != nil {
+		if !end.AsTime().After(start) {
+			return recordingWindow{}, true, fmt.Errorf("recording end must be after the start")
+		}
+		return recordingWindow{Start: start.UTC(), End: end.AsTime().UTC()}, true, nil
+	}
+	meta, err := fetchRecordingMetadata(e.vidispine, vxID)
+	if err != nil {
+		return recordingWindow{}, true, err
+	}
+	seconds, err := durationFromMetadata(meta)
+	if err != nil {
+		return recordingWindow{}, true, fmt.Errorf("a recording end is required: %w", err)
+	}
+	return recordingWindow{
+		Start: start.UTC(),
+		End:   start.UTC().Add(time.Duration(seconds * float64(time.Second))),
+	}, true, nil
+}
+
+// GetRecordingWindow reports the span the import would use, so the dialog can
+// show and correct it first. An underivable window is reported in the response,
+// not as an error: the dialog turns it into a prompt.
+func (e EditorialAPI) GetRecordingWindow(ctx context.Context, req *connect.Request[apiv1.GetRecordingWindowRequest]) (*connect.Response[apiv1.GetRecordingWindowResponse], error) {
+	if _, err := requireEditorial(req, true); err != nil {
+		return nil, err
+	}
+	sess, err := e.store.GetSession(ctx, req.Msg.GetSessionId())
+	if err != nil {
+		return nil, editorialErr(err)
+	}
+
+	info, err := recordingInfoForItem(e.vidispine, sess.VXID)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+
+	resp := &apiv1.GetRecordingWindowResponse{DurationMs: info.DurationMs}
+	switch {
+	case !sess.RecordingStart.IsZero() && !sess.RecordingEnd.IsZero():
+		resp.Start = timestamppb.New(sess.RecordingStart)
+		resp.End = timestamppb.New(sess.RecordingEnd)
+		resp.Source = "manual"
+	case info.WindowErr == nil:
+		resp.Start = timestamppb.New(info.Window.Start)
+		resp.End = timestamppb.New(info.Window.End)
+		resp.Source = "metadata"
+	default:
+		resp.Error = info.WindowErr.Error()
 	}
 	return connect.NewResponse(resp), nil
 }
