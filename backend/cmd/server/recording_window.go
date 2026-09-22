@@ -60,6 +60,32 @@ func recordingDateFromFileName(name string) (year int, month time.Month, day int
 	return y, time.Month(mo), d, true
 }
 
+// timecodeToSeconds converts a Vidispine timecode ("<samples>@<timebase>") to
+// seconds. vscommon.TCToSeconds only handles "@PAL", but Mediabanken also
+// holds "@50"/"@48000" material, so timebase is resolved here: "PAL" is
+// 25 fps, anything numeric is samples per second as given.
+func timecodeToSeconds(tc string) (float64, error) {
+	samplesPart, timebase, found := strings.Cut(tc, "@")
+	if !found {
+		return 0, fmt.Errorf("timecode %q has no timebase", tc)
+	}
+	samples, err := strconv.ParseFloat(samplesPart, 64)
+	if err != nil {
+		return 0, fmt.Errorf("timecode %q: %w", tc, err)
+	}
+
+	denominator := 25.0 // PAL
+	if timebase != "PAL" {
+		if denominator, err = strconv.ParseFloat(timebase, 64); err != nil {
+			return 0, fmt.Errorf("timecode %q: unsupported timebase %q", tc, timebase)
+		}
+	}
+	if denominator <= 0 {
+		return 0, fmt.Errorf("timecode %q: timebase must be positive", tc)
+	}
+	return samples / denominator, nil
+}
+
 // recordingWindowFromMetadata places a recording on the wall clock: date from
 // the file name, start from the start timecode, length from the duration.
 func recordingWindowFromMetadata(meta *vsapi.MetadataResult) (recordingWindow, error) {
@@ -76,9 +102,9 @@ func recordingWindowFromMetadata(meta *vsapi.MetadataResult) (recordingWindow, e
 	if tc == "" {
 		return recordingWindow{}, fmt.Errorf("item has no start timecode")
 	}
-	startSeconds, err := vscommon.TCToSeconds(tc)
+	startSeconds, err := timecodeToSeconds(tc)
 	if err != nil {
-		return recordingWindow{}, fmt.Errorf("parse start timecode %q: %w", tc, err)
+		return recordingWindow{}, fmt.Errorf("parse start timecode: %w", err)
 	}
 
 	rawDuration := meta.Get(vscommon.FieldDurationSeconds, "")

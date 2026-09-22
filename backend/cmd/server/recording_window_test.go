@@ -46,6 +46,40 @@ func TestRecordingDateFromFileName(t *testing.T) {
 	}
 }
 
+func TestTimecodeToSeconds(t *testing.T) {
+	tests := []struct {
+		name string
+		tc   string
+		want float64
+	}{
+		// Every timebase observed in Mediabanken.
+		{"PAL is 25fps", "1327778@PAL", 53111.12}, // VX-519332, 14:45:11
+		{"50fps", "1800000@50", 36000},            // 10:00:00
+		{"audio sample rate", "172800000@48000", 3600},
+		{"zero", "0@PAL", 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := timecodeToSeconds(tt.tc)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			// Float division, so compare within a millisecond.
+			if diff := got - tt.want; diff > 0.001 || diff < -0.001 {
+				t.Fatalf("got %v, want %v", got, tt.want)
+			}
+		})
+	}
+
+	for _, tc := range []string{"", "1327778", "abc@PAL", "1000@NTSC", "1000@0", "1000@-25"} {
+		t.Run("rejects "+tc, func(t *testing.T) {
+			if _, err := timecodeToSeconds(tc); err == nil {
+				t.Fatalf("expected an error for %q", tc)
+			}
+		})
+	}
+}
+
 func metadata(fields map[string]string) *vsapi.MetadataResult {
 	terse := map[string][]*vsapi.MetadataField{}
 	for k, v := range fields {
@@ -85,6 +119,16 @@ func TestRecordingWindowFromMetadata(t *testing.T) {
 			duration:  "3600",
 			wantStart: "2026-12-16T13:45:11Z",
 			wantEnd:   "2026-12-16T14:45:11Z",
+		},
+		{
+			// Same instant expressed at 50fps: the timebase must not change
+			// the result. vscommon.TCToSeconds would reject this outright.
+			name:      "50fps timebase",
+			file:      "SS26_20260808_1500_CLN_NOR.mxf",
+			tc:        "2655556@50",
+			duration:  "6770.24",
+			wantStart: "2026-08-08T12:45:11Z",
+			wantEnd:   "2026-08-08T14:38:01Z",
 		},
 		{
 			// The clocks go forward at 02:00 local on 2026-03-29. A recording
