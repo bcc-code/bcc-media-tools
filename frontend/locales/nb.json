@@ -292,7 +292,17 @@
         "recordingWindowInvalid": "Fyll inn dato og starttidspunkt.",
         "recordingDate": "Dato",
         "recordingStartTime": "Start",
-        "recordingEndTime": "Slutt"
+        "recordingEndTime": "Slutt",
+        "selectedCount": "{n} valgt",
+        "clearSelection": "Nullstill",
+        "removeSelected": "Fjern",
+        "selectAll": "Velg alle rader",
+        "selectRow": "Velg rad",
+        "importMergeTitle": "Erstatte de importerte radene?",
+        "importMergeMessage": "Tabellen har allerede {existing} importerte rader. Erstatt dem med de {incoming} nye, eller behold begge?",
+        "importMergeReplace": "Erstatt",
+        "importMergeAdd": "Behold begge",
+        "selectRowHint": "Shift-klikk for å velge et område"
     },
     "vault": {
         "searchPlaceholder": "Søk i vault",

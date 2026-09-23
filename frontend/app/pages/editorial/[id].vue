@@ -56,6 +56,7 @@ const typeItems = computed(() =>
 // A single editable row. Start/End are kept as "HH:MM:SS" strings so text
 // editing is natural; they're parsed to milliseconds only at save/preview.
 interface Row {
+    key: string;
     id: string;
     name: string;
     contributors: string;
@@ -122,8 +123,12 @@ function parseTc(tc: string): number {
     return Math.max(0, Math.round(seconds * 1000));
 }
 
+let rowSeq = 0;
+const nextRowKey = () => `r${++rowSeq}`;
+
 function toRow(m: EditorialMarker): Row {
     return {
+        key: nextRowKey(),
         id: m.id,
         name: m.name,
         contributors: m.contributors,
@@ -329,6 +334,7 @@ async function persistComment(row: Row) {
 // ── Edit-mode mutations ───────────────────────────────────
 function addRow() {
     rows.value.push({
+        key: nextRowKey(),
         id: "",
         name: "",
         contributors: "",
@@ -344,7 +350,63 @@ function addRow() {
 }
 
 function removeRow(i: number) {
+    const row = rows.value[i];
+    if (row) selectedKeys.value.delete(row.key);
     rows.value.splice(i, 1);
+}
+
+// ── Bulk selection ────────────────────────────────────────
+// Imports can add twenty-odd rows at once; removing the unwanted ones one
+// trash-click at a time is the slow part of the review
+const selectedKeys = ref(new Set<string>());
+const selectedCount = computed(() => selectedKeys.value.size);
+const allSelected = computed(
+    () => rows.value.length > 0 && selectedCount.value === rows.value.length,
+);
+
+function isSelected(row: Row) {
+    return selectedKeys.value.has(row.key);
+}
+
+let rangeAnchor: number | null = null;
+let shiftHeld = false;
+function noteModifier(e: MouseEvent) {
+    shiftHeld = e.shiftKey;
+    if (!e.shiftKey) return;
+    e.preventDefault();
+    window.getSelection()?.removeAllRanges();
+}
+
+function setSelected(row: Row, on: boolean) {
+    const index = rows.value.findIndex((r) => r.key === row.key);
+    const next = new Set(selectedKeys.value);
+    if (shiftHeld && rangeAnchor !== null && index >= 0) {
+        const from = Math.min(rangeAnchor, index);
+        const to = Math.max(rangeAnchor, index);
+        for (let i = from; i <= to; i++) {
+            const key = rows.value[i]?.key;
+            if (!key) continue;
+            if (on) next.add(key);
+            else next.delete(key);
+        }
+    } else {
+        if (on) next.add(row.key);
+        else next.delete(row.key);
+        // The anchor only moves on a plain click, so the range can be widened or narrowed with repeated shift-clicks.
+        rangeAnchor = index;
+    }
+    selectedKeys.value = next;
+    shiftHeld = false;
+}
+function toggleAll(on: boolean) {
+    selectedKeys.value = on ? new Set(rows.value.map((r) => r.key)) : new Set();
+    rangeAnchor = null;
+}
+function removeSelected() {
+    rows.value = rows.value.filter((r) => !selectedKeys.value.has(r.key));
+    selectedKeys.value = new Set();
+    rangeAnchor = null;
+    dirty.value = true;
 }
 
 // Drag-to-reorder. Only the grip handle is draggable so the row's inputs stay
@@ -387,6 +449,44 @@ const mutationInProgress = computed(
     () => importing.value || importingPlayout.value || saving.value,
 );
 const deleteOpen = ref(false);
+
+// ── Import merge ──────────────────────────────────────────
+// A second import is usually a retry after correcting the window, so appending
+// would double the table. Ask, but only when there's something to replace.
+const importMergeOpen = ref(false);
+const pendingImport = ref<Row[]>([]);
+const importedRowCount = computed(
+    () => rows.value.filter((r) => r.source === "import").length,
+);
+
+function applyImport(markers: EditorialMarker[]) {
+    const incoming = markers.map(toRow);
+    if (importedRowCount.value === 0) {
+        commitImport(incoming, false);
+        return;
+    }
+    pendingImport.value = incoming;
+    importMergeOpen.value = true;
+}
+
+function commitImport(incoming: Row[], replace: boolean) {
+    if (replace) {
+        rows.value = rows.value.filter((r) => r.source !== "import");
+        selectedKeys.value = new Set();
+    }
+    rows.value.push(...incoming);
+    dirty.value = true;
+    toaster.create({
+        title: t("editorial.importedCount", { n: incoming.length }),
+        type: "success",
+    });
+}
+
+function resolveImportMerge(replace: boolean) {
+    importMergeOpen.value = false;
+    commitImport(pendingImport.value, replace);
+    pendingImport.value = [];
+}
 
 const playoutPickerOpen = ref(false);
 const playoutEvents = ref<PlayoutEvent[]>([]);
@@ -631,12 +731,7 @@ async function importMarkers() {
     importing.value = true;
     try {
         const res = await api.importEditorialMarkers({ id: sessionId.value });
-        for (const m of res.markers) rows.value.push(toRow(m));
-        dirty.value = true;
-        toaster.create({
-            title: t("editorial.importedCount", { n: res.markers.length }),
-            type: "success",
-        });
+        applyImport(res.markers);
     } catch {
         toaster.create({ title: t("editorial.importFailed"), type: "error" });
     } finally {
@@ -662,12 +757,7 @@ async function importPlayoutMarkers(
                 ? timestampFromDate(recordingEnd)
                 : undefined,
         });
-        for (const m of res.markers) rows.value.push(toRow(m));
-        dirty.value = true;
-        toaster.create({
-            title: t("editorial.importedCount", { n: res.markers.length }),
-            type: "success",
-        });
+        applyImport(res.markers);
     } catch (e) {
         // Surface the server's specific reason, a bare "import failed" would
         // leave the editor with no way to act on it.
@@ -854,12 +944,72 @@ onBeforeRouteLeave(() => {
                     >
                         {{ t("editorial.noMarkers") }}
                     </p>
-                    <div v-else class="overflow-x-auto">
+                    <!--
+                        Floats over the page rather than sitting in the flow:
+                        in-flow it pushed the table and the preview down every
+                        time a row was ticked. Fixed also keeps it reachable
+                        without scrolling back up a long import.
+                    -->
+                    <Transition
+                        enter-active-class="transition duration-150 ease-out"
+                        enter-from-class="translate-y-3 opacity-0"
+                        leave-active-class="transition duration-100 ease-in"
+                        leave-to-class="translate-y-3 opacity-0"
+                    >
+                        <div
+                            v-if="
+                                rows.length &&
+                                effectiveMode === 'edit' &&
+                                selectedCount
+                            "
+                            class="bg-surface-raise gradient-border shadow-resting fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 items-center gap-4 rounded-2xl py-2.5 pr-2.5 pl-5"
+                        >
+                            <p class="text-body-3 text-text-default">
+                                {{
+                                    t("editorial.selectedCount", {
+                                        n: selectedCount,
+                                    })
+                                }}
+                            </p>
+                            <div class="flex items-center gap-2">
+                                <DesignButton
+                                    variant="tertiary"
+                                    size="small"
+                                    @click="toggleAll(false)"
+                                >
+                                    {{ t("editorial.clearSelection") }}
+                                </DesignButton>
+                                <DesignButton
+                                    variant="primary"
+                                    intent="danger"
+                                    size="small"
+                                    icon="tabler:trash"
+                                    @click="removeSelected"
+                                >
+                                    {{ t("editorial.removeSelected") }}
+                                </DesignButton>
+                            </div>
+                        </div>
+                    </Transition>
+
+                    <div v-if="rows.length" class="overflow-x-auto">
                         <table class="w-full border-separate border-spacing-0">
                             <thead
                                 class="text-caption-1 text-text-hint text-left"
                             >
                                 <tr>
+                                    <th
+                                        v-if="effectiveMode === 'edit'"
+                                        class="border-border-1 w-8 border-b py-2 pl-2 select-none"
+                                    >
+                                        <DesignCheckbox
+                                            :model-value="allSelected"
+                                            :aria-label="
+                                                t('editorial.selectAll')
+                                            "
+                                            @update:model-value="toggleAll"
+                                        />
+                                    </th>
                                     <th
                                         class="border-border-1 w-10 border-b py-2 pl-2"
                                     ></th>
@@ -918,7 +1068,7 @@ onBeforeRouteLeave(() => {
                             <tbody>
                                 <tr
                                     v-for="(row, i) in rows"
-                                    :key="row.id || `new-${i}`"
+                                    :key="row.key"
                                     class="[&>td]:border-border-1/50 transition-colors [&>td]:border-b"
                                     :class="[
                                         i === activeIndex
@@ -933,6 +1083,24 @@ onBeforeRouteLeave(() => {
                                     @drop.prevent="onDrop(i)"
                                     @dragend="onDragEnd"
                                 >
+                                    <td
+                                        v-if="effectiveMode === 'edit'"
+                                        class="py-2 pl-2 select-none"
+                                        @mousedown.capture="noteModifier"
+                                    >
+                                        <DesignCheckbox
+                                            :model-value="isSelected(row)"
+                                            :title="
+                                                t('editorial.selectRowHint')
+                                            "
+                                            :aria-label="
+                                                t('editorial.selectRow')
+                                            "
+                                            @update:model-value="
+                                                setSelected(row, $event)
+                                            "
+                                        />
+                                    </td>
                                     <td class="py-2 pl-2">
                                         <DesignButton
                                             variant="tertiary"
@@ -1169,6 +1337,29 @@ onBeforeRouteLeave(() => {
             </div>
         </template>
     </div>
+
+    <DesignDialog
+        v-model:open="importMergeOpen"
+        :title="t('editorial.importMergeTitle')"
+        :description="
+            t('editorial.importMergeMessage', {
+                existing: importedRowCount,
+                incoming: pendingImport.length,
+            })
+        "
+    >
+        <div class="flex justify-end gap-2">
+            <DesignButton
+                variant="secondary"
+                @click="resolveImportMerge(false)"
+            >
+                {{ t("editorial.importMergeAdd") }}
+            </DesignButton>
+            <DesignButton variant="primary" @click="resolveImportMerge(true)">
+                {{ t("editorial.importMergeReplace") }}
+            </DesignButton>
+        </div>
+    </DesignDialog>
 
     <DesignDialog
         v-model:open="deleteOpen"

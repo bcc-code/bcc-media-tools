@@ -292,7 +292,17 @@
         "recordingWindowInvalid": "Enter a date and a start time.",
         "recordingDate": "Date",
         "recordingStartTime": "Start",
-        "recordingEndTime": "End"
+        "recordingEndTime": "End",
+        "selectedCount": "{n} selected",
+        "clearSelection": "Clear",
+        "removeSelected": "Remove",
+        "selectAll": "Select all rows",
+        "selectRow": "Select row",
+        "importMergeTitle": "Replace the imported rows?",
+        "importMergeMessage": "This table already has {existing} imported row(s). Replace them with the {incoming} just imported, or keep both?",
+        "importMergeReplace": "Replace",
+        "importMergeAdd": "Keep both",
+        "selectRowHint": "Shift-click to select a range"
     },
     "vault": {
         "searchPlaceholder": "Search the vault",
