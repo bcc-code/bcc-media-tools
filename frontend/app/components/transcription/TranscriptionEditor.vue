@@ -1,8 +1,9 @@
 <script lang="ts" setup>
 import type { ComponentPublicInstance } from "vue";
 
-defineProps<{
+const props = defineProps<{
     focusedSegment?: Segment;
+    mediaDuration?: number;
 }>();
 
 defineEmits<{
@@ -22,13 +23,14 @@ const handleSegmentToggleDelete = (uid: string) => {
 };
 
 const handleAddSegment = (index: number) => {
-    segments.value = insertSegmentAfter(segments.value, index);
+    segments.value = insertSegmentAt(
+        segments.value,
+        index,
+        props.mediaDuration,
+    );
 };
 
 const { deleteMode } = useDeleteMode();
-
-const canAdd = (index: number) =>
-    !deleteMode.value && canInsertAfter(segments.value, index);
 
 const segmentelements = defineModel<Record<number, ComponentPublicInstance>>(
     "segmentelements",
@@ -40,7 +42,7 @@ function focusSegment(index: number, direction: number) {
     if (!next) return;
     const child = next.$el.querySelector(
         "[contenteditable]",
-    ) as HTMLSpanElement | null;
+    ) as HTMLElement | null;
     child?.focus();
 }
 
@@ -48,6 +50,9 @@ const { list, wrapperProps, containerProps } = useVirtualList<Segment>(
     computed(() => segments.value),
     { itemHeight: 80, overscan: 10 },
 );
+
+const addButtonClass =
+    "bg-surface-raise border-border-1 absolute left-1/2 z-10 grid aspect-square size-6 -translate-x-1/2 place-items-center rounded-full border p-0.5 text-sm opacity-0 transition group-hover:opacity-100 hover:scale-110 focus-visible:opacity-100";
 </script>
 
 <template>
@@ -62,7 +67,12 @@ const { list, wrapperProps, containerProps } = useVirtualList<Segment>(
             class="divide-border-1 flex flex-col divide-y"
             v-bind="wrapperProps"
         >
-            <template v-for="s in list" :key="s.data.uid">
+            <div
+                v-for="s in list"
+                :key="s.data.uid"
+                class="group relative"
+                style="min-height: 80px"
+            >
                 <TranscriptionSegmentEditor
                     :ref="
                         (el) => {
@@ -74,27 +84,29 @@ const { list, wrapperProps, containerProps } = useVirtualList<Segment>(
                     "
                     :segment="s.data"
                     :focused="focusedSegment?.uid === s.data.uid"
-                    style="min-height: 80px"
                     @word-focus="(w, seg) => $emit('wordFocus', w, seg)"
                     @update="handleSegmentUpdate(s.data.uid, $event)"
                     @toggle-delete="handleSegmentToggleDelete(s.data.uid)"
                     @focus-previous="focusSegment(s.index, -1)"
                     @focus-next="focusSegment(s.index, 1)"
                 />
-                <div
-                    v-if="canAdd(s.index)"
-                    :key="`${s.data.uid}:add`"
-                    class="relative w-full"
+                <button
+                    v-if="!deleteMode && s.index === 0"
+                    :class="[addButtonClass, 'top-0 -translate-y-1/2']"
+                    :title="$t('transcription.addSegmentBefore')"
+                    @click="handleAddSegment(-1)"
                 >
-                    <button
-                        class="bg-surface-raise border-border-1 absolute right-1/2 z-10 grid aspect-square size-6 -translate-y-1/2 place-items-center rounded-full border p-0.5 text-sm hover:scale-110"
-                        :title="$t('transcription.addSegment')"
-                        @click="handleAddSegment(s.index)"
-                    >
-                        <Icon name="tabler:plus" />
-                    </button>
-                </div>
-            </template>
+                    <Icon name="tabler:plus" />
+                </button>
+                <button
+                    v-if="!deleteMode"
+                    :class="[addButtonClass, 'bottom-0 translate-y-1/2']"
+                    :title="$t('transcription.addSegment')"
+                    @click="handleAddSegment(s.index)"
+                >
+                    <Icon name="tabler:plus" />
+                </button>
+            </div>
         </div>
     </div>
 </template>

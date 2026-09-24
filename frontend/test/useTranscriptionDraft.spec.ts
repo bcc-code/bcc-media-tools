@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { useTranscriptionDraft } from "~/composables/useTranscriptionDraft";
 import type { Segment } from "~/utils/transcription";
-import { setWordText, toggleSegmentDeleted } from "~/utils/transcription";
+import { setSegmentText, toggleSegmentDeleted } from "~/utils/transcription";
 import type { DraftStorage } from "~/utils/transcriptionDraft";
 import { draftKey, readDraft } from "~/utils/transcriptionDraft";
 
@@ -70,10 +70,10 @@ function setup(
     return { ...draft, api, storage };
 }
 
-/** Edits the first word of the first segment, the way the editor does. */
+/** Rewrites the first segment's text, the way the editor does. */
 function edit(segments: { value: Segment[] }, text: string) {
     segments.value = segments.value.map((s, i) =>
-        i === 0 ? setWordText(s, 0, text) : s,
+        i === 0 ? setSegmentText(s, text) : s,
     );
 }
 

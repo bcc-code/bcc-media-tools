@@ -1,6 +1,6 @@
 # Transcription Tool — Bugs & Improvements
 
-> Status: **Phase 0 done** (see §7) · Owner: TBD
+> Status: **Phase 0 done** (§7) · **Phase 2 in progress** (§9) · Owner: TBD
 >
 > Tracking note for fixing the transcription editor (`/transcription/[id]`)
 > after several user reports in Oct 2025 that edits are lost, rows appear
@@ -143,7 +143,7 @@ Related: the error path in `reset()` (`[id].vue:70-71`) sets `segments.value =
 []`, which triggers the same watcher and **overwrites a good draft with an empty
 one**. A transient network blip during "Tilbakestill" destroys the draft.
 
-### <a id="b5"></a>B5 — You can only insert a row where there is a ≥1 s gap · **high**
+### <a id="b5"></a>B5 — You can only insert a row where there is a ≥1 s gap · **high** · ✅ fixed
 
 `canAddSegment` (`TranscriptionEditor.vue:54-60`) only shows the `+` when
 `next.start >= curr.end + 1`. That is exactly R4/R5: the `+` appears "innimellom"
@@ -156,7 +156,7 @@ row.
 row's timing by splitting the neighbour's interval when there is no gap, and let
 the user adjust start/end.
 
-### <a id="b6"></a>B6 — One `contenteditable` per word blocks the three edits this tool exists for · **high**
+### <a id="b6"></a>B6 — One `contenteditable` per word blocks the three edits this tool exists for · **high** · ✅ fixed
 
 `TranscriptionSegmentEditor.vue:67-79` renders each word as its own
 `contenteditable` span, which is a reasonable shape for _adjusting timings_ and
@@ -202,7 +202,7 @@ confirm which of the two dominates.**
 `@tanstack/vue-virtual`), take the `+` rows out of the virtualised item flow, and
 drop the `TransitionGroup` inside the virtual window.
 
-### <a id="b8"></a>B8 — `SubmitTranscription` has no authorization check at all · **high (security)**
+### <a id="b8"></a>B8 — `SubmitTranscription` has no authorization check at all · **high (security)** · ✅ fixed
 
 `backend/cmd/server/transcription.go:121-142` never calls `getEmail` or
 `PermissionsForEmail`. Any request that reaches the backend can overwrite the
@@ -350,14 +350,16 @@ multi-track, or anything that treats this as a writing surface.
 
 ## 5. Open questions
 
-- Is the `transcription_json` shape actually replaced on re-import, or can an
-  asset end up with two `transcription_json` formats (in which case
-  `GetTranscriptionJSON` picking `formats[0]` would explain R6 on its own)?
-  → check a submitted asset in Cantemo.
-- Should submitted transcriptions stay readable (read-only) to the volunteer who
-  did them? Current behaviour removes them from `_AccessibleByTools`.
-- Do we want a review step (volunteer submits → staff approves) rather than
-  volunteer-submits-straight-to-Mediabanken?
+- **Open, and worth 5 minutes:** is the `transcription_json` shape actually
+  replaced on re-import, or can an asset end up with two `transcription_json`
+  formats? `GetTranscriptionJSON` picks the first match, so a second format
+  would explain R6 on its own — and that would be a backend bug phase 0 did not
+  touch. → look at a submitted asset's formats in Cantemo.
+- ~~Should submitted transcriptions stay readable to the volunteer?~~
+  **Answered (2026-09-24): no.** If a transcription needs more work it is simply
+  shared again. Current behaviour stands.
+- ~~Do we want a review step (volunteer submits → staff approves)?~~
+  **Answered (2026-09-24): not for now.**
 - Reproduce R1 on a real asset to confirm whether the doubling is [B7](#b7)
   (rendering) or [B1](#b1).4 (data).
 
@@ -451,3 +453,95 @@ of these is caught:
 **Still not verified.** The three scenarios in §4 have not been exercised
 against a real asset in a browser, and nothing covers the component layer —
 in particular the uncontrolled-contenteditable directive and the virtual list.
+
+## 9. Phase 2 — in progress
+
+Ordering note: phase 2 is being done before phase 1. Phase 0 made local
+persistence reliable, so the acute data-loss pain is gone; what remains in the
+users' own words is editing friction, which needs no backend. Phase 1's
+centrepiece (I1, server-side drafts) is better built alongside the editorial
+tool's SQLite work.
+
+### B8 — authorization ✅
+
+`backend/cmd/server/transcription.go`. `SubmitTranscription` had no check at
+all; `GetTranscription` checked the tool permission but not whether the asset
+was shared with the caller, and passed HTTP statuses where ConnectRPC expects
+its own codes (which is why frontend errors arrived tagged `[unknown]`).
+
+All three handlers now go through one policy, `transcriptionAccess`, which takes
+the permissions and a `sharedForEditing` func. Splitting it that way keeps the
+Cantemo ACL lookup out of the decision, so the policy is unit-tested
+(`cmd/server/transcription_test.go`) and the lookup is skipped for admins who
+would pass regardless.
+
+### B6 — segment-level editing ✅
+
+Each segment is now one editable field instead of one `contenteditable` per
+word, so adding, deleting, splitting and merging words are ordinary typing.
+
+Word timings are re-derived on every edit by `realignWords`
+(`utils/transcription.ts`): an LCS diff over the tokens, matched on a
+case- and punctuation-insensitive key. Words that survive keep their original
+start/end exactly; a run of new tokens takes over the span of the words it
+replaced, or the pause between its surviving neighbours if it is a pure
+insertion. Nothing is re-aligned against the audio — in a correction pass
+almost every token survives, so the diff carries the timings.
+
+Known limitation: inserting between two words with no pause between them gives
+the new word a zero-length span. It only affects word-level SRT export; the
+segment-level SRT and the JSON are unaffected.
+
+The field is uncontrolled while focused. The caret would otherwise be reset on
+every keystroke, both by Vue patching the text node and by the canonical text
+being whitespace-normalised. It re-syncs on blur and whenever the row is
+re-created. Enter is suppressed (a cue is one line; split-at-caret is [I3](#i3))
+and paste is forced to plain text via the Selection/Range API.
+
+Because that paste is a programmatic DOM edit rather than
+`document.execCommand` (deprecated), it is outside the browser's native undo
+stack. Not a loss against the plan: native undo cannot span segments anyway, so
+[I3](#i3)'s document-level undo has to capture paste explicitly regardless.
+
+Seek-on-focus survives the change: the caret position is mapped back to a word
+via `wordAtOffset`, so clicking into a word still seeks the video there.
+
+### B5 — insert a row anywhere ✅
+
+`insertSegmentAt` replaces `canInsertAfter`/`insertSegmentAfter`. Index `-1`
+inserts before the first row, and there is no longer a gap requirement. Where
+there is a pause the new row fills it; where there is none it borrows up to 2s
+from the following row, leaving that row at least 0.4s, and refuses to borrow
+from a row too short to give. A row appended at the end is clamped to the video
+duration, which the page now passes down from the video element.
+
+The `+` is no longer conditional. It sits on the row boundary and appears on
+hover, which also removes the "why is there no + here" question entirely.
+
+### I2 — submit reads as submit ✅
+
+The button key was `transcription.save`. Renamed to `transcription.submit`, and
+**"Tilbakestill" now asks for confirmation** — it sits next to the save
+indicator and discarded every correction in one click.
+
+The manual's shortcut list was updated: tab moves between segments now, not
+between words.
+
+### Still to do in phase 2
+
+- [ ] Nothing — see §10 for what is left overall.
+
+## 10. What is left
+
+| Item                 | Why it is still open                                                                                                                                                                      |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [B7](#b7)            | Fixed-height virtual list against variable-height rows. Phase 0's layout fix bounded the scroll container, so virtualisation now actually windows, but `itemHeight: 80` is still a guess. |
+| [B10](#b10)          | Video-follow skips the first segment; `segmentelements` is never cleaned up.                                                                                                              |
+| [B11](#b11)          | The `avg_logprob` / `compression_ration` field-name mismatch between the hand-written type and the generated protobuf.                                                                    |
+| [I1](#i1)            | Server-side drafts — the one thing that still makes a browser the only place the work lives. Best built with the editorial tool's SQLite work.                                            |
+| [B2](#b2)            | Submit is still optimistic: it reports success when the workflow _starts_. Needs the workflow id back from the API.                                                                       |
+| [I3](#i3)            | Undo/redo and find & replace — the two highest-value editing affordances still missing.                                                                                                   |
+| [I4](#i4), [I5](#i5) | Confidence shading, progress, onboarding copy.                                                                                                                                            |
+
+The `transcription_json` question in §5 is still unanswered and is the cheapest
+thing on this list to resolve.

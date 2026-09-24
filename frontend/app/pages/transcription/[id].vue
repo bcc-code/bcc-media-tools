@@ -36,6 +36,7 @@ const fileName = computed(() => `transcription-${routeId}`);
 
 const video = ref<string>();
 const videoelement = ref<HTMLVideoElement>();
+const mediaDuration = ref<number>();
 
 const segmentelements = ref<{
     [key: number]: ComponentPublicInstance;
@@ -54,7 +55,9 @@ const savedAtLabel = computed(() =>
         : null,
 );
 
+const showResetConfirmationModal = ref(false);
 const handleReset = async () => {
+    showResetConfirmationModal.value = false;
     if (await reset()) {
         toaster.create({
             title: t("transcription.resetSuccess"),
@@ -202,7 +205,7 @@ const splitterApi = computed(() =>
                     <p v-else>{{ $t("transcription.changesSavedLocally") }}</p>
                     <button
                         class="-m-3 p-3 text-neutral-500 underline"
-                        @click="handleReset"
+                        @click="showResetConfirmationModal = true"
                     >
                         {{ $t("transcription.reset") }}
                     </button>
@@ -226,7 +229,7 @@ const splitterApi = computed(() =>
                     :filename="fileName"
                 />
                 <DesignButton @click="showSubmitConfirmationModal = true">
-                    {{ $t("transcription.save") }}
+                    {{ $t("transcription.submit") }}
                 </DesignButton>
                 <button
                     class="-mx-3 aspect-square p-3"
@@ -269,6 +272,7 @@ const splitterApi = computed(() =>
                     v-model="segments"
                     v-model:segmentelements="segmentelements"
                     :focused-segment="focusedSegment"
+                    :media-duration="mediaDuration"
                     @word-focus="handleWordFocus"
                 />
             </div>
@@ -295,6 +299,9 @@ const splitterApi = computed(() =>
                             :src="video"
                             controls
                             class="bg-surface-default shadow-xl"
+                            @loadedmetadata="
+                                mediaDuration = videoelement?.duration
+                            "
                         />
                         <p
                             v-if="previewSubtitles && focusedSegment"
@@ -311,6 +318,27 @@ const splitterApi = computed(() =>
             </div>
         </div>
         <TranscriptionManual v-model:open="showManual" />
+        <DesignDialog
+            v-model:open="showResetConfirmationModal"
+            :title="$t('transcription.resetConfirmationTitle')"
+            :description="$t('transcription.resetConfirmationMessage')"
+        >
+            <div class="flex w-full justify-end gap-2">
+                <DesignButton
+                    variant="tertiary"
+                    @click="showResetConfirmationModal = false"
+                >
+                    {{ $t("transcription.resetConfirmationCancel") }}
+                </DesignButton>
+                <DesignButton
+                    variant="primary"
+                    intent="danger"
+                    @click="handleReset"
+                >
+                    {{ $t("transcription.resetConfirmationConfirm") }}
+                </DesignButton>
+            </div>
+        </DesignDialog>
         <DesignDialog
             v-model:open="showSubmitConfirmationModal"
             :title="$t('transcription.submitConfirmationTitle')"

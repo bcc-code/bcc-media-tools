@@ -7,13 +7,11 @@
     "transcription": {
         "reset": "Reset",
         "changesSavedLocally": "Changes are saved locally",
-        "save": "Submit to Mediabanken",
         "deleteSegment": "Delete segment",
         "undeleteSegment": "Undelete segment",
         "goToNextSegment": "Go to next segment",
         "goToPreviousSegment": "Go to previous segment",
-        "goToNextWord": "Go to next word in segment",
-        "addSegment": "Add missing segment",
+        "addSegment": "Add a line here",
         "deleteMode": "Delete mode",
         "seekOnFocus": "Seek on focus",
         "previewSubtitles": "Preview subtitles",
@@ -32,7 +30,14 @@
         "submitError": "Transcription could not be submitted",
         "changesSavedLocallyAt": "Changes saved locally at {time}",
         "saveFailed": "Changes are NOT being saved",
-        "saveFailedDescription": "Your browser could not store this transcription locally, so your changes are only in this tab. Download a copy and reload the page."
+        "saveFailedDescription": "Your browser could not store this transcription locally, so your changes are only in this tab. Download a copy and reload the page.",
+        "submit": "Submit to Mediabanken",
+        "addSegmentBefore": "Add a line at the start",
+        "resetConfirmationTitle": "Discard all your changes?",
+        "resetConfirmationMessage": "This loads the original transcription again. Everything you have corrected will be lost.",
+        "resetConfirmationCancel": "Cancel",
+        "resetConfirmationConfirm": "Yes, discard",
+        "goToNextSegmentField": "Go to next segment"
     },
     "bmmUpload": {
         "title": "BMM Upload",

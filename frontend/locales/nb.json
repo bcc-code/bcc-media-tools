@@ -7,13 +7,11 @@
     "transcription": {
         "reset": "Tilbakestill",
         "changesSavedLocally": "Endringer er lagret lokalt",
-        "save": "Send til Mediabanken",
         "deleteSegment": "Slett segment",
         "undeleteSegment": "Angre sletting av segment",
         "goToNextSegment": "Gå til neste segment",
         "goToPreviousSegment": "Gå til forrige segment",
-        "goToNextWord": "Gå til neste ord i segment",
-        "addSegment": "Legg til manglende segment",
+        "addSegment": "Legg til en linje her",
         "deleteMode": "Slettemodus",
         "seekOnFocus": "Gå til videoposisjon ved fokus",
         "previewSubtitles": "Forhåndsvis undertekster",
@@ -32,7 +30,14 @@
         "submitError": "Feil ved sending til Mediabanken",
         "changesSavedLocallyAt": "Endringer lagret lokalt kl. {time}",
         "saveFailed": "Endringene blir IKKE lagret",
-        "saveFailedDescription": "Nettleseren klarte ikke å lagre denne transkripsjonen lokalt, så endringene finnes bare i denne fanen. Last ned en kopi og last inn siden på nytt."
+        "saveFailedDescription": "Nettleseren klarte ikke å lagre denne transkripsjonen lokalt, så endringene finnes bare i denne fanen. Last ned en kopi og last inn siden på nytt.",
+        "submit": "Send til Mediabanken",
+        "addSegmentBefore": "Legg til en linje i starten",
+        "resetConfirmationTitle": "Forkaste alle endringene dine?",
+        "resetConfirmationMessage": "Dette henter den opprinnelige transkripsjonen på nytt. Alt du har rettet blir borte.",
+        "resetConfirmationCancel": "Avbryt",
+        "resetConfirmationConfirm": "Ja, forkast",
+        "goToNextSegmentField": "Gå til neste segment"
     },
     "bmmUpload": {
         "title": "BMM opplasting",

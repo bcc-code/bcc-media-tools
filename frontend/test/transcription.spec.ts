@@ -1,14 +1,16 @@
 import { describe, expect, it } from "vitest";
 import type { Segment, Word } from "~/utils/transcription";
 import {
-    canInsertAfter,
-    insertSegmentAfter,
+    insertSegmentAt,
+    realignWords,
     segmentText,
-    setWordText,
+    setSegmentText,
     toTranscription,
     toggleSegmentDeleted,
+    tokenizeWords,
     updateSegment,
     withUids,
+    wordAtOffset,
 } from "~/utils/transcription";
 
 function word(text: string, start: number, end: number): Word {
@@ -41,6 +43,12 @@ const doc = () => [
     segment("b", ["sammen", "her"], 2, 4),
     segment("c", ["i", "dag"], 10, 12),
 ];
+
+/** The common correction: fix one word, leave the rest of the line alone. */
+const fixFirstWord = (s: Segment, text: string) =>
+    setSegmentText(s, [text, ...s.words.slice(1).map((w) => w.text)].join(" "));
+
+const times = (words: Word[]) => words.map((w) => [w.start, w.end]);
 
 describe("withUids", () => {
     it("gives every segment an id and keeps the ones already set", () => {
@@ -79,27 +87,183 @@ describe("segmentText", () => {
     });
 });
 
-describe("setWordText", () => {
-    it("changes only the addressed word and re-derives the text", () => {
-        const result = setWordText(segment("a", ["Kåre", "sin"]), 0, "Kaare");
-
-        expect(result.words.map((w) => w.text)).toEqual(["Kaare", "sin"]);
-        expect(result.text).toBe("Kaare sin");
+describe("tokenizeWords", () => {
+    it("splits on any run of whitespace", () => {
+        expect(tokenizeWords("  Hei   du \n der ")).toEqual([
+            "Hei",
+            "du",
+            "der",
+        ]);
     });
 
-    it("keeps the word timings", () => {
-        const before = segment("a", ["Kåre", "sin"], 0, 2);
-        const after = setWordText(before, 0, "Kaare");
+    it("returns nothing for blank text", () => {
+        expect(tokenizeWords("   ")).toEqual([]);
+    });
+});
 
-        expect(after.words[0]!.start).toBe(before.words[0]!.start);
-        expect(after.words[0]!.end).toBe(before.words[0]!.end);
+describe("realignWords", () => {
+    const bounds = { start: 0, end: 4 };
+    const previous = [word("Kåre", 0, 1), word("sa", 2, 3), word("det", 3, 4)];
+
+    it("keeps the timings of words that did not change", () => {
+        const result = realignWords(previous, "Kåre sa det", bounds);
+
+        expect(times(result)).toEqual([
+            [0, 1],
+            [2, 3],
+            [3, 4],
+        ]);
+    });
+
+    it("gives a corrected word the span of the one it replaced", () => {
+        const result = realignWords(previous, "Kaare sa det", bounds);
+
+        expect(result[0]!.text).toBe("Kaare");
+        expect(times(result)).toEqual([
+            [0, 1],
+            [2, 3],
+            [3, 4],
+        ]);
+    });
+
+    it("does not let a corrected word swallow the silence before it", () => {
+        const late = [word("Kåre", 0.5, 1), word("sa", 2, 3)];
+        const result = realignWords(late, "Kaare sa", { start: 0, end: 4 });
+
+        expect(times(result)[0]).toEqual([0.5, 1]);
+    });
+
+    it("keeps a word's timing when punctuation changes next to an insert", () => {
+        // Without normalised matching "Hei," reads as a new word, and it and
+        // the inserted one would split the first word's span between them.
+        const result = realignWords(
+            [word("Hei", 0, 1), word("du", 2, 3)],
+            "Hei, kjære du",
+            { start: 0, end: 4 },
+        );
+
+        expect(times(result)).toEqual([
+            [0, 1],
+            [1, 2],
+            [2, 3],
+        ]);
+    });
+
+    it("keeps timings when only case or punctuation changed", () => {
+        const result = realignWords(previous, "kåre, sa det.", bounds);
+
+        expect(result.map((w) => w.text)).toEqual(["kåre,", "sa", "det."]);
+        expect(times(result)).toEqual([
+            [0, 1],
+            [2, 3],
+            [3, 4],
+        ]);
+    });
+
+    it("spreads an inserted word across the gap between its neighbours", () => {
+        const result = realignWords(previous, "Kåre virkelig sa det", bounds);
+
+        expect(result.map((w) => w.text)).toEqual([
+            "Kåre",
+            "virkelig",
+            "sa",
+            "det",
+        ]);
+        expect(times(result)[1]).toEqual([1, 2]);
+    });
+
+    it("shares a gap between several inserted words", () => {
+        const result = realignWords(previous, "Kåre ja da sa det", bounds);
+
+        expect(times(result)[1]).toEqual([1, 1.5]);
+        expect(times(result)[2]).toEqual([1.5, 2]);
+    });
+
+    it("uses the segment bounds for words inserted at the edges", () => {
+        const result = realignWords([word("sa", 2, 3)], "og sa det", {
+            start: 0,
+            end: 4,
+        });
+
+        expect(times(result)).toEqual([
+            [0, 2],
+            [2, 3],
+            [3, 4],
+        ]);
+    });
+
+    it("drops a deleted word and leaves the others untouched", () => {
+        const result = realignWords(previous, "Kåre det", bounds);
+
+        expect(result.map((w) => w.text)).toEqual(["Kåre", "det"]);
+        expect(times(result)).toEqual([
+            [0, 1],
+            [3, 4],
+        ]);
+    });
+
+    it("returns nothing when all the text is removed", () => {
+        expect(realignWords(previous, "   ", bounds)).toEqual([]);
+    });
+
+    it("spreads evenly when there were no words to align against", () => {
+        const result = realignWords([], "en to", { start: 0, end: 4 });
+
+        expect(times(result)).toEqual([
+            [0, 2],
+            [2, 4],
+        ]);
+    });
+
+    it("never invents a timing outside the segment", () => {
+        const result = realignWords(previous, "helt nye ord her", bounds);
+
+        expect(result[0]!.start).toBeGreaterThanOrEqual(bounds.start);
+        expect(result.at(-1)!.end).toBeLessThanOrEqual(bounds.end);
+    });
+});
+
+describe("setSegmentText", () => {
+    it("re-derives the segment text from the edited words", () => {
+        const result = setSegmentText(
+            segment("a", ["Hei", "alle"]),
+            "Hei dere",
+        );
+
+        expect(result.text).toBe("Hei dere");
+        expect(result.words.map((w) => w.text)).toEqual(["Hei", "dere"]);
+    });
+
+    it("normalises whitespace", () => {
+        expect(setSegmentText(segment("a", ["Hei"]), "  Hei   du ").text).toBe(
+            "Hei du",
+        );
     });
 
     it("does not mutate the input", () => {
-        const before = segment("a", ["Kåre"]);
-        setWordText(before, 0, "Kaare");
+        const before = segment("a", ["Hei"]);
+        setSegmentText(before, "Hallo");
 
-        expect(before.words[0]!.text).toBe("Kåre");
+        expect(before.text).toBe("Hei");
+    });
+});
+
+describe("wordAtOffset", () => {
+    const words = [word("Hei", 0, 1), word("du", 1, 2), word("der", 2, 3)];
+
+    it.each([
+        [0, "Hei"],
+        [3, "Hei"],
+        [4, "du"],
+        [6, "du"],
+        [7, "der"],
+        [10, "der"],
+    ])("offset %i is in %s", (offset, expected) => {
+        expect(wordAtOffset(words, offset)?.text).toBe(expected);
+    });
+
+    it("returns nothing for a segment with no words", () => {
+        expect(wordAtOffset([], 0)).toBeUndefined();
     });
 });
 
@@ -118,10 +282,7 @@ describe("updateSegment", () => {
     });
 
     it("still hits the right row after the indexes have shifted", () => {
-        // The original bug: rows were addressed by index into one array while
-        // the edit was written into another, so an insert made edits land on a
-        // different row than the one the user typed in.
-        const shifted = insertSegmentAfter(doc(), 1);
+        const shifted = insertSegmentAt(doc(), 1);
         const result = updateSegment(shifted, "c", (s) => ({
             ...s,
             text: "endret",
@@ -149,10 +310,8 @@ describe("toggleSegmentDeleted", () => {
     });
 
     it("keeps text edits made to other rows", () => {
-        // Deleting used to rebuild the list from the untouched original, which
-        // silently reverted every correction the user had made.
         const edited = updateSegment(doc(), "a", (s) =>
-            setWordText(s, 0, "Hallo"),
+            fixFirstWord(s, "Hallo"),
         );
         const afterDelete = toggleSegmentDeleted(edited, "c");
 
@@ -160,45 +319,70 @@ describe("toggleSegmentDeleted", () => {
     });
 });
 
-describe("canInsertAfter", () => {
-    it("allows an insert where there is a gap", () => {
-        expect(canInsertAfter(doc(), 1)).toBe(true);
-    });
-
-    it("refuses where the rows are back to back (B5)", () => {
-        expect(canInsertAfter(doc(), 0)).toBe(false);
-    });
-
-    it("refuses after the last row (B5)", () => {
-        expect(canInsertAfter(doc(), 2)).toBe(false);
-    });
-});
-
-describe("insertSegmentAfter", () => {
-    it("inserts an empty segment filling the gap", () => {
-        const result = insertSegmentAfter(doc(), 1);
+describe("insertSegmentAt", () => {
+    it("fills the gap between two rows", () => {
+        const result = insertSegmentAt(doc(), 1);
 
         expect(result).toHaveLength(4);
-        expect(result[2]!.start).toBe(4);
-        expect(result[2]!.end).toBe(10);
+        expect([result[2]!.start, result[2]!.end]).toEqual([4, 10]);
         expect(result[2]!.text).toBe("");
     });
 
-    it("gives the new segment its own uid", () => {
-        const result = insertSegmentAfter(doc(), 1);
-        const uids = result.map((s) => s.uid);
+    it("inserts before the first row", () => {
+        const result = insertSegmentAt(
+            [segment("a", ["Hei"], 5, 6), segment("b", ["du"], 6, 7)],
+            -1,
+        );
 
-        expect(new Set(uids).size).toBe(uids.length);
+        expect([result[0]!.start, result[0]!.end]).toEqual([0, 5]);
+        expect(result[1]!.uid).toBe("a");
     });
 
-    it("is a no-op past the end", () => {
-        expect(insertSegmentAfter(doc(), 2)).toHaveLength(3);
+    it("inserts after the last row", () => {
+        const result = insertSegmentAt(doc(), 2);
+
+        expect(result).toHaveLength(4);
+        expect([result[3]!.start, result[3]!.end]).toEqual([12, 14]);
     });
 
-    it("does not mutate the input", () => {
+    it("does not run past the end of the video", () => {
+        const result = insertSegmentAt(doc(), 2, 12.5);
+
+        expect([result[3]!.start, result[3]!.end]).toEqual([12, 12.5]);
+    });
+
+    it("borrows time from the next row when there is no gap (B5)", () => {
+        const result = insertSegmentAt(doc(), 0);
+
+        expect([result[1]!.start, result[1]!.end]).toEqual([2, 3.6]);
+        expect(result[2]!.uid).toBe("b");
+        expect(result[2]!.start).toBe(3.6);
+        expect(result[2]!.end).toBe(4);
+    });
+
+    it("refuses to borrow from a row that is already short", () => {
+        const tight = [
+            segment("a", ["Hei"], 0, 1),
+            segment("b", ["du"], 1, 1.2),
+        ];
+        const result = insertSegmentAt(tight, 0);
+
+        expect(result[2]!.start).toBe(1);
+        expect(result[1]!.start).toBe(result[1]!.end);
+    });
+
+    it("works on an empty document", () => {
+        const result = insertSegmentAt([], -1);
+
+        expect(result).toHaveLength(1);
+        expect([result[0]!.start, result[0]!.end]).toEqual([0, 2]);
+    });
+
+    it("gives the new row its own uid and does not mutate the input", () => {
         const before = doc();
-        insertSegmentAfter(before, 1);
+        const result = insertSegmentAt(before, 1);
 
+        expect(new Set(result.map((s) => s.uid)).size).toBe(4);
         expect(before).toHaveLength(3);
     });
 });
@@ -221,25 +405,15 @@ describe("toTranscription", () => {
     });
 
     it("leaves out rows whose text was emptied", () => {
-        const emptied = updateSegment(doc(), "b", (s) =>
-            setWordText(setWordText(s, 0, ""), 1, ""),
-        );
+        const emptied = updateSegment(doc(), "b", (s) => setSegmentText(s, ""));
 
         expect(toTranscription(emptied).segments).toHaveLength(2);
     });
 
     it("leaves out an inserted row that was never filled in", () => {
         expect(
-            toTranscription(insertSegmentAfter(doc(), 1)).segments,
+            toTranscription(insertSegmentAt(doc(), 1)).segments,
         ).toHaveLength(3);
-    });
-
-    it("re-derives each segment's text from its words", () => {
-        const edited = updateSegment(doc(), "a", (s) =>
-            setWordText(s, 0, "Hallo"),
-        );
-
-        expect(toTranscription(edited).segments[0]!.text).toBe("Hallo alle");
     });
 
     it("re-derives text that disagrees with the words", () => {
@@ -256,7 +430,7 @@ describe("toTranscription", () => {
 
     it("re-derives the full text", () => {
         const edited = updateSegment(doc(), "a", (s) =>
-            setWordText(s, 0, "Hallo"),
+            fixFirstWord(s, "Hallo"),
         );
 
         expect(toTranscription(edited).text).toBe(
@@ -266,7 +440,7 @@ describe("toTranscription", () => {
 
     it("carries an edit made before a delete all the way to the payload", () => {
         const edited = updateSegment(doc(), "a", (s) =>
-            setWordText(s, 0, "Hallo"),
+            fixFirstWord(s, "Hallo"),
         );
 
         expect(toTranscription(toggleSegmentDeleted(edited, "c")).text).toBe(
