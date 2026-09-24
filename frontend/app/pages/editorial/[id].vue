@@ -568,7 +568,7 @@ const recWindowSummary = computed(() => {
     if (!w?.start || !w?.end) return "";
     const start = timestampDate(w.start);
     const end = timestampDate(w.end);
-    return `${formatDateTime(w.start)}\u2013${osloTime.format(end)} (${formatDuration(
+    return `${formatDateTime(w.start)}-${osloTime.format(end)} (${formatDuration(
         end.getTime() - start.getTime(),
     )})`;
 });
