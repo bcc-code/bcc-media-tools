@@ -11,56 +11,46 @@ onMounted(() => {
     });
 });
 
-const transcription = ref<TranscriptionResult>();
-
 const fileName = ref<string>();
 
 const tKey = ref<string>();
+
+const segments = ref<Segment[]>([]);
 
 // DesignFileUpload uses a File[] model; this page only takes the first file.
 const uploadFiles = ref<File[]>([]);
 watch(uploadFiles, (files) => handleFile(files[0]));
 
 const handleFile = (file: File | null | undefined) => {
-    if (file) {
-        fileName.value = file.name;
-        transcription.value = undefined;
-        segments.value = [];
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const result = e.target?.result;
-            if (result) {
-                transcription.value = JSON.parse(result.toString());
-                transcription.value!.segments.forEach((s) => {
-                    s.text = s.text.trim();
-                    s.words = s.words.map((w) => ({
-                        ...w,
-                        text: w.text.trim(),
-                    }));
-                });
+    if (!file) return;
 
-                segments.value = transcription.value!.segments ?? [];
+    fileName.value = file.name;
+    segments.value = [];
 
-                tKey.value = generateRandomId();
-            }
-        };
-        reader.readAsText(file);
-    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const result = e.target?.result;
+        if (!result) return;
+
+        const parsed = JSON.parse(result.toString()) as TranscriptionResult;
+        segments.value = withUids(
+            (parsed.segments ?? []).map((s) => ({
+                ...s,
+                text: s.text.trim(),
+                words: s.words.map((w) => ({ ...w, text: w.text.trim() })),
+            })),
+        );
+
+        tKey.value = generateRandomId();
+    };
+    reader.readAsText(file);
 };
-
-const segments = ref<Segment[]>([]);
 
 const vxId = ref("");
 
 const { deleteMode } = useDeleteMode();
 
 const { isTranscriptionAdmin } = usePermissions();
-
-function setSegments(s: Segment[]) {
-    segments.value = s;
-    if (!transcription.value) return;
-    transcription.value.segments = s;
-}
 </script>
 
 <template>
@@ -78,7 +68,7 @@ function setSegments(s: Segment[]) {
             >
                 <div class="w-full shrink-0">
                     <DesignFileUpload
-                        v-if="!transcription"
+                        v-if="!segments.length"
                         v-model="uploadFiles"
                         accept="application/json"
                         icon="tabler:file-text"
@@ -118,11 +108,9 @@ function setSegments(s: Segment[]) {
                 />
             </div>
             <TranscriptionEditor
+                v-if="segments.length"
                 :key="tKey"
-                :transcription="transcription"
-                :file-name="fileName"
                 v-model="segments"
-                @update-segments="(s) => setSegments(s)"
             />
         </div>
     </div>

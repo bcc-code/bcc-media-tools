@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 const props = defineProps<{
     segment: Segment;
-    deleted: boolean;
     focused?: boolean;
 }>();
 
@@ -11,28 +10,27 @@ const emit = defineEmits<{
     toggleDelete: [];
     focusNext: [];
     focusPrevious: [];
-    addBefore: [];
-    addAfter: [];
 }>();
 
-const words = ref(props.segment.words.map((w) => ({ ...w })));
-
-watch(words.value, (v) => {
-    emit("update", {
-        ...props.segment,
-        words: v,
-        text: v.map((w) => w.text).join(" "),
-    });
-});
-
-const handleTextUpdate = (index: number, event: Event) => {
-    const target = event.target as HTMLSpanElement;
-    const arr = words.value;
-    arr[index]!.text = target.innerText;
-    words.value = arr;
+// Keeps the contenteditable uncontrolled while typing: patching the text node
+// on every keystroke would reset the caret. Writing only on a real difference
+// makes the echo of the user's own edit a no-op, while a value that changed
+// elsewhere (row re-created by the virtual list, reset, restored draft) lands.
+const vWordText = {
+    mounted(el: HTMLElement, binding: { value: string }) {
+        el.textContent = binding.value;
+    },
+    updated(el: HTMLElement, binding: { value: string }) {
+        if (el.textContent !== binding.value) {
+            el.textContent = binding.value;
+        }
+    },
 };
 
-const hovering = ref(false);
+const handleTextUpdate = (index: number, event: Event) => {
+    const text = (event.target as HTMLElement).textContent ?? "";
+    emit("update", setWordText(props.segment, index, text));
+};
 
 const { deleteMode } = useDeleteMode();
 </script>
@@ -42,15 +40,13 @@ const { deleteMode } = useDeleteMode();
         class="flex items-center px-6 py-4 transition-all ease-out"
         :class="{
             'cursor-pointer hover:bg-red-200 hover:text-red-700': deleteMode,
-            'bg-surface-raise opacity-50': deleted,
+            'bg-surface-raise opacity-50': segment.deleted,
             'ring-text-default bg-surface-indent ring-2 ring-inset': focused,
         }"
         :tabindex="deleteMode ? 0 : -1"
         @click="deleteMode ? $emit('toggleDelete') : undefined"
         @keydown.enter="deleteMode ? $emit('toggleDelete') : undefined"
         @keydown.space="deleteMode ? $emit('toggleDelete') : undefined"
-        @mouseenter="hovering = true"
-        @mouseleave="hovering = false"
     >
         <div class="grow">
             <div class="text-text-hint flex gap-2 text-sm tabular-nums">
@@ -66,22 +62,21 @@ const { deleteMode } = useDeleteMode();
             >
                 <span
                     v-for="(w, index) in segment.words"
-                    :key="`segment:${segment.id}:${segment.start}:${segment.end}:word:${w.start}:${w.end}`"
+                    :key="`${segment.uid}:word:${index}`"
+                    v-word-text="w.text"
                     contenteditable
                     :tabindex="deleteMode ? -1 : 0"
-                    class="focus:border-text-default focus:bg-surface-indent rounded-md border border-transparent px-2 leading-tight focus:outline-none"
+                    class="focus:border-text-default focus:bg-surface-indent min-w-4 rounded-md border border-transparent px-2 leading-tight focus:outline-none"
                     @input="handleTextUpdate(index, $event)"
                     @focus="$emit('wordFocus', w, segment)"
                     @keydown.down="$emit('focusNext')"
                     @keydown.up="$emit('focusPrevious')"
-                >
-                    {{ w.text }}
-                </span>
+                />
             </div>
         </div>
         <div v-if="!deleteMode" class="ml-auto">
             <DesignTooltip
-                v-if="!deleted"
+                v-if="!segment.deleted"
                 :content="$t('transcription.deleteSegment')"
             >
                 <DesignButton

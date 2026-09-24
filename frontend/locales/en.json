@@ -30,8 +30,9 @@
         "resetSuccess": "Transcription was successfully reset",
         "submitSuccess": "Transcription was successfully submitted",
         "submitError": "Transcription could not be submitted",
-        "clearAllLocalData": "Clear all local data",
-        "clear": "Clear"
+        "changesSavedLocallyAt": "Changes saved locally at {time}",
+        "saveFailed": "Changes are NOT being saved",
+        "saveFailedDescription": "Your browser could not store this transcription locally, so your changes are only in this tab. Download a copy and reload the page."
     },
     "bmmUpload": {
         "title": "BMM Upload",

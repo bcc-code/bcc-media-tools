@@ -1,6 +1,6 @@
 # Transcription Tool — Bugs & Improvements
 
-> Status: **Analysis done, nothing fixed yet** · Owner: TBD
+> Status: **Phase 0 done** (see §7) · Owner: TBD
 >
 > Tracking note for fixing the transcription editor (`/transcription/[id]`)
 > after several user reports in Oct 2025 that edits are lost, rows appear
@@ -65,7 +65,7 @@ and stay diverged until the page is reloaded.
  submitted       arr1  ✗         arr3  ✓              saved  ✓
 ```
 
-### <a id="b1"></a>B1 — Edits revert on scroll, and are lost on submit · **critical**
+### <a id="b1"></a>B1 — Edits revert on scroll, and are lost on submit · **critical** · ✅ fixed
 
 Consequences of the divergence above:
 
@@ -115,7 +115,7 @@ if anything went wrong downstream they see the original text with no recourse �
 "føles som jeg har brukt opp muligheten til å endre" (R7) is literally what
 happens.
 
-### <a id="b3"></a>B3 — The local draft is deleted before the work is known to be safe · **critical**
+### <a id="b3"></a>B3 — The local draft is deleted before the work is known to be safe · **critical** · ✅ fixed
 
 `[id].vue:90` — `localStorage.removeItem(key)` runs as soon as the workflow has
 been _started_. If the Vidispine import job fails, or the shape is not actually
@@ -126,7 +126,7 @@ the user cannot even get back in to redo it.
 return a workflow id the frontend can poll, or the handler should wait), and
 keep read access to submitted items.
 
-### <a id="b4"></a>B4 — localStorage can silently fail to save · **high**
+### <a id="b4"></a>B4 — localStorage can silently fail to save · **high** · ✅ fixed
 
 `[id].vue:195-202` serialises the **entire** transcription — including the
 `tokens` array on every segment — on every keystroke-driven update. For a long
@@ -213,7 +213,7 @@ can read any transcription.
 
 **Fix:** mirror the `GetTranscriptionPreview` checks in both handlers.
 
-### <a id="b9"></a>B9 — `clearLocalData` wipes localStorage for the whole origin · **medium**
+### <a id="b9"></a>B9 — `clearLocalData` wipes localStorage for the whole origin · **medium** · ✅ fixed
 
 `[id].vue:107-110` calls `localStorage.clear()`, destroying **every other
 transcription draft** plus all user settings (`seekOnFocus`, `splitterSize`,
@@ -340,13 +340,13 @@ multi-track, or anything that treats this as a writing surface.
 
 ## 4. Suggested order of work
 
-| Phase                     | Scope                                                                                | Why first                                                                                             |
-| ------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
-| **0 — stop the bleeding** | [B1](#b1), [B3](#b3), [B4](#b4) (guard + strip `tokens` + debounce), [B9](#b9)       | These lose work. Nothing else matters until edits reliably survive.                                   |
-| **1 — trust**             | [I1](#i1) server drafts, [I2](#i2) save/submit clarity, [B2](#b2) post-submit access | Users can see their work is safe.                                                                     |
-| **2 — editing**           | [B6](#b6), [B5](#b5), [I3](#i3) 1-3, [I4](#i4) confidence                            | Delete/add a word become possible at all; undo, replace-all and confidence shading cut the work down. |
-| **3 — rendering**         | [B7](#b7), [B10](#b10)                                                               | Removes the remaining "weird" behaviour.                                                              |
-| **4 — polish**            | [B8](#b8) (do earlier if exposure warrants), [B11](#b11), [I4](#i4), [I5](#i5)       |                                                                                                       |
+| Phase                        | Scope                                                                                | Why first                                                                                             |
+| ---------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| **0 — stop the bleeding** ✅ | [B1](#b1), [B3](#b3), [B4](#b4) (guard + strip `tokens` + debounce), [B9](#b9)       | These lose work. Nothing else matters until edits reliably survive.                                   |
+| **1 — trust**                | [I1](#i1) server drafts, [I2](#i2) save/submit clarity, [B2](#b2) post-submit access | Users can see their work is safe.                                                                     |
+| **2 — editing**              | [B6](#b6), [B5](#b5), [I3](#i3) 1-3, [I4](#i4) confidence                            | Delete/add a word become possible at all; undo, replace-all and confidence shading cut the work down. |
+| **3 — rendering**            | [B7](#b7), [B10](#b10)                                                               | Removes the remaining "weird" behaviour.                                                              |
+| **4 — polish**               | [B8](#b8) (do earlier if exposure warrants), [B11](#b11), [I4](#i4), [I5](#i5)       |                                                                                                       |
 
 ## 5. Open questions
 
@@ -377,3 +377,55 @@ api/v1/api.proto                                              Transcription mess
 
 Upstream: `bcc-media-flows` `workflows/ingest/import_subtitles.go` (`ImportSubtitles`),
 `services/cantemo/client.go` (`GetTranscriptionJSON`, `GetACL`).
+
+## 7. Phase 0 — what was changed
+
+Edits now survive scrolling, deleting and submitting. One document, one array.
+
+**New**
+
+- `frontend/app/utils/transcriptionDraft.ts` — draft encode/decode and storage.
+  Storage is injected and `writeDraft` returns a result instead of throwing, so
+  a full quota is reported rather than swallowed.
+- `frontend/app/composables/useTranscriptionDraft.ts` — owns the document for
+  one asset: load, autosave, reset, submit. The API client and the storage are
+  injectable.
+
+**Changed**
+
+- `utils/transcription.ts` — segments carry a `uid` and a `deleted` flag.
+  Added pure operations (`updateSegment`, `toggleSegmentDeleted`, `setWordText`,
+  `canInsertAfter`, `insertSegmentAfter`, `toTranscription`) so the editing
+  rules are testable without a component.
+- `TranscriptionEditor.vue` — renders from the `v-model` instead of
+  `transcription.segments`; rows are keyed and addressed by `uid`. Deleting
+  marks a row rather than filtering a second array, which is what discarded
+  text edits.
+- `TranscriptionSegmentEditor.vue` — dropped the local `words` copy that was
+  seeded from props once and never re-synced. The contenteditable is now
+  explicitly uncontrolled via a small directive that writes only when the value
+  really differs, so the caret survives typing and a re-created row still shows
+  current text.
+- `pages/transcription/[id].vue` — state moved into the composable; the page is
+  layout, the video and the submit dialog. Shows the last save time, and an
+  error banner if saving fails.
+- `pages/transcription/index.vue` — adapted to the same model.
+
+**Behaviour**
+
+- Submitting no longer deletes the local draft, and records `submittedAt` on it.
+- Drafts are written debounced (500ms), without `tokens`, and never as an empty
+  document over a good one.
+- A failed "Tilbakestill" leaves the current work alone.
+- `localStorage.clear()` and the hidden hover-plus-`c` shortcut are gone.
+- Segments whose text ends up empty are dropped on submit/download instead of
+  becoming blank cues — which is also how a corrector removes invented speech,
+  given that words cannot be deleted individually yet ([B6](#b6)).
+
+**Deliberately not touched** — [B5](#b5) (the ≥1s gap rule still limits where
+`+` appears), [B6](#b6), [B7](#b7) (fixed-height virtual list), [B10](#b10),
+[B11](#b11) metadata field names.
+
+**Not verified.** Typecheck and build pass; the three scenarios in §4 have not
+been exercised against a real asset. Also note there is no test runner in the
+frontend, so the extracted pure logic is testable but untested.

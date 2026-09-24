@@ -2,7 +2,6 @@
 import { normalizeProps, useMachine } from "@zag-js/vue";
 import * as splitter from "@zag-js/splitter";
 import type { ComponentPublicInstance } from "vue";
-import { onKeyDown, onKeyUp } from "@vueuse/core";
 
 const analytics = useAnalytics();
 onMounted(() => {
@@ -19,123 +18,79 @@ useHead({
 const api = useAPI();
 
 const route = useRoute("transcription-id");
-const key = computed(() => "ts-" + route.params.id);
 const routeId = route.params.id;
 
-const loading = ref(true);
-const error = ref<string | null>(null);
+const {
+    segments,
+    loading,
+    error,
+    saveState,
+    savedAt,
+    submitting,
+    load,
+    reset,
+    submit,
+} = useTranscriptionDraft(routeId);
 
-const transcription = ref<TranscriptionResult>();
-
-const fileName = ref<string>("untitled");
-
-const segments = ref<Segment[]>([]);
+const fileName = computed(() => `transcription-${routeId}`);
 
 const video = ref<string>();
-
 const videoelement = ref<HTMLVideoElement>();
 
 const segmentelements = ref<{
     [key: number]: ComponentPublicInstance;
 }>({});
 
-function formatErrorMessage(msg: string | null): string | null {
-    if (!msg) return null;
-    // Remove [unknown] or similar prefix
-    msg = msg.replace(/^\[.*?\]\s*/, "");
-    // Capitalize first letter
-    msg = msg.charAt(0).toUpperCase() + msg.slice(1);
-    return msg;
-}
-
 const { t } = useI18n();
 const toaster = useToast();
-const reset = async (notify: boolean = true) => {
-    loading.value = true;
-    error.value = null;
-    try {
-        let result = await api.getTranscription({ VXID: routeId });
-        setTranscription(result);
-        localStorage[key.value] = JSON.stringify(result);
-        if (notify) {
-            toaster.create({
-                title: t("transcription.resetSuccess"),
-                type: "success",
-            });
-        }
-        return result;
-    } catch (e: any) {
-        error.value = e?.message || e?.toString() || "Unknown error";
-        loading.value = false;
-        transcription.value = undefined;
-        segments.value = [];
-        return null;
+
+// i18n has no `datetimeFormats` configured.
+const savedAtLabel = computed(() =>
+    savedAt.value
+        ? savedAt.value.toLocaleTimeString(undefined, {
+              hour: "2-digit",
+              minute: "2-digit",
+          })
+        : null,
+);
+
+const handleReset = async () => {
+    if (await reset()) {
+        toaster.create({
+            title: t("transcription.resetSuccess"),
+            type: "success",
+        });
     }
 };
 
-const setTranscription = (result: any) => {
-    transcription.value = result;
-    segments.value = transcription.value?.segments!;
-    loading.value = false;
-};
-
-const loadingSubmit = ref(false);
+const showSubmitConfirmationModal = ref(false);
 const submitToMediabanken = async () => {
-    loadingSubmit.value = true;
-    try {
-        await api.submitTranscription({
-            VXID: routeId,
-            transcription: transcription.value,
-        });
-        localStorage.removeItem(key.value);
+    if (await submit()) {
         toaster.create({
             title: t("transcription.submitSuccess"),
             type: "success",
         });
         navigateTo("/transcription");
-    } catch (err) {
+    } else {
         toaster.create({
             title: t("transcription.submitError"),
             type: "error",
         });
-        loadingSubmit.value = false;
     }
 };
 
-const showClearButton = ref(false);
-const isHoveringOverClearButton = ref(false);
-function clearLocalData() {
-    localStorage.clear();
-    reset();
-}
-
-onKeyDown("c", () => {
-    if (!isHoveringOverClearButton.value) return;
-    showClearButton.value = true;
-});
-onKeyUp("c", () => {
-    showClearButton.value = false;
-});
-
 onMounted(async () => {
-    const saved = localStorage[key.value];
-    error.value = null;
     try {
         video.value = (
             await api.getTranscriptionPreview({ VXID: routeId })
         ).url;
-    } catch (e: any) {
-        error.value = e?.message || e?.toString() || "Unknown error";
+    } catch (e: unknown) {
+        error.value = (e as { message?: string })?.message ?? "Unknown error";
         loading.value = false;
         return;
     }
-    fileName.value = key.value;
 
-    if (saved) {
-        setTranscription(JSON.parse(saved));
-    } else {
-        await reset(false);
-    }
+    await load();
 });
 
 watch(videoelement, (el) => {
@@ -155,16 +110,15 @@ watch(videoelement, (el) => {
                 prev = s.end;
             }
 
-            if (!index) return;
+            if (index === null) return;
             if (index === prevIndex) return;
 
             focusedSegment.value = segments.value[index];
 
-            const segmentElement = (
-                segmentelements.value[index] as ComponentPublicInstance
-            ).$el as HTMLDivElement;
-
-            segmentElement.scrollIntoView({
+            // Virtualised: a segment outside the window has no element.
+            const segmentElement = segmentelements.value[index]?.$el as
+                HTMLDivElement | undefined;
+            segmentElement?.scrollIntoView({
                 behavior: "smooth",
                 block: "center",
             });
@@ -182,8 +136,7 @@ const handleWordFocus = (word: Word, segment: Segment) => {
     if (!el) {
         return;
     }
-    const seek = (localStorage.seekOnFocus ?? "true") === "true";
-    if (seek) {
+    if (seekOnFocus.value) {
         if (el.fastSeek) {
             el.fastSeek(word.start);
         } else {
@@ -191,15 +144,6 @@ const handleWordFocus = (word: Word, segment: Segment) => {
         }
     }
 };
-
-watch(segments, () => {
-    localStorage[key.value] = JSON.stringify({
-        text: segments.value.map((s) => s.text).join(" "),
-        segments: segments.value,
-        video: video.value,
-        filename: fileName.value,
-    });
-});
 
 const seekOnFocus = useLocalStorage("seekOnFocus", true);
 const previewSubtitles = useLocalStorage("previewSubtitles", true);
@@ -216,14 +160,6 @@ onMounted(() => {
         }, 1000);
     }
 });
-
-function setSegments(s: Segment[]) {
-    segments.value = s;
-    if (!transcription.value) return;
-    transcription.value.segments = s;
-}
-
-const showSubmitConfirmationModal = ref(false);
 
 // Splitter
 const storedSplitterSize = useLocalStorage("splitterSize", [50, 50]);
@@ -249,30 +185,24 @@ const splitterApi = computed(() =>
         <div
             class="border-border-1 bg-surface-default flex items-center justify-between gap-4 border-b px-6 py-3"
         >
-            <div
-                class="flex flex-col"
-                @mouseenter="isHoveringOverClearButton = true"
-                @mouseleave="isHoveringOverClearButton = false"
-            >
-                <div class="flex gap-3">
-                    <p>{{ $t("transcription.changesSavedLocally") }}</p>
+            <div class="flex flex-col">
+                <div class="flex items-center gap-3">
+                    <p v-if="saveState === 'error'" class="text-semantic-error">
+                        {{ $t("transcription.saveFailed") }}
+                    </p>
+                    <p v-else-if="savedAtLabel">
+                        {{
+                            $t("transcription.changesSavedLocallyAt", {
+                                time: savedAtLabel,
+                            })
+                        }}
+                    </p>
+                    <p v-else>{{ $t("transcription.changesSavedLocally") }}</p>
                     <button
                         class="-m-3 p-3 text-neutral-500 underline"
-                        @click="() => reset()"
+                        @click="handleReset"
                     >
                         {{ $t("transcription.reset") }}
-                    </button>
-                </div>
-                <div
-                    v-if="showClearButton"
-                    class="flex gap-2 text-sm text-neutral-500"
-                >
-                    <p>{{ $t("transcription.clearAllLocalData") }}</p>
-                    <button
-                        class="-m-3 p-3 underline"
-                        @click="() => clearLocalData()"
-                    >
-                        {{ $t("transcription.clear") }}
                     </button>
                 </div>
             </div>
@@ -304,6 +234,14 @@ const splitterApi = computed(() =>
                 </button>
             </div>
         </div>
+        <DesignBanner
+            v-if="saveState === 'error'"
+            variant="error"
+            icon="tabler:alert-triangle"
+            class="mx-6 mt-3"
+        >
+            {{ $t("transcription.saveFailedDescription") }}
+        </DesignBanner>
         <div
             v-bind="splitterApi.getRootProps()"
             class="flex bg-neutral-100 dark:bg-neutral-950"
@@ -321,18 +259,15 @@ const splitterApi = computed(() =>
                     v-if="error && !loading"
                     class="mx-auto text-lg text-red-600"
                 >
-                    {{ formatErrorMessage(error) }}
+                    {{ error }}
                 </div>
                 <TranscriptionEditor
                     class="ml-auto w-full max-w-7xl overflow-auto"
-                    v-if="transcription && !loading"
+                    v-if="segments.length && !loading"
                     v-model="segments"
                     v-model:segmentelements="segmentelements"
-                    :transcription="transcription"
-                    :file-name="fileName!"
                     :focused-segment="focusedSegment"
                     @word-focus="handleWordFocus"
-                    @update-segments="(s) => setSegments(s)"
                 />
             </div>
             <div class="flex h-full items-center px-1">
@@ -388,8 +323,8 @@ const splitterApi = computed(() =>
                 </DesignButton>
                 <DesignButton
                     variant="primary"
-                    :loading="loadingSubmit"
-                    :disabled="loadingSubmit"
+                    :loading="submitting"
+                    :disabled="submitting"
                     @click="submitToMediabanken"
                 >
                     {{ $t("transcription.submitConfirmationSubmit") }}

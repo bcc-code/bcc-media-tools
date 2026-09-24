@@ -30,8 +30,9 @@
         "resetSuccess": "Transkripsjon er tilbakestilt",
         "submitSuccess": "Transkripsjon er sendt til Mediabanken",
         "submitError": "Feil ved sending til Mediabanken",
-        "clearAllLocalData": "Tøm all lokal data",
-        "clear": "Tøm"
+        "changesSavedLocallyAt": "Endringer lagret lokalt kl. {time}",
+        "saveFailed": "Endringene blir IKKE lagret",
+        "saveFailedDescription": "Nettleseren klarte ikke å lagre denne transkripsjonen lokalt, så endringene finnes bare i denne fanen. Last ned en kopi og last inn siden på nytt."
     },
     "bmmUpload": {
         "title": "BMM opplasting",
