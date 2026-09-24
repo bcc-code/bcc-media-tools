@@ -309,6 +309,40 @@
             "video": "Video",
             "audio": "Audio",
             "image": "Image"
+        },
+        "createShortDescription": "Opens the shorts tool for this video in the app."
+    },
+    "cantemo": {
+        "started": "{action} started",
+        "startedDescription": "It runs in the background in Mediabanken and takes a while.",
+        "startFailed": "Could not start",
+        "export": {
+            "label": "Export",
+            "description": "Opens the export tool in a new tab, for delivering this asset to VOD, BMM, XDCAM or Isilon."
+        },
+        "exportOslofjord": {
+            "label": "Export Oslofjord",
+            "description": "Opens the playout export tool in a new tab, for delivering this asset to Abekas, Hippo, B-Stage, Hyperdeck and the other stage systems."
+        },
+        "editTranscription": {
+            "label": "Edit transcription",
+            "description": "Opens the transcription editor in a new tab, where the automatic transcription can be corrected."
+        },
+        "preview": {
+            "label": "Generate preview",
+            "description": "Builds the preview files again from the original: a low-res watermarked video (or a low-res audio file), plus one audio preview per language. Runs in the background."
+        },
+        "transcribe": {
+            "label": "Transcribe automatically",
+            "description": "Transcribes the audio again in Norwegian and replaces the existing transcription and its subtitle file — including any corrections made in the transcription editor. Runs in the background."
+        },
+        "subtitleFromSubtrans": {
+            "label": "Import subtitles from Subtrans",
+            "description": "Fetches this asset's subtitles from Subtrans in every language it has there, approved or not, and replaces the subtitle files on the asset. Runs in the background."
+        },
+        "updateRelations": {
+            "label": "Update relations",
+            "description": "Goes through the audio files already related to this asset, reads the language code at the end of each filename, and records each one as that language's audio. Does not create new relations. Runs in the background."
         }
     }
 }

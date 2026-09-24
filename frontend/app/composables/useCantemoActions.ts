@@ -1,8 +1,15 @@
 import { CantemoAction } from "~~/src/gen/api/v1/api_pb";
 
 export type CantemoChip = {
-    name: string;
-    action: string;
+    id: string;
+    label: string;
+    description: string;
+    /**
+     * "open" navigates to a tool, "run" starts a background workflow and
+     * reports nothing back. The two are indistinguishable otherwise, which is
+     * the main thing that made this panel hard to read.
+     */
+    kind: "open" | "run";
     color: string;
     enabled: boolean;
     run: () => void | Promise<void>;
@@ -14,27 +21,27 @@ export function useCantemoActions(vxId: MaybeRefOrGetter<string | undefined>) {
     const perms = usePermissions();
     const api = useAPI();
     const toaster = useToast();
+    const { t } = useI18n();
 
-    // Name of the chip whose workflow is currently being triggered (disables it).
+    // Id of the chip whose workflow is currently being triggered (disables it).
     const loading = ref<string | null>(null);
 
-    async function trigger(
-        name: string,
-        action: CantemoAction,
-        started: string,
-    ) {
-        const id = toValue(vxId);
-        if (!id || loading.value) return;
-        loading.value = name;
+    async function trigger(id: string, action: CantemoAction) {
+        const vx = toValue(vxId);
+        if (!vx || loading.value) return;
+        loading.value = id;
         try {
-            await api.triggerCantemoAction({ VXID: id, action });
+            await api.triggerCantemoAction({ VXID: vx, action });
             toaster.create({
-                title: started,
+                title: t("cantemo.started", {
+                    action: t(`cantemo.${id}.label`),
+                }),
+                description: t("cantemo.startedDescription"),
                 type: "success",
             });
         } catch (err) {
             toaster.create({
-                title: "Failed to start",
+                title: t("cantemo.startFailed"),
                 description: (err as Error)?.message,
                 type: "error",
             });
@@ -59,81 +66,77 @@ export function useCantemoActions(vxId: MaybeRefOrGetter<string | undefined>) {
         window.open(`${path}/${id}`, "_blank");
     }
 
-    const chips = computed<CantemoChip[]>(() => {
-        return [
-            {
-                name: "Export",
-                action: "Go to VX export",
-                color: "#9aa0a8",
-                enabled: perms.canExport.value,
-                run: () => openTool("/export/"),
-            },
-            {
-                name: "Export Oslofjord",
-                action: "Go to VB export",
-                color: "#3c61d8",
-                enabled: perms.canVbExport.value,
-                run: () => openTool("/vb-export/"),
-            },
-            {
-                name: "Make preview",
-                action: "Trigger preview generation",
-                color: "#cdbf3a",
-                enabled: perms.canCantemoPreview.value,
-                run: () =>
-                    trigger(
-                        "Make preview",
-                        CantemoAction.PREVIEW,
-                        "Preview generation started",
-                    ),
-            },
-            {
-                name: "Transcribe",
-                action: "Trigger transcription",
-                color: "#3fb84f",
-                enabled: perms.canCantemoTranscribe.value,
-                run: () =>
-                    trigger(
-                        "Transcribe",
-                        CantemoAction.TRANSCRIBE,
-                        "Transcription started",
-                    ),
-            },
-            {
-                name: "Correct transcription",
-                action: "Open the transcription editor",
-                color: "#8b5cf6",
-                enabled:
-                    perms.canTranscribe.value ||
-                    perms.isTranscriptionAdmin.value,
-                run: () => openToolWithIdPath("/transcription"),
-            },
-            {
-                name: "Update subtitle from Subtrans",
-                action: "Trigger appropriate workflow",
-                color: "#3fb84f",
-                enabled: perms.canCantemoSubtitles.value,
-                run: () =>
-                    trigger(
-                        "Update subtitle from Subtrans",
-                        CantemoAction.SUBTITLE_FROM_SUBTRANS,
-                        "Subtitle update started",
-                    ),
-            },
-            {
-                name: "Update asset relations",
-                action: "Update asset relations flow",
-                color: "#3c61d8",
-                enabled: perms.canCantemoRelations.value,
-                run: () =>
-                    trigger(
-                        "Update asset relations",
-                        CantemoAction.UPDATE_RELATIONS,
-                        "Asset relations update started",
-                    ),
-            },
-        ].filter((c) => c.enabled);
-    });
+    const chips = computed<CantemoChip[]>(() =>
+        (
+            [
+                {
+                    id: "export",
+                    kind: "open",
+                    color: "#9aa0a8",
+                    enabled: perms.canExport.value,
+                    run: () => openTool("/export/"),
+                },
+                {
+                    id: "exportOslofjord",
+                    kind: "open",
+                    color: "#3c61d8",
+                    enabled: perms.canVbExport.value,
+                    run: () => openTool("/vb-export/"),
+                },
+                {
+                    id: "editTranscription",
+                    kind: "open",
+                    color: "#8b5cf6",
+                    enabled:
+                        perms.canTranscribe.value ||
+                        perms.isTranscriptionAdmin.value,
+                    run: () => openToolWithIdPath("/transcription"),
+                },
+                {
+                    id: "preview",
+                    kind: "run",
+                    color: "#cdbf3a",
+                    enabled: perms.canCantemoPreview.value,
+                    run: () => trigger("preview", CantemoAction.PREVIEW),
+                },
+                {
+                    id: "transcribe",
+                    kind: "run",
+                    color: "#3fb84f",
+                    enabled: perms.canCantemoTranscribe.value,
+                    run: () => trigger("transcribe", CantemoAction.TRANSCRIBE),
+                },
+                {
+                    id: "subtitleFromSubtrans",
+                    kind: "run",
+                    color: "#3fb84f",
+                    enabled: perms.canCantemoSubtitles.value,
+                    run: () =>
+                        trigger(
+                            "subtitleFromSubtrans",
+                            CantemoAction.SUBTITLE_FROM_SUBTRANS,
+                        ),
+                },
+                {
+                    id: "updateRelations",
+                    kind: "run",
+                    color: "#3c61d8",
+                    enabled: perms.canCantemoRelations.value,
+                    run: () =>
+                        trigger(
+                            "updateRelations",
+                            CantemoAction.UPDATE_RELATIONS,
+                        ),
+                },
+            ] satisfies Omit<CantemoChip, "label" | "description">[]
+        )
+            .filter((c) => c.enabled)
+            .map((c) => ({
+                ...c,
+                label: t(`cantemo.${c.id}.label`),
+                description: t(`cantemo.${c.id}.description`),
+            })),
+    );
 
     return { chips, loading };
 }

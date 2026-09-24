@@ -206,40 +206,51 @@ const lengthLabel = computed(() => {
                             {{ t("vault.actions") }}
                         </h3>
                         <div class="flex flex-wrap gap-2">
-                            <DesignButton
+                            <DesignTooltip
                                 v-for="chip in chips"
-                                :key="chip.name"
-                                size="small"
-                                variant="secondary"
-                                :title="chip.action"
-                                :loading="actionLoading === chip.name"
-                                :disabled="!!actionLoading"
-                                @click="chip.run()"
+                                :key="chip.id"
+                                :content="chip.description"
                             >
-                                <span
-                                    class="mr-1 inline-block size-1.5 rounded-full"
-                                    :style="{ backgroundColor: chip.color }"
-                                />
-                                {{ chip.name }}
-                            </DesignButton>
-                            <DesignButton
+                                <DesignButton
+                                    size="small"
+                                    variant="secondary"
+                                    :loading="actionLoading === chip.id"
+                                    :disabled="!!actionLoading"
+                                    @click="chip.run()"
+                                >
+                                    <span
+                                        class="mr-1 inline-block size-1.5 rounded-full"
+                                        :style="{ backgroundColor: chip.color }"
+                                    />
+                                    {{ chip.label }}
+                                    <Icon
+                                        v-if="chip.kind === 'open'"
+                                        name="tabler:external-link"
+                                        class="text-text-hint ml-1 size-3.5"
+                                    />
+                                </DesignButton>
+                            </DesignTooltip>
+                            <DesignTooltip
                                 v-if="isVideo && canUseShorts"
-                                size="small"
-                                variant="secondary"
-                                :title="t('vault.createShort')"
-                                @click="
-                                    navigateTo({
-                                        name: 'shorts-generate',
-                                        query: { id: vxId },
-                                    })
-                                "
+                                :content="t('vault.createShortDescription')"
                             >
-                                <span
-                                    class="mr-1 inline-block size-1.5 rounded-full"
-                                    :style="{ backgroundColor: '#ec4899' }"
-                                />
-                                {{ t("vault.createShort") }}
-                            </DesignButton>
+                                <DesignButton
+                                    size="small"
+                                    variant="secondary"
+                                    @click="
+                                        navigateTo({
+                                            name: 'shorts-generate',
+                                            query: { id: vxId },
+                                        })
+                                    "
+                                >
+                                    <span
+                                        class="mr-1 inline-block size-1.5 rounded-full"
+                                        :style="{ backgroundColor: '#ec4899' }"
+                                    />
+                                    {{ t("vault.createShort") }}
+                                </DesignButton>
+                            </DesignTooltip>
                         </div>
                     </div>
                 </div>

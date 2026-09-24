@@ -309,6 +309,40 @@
             "video": "Video",
             "audio": "Lyd",
             "image": "Bilde"
+        },
+        "createShortDescription": "Åpner shorts-verktøyet for denne videoen i appen."
+    },
+    "cantemo": {
+        "started": "{action} er startet",
+        "startedDescription": "Den kjører i bakgrunnen i Mediabanken og tar litt tid.",
+        "startFailed": "Kunne ikke starte",
+        "export": {
+            "label": "Eksporter",
+            "description": "Åpner eksportverktøyet i en ny fane, for å levere denne filen til VOD, BMM, XDCAM eller Isilon."
+        },
+        "exportOslofjord": {
+            "label": "Eksporter Oslofjord",
+            "description": "Åpner playout-eksporten i en ny fane, for å levere denne filen til Abekas, Hippo, B-Stage, Hyperdeck og de andre scenesystemene."
+        },
+        "editTranscription": {
+            "label": "Rediger transkripsjon",
+            "description": "Åpner transkripsjonsverktøyet i en ny fane, der den automatiske transkripsjonen kan rettes."
+        },
+        "preview": {
+            "label": "Lag forhåndsvisning",
+            "description": "Lager forhåndsvisningsfilene på nytt fra originalen: en lavoppløst video med vannmerke (eller en lavoppløst lydfil), pluss én lydforhåndsvisning per språk. Kjører i bakgrunnen."
+        },
+        "transcribe": {
+            "label": "Transkriber automatisk",
+            "description": "Transkriberer lyden på nytt på norsk og erstatter den eksisterende transkripsjonen og undertekstfilen — også rettelser som er gjort i transkripsjonsverktøyet. Kjører i bakgrunnen."
+        },
+        "subtitleFromSubtrans": {
+            "label": "Hent undertekst fra Subtrans",
+            "description": "Henter undertekstene til denne filen fra Subtrans på alle språk som finnes der, godkjente eller ikke, og erstatter undertekstfilene på filen. Kjører i bakgrunnen."
+        },
+        "updateRelations": {
+            "label": "Oppdater relasjoner",
+            "description": "Går gjennom lydfilene som allerede er koblet til denne filen, leser språkkoden sist i hvert filnavn, og registrerer hver fil som lyd for det språket. Oppretter ikke nye koblinger. Kjører i bakgrunnen."
         }
     }
 }
