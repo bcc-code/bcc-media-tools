@@ -56,15 +56,15 @@ const { isTranscriptionAdmin } = usePermissions();
 <template>
     <div
         :class="[
-            'mx-auto flex h-screen max-w-7xl p-8',
+            'mx-auto flex h-[calc(100dvh-var(--header-height))] max-w-7xl overflow-hidden p-8',
             {
                 'border-8 border-red-700': deleteMode,
             },
         ]"
     >
-        <div class="flex grow flex-col">
+        <div class="flex min-h-0 grow flex-col">
             <div
-                class="mx-auto flex w-full max-w-sm flex-col items-center gap-4"
+                class="mx-auto flex w-full max-w-sm shrink-0 flex-col items-center gap-4"
             >
                 <div class="w-full shrink-0">
                     <DesignFileUpload
@@ -111,6 +111,7 @@ const { isTranscriptionAdmin } = usePermissions();
                 v-if="segments.length"
                 :key="tKey"
                 v-model="segments"
+                class="min-h-0 flex-1 overflow-auto"
             />
         </div>
     </div>

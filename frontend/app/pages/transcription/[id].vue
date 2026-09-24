@@ -181,7 +181,9 @@ const splitterApi = computed(() =>
 </script>
 
 <template>
-    <div class="flex h-[calc(100dvh-var(--header-height))] flex-col">
+    <div
+        class="flex h-[calc(100dvh-var(--header-height))] flex-col overflow-hidden"
+    >
         <div
             class="border-border-1 bg-surface-default flex items-center justify-between gap-4 border-b px-6 py-3"
         >
@@ -244,11 +246,11 @@ const splitterApi = computed(() =>
         </DesignBanner>
         <div
             v-bind="splitterApi.getRootProps()"
-            class="flex bg-neutral-100 dark:bg-neutral-950"
+            class="flex min-h-0 flex-1 bg-neutral-100 dark:bg-neutral-950"
         >
             <div
                 v-bind="splitterApi.getPanelProps({ id: 'left' })"
-                class="bg-surface-default border-border-1 flex flex-col border-r"
+                class="bg-surface-default border-border-1 flex min-h-0 flex-col border-r"
             >
                 <Icon
                     v-if="loading"
@@ -262,7 +264,7 @@ const splitterApi = computed(() =>
                     {{ error }}
                 </div>
                 <TranscriptionEditor
-                    class="ml-auto w-full max-w-7xl overflow-auto"
+                    class="ml-auto min-h-0 w-full max-w-7xl flex-1 overflow-auto"
                     v-if="segments.length && !loading"
                     v-model="segments"
                     v-model:segmentelements="segmentelements"
@@ -279,7 +281,7 @@ const splitterApi = computed(() =>
             </div>
             <div
                 v-bind="splitterApi.getPanelProps({ id: 'right' })"
-                class="flex flex-col bg-neutral-100 dark:bg-neutral-950"
+                class="flex min-h-0 flex-col overflow-auto bg-neutral-100 dark:bg-neutral-950"
             >
                 <Icon
                     v-if="loading && !video"
