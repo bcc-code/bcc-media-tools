@@ -7,13 +7,11 @@
     "transcription": {
         "reset": "Tilbakestill",
         "changesSavedLocally": "Endringer er lagret lokalt",
-        "save": "Send til Mediabanken",
         "deleteSegment": "Slett segment",
         "undeleteSegment": "Angre sletting av segment",
         "goToNextSegment": "Gå til neste segment",
         "goToPreviousSegment": "Gå til forrige segment",
-        "goToNextWord": "Gå til neste ord i segment",
-        "addSegment": "Legg til manglende segment",
+        "addSegment": "Legg til en linje her",
         "deleteMode": "Slettemodus",
         "seekOnFocus": "Gå til videoposisjon ved fokus",
         "previewSubtitles": "Forhåndsvis undertekster",
@@ -30,8 +28,16 @@
         "resetSuccess": "Transkripsjon er tilbakestilt",
         "submitSuccess": "Transkripsjon er sendt til Mediabanken",
         "submitError": "Feil ved sending til Mediabanken",
-        "clearAllLocalData": "Tøm all lokal data",
-        "clear": "Tøm"
+        "changesSavedLocallyAt": "Endringer lagret lokalt kl. {time}",
+        "saveFailed": "Endringene blir IKKE lagret",
+        "saveFailedDescription": "Nettleseren klarte ikke å lagre denne transkripsjonen lokalt, så endringene finnes bare i denne fanen. Last ned en kopi og last inn siden på nytt.",
+        "submit": "Send til Mediabanken",
+        "addSegmentBefore": "Legg til en linje i starten",
+        "resetConfirmationTitle": "Forkaste alle endringene dine?",
+        "resetConfirmationMessage": "Dette henter den opprinnelige transkripsjonen på nytt. Alt du har rettet blir borte.",
+        "resetConfirmationCancel": "Avbryt",
+        "resetConfirmationConfirm": "Ja, forkast",
+        "goToNextSegmentField": "Gå til neste segment"
     },
     "bmmUpload": {
         "title": "BMM opplasting",
@@ -303,6 +309,40 @@
             "video": "Video",
             "audio": "Lyd",
             "image": "Bilde"
+        },
+        "createShortDescription": "Åpner shorts-verktøyet for denne videoen i appen."
+    },
+    "cantemo": {
+        "started": "{action} er startet",
+        "startedDescription": "Den kjører i bakgrunnen i Mediabanken og tar litt tid.",
+        "startFailed": "Kunne ikke starte",
+        "export": {
+            "label": "Eksporter",
+            "description": "Åpner eksportverktøyet i en ny fane, for å levere denne filen til VOD, BMM, XDCAM eller Isilon."
+        },
+        "exportOslofjord": {
+            "label": "Eksporter Oslofjord",
+            "description": "Åpner playout-eksporten i en ny fane, for å levere denne filen til Abekas, Hippo, B-Stage, Hyperdeck og de andre scenesystemene."
+        },
+        "editTranscription": {
+            "label": "Rediger transkripsjon",
+            "description": "Åpner transkripsjonsverktøyet i en ny fane, der den automatiske transkripsjonen kan rettes."
+        },
+        "preview": {
+            "label": "Lag forhåndsvisning",
+            "description": "Lager forhåndsvisningsfilene på nytt fra originalen: en lavoppløst video med vannmerke (eller en lavoppløst lydfil), pluss én lydforhåndsvisning per språk. Kjører i bakgrunnen."
+        },
+        "transcribe": {
+            "label": "Transkriber automatisk",
+            "description": "Transkriberer lyden på nytt på norsk og erstatter den eksisterende transkripsjonen og undertekstfilen — også rettelser som er gjort i transkripsjonsverktøyet. Kjører i bakgrunnen."
+        },
+        "subtitleFromSubtrans": {
+            "label": "Hent undertekst fra Subtrans",
+            "description": "Henter undertekstene til denne filen fra Subtrans på alle språk som finnes der, godkjente eller ikke, og erstatter undertekstfilene på filen. Kjører i bakgrunnen."
+        },
+        "updateRelations": {
+            "label": "Oppdater relasjoner",
+            "description": "Går gjennom lydfilene som allerede er koblet til denne filen, leser språkkoden sist i hvert filnavn, og registrerer hver fil som lyd for det språket. Oppretter ikke nye koblinger. Kjører i bakgrunnen."
         }
     }
 }

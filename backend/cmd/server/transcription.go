@@ -28,17 +28,8 @@ func NewTranscriptionAPI(baseURL, token string, temporalClient client.Client) *T
 // transcription editor. Admins see everything; a volunteer may only preview a
 // video while it is shared for transcription editing.
 func (t TranscriptionAPI) GetTranscriptionPreview(ctx context.Context, req *connect.Request[apiv1.GetPreviewRequest]) (*connect.Response[apiv1.Preview], error) {
-	email := getEmail(req)
-	if email == "" {
-		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("missing email header"))
-	}
-	perms := PermissionsForEmail(email)
-	if perms.Transcription == nil || (!perms.Transcription.Admin && !perms.Transcription.Mediabanken) {
-		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("not enough permissions for transcription"))
-	}
-	allowed := perms.Admin || perms.Transcription.Admin || t.inTranscriptionCollection(req.Msg.VXID)
-	if !allowed {
-		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("not enough permissions for preview"))
+	if err := t.authorize(getEmail(req), req.Msg.VXID); err != nil {
+		return nil, err
 	}
 
 	url, err := t.cantemoClient.GetPreviewUrl(req.Msg.VXID)
@@ -46,6 +37,33 @@ func (t TranscriptionAPI) GetTranscriptionPreview(ctx context.Context, req *conn
 		return nil, err
 	}
 	return connect.NewResponse(&apiv1.Preview{Url: url}), nil
+}
+
+// transcriptionAccess decides who may read or write a transcription.
+//
+// sharedForEditing is a func so the ACL lookup is skipped for admins, who do not
+// need it, and so the policy can be exercised without Cantemo.
+func transcriptionAccess(email string, perms *apiv1.Permissions, sharedForEditing func() bool) error {
+	if email == "" {
+		return connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("missing email header"))
+	}
+
+	tp := perms.GetTranscription()
+	if !tp.GetAdmin() && !tp.GetMediabanken() {
+		return connect.NewError(connect.CodePermissionDenied, fmt.Errorf("not enough permissions for transcription"))
+	}
+
+	if perms.GetAdmin() || tp.GetAdmin() || sharedForEditing() {
+		return nil
+	}
+
+	return connect.NewError(connect.CodePermissionDenied, fmt.Errorf("asset is not shared for transcription editing"))
+}
+
+func (t TranscriptionAPI) authorize(email, vxid string) error {
+	return transcriptionAccess(email, PermissionsForEmail(email), func() bool {
+		return t.inTranscriptionCollection(vxid)
+	})
 }
 
 // inTranscriptionCollection reports whether the asset is currently shared for
@@ -67,14 +85,8 @@ func (t TranscriptionAPI) inTranscriptionCollection(vxid string) bool {
 }
 
 func (t TranscriptionAPI) GetTranscription(ctx context.Context, req *connect.Request[apiv1.GetTranscriptionReqest]) (*connect.Response[apiv1.Transcription], error) {
-	email := getEmail(req)
-	if email == "" {
-		return nil, connect.NewError(401, fmt.Errorf("missing email header"))
-	}
-
-	perms := PermissionsForEmail(email)
-	if perms.Transcription == nil || (!perms.Transcription.Admin && !perms.Transcription.Mediabanken) {
-		return nil, connect.NewError(403, fmt.Errorf("not enough permissions for transcription"))
+	if err := t.authorize(getEmail(req), req.Msg.VXID); err != nil {
+		return nil, err
 	}
 
 	transcription, err := t.cantemoClient.GetTranscriptionJSON(req.Msg.VXID)
@@ -118,7 +130,9 @@ func (t TranscriptionAPI) GetTranscription(ctx context.Context, req *connect.Req
 }
 
 func (t TranscriptionAPI) SubmitTranscription(ctx context.Context, req *connect.Request[apiv1.SubmitTranscriptionRequest]) (*connect.Response[apiv1.Void], error) {
-	fmt.Printf("Received transcription for VXID %s: %+v\n", req.Msg.GetVXID(), req.Msg.GetTranscription())
+	if err := t.authorize(getEmail(req), req.Msg.VXID); err != nil {
+		return nil, err
+	}
 
 	// Trigger flow
 	queue := getQueue()
