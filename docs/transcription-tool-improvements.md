@@ -426,6 +426,28 @@ Edits now survive scrolling, deleting and submitting. One document, one array.
 `+` appears), [B6](#b6), [B7](#b7) (fixed-height virtual list), [B10](#b10),
 [B11](#b11) metadata field names.
 
-**Not verified.** Typecheck and build pass; the three scenarios in §4 have not
-been exercised against a real asset. Also note there is no test runner in the
-frontend, so the extracted pure logic is testable but untested.
+## 8. Tests
+
+`pnpm test` (vitest, Nuxt environment — `frontend/vitest.config.ts`). 68 tests
+in `frontend/test/`, covering the extracted logic rather than the components:
+
+| File                            | Covers                                                                                                             |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `transcription.spec.ts`         | segment operations — uid addressing, delete marking, word edits, insert rules, and what `toTranscription` lets out |
+| `transcriptionDraft.spec.ts`    | draft encode/decode, token stripping, quota and unusable-storage handling, per-asset key isolation                 |
+| `useTranscriptionDraft.spec.ts` | load / autosave / reset / submit, with the API and storage injected                                                |
+
+The tests were checked against deliberately reintroduced regressions — every one
+of these is caught:
+
+- `toTranscription` keeping deleted rows, or not re-deriving text from words
+- `updateSegment` failing to match (the stale-array behaviour)
+- the draft keeping `tokens`
+- a quota error escaping instead of being reported
+- an empty document overwriting a good draft
+- a failed reset wiping the work
+- submit deleting the local draft
+
+**Still not verified.** The three scenarios in §4 have not been exercised
+against a real asset in a browser, and nothing covers the component layer —
+in particular the uncontrolled-contenteditable directive and the virtual list.
