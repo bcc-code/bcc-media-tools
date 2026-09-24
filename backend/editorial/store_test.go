@@ -2,8 +2,10 @@ package editorial
 
 import (
 	"context"
+	"errors"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -181,4 +183,38 @@ func TestDeleteSessionCascadesMarkers(t *testing.T) {
 func TestDeleteSessionNotFound(t *testing.T) {
 	s := newTestStore(t)
 	assert.ErrorIs(t, s.DeleteSession(context.Background(), "nope"), ErrNotFound)
+}
+
+func TestSetPlayoutWindow(t *testing.T) {
+	ctx := context.Background()
+	s := newTestStore(t)
+
+	sess, err := s.CreateSession(ctx, "VX-1", "Session", "editor@bcc.media")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !sess.RecordingStart.IsZero() {
+		t.Fatal("a new session has no recording window")
+	}
+
+	start := time.Date(2026, 8, 8, 12, 45, 11, 0, time.UTC)
+	end := start.Add(113 * time.Minute)
+	if err := s.SetPlayoutWindow(ctx, sess.ID, "1150", start, end); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := s.GetSession(ctx, sess.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.PlayoutEventID != "1150" {
+		t.Errorf("event id: got %q", got.PlayoutEventID)
+	}
+	if !got.RecordingStart.Equal(start) || !got.RecordingEnd.Equal(end) {
+		t.Errorf("window: got %s–%s, want %s–%s", got.RecordingStart, got.RecordingEnd, start, end)
+	}
+
+	if err := s.SetPlayoutWindow(ctx, "missing", "1150", start, end); !errors.Is(err, ErrNotFound) {
+		t.Errorf("unknown session: got %v, want ErrNotFound", err)
+	}
 }
