@@ -24,21 +24,6 @@ func NewTranscriptionAPI(baseURL, token string, temporalClient client.Client) *T
 	}
 }
 
-// GetTranscriptionPreview resolves the source-video preview URL for the
-// transcription editor. Admins see everything; a volunteer may only preview a
-// video while it is shared for transcription editing.
-func (t TranscriptionAPI) GetTranscriptionPreview(ctx context.Context, req *connect.Request[apiv1.GetPreviewRequest]) (*connect.Response[apiv1.Preview], error) {
-	if err := t.authorize(getEmail(req), req.Msg.VXID); err != nil {
-		return nil, err
-	}
-
-	url, err := t.cantemoClient.GetPreviewUrl(req.Msg.VXID)
-	if err != nil {
-		return nil, err
-	}
-	return connect.NewResponse(&apiv1.Preview{Url: url}), nil
-}
-
 // transcriptionAccess decides who may read or write a transcription.
 //
 // sharedForEditing is a func so the ACL lookup is skipped for admins, who do not

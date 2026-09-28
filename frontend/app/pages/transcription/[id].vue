@@ -15,7 +15,7 @@ useHead({
     title: "Transcription",
 });
 
-const api = useAPI();
+const config = useRuntimeConfig();
 
 const route = useRoute("transcription-id");
 const routeId = route.params.id;
@@ -34,7 +34,12 @@ const {
 
 const fileName = computed(() => `transcription-${routeId}`);
 
-const video = ref<string>();
+// Streamed through the backend rather than straight from Cantemo: the upstream
+// host only resolves on the internal network.
+const video = computed(
+    () =>
+        `${config.public.grpcUrl}/transcription/preview?vxid=${encodeURIComponent(routeId)}`,
+);
 const videoelement = ref<HTMLVideoElement>();
 const mediaDuration = ref<number>();
 
@@ -83,16 +88,6 @@ const submitToMediabanken = async () => {
 };
 
 onMounted(async () => {
-    try {
-        video.value = (
-            await api.getTranscriptionPreview({ VXID: routeId })
-        ).url;
-    } catch (e: unknown) {
-        error.value = (e as { message?: string })?.message ?? "Unknown error";
-        loading.value = false;
-        return;
-    }
-
     await load();
 });
 
@@ -287,33 +282,20 @@ const splitterApi = computed(() =>
                 v-bind="splitterApi.getPanelProps({ id: 'right' })"
                 class="flex min-h-0 flex-col overflow-auto bg-neutral-100 dark:bg-neutral-950"
             >
-                <Icon
-                    v-if="loading && !video"
-                    name="svg-spinners:bars-rotate-fade"
-                    class="m-auto text-2xl"
-                />
                 <div class="relative mx-auto p-4">
-                    <template v-if="video">
-                        <video
-                            ref="videoelement"
-                            :src="video"
-                            controls
-                            class="bg-surface-default shadow-xl"
-                            @loadedmetadata="
-                                mediaDuration = videoelement?.duration
-                            "
-                        />
-                        <p
-                            v-if="previewSubtitles && focusedSegment"
-                            class="absolute bottom-16 left-1/2 w-max max-w-[75%] -translate-x-1/2 bg-black/50 p-2 text-center text-2xl text-white"
-                        >
-                            {{
-                                focusedSegment.words
-                                    .map((w) => w.text)
-                                    .join(" ")
-                            }}
-                        </p>
-                    </template>
+                    <video
+                        ref="videoelement"
+                        :src="video"
+                        controls
+                        class="bg-surface-default shadow-xl"
+                        @loadedmetadata="mediaDuration = videoelement?.duration"
+                    />
+                    <p
+                        v-if="previewSubtitles && focusedSegment"
+                        class="absolute bottom-16 left-1/2 w-max max-w-[75%] -translate-x-1/2 bg-black/50 p-2 text-center text-2xl text-white"
+                    >
+                        {{ focusedSegment.words.map((w) => w.text).join(" ") }}
+                    </p>
                 </div>
             </div>
         </div>
