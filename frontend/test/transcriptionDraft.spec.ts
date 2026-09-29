@@ -20,9 +20,9 @@ function segment(uid: string, text: string): Segment {
         text,
         tokens: Array.from({ length: 200 }, (_, i) => i),
         temperature: 0,
-        avg_logprob: 0,
-        compression_ration: 0,
-        no_speech_prob: 0,
+        avgLogprob: 0,
+        compressionRatio: 0,
+        noSpeechProb: 0,
         confidence: 1,
         words: [{ text, start: 0, end: 1, confidence: 1 }],
     };

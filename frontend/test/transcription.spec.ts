@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { create, fromBinary, toBinary } from "@bufbuild/protobuf";
+import { SubmitTranscriptionRequestSchema } from "~~/src/gen/api/v1/api_pb";
 import type { Segment, Word } from "~/utils/transcription";
 import {
     insertSegmentAt,
@@ -28,9 +30,9 @@ function segment(uid: string, texts: string[], start = 0, end = 1): Segment {
         text: texts.join(" "),
         tokens: [1, 2, 3],
         temperature: 0,
-        avg_logprob: 0,
-        compression_ration: 0,
-        no_speech_prob: 0,
+        avgLogprob: 0,
+        compressionRatio: 0,
+        noSpeechProb: 0,
         confidence: 1,
         words: texts.map((t, i) =>
             word(t, start + i * step, start + (i + 1) * step),
@@ -446,5 +448,71 @@ describe("toTranscription", () => {
         expect(toTranscription(toggleSegmentDeleted(edited, "c")).text).toBe(
             "Hallo alle sammen her",
         );
+    });
+});
+
+/**
+ * The bug this guards against: segments arrive from the API as protobuf
+ * messages carrying `$typeName`, the spread in `toTranscription` used to copy
+ * that marker, and `create()` then returned the segment untouched — leaving
+ * the words `realignWords` had rebuilt as bare objects. Serializing those blew
+ * up with "Cannot use field api.v1.Words.text with message undefined".
+ */
+describe("toTranscription produces a serializable payload", () => {
+    /** As the Connect client hands them over. */
+    const fromApi = () =>
+        doc().map((s) => ({
+            ...s,
+            $typeName: "api.v1.Segments",
+            words: s.words.map((w) => ({ ...w, $typeName: "api.v1.Words" })),
+        })) as Segment[];
+
+    const submit = (segments: Segment[]) =>
+        toBinary(
+            SubmitTranscriptionRequestSchema,
+            create(SubmitTranscriptionRequestSchema, {
+                VXID: "VX-1",
+                transcription: toTranscription(segments),
+            }),
+        );
+
+    it("serializes an edited segment loaded from the API", () => {
+        const edited = updateSegment(fromApi(), "a", (s) =>
+            fixFirstWord(s, "Hallo"),
+        );
+
+        expect(() => submit(edited)).not.toThrow();
+    });
+
+    it("serializes a segment inserted into an API document", () => {
+        const withRow = insertSegmentAt(fromApi(), 0);
+        const filled = updateSegment(withRow, withRow[1]!.uid, (s) =>
+            setSegmentText(s, "nytt innhold"),
+        );
+
+        expect(() => submit(filled)).not.toThrow();
+    });
+
+    it("leaves no message marker on the payload", () => {
+        const edited = updateSegment(fromApi(), "a", (s) =>
+            fixFirstWord(s, "Hallo"),
+        );
+        const [first] = toTranscription(edited).segments;
+
+        expect(first).not.toHaveProperty("$typeName");
+        expect(first!.words.every((w) => !("$typeName" in w))).toBe(true);
+    });
+
+    it("keeps the fields the message actually declares", () => {
+        const [first] = toTranscription(fromApi()).segments;
+        const decoded = fromBinary(
+            SubmitTranscriptionRequestSchema,
+            submit(fromApi()),
+        );
+
+        expect(decoded.transcription!.segments[0]!.start).toBe(first!.start);
+        expect(
+            decoded.transcription!.segments[0]!.words.map((w) => w.text),
+        ).toEqual(["Hei", "alle"]);
     });
 });

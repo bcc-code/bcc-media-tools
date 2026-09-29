@@ -17,9 +17,9 @@ function rawSegment(text: string, start = 0, end = 1) {
         text,
         tokens: [1, 2, 3],
         temperature: 0,
-        avg_logprob: 0,
-        compression_ration: 0,
-        no_speech_prob: 0,
+        avgLogprob: 0,
+        compressionRatio: 0,
+        noSpeechProb: 0,
         confidence: 1,
         words: [{ text, start, end, confidence: 1 }],
     };

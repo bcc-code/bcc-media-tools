@@ -12,9 +12,9 @@ export type Segment = {
     text: string;
     tokens: number[];
     temperature: number;
-    avg_logprob: number;
-    compression_ration: number;
-    no_speech_prob: number;
+    avgLogprob: number;
+    compressionRatio: number;
+    noSpeechProb: number;
     confidence: number;
     words: Word[];
 };
@@ -38,12 +38,30 @@ export function segmentText(words: Word[]): string {
         .join(" ");
 }
 
+/**
+ * protobuf-es marks every message with an enumerable `$typeName`, and
+ * `create()` hands back an init object that carries one untouched, without
+ * converting anything nested inside it. Segments loaded from the API keep that
+ * marker through an object spread, so their words were never converted — and a
+ * word rebuilt by `realignWords` has no marker of its own, which made
+ * submitting an edited segment fail with "Cannot use field api.v1.Words.text
+ * with message undefined". Dropping the marker makes `create()` build the
+ * whole message from plain data.
+ */
+function withoutTypeName<T extends object>(value: T): T {
+    const { $typeName: _typeName, ...rest } = value as T & {
+        $typeName?: string;
+    };
+    return rest as T;
+}
+
 /** The single place that decides what leaves the editor. */
 export function toTranscription(segments: Segment[]): TranscriptionResult {
     const kept = segments
         .filter((s) => !s.deleted)
         .map(({ uid: _uid, deleted: _deleted, ...rest }) => ({
-            ...rest,
+            ...withoutTypeName(rest),
+            words: rest.words.map(withoutTypeName),
             text: segmentText(rest.words),
         }))
         // An emptied row is how you remove speech the ASR invented, and an
@@ -227,9 +245,9 @@ function emptySegment(start: number, end: number): Segment {
         text: "",
         tokens: [],
         temperature: 0,
-        avg_logprob: 0,
-        compression_ration: 0,
-        no_speech_prob: 0,
+        avgLogprob: 0,
+        compressionRatio: 0,
+        noSpeechProb: 0,
         confidence: 0,
         words: [],
     };
