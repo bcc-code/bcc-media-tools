@@ -1,0 +1,13 @@
+version: "2"
+sql:
+  - engine: sqlite
+    # sqlc reads the "-- +goose Up" sections of the goose migrations.
+    schema: editorial/migrations
+    queries: editorial/query.sql
+    gen:
+      go:
+        package: editorial
+        out: editorial
+        overrides:
+          - column: markers.publish
+            go_type: bool
