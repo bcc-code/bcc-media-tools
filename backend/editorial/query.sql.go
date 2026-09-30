@@ -81,22 +81,26 @@ func (q *Queries) GetSession(ctx context.Context, id string) (Session, error) {
 }
 
 const insertMarker = `-- name: InsertMarker :exec
-INSERT INTO markers (id, session_id, sort_order, name, type, start_ms, end_ms, publish, source, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO markers (id, session_id, sort_order, name, contributors, comment, bible_verses, type, start_ms, end_ms, publish_bmm, publish_bcc, source, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `
 
 type InsertMarkerParams struct {
-	ID        string
-	SessionID string
-	SortOrder int64
-	Name      string
-	Type      string
-	StartMs   int64
-	EndMs     int64
-	Publish   bool
-	Source    string
-	CreatedAt int64
-	UpdatedAt int64
+	ID           string
+	SessionID    string
+	SortOrder    int64
+	Name         string
+	Contributors string
+	Comment      string
+	BibleVerses  string
+	Type         string
+	StartMs      int64
+	EndMs        int64
+	PublishBmm   bool
+	PublishBcc   bool
+	Source       string
+	CreatedAt    int64
+	UpdatedAt    int64
 }
 
 func (q *Queries) InsertMarker(ctx context.Context, arg InsertMarkerParams) error {
@@ -105,10 +109,14 @@ func (q *Queries) InsertMarker(ctx context.Context, arg InsertMarkerParams) erro
 		arg.SessionID,
 		arg.SortOrder,
 		arg.Name,
+		arg.Contributors,
+		arg.Comment,
+		arg.BibleVerses,
 		arg.Type,
 		arg.StartMs,
 		arg.EndMs,
-		arg.Publish,
+		arg.PublishBmm,
+		arg.PublishBcc,
 		arg.Source,
 		arg.CreatedAt,
 		arg.UpdatedAt,
@@ -117,7 +125,7 @@ func (q *Queries) InsertMarker(ctx context.Context, arg InsertMarkerParams) erro
 }
 
 const listMarkersForSession = `-- name: ListMarkersForSession :many
-SELECT id, session_id, sort_order, name, type, start_ms, end_ms, publish, source, created_at, updated_at FROM markers
+SELECT id, session_id, sort_order, name, contributors, comment, bible_verses, type, start_ms, end_ms, publish_bmm, publish_bcc, source, created_at, updated_at FROM markers
 WHERE session_id = ?
 ORDER BY sort_order ASC
 `
@@ -136,10 +144,14 @@ func (q *Queries) ListMarkersForSession(ctx context.Context, sessionID string) (
 			&i.SessionID,
 			&i.SortOrder,
 			&i.Name,
+			&i.Contributors,
+			&i.Comment,
+			&i.BibleVerses,
 			&i.Type,
 			&i.StartMs,
 			&i.EndMs,
-			&i.Publish,
+			&i.PublishBmm,
+			&i.PublishBcc,
 			&i.Source,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -193,21 +205,73 @@ func (q *Queries) ListSessions(ctx context.Context) ([]Session, error) {
 	return items, nil
 }
 
-const setMarkerPublish = `-- name: SetMarkerPublish :execrows
-UPDATE markers SET publish = ?, updated_at = ?
+const setMarkerComment = `-- name: SetMarkerComment :execrows
+UPDATE markers SET comment = ?, updated_at = ?
 WHERE id = ? AND session_id = ?
 `
 
-type SetMarkerPublishParams struct {
-	Publish   bool
+type SetMarkerCommentParams struct {
+	Comment   string
 	UpdatedAt int64
 	ID        string
 	SessionID string
 }
 
+func (q *Queries) SetMarkerComment(ctx context.Context, arg SetMarkerCommentParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, setMarkerComment,
+		arg.Comment,
+		arg.UpdatedAt,
+		arg.ID,
+		arg.SessionID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const setMarkerName = `-- name: SetMarkerName :execrows
+UPDATE markers SET name = ?, updated_at = ?
+WHERE id = ? AND session_id = ?
+`
+
+type SetMarkerNameParams struct {
+	Name      string
+	UpdatedAt int64
+	ID        string
+	SessionID string
+}
+
+func (q *Queries) SetMarkerName(ctx context.Context, arg SetMarkerNameParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, setMarkerName,
+		arg.Name,
+		arg.UpdatedAt,
+		arg.ID,
+		arg.SessionID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const setMarkerPublish = `-- name: SetMarkerPublish :execrows
+UPDATE markers SET publish_bmm = ?, publish_bcc = ?, updated_at = ?
+WHERE id = ? AND session_id = ?
+`
+
+type SetMarkerPublishParams struct {
+	PublishBmm bool
+	PublishBcc bool
+	UpdatedAt  int64
+	ID         string
+	SessionID  string
+}
+
 func (q *Queries) SetMarkerPublish(ctx context.Context, arg SetMarkerPublishParams) (int64, error) {
 	result, err := q.db.ExecContext(ctx, setMarkerPublish,
-		arg.Publish,
+		arg.PublishBmm,
+		arg.PublishBcc,
 		arg.UpdatedAt,
 		arg.ID,
 		arg.SessionID,

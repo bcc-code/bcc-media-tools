@@ -5,17 +5,21 @@
 package editorial
 
 type Marker struct {
-	ID        string
-	SessionID string
-	SortOrder int64
-	Name      string
-	Type      string
-	StartMs   int64
-	EndMs     int64
-	Publish   bool
-	Source    string
-	CreatedAt int64
-	UpdatedAt int64
+	ID           string
+	SessionID    string
+	SortOrder    int64
+	Name         string
+	Contributors string
+	Comment      string
+	BibleVerses  string
+	Type         string
+	StartMs      int64
+	EndMs        int64
+	PublishBmm   bool
+	PublishBcc   bool
+	Source       string
+	CreatedAt    int64
+	UpdatedAt    int64
 }
 
 type Session struct {

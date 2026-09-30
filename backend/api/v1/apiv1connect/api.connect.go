@@ -48,9 +48,6 @@ const (
 	// APIServiceGetTranscriptionProcedure is the fully-qualified name of the APIService's
 	// GetTranscription RPC.
 	APIServiceGetTranscriptionProcedure = "/api.v1.APIService/GetTranscription"
-	// APIServiceGetTranscriptionPreviewProcedure is the fully-qualified name of the APIService's
-	// GetTranscriptionPreview RPC.
-	APIServiceGetTranscriptionPreviewProcedure = "/api.v1.APIService/GetTranscriptionPreview"
 	// APIServiceGetShortsPreviewProcedure is the fully-qualified name of the APIService's
 	// GetShortsPreview RPC.
 	APIServiceGetShortsPreviewProcedure = "/api.v1.APIService/GetShortsPreview"
@@ -119,6 +116,12 @@ const (
 	// APIServiceSetEditorialPublishProcedure is the fully-qualified name of the APIService's
 	// SetEditorialPublish RPC.
 	APIServiceSetEditorialPublishProcedure = "/api.v1.APIService/SetEditorialPublish"
+	// APIServiceSetEditorialCommentProcedure is the fully-qualified name of the APIService's
+	// SetEditorialComment RPC.
+	APIServiceSetEditorialCommentProcedure = "/api.v1.APIService/SetEditorialComment"
+	// APIServiceSetEditorialNameProcedure is the fully-qualified name of the APIService's
+	// SetEditorialName RPC.
+	APIServiceSetEditorialNameProcedure = "/api.v1.APIService/SetEditorialName"
 	// APIServiceDeleteEditorialSessionProcedure is the fully-qualified name of the APIService's
 	// DeleteEditorialSession RPC.
 	APIServiceDeleteEditorialSessionProcedure = "/api.v1.APIService/DeleteEditorialSession"
@@ -139,7 +142,6 @@ type APIServiceClient interface {
 	// Per-tool preview endpoints: each enforces its own tool permission, so there
 	// is no generic "preview any asset" endpoint. Editorial delivers its preview
 	// URL inside GetEditorialSession instead.
-	GetTranscriptionPreview(context.Context, *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error)
 	GetShortsPreview(context.Context, *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error)
 	SubmitTranscription(context.Context, *connect.Request[v1.SubmitTranscriptionRequest]) (*connect.Response[v1.Void], error)
 	// BMM
@@ -175,6 +177,8 @@ type APIServiceClient interface {
 	GetEditorialSession(context.Context, *connect.Request[v1.GetEditorialSessionRequest]) (*connect.Response[v1.EditorialSession], error)
 	SaveEditorialSession(context.Context, *connect.Request[v1.SaveEditorialSessionRequest]) (*connect.Response[v1.EditorialSession], error)
 	SetEditorialPublish(context.Context, *connect.Request[v1.SetEditorialPublishRequest]) (*connect.Response[v1.Void], error)
+	SetEditorialComment(context.Context, *connect.Request[v1.SetEditorialCommentRequest]) (*connect.Response[v1.Void], error)
+	SetEditorialName(context.Context, *connect.Request[v1.SetEditorialNameRequest]) (*connect.Response[v1.Void], error)
 	DeleteEditorialSession(context.Context, *connect.Request[v1.DeleteEditorialSessionRequest]) (*connect.Response[v1.Void], error)
 	ImportEditorialMarkers(context.Context, *connect.Request[v1.ImportEditorialMarkersRequest]) (*connect.Response[v1.ImportEditorialMarkersResponse], error)
 }
@@ -218,12 +222,6 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			httpClient,
 			baseURL+APIServiceGetTranscriptionProcedure,
 			connect.WithSchema(aPIServiceMethods.ByName("GetTranscription")),
-			connect.WithClientOptions(opts...),
-		),
-		getTranscriptionPreview: connect.NewClient[v1.GetPreviewRequest, v1.Preview](
-			httpClient,
-			baseURL+APIServiceGetTranscriptionPreviewProcedure,
-			connect.WithSchema(aPIServiceMethods.ByName("GetTranscriptionPreview")),
 			connect.WithClientOptions(opts...),
 		),
 		getShortsPreview: connect.NewClient[v1.GetPreviewRequest, v1.Preview](
@@ -376,6 +374,18 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(aPIServiceMethods.ByName("SetEditorialPublish")),
 			connect.WithClientOptions(opts...),
 		),
+		setEditorialComment: connect.NewClient[v1.SetEditorialCommentRequest, v1.Void](
+			httpClient,
+			baseURL+APIServiceSetEditorialCommentProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("SetEditorialComment")),
+			connect.WithClientOptions(opts...),
+		),
+		setEditorialName: connect.NewClient[v1.SetEditorialNameRequest, v1.Void](
+			httpClient,
+			baseURL+APIServiceSetEditorialNameProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("SetEditorialName")),
+			connect.WithClientOptions(opts...),
+		),
 		deleteEditorialSession: connect.NewClient[v1.DeleteEditorialSessionRequest, v1.Void](
 			httpClient,
 			baseURL+APIServiceDeleteEditorialSessionProcedure,
@@ -393,39 +403,40 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 
 // aPIServiceClient implements APIServiceClient.
 type aPIServiceClient struct {
-	getPermissions          *connect.Client[v1.Void, v1.Permissions]
-	updatePermissions       *connect.Client[v1.SetPermissionsRequest, v1.Void]
-	deletePermissions       *connect.Client[v1.DeletePermissionsRequest, v1.Void]
-	listPermissions         *connect.Client[v1.Void, v1.PermissionsList]
-	getTranscription        *connect.Client[v1.GetTranscriptionReqest, v1.Transcription]
-	getTranscriptionPreview *connect.Client[v1.GetPreviewRequest, v1.Preview]
-	getShortsPreview        *connect.Client[v1.GetPreviewRequest, v1.Preview]
-	submitTranscription     *connect.Client[v1.SubmitTranscriptionRequest, v1.Void]
-	getYears                *connect.Client[v1.GetYearsRequest, v1.GetYearsResponse]
-	getAlbums               *connect.Client[v1.GetAlbumsRequest, v1.AlbumsList]
-	getAlbumTracks          *connect.Client[v1.GetAlbumTracksRequest, v1.TracksList]
-	getPodcastTracks        *connect.Client[v1.GetPodcastTracksRequest, v1.TracksList]
-	getLanguages            *connect.Client[v1.GetAvailableLanguagesRequest, v1.LanguageList]
-	getBMMTranscription     *connect.Client[v1.GetBMMTranscriptionRequest, v1.Transcription]
-	submitShort             *connect.Client[v1.SubmitShortRequest, v1.Void]
-	getExportConfig         *connect.Client[v1.GetExportConfigRequest, v1.GetExportConfigResponse]
-	startExport             *connect.Client[v1.StartExportRequest, v1.StartExportResponse]
-	exportTimedMetadata     *connect.Client[v1.ExportTimedMetadataRequest, v1.Void]
-	resolveAssets           *connect.Client[v1.ResolveAssetsRequest, v1.ResolveAssetsResponse]
-	getVBExportConfig       *connect.Client[v1.GetVBExportConfigRequest, v1.GetVBExportConfigResponse]
-	startVBExport           *connect.Client[v1.StartVBExportRequest, v1.StartVBExportResponse]
-	getExportDestinations   *connect.Client[v1.Void, v1.ExportDestinationsResponse]
-	triggerCantemoAction    *connect.Client[v1.TriggerCantemoActionRequest, v1.Void]
-	finishLiveIngest        *connect.Client[v1.FinishLiveIngestRequest, v1.FinishLiveIngestResponse]
-	vaultSearch             *connect.Client[v1.VaultSearchRequest, v1.VaultSearchResponse]
-	getVaultItem            *connect.Client[v1.GetVaultItemRequest, v1.GetVaultItemResponse]
-	listEditorialSessions   *connect.Client[v1.Void, v1.ListEditorialSessionsResponse]
-	createEditorialSession  *connect.Client[v1.CreateEditorialSessionRequest, v1.EditorialSession]
-	getEditorialSession     *connect.Client[v1.GetEditorialSessionRequest, v1.EditorialSession]
-	saveEditorialSession    *connect.Client[v1.SaveEditorialSessionRequest, v1.EditorialSession]
-	setEditorialPublish     *connect.Client[v1.SetEditorialPublishRequest, v1.Void]
-	deleteEditorialSession  *connect.Client[v1.DeleteEditorialSessionRequest, v1.Void]
-	importEditorialMarkers  *connect.Client[v1.ImportEditorialMarkersRequest, v1.ImportEditorialMarkersResponse]
+	getPermissions         *connect.Client[v1.Void, v1.Permissions]
+	updatePermissions      *connect.Client[v1.SetPermissionsRequest, v1.Void]
+	deletePermissions      *connect.Client[v1.DeletePermissionsRequest, v1.Void]
+	listPermissions        *connect.Client[v1.Void, v1.PermissionsList]
+	getTranscription       *connect.Client[v1.GetTranscriptionReqest, v1.Transcription]
+	getShortsPreview       *connect.Client[v1.GetPreviewRequest, v1.Preview]
+	submitTranscription    *connect.Client[v1.SubmitTranscriptionRequest, v1.Void]
+	getYears               *connect.Client[v1.GetYearsRequest, v1.GetYearsResponse]
+	getAlbums              *connect.Client[v1.GetAlbumsRequest, v1.AlbumsList]
+	getAlbumTracks         *connect.Client[v1.GetAlbumTracksRequest, v1.TracksList]
+	getPodcastTracks       *connect.Client[v1.GetPodcastTracksRequest, v1.TracksList]
+	getLanguages           *connect.Client[v1.GetAvailableLanguagesRequest, v1.LanguageList]
+	getBMMTranscription    *connect.Client[v1.GetBMMTranscriptionRequest, v1.Transcription]
+	submitShort            *connect.Client[v1.SubmitShortRequest, v1.Void]
+	getExportConfig        *connect.Client[v1.GetExportConfigRequest, v1.GetExportConfigResponse]
+	startExport            *connect.Client[v1.StartExportRequest, v1.StartExportResponse]
+	exportTimedMetadata    *connect.Client[v1.ExportTimedMetadataRequest, v1.Void]
+	resolveAssets          *connect.Client[v1.ResolveAssetsRequest, v1.ResolveAssetsResponse]
+	getVBExportConfig      *connect.Client[v1.GetVBExportConfigRequest, v1.GetVBExportConfigResponse]
+	startVBExport          *connect.Client[v1.StartVBExportRequest, v1.StartVBExportResponse]
+	getExportDestinations  *connect.Client[v1.Void, v1.ExportDestinationsResponse]
+	triggerCantemoAction   *connect.Client[v1.TriggerCantemoActionRequest, v1.Void]
+	finishLiveIngest       *connect.Client[v1.FinishLiveIngestRequest, v1.FinishLiveIngestResponse]
+	vaultSearch            *connect.Client[v1.VaultSearchRequest, v1.VaultSearchResponse]
+	getVaultItem           *connect.Client[v1.GetVaultItemRequest, v1.GetVaultItemResponse]
+	listEditorialSessions  *connect.Client[v1.Void, v1.ListEditorialSessionsResponse]
+	createEditorialSession *connect.Client[v1.CreateEditorialSessionRequest, v1.EditorialSession]
+	getEditorialSession    *connect.Client[v1.GetEditorialSessionRequest, v1.EditorialSession]
+	saveEditorialSession   *connect.Client[v1.SaveEditorialSessionRequest, v1.EditorialSession]
+	setEditorialPublish    *connect.Client[v1.SetEditorialPublishRequest, v1.Void]
+	setEditorialComment    *connect.Client[v1.SetEditorialCommentRequest, v1.Void]
+	setEditorialName       *connect.Client[v1.SetEditorialNameRequest, v1.Void]
+	deleteEditorialSession *connect.Client[v1.DeleteEditorialSessionRequest, v1.Void]
+	importEditorialMarkers *connect.Client[v1.ImportEditorialMarkersRequest, v1.ImportEditorialMarkersResponse]
 }
 
 // GetPermissions calls api.v1.APIService.GetPermissions.
@@ -451,11 +462,6 @@ func (c *aPIServiceClient) ListPermissions(ctx context.Context, req *connect.Req
 // GetTranscription calls api.v1.APIService.GetTranscription.
 func (c *aPIServiceClient) GetTranscription(ctx context.Context, req *connect.Request[v1.GetTranscriptionReqest]) (*connect.Response[v1.Transcription], error) {
 	return c.getTranscription.CallUnary(ctx, req)
-}
-
-// GetTranscriptionPreview calls api.v1.APIService.GetTranscriptionPreview.
-func (c *aPIServiceClient) GetTranscriptionPreview(ctx context.Context, req *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error) {
-	return c.getTranscriptionPreview.CallUnary(ctx, req)
 }
 
 // GetShortsPreview calls api.v1.APIService.GetShortsPreview.
@@ -583,6 +589,16 @@ func (c *aPIServiceClient) SetEditorialPublish(ctx context.Context, req *connect
 	return c.setEditorialPublish.CallUnary(ctx, req)
 }
 
+// SetEditorialComment calls api.v1.APIService.SetEditorialComment.
+func (c *aPIServiceClient) SetEditorialComment(ctx context.Context, req *connect.Request[v1.SetEditorialCommentRequest]) (*connect.Response[v1.Void], error) {
+	return c.setEditorialComment.CallUnary(ctx, req)
+}
+
+// SetEditorialName calls api.v1.APIService.SetEditorialName.
+func (c *aPIServiceClient) SetEditorialName(ctx context.Context, req *connect.Request[v1.SetEditorialNameRequest]) (*connect.Response[v1.Void], error) {
+	return c.setEditorialName.CallUnary(ctx, req)
+}
+
 // DeleteEditorialSession calls api.v1.APIService.DeleteEditorialSession.
 func (c *aPIServiceClient) DeleteEditorialSession(ctx context.Context, req *connect.Request[v1.DeleteEditorialSessionRequest]) (*connect.Response[v1.Void], error) {
 	return c.deleteEditorialSession.CallUnary(ctx, req)
@@ -605,7 +621,6 @@ type APIServiceHandler interface {
 	// Per-tool preview endpoints: each enforces its own tool permission, so there
 	// is no generic "preview any asset" endpoint. Editorial delivers its preview
 	// URL inside GetEditorialSession instead.
-	GetTranscriptionPreview(context.Context, *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error)
 	GetShortsPreview(context.Context, *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error)
 	SubmitTranscription(context.Context, *connect.Request[v1.SubmitTranscriptionRequest]) (*connect.Response[v1.Void], error)
 	// BMM
@@ -641,6 +656,8 @@ type APIServiceHandler interface {
 	GetEditorialSession(context.Context, *connect.Request[v1.GetEditorialSessionRequest]) (*connect.Response[v1.EditorialSession], error)
 	SaveEditorialSession(context.Context, *connect.Request[v1.SaveEditorialSessionRequest]) (*connect.Response[v1.EditorialSession], error)
 	SetEditorialPublish(context.Context, *connect.Request[v1.SetEditorialPublishRequest]) (*connect.Response[v1.Void], error)
+	SetEditorialComment(context.Context, *connect.Request[v1.SetEditorialCommentRequest]) (*connect.Response[v1.Void], error)
+	SetEditorialName(context.Context, *connect.Request[v1.SetEditorialNameRequest]) (*connect.Response[v1.Void], error)
 	DeleteEditorialSession(context.Context, *connect.Request[v1.DeleteEditorialSessionRequest]) (*connect.Response[v1.Void], error)
 	ImportEditorialMarkers(context.Context, *connect.Request[v1.ImportEditorialMarkersRequest]) (*connect.Response[v1.ImportEditorialMarkersResponse], error)
 }
@@ -680,12 +697,6 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 		APIServiceGetTranscriptionProcedure,
 		svc.GetTranscription,
 		connect.WithSchema(aPIServiceMethods.ByName("GetTranscription")),
-		connect.WithHandlerOptions(opts...),
-	)
-	aPIServiceGetTranscriptionPreviewHandler := connect.NewUnaryHandler(
-		APIServiceGetTranscriptionPreviewProcedure,
-		svc.GetTranscriptionPreview,
-		connect.WithSchema(aPIServiceMethods.ByName("GetTranscriptionPreview")),
 		connect.WithHandlerOptions(opts...),
 	)
 	aPIServiceGetShortsPreviewHandler := connect.NewUnaryHandler(
@@ -838,6 +849,18 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(aPIServiceMethods.ByName("SetEditorialPublish")),
 		connect.WithHandlerOptions(opts...),
 	)
+	aPIServiceSetEditorialCommentHandler := connect.NewUnaryHandler(
+		APIServiceSetEditorialCommentProcedure,
+		svc.SetEditorialComment,
+		connect.WithSchema(aPIServiceMethods.ByName("SetEditorialComment")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aPIServiceSetEditorialNameHandler := connect.NewUnaryHandler(
+		APIServiceSetEditorialNameProcedure,
+		svc.SetEditorialName,
+		connect.WithSchema(aPIServiceMethods.ByName("SetEditorialName")),
+		connect.WithHandlerOptions(opts...),
+	)
 	aPIServiceDeleteEditorialSessionHandler := connect.NewUnaryHandler(
 		APIServiceDeleteEditorialSessionProcedure,
 		svc.DeleteEditorialSession,
@@ -862,8 +885,6 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceListPermissionsHandler.ServeHTTP(w, r)
 		case APIServiceGetTranscriptionProcedure:
 			aPIServiceGetTranscriptionHandler.ServeHTTP(w, r)
-		case APIServiceGetTranscriptionPreviewProcedure:
-			aPIServiceGetTranscriptionPreviewHandler.ServeHTTP(w, r)
 		case APIServiceGetShortsPreviewProcedure:
 			aPIServiceGetShortsPreviewHandler.ServeHTTP(w, r)
 		case APIServiceSubmitTranscriptionProcedure:
@@ -914,6 +935,10 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceSaveEditorialSessionHandler.ServeHTTP(w, r)
 		case APIServiceSetEditorialPublishProcedure:
 			aPIServiceSetEditorialPublishHandler.ServeHTTP(w, r)
+		case APIServiceSetEditorialCommentProcedure:
+			aPIServiceSetEditorialCommentHandler.ServeHTTP(w, r)
+		case APIServiceSetEditorialNameProcedure:
+			aPIServiceSetEditorialNameHandler.ServeHTTP(w, r)
 		case APIServiceDeleteEditorialSessionProcedure:
 			aPIServiceDeleteEditorialSessionHandler.ServeHTTP(w, r)
 		case APIServiceImportEditorialMarkersProcedure:
@@ -945,10 +970,6 @@ func (UnimplementedAPIServiceHandler) ListPermissions(context.Context, *connect.
 
 func (UnimplementedAPIServiceHandler) GetTranscription(context.Context, *connect.Request[v1.GetTranscriptionReqest]) (*connect.Response[v1.Transcription], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetTranscription is not implemented"))
-}
-
-func (UnimplementedAPIServiceHandler) GetTranscriptionPreview(context.Context, *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetTranscriptionPreview is not implemented"))
 }
 
 func (UnimplementedAPIServiceHandler) GetShortsPreview(context.Context, *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error) {
@@ -1049,6 +1070,14 @@ func (UnimplementedAPIServiceHandler) SaveEditorialSession(context.Context, *con
 
 func (UnimplementedAPIServiceHandler) SetEditorialPublish(context.Context, *connect.Request[v1.SetEditorialPublishRequest]) (*connect.Response[v1.Void], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.SetEditorialPublish is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) SetEditorialComment(context.Context, *connect.Request[v1.SetEditorialCommentRequest]) (*connect.Response[v1.Void], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.SetEditorialComment is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) SetEditorialName(context.Context, *connect.Request[v1.SetEditorialNameRequest]) (*connect.Response[v1.Void], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.SetEditorialName is not implemented"))
 }
 
 func (UnimplementedAPIServiceHandler) DeleteEditorialSession(context.Context, *connect.Request[v1.DeleteEditorialSessionRequest]) (*connect.Response[v1.Void], error) {

@@ -450,16 +450,25 @@ message EditorialMarker {
   string id = 1;
   // display order in the table (assigned server-side from list position on save)
   int32 sort_order = 2;
-  // "Hvem eller hva" — person/thing
+  // "Tittel" — the marker title (chapter title on import)
   string name = 3;
-  // appell / vitnesbyrd / sang / ...
+  // vitnesbyrd / sang / tale / ...
   string type = 4;
   int64 start_ms = 5;
   int64 end_ms = 6;
-  // Ja/Nei publish toggle
-  bool publish = 7;
+  reserved 7; // was: bool publish — split into publish_bmm / publish_bcc
+  reserved "publish";
   // "import" (from Mediabanken chapters) or "manual"
   string source = 8;
+  // "Medvirkende" — who takes part in the marker
+  string contributors = 9;
+  // optional free-text editorial comment
+  string comment = 10;
+  // optional free-text bible verse references (e.g. "John 3:16; Rom 8:1-4")
+  string bible_verses = 11;
+  // Ja/Nei publish toggles, one per publishing target
+  bool publish_bmm = 12;
+  bool publish_bcc = 13;
 }
 
 // A review session tied to a single Mediabanken asset.
@@ -512,12 +521,30 @@ message ImportEditorialMarkersResponse {
   repeated EditorialMarker markers = 1;
 }
 
-// Toggle a single marker's publish flag (Ja/Nei). This is the write path for
-// reviewers who may accept/reject but not edit markers (the simple view).
+// Set a single marker's publish flags (Ja/Nei per target). This is the write
+// path for reviewers who may accept/reject but not edit markers (simple view).
 message SetEditorialPublishRequest {
   string session_id = 1;
   string marker_id = 2;
-  bool publish = 3;
+  bool publish_bmm = 3;
+  bool publish_bcc = 4;
+}
+
+// Update a single marker's free-text comment. Like SetEditorialPublish this is
+// a write path available in the simple view (no edit rights required).
+message SetEditorialCommentRequest {
+  string session_id = 1;
+  string marker_id = 2;
+  string comment = 3;
+}
+
+// Update a single marker's title/name without touching anything else. This is
+// the write path for editing a row's title from the simple view; unlike
+// comment/publish it requires edit rights.
+message SetEditorialNameRequest {
+  string session_id = 1;
+  string marker_id = 2;
+  string name = 3;
 }
 
 service APIService {
@@ -532,7 +559,6 @@ service APIService {
   // Per-tool preview endpoints: each enforces its own tool permission, so there
   // is no generic "preview any asset" endpoint. Editorial delivers its preview
   // URL inside GetEditorialSession instead.
-  rpc GetTranscriptionPreview(GetPreviewRequest) returns (Preview) {}
   rpc GetShortsPreview(GetPreviewRequest) returns (Preview) {}
   rpc SubmitTranscription(SubmitTranscriptionRequest) returns (Void) {}
 
@@ -577,6 +603,8 @@ service APIService {
   rpc GetEditorialSession(GetEditorialSessionRequest) returns (EditorialSession) {}
   rpc SaveEditorialSession(SaveEditorialSessionRequest) returns (EditorialSession) {}
   rpc SetEditorialPublish(SetEditorialPublishRequest) returns (Void) {}
+  rpc SetEditorialComment(SetEditorialCommentRequest) returns (Void) {}
+  rpc SetEditorialName(SetEditorialNameRequest) returns (Void) {}
   rpc DeleteEditorialSession(DeleteEditorialSessionRequest) returns (Void) {}
   rpc ImportEditorialMarkers(ImportEditorialMarkersRequest) returns (ImportEditorialMarkersResponse) {}
 }

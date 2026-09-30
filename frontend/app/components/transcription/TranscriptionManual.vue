@@ -4,7 +4,7 @@ const open = defineModel<boolean>("open", { required: true });
 const keyboardShortcuts = {
     "↑": "transcription.goToPreviousSegment",
     "↓": "transcription.goToNextSegment",
-    tab: "transcription.goToNextWord",
+    tab: "transcription.goToNextSegmentField",
 };
 </script>
 

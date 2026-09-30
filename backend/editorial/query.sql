@@ -32,9 +32,17 @@ DELETE FROM markers
 WHERE session_id = ?;
 
 -- name: InsertMarker :exec
-INSERT INTO markers (id, session_id, sort_order, name, type, start_ms, end_ms, publish, source, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO markers (id, session_id, sort_order, name, contributors, comment, bible_verses, type, start_ms, end_ms, publish_bmm, publish_bcc, source, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 -- name: SetMarkerPublish :execrows
-UPDATE markers SET publish = ?, updated_at = ?
+UPDATE markers SET publish_bmm = ?, publish_bcc = ?, updated_at = ?
+WHERE id = ? AND session_id = ?;
+
+-- name: SetMarkerComment :execrows
+UPDATE markers SET comment = ?, updated_at = ?
+WHERE id = ? AND session_id = ?;
+
+-- name: SetMarkerName :execrows
+UPDATE markers SET name = ?, updated_at = ?
 WHERE id = ? AND session_id = ?;

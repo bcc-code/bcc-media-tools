@@ -3,11 +3,13 @@ import type {
     EditorialSession,
     EditorialMarker,
 } from "~~/src/gen/api/v1/api_pb";
+import type { Timestamp } from "@bufbuild/protobuf/wkt";
+import { timestampDate, timestampFromDate } from "@bufbuild/protobuf/wkt";
 
 const route = useRoute("editorial-id");
 const sessionId = computed(() => route.params.id as string);
 
-const { t } = useI18n();
+const { t, te } = useI18n();
 const api = useAPI();
 const perms = usePermissions();
 const toaster = useToast();
@@ -25,17 +27,43 @@ onMounted(() =>
     }),
 );
 
-const TYPE_OPTIONS = ["appell", "vitnesbyrd", "sang", "tale", "bønn", "annet"];
+const TYPE_OPTIONS = [
+    "vitnesbyrd",
+    "sang",
+    "allsang",
+    "tale",
+    "bønn",
+    "tydning",
+    "programleder",
+    "video",
+    "intervju",
+    "annet",
+];
+
+// Translated type label; falls back to the raw value for legacy types.
+function typeLabel(type: string): string {
+    const key = `editorial.types.${type}`;
+    if (te(key)) return t(key);
+    return type ? type.charAt(0).toUpperCase() + type.slice(1) : type;
+}
+
+const typeItems = computed(() =>
+    TYPE_OPTIONS.map((value) => ({ label: typeLabel(value), value })),
+);
 
 // A single editable row. Start/End are kept as "HH:MM:SS" strings so text
 // editing is natural; they're parsed to milliseconds only at save/preview.
 interface Row {
     id: string;
     name: string;
+    contributors: string;
+    bibleVerses: string;
+    comment: string;
     type: string;
     start: string;
     end: string;
-    publish: boolean;
+    publishBmm: boolean;
+    publishBcc: boolean;
     source: string;
 }
 
@@ -70,6 +98,16 @@ function formatMs(ms: number): string {
     return `${pad(h)}:${pad(m)}:${pad(s)}`;
 }
 
+const dateTimeFormatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Oslo",
+    dateStyle: "medium",
+    timeStyle: "short",
+});
+function formatDateTime(ts?: Timestamp): string {
+    if (!ts) return "";
+    return dateTimeFormatter.format(timestampDate(ts));
+}
+
 // Parses "HH:MM:SS(.mmm)", "MM:SS" or "SS" into milliseconds; invalid → 0.
 function parseTc(tc: string): number {
     const parts = tc
@@ -86,31 +124,20 @@ function toRow(m: EditorialMarker): Row {
     return {
         id: m.id,
         name: m.name,
+        contributors: m.contributors,
+        bibleVerses: m.bibleVerses,
+        comment: m.comment,
         type: m.type,
         start: formatMs(Number(m.startMs)),
         end: formatMs(Number(m.endMs)),
-        publish: m.publish,
+        publishBmm: m.publishBmm,
+        publishBcc: m.publishBcc,
         source: m.source || "manual",
     };
 }
 
 function durationOf(row: Row): string {
     return formatMs(parseTc(row.end) - parseTc(row.start));
-}
-
-function typeVariant(
-    type: string,
-): "success" | "warning" | "info" | "error" | "neutral" {
-    switch (type) {
-        case "appell":
-            return "info";
-        case "vitnesbyrd":
-            return "success";
-        case "sang":
-            return "warning";
-        default:
-            return "neutral";
-    }
 }
 
 const previewUrl = ref<string>();
@@ -184,20 +211,115 @@ watch(
     { deep: true },
 );
 
+// ── Auto-save status ──────────────────────────────────────
+// Simple-mode edits persist immediately (no Save button), so surface an inline
+// "Saving…/Saved" indicator. `tracked` wraps each write; concurrent writes are
+// counted so the indicator only settles once the last one lands.
+type SaveStatus = "idle" | "saving" | "saved" | "error";
+const saveStatus = ref<SaveStatus>("idle");
+let inFlight = 0;
+let inFlightError = false;
+let saveResetTimer: ReturnType<typeof setTimeout> | undefined;
+
+async function tracked<T>(fn: () => Promise<T>): Promise<T> {
+    if (saveResetTimer) {
+        clearTimeout(saveResetTimer);
+        saveResetTimer = undefined;
+    }
+    inFlight++;
+    saveStatus.value = "saving";
+    try {
+        return await fn();
+    } catch (e) {
+        inFlightError = true;
+        throw e;
+    } finally {
+        inFlight--;
+        if (inFlight === 0) {
+            const errored = inFlightError;
+            inFlightError = false;
+            // These RPCs return Void; reflect the server's touch of updated_at
+            // locally so "Last updated" tracks simple-mode edits without a reload.
+            if (!errored && session.value) {
+                session.value.updatedAt = timestampFromDate(new Date());
+            }
+            saveStatus.value = errored ? "error" : "saved";
+            saveResetTimer = setTimeout(
+                () => {
+                    saveStatus.value = "idle";
+                    saveResetTimer = undefined;
+                },
+                errored ? 4000 : 2000,
+            );
+        }
+    }
+}
+
 // ── Publish toggle ────────────────────────────────────────
-async function onPublishToggle(row: Row, value: boolean) {
-    row.publish = value;
+async function onPublishToggle(
+    row: Row,
+    target: "bmm" | "bcc",
+    value: boolean,
+) {
+    if (target === "bmm") row.publishBmm = value;
+    else row.publishBcc = value;
     // In edit mode the change is persisted on Save. In simple mode there is no
-    // Save button, so persist the single toggle immediately.
+    // Save button, so persist immediately (both flags, from the row's state).
     if (effectiveMode.value === "edit") return;
     try {
-        await api.setEditorialPublish({
-            sessionId: sessionId.value,
-            markerId: row.id,
-            publish: value,
-        });
+        await tracked(() =>
+            api.setEditorialPublish({
+                sessionId: sessionId.value,
+                markerId: row.id,
+                publishBmm: row.publishBmm,
+                publishBcc: row.publishBcc,
+            }),
+        );
     } catch {
-        row.publish = !value;
+        if (target === "bmm") row.publishBmm = !value;
+        else row.publishBcc = !value;
+        toaster.create({ title: t("editorial.saveFailed"), type: "error" });
+    }
+}
+
+// ── Row title/name (editable in both views, edit rights required) ──
+const nameBeforeEdit = ref("");
+
+// Edit mode persists on the batch Save; simple mode writes immediately.
+async function persistName(row: Row) {
+    if (effectiveMode.value === "edit") return;
+    if (!row.id || row.name === nameBeforeEdit.value) return;
+    try {
+        await tracked(() =>
+            api.setEditorialName({
+                sessionId: sessionId.value,
+                markerId: row.id,
+                name: row.name,
+            }),
+        );
+    } catch {
+        row.name = nameBeforeEdit.value;
+        toaster.create({ title: t("editorial.saveFailed"), type: "error" });
+    }
+}
+
+// ── Comment (editable in both views) ──────────────────────
+const commentBeforeEdit = ref("");
+
+// Edit mode persists on the batch Save; simple mode writes immediately.
+async function persistComment(row: Row) {
+    if (effectiveMode.value === "edit") return;
+    if (!row.id || row.comment === commentBeforeEdit.value) return;
+    try {
+        await tracked(() =>
+            api.setEditorialComment({
+                sessionId: sessionId.value,
+                markerId: row.id,
+                comment: row.comment,
+            }),
+        );
+    } catch {
+        row.comment = commentBeforeEdit.value;
         toaster.create({ title: t("editorial.saveFailed"), type: "error" });
     }
 }
@@ -207,10 +329,14 @@ function addRow() {
     rows.value.push({
         id: "",
         name: "",
+        contributors: "",
+        bibleVerses: "",
+        comment: "",
         type: "",
         start: "00:00:00",
         end: "00:00:00",
-        publish: false,
+        publishBmm: false,
+        publishBcc: false,
         source: "manual",
     });
 }
@@ -219,11 +345,36 @@ function removeRow(i: number) {
     rows.value.splice(i, 1);
 }
 
-function move(i: number, delta: number) {
-    const j = i + delta;
-    if (j < 0 || j >= rows.value.length) return;
-    const [item] = rows.value.splice(i, 1);
-    rows.value.splice(j, 0, item!);
+// Drag-to-reorder. Only the grip handle is draggable so the row's inputs stay
+// selectable; the whole row is used as the drag image for clear feedback.
+const dragIndex = ref<number | null>(null);
+const dragOverIndex = ref<number | null>(null);
+
+function onDragStart(i: number, e: DragEvent) {
+    dragIndex.value = i;
+    if (!e.dataTransfer) return;
+    e.dataTransfer.effectAllowed = "move";
+    // Firefox only starts a drag once data is set.
+    e.dataTransfer.setData("text/plain", String(i));
+    const tr = (e.target as HTMLElement).closest("tr");
+    if (tr) e.dataTransfer.setDragImage(tr, 24, 16);
+}
+
+function onDragOver(i: number) {
+    if (dragIndex.value !== null) dragOverIndex.value = i;
+}
+
+function onDrop(i: number) {
+    const from = dragIndex.value;
+    onDragEnd();
+    if (from === null || from === i) return;
+    const [item] = rows.value.splice(from, 1);
+    rows.value.splice(i, 0, item!);
+}
+
+function onDragEnd() {
+    dragIndex.value = null;
+    dragOverIndex.value = null;
 }
 
 // ── Backend actions ───────────────────────────────────────
@@ -282,10 +433,14 @@ async function save() {
                 id: r.id,
                 sortOrder: i,
                 name: r.name,
+                contributors: r.contributors,
+                bibleVerses: r.bibleVerses,
+                comment: r.comment,
                 type: r.type,
                 startMs: BigInt(parseTc(r.start)),
                 endMs: BigInt(parseTc(r.end)),
-                publish: r.publish,
+                publishBmm: r.publishBmm,
+                publishBcc: r.publishBcc,
                 source: r.source,
             })),
         });
@@ -362,31 +517,72 @@ onBeforeRouteLeave(() => {
                 >
                     {{ session?.VXID }}
                 </p>
+                <p
+                    v-if="session?.updatedAt"
+                    class="text-caption-1 text-text-hint mt-1"
+                >
+                    {{
+                        t("editorial.lastUpdated", {
+                            date: formatDateTime(session.updatedAt),
+                        })
+                    }}
+                </p>
             </div>
 
             <div
-                v-if="canEdit"
-                class="mb-6 flex items-center justify-between gap-3"
+                v-if="canEdit || saveStatus !== 'idle'"
+                class="mb-6 flex items-center gap-3"
             >
                 <DesignSegmentGroup
+                    v-if="canEdit"
                     v-model="modeModel"
                     :items="modeItems"
                     class="border-border-1 border"
                 />
-                <div class="flex items-center gap-2">
-                    <DesignMenu
-                        :items="menuItems"
-                        :trigger-label="t('editorial.moreActions')"
-                        @select="onMenuSelect"
-                    />
-                    <DesignButton
-                        v-if="effectiveMode === 'edit'"
-                        icon="tabler:device-floppy"
-                        :loading="saving"
-                        @click="save"
+                <div class="ml-auto flex items-center gap-3">
+                    <span
+                        v-if="saveStatus !== 'idle'"
+                        class="text-caption-1 flex items-center gap-1.5"
+                        :class="
+                            saveStatus === 'error'
+                                ? 'text-semantic-error'
+                                : 'text-text-hint'
+                        "
                     >
-                        {{ t("editorial.save") }}
-                    </DesignButton>
+                        <template v-if="saveStatus === 'saving'">
+                            <Icon
+                                name="svg-spinners:ring-resize"
+                                class="size-4"
+                            />
+                            {{ t("editorial.saving") }}
+                        </template>
+                        <template v-else-if="saveStatus === 'saved'">
+                            <Icon
+                                name="tabler:check"
+                                class="text-semantic-success size-4"
+                            />
+                            {{ t("editorial.saved") }}
+                        </template>
+                        <template v-else>
+                            <Icon name="tabler:alert-triangle" class="size-4" />
+                            {{ t("editorial.saveFailed") }}
+                        </template>
+                    </span>
+                    <template v-if="canEdit">
+                        <DesignMenu
+                            :items="menuItems"
+                            :trigger-label="t('editorial.moreActions')"
+                            @select="onMenuSelect"
+                        />
+                        <DesignButton
+                            v-if="effectiveMode === 'edit'"
+                            icon="tabler:device-floppy"
+                            :loading="saving"
+                            @click="save"
+                        >
+                            {{ t("editorial.save") }}
+                        </DesignButton>
+                    </template>
                 </div>
             </div>
 
@@ -410,7 +606,22 @@ onBeforeRouteLeave(() => {
                                     <th
                                         class="border-border-1 border-b py-2 pr-2 pl-3 font-normal"
                                     >
-                                        {{ t("editorial.col.name") }}
+                                        {{ t("editorial.col.title") }}
+                                    </th>
+                                    <th
+                                        class="border-border-1 border-b px-2 py-2 font-normal"
+                                    >
+                                        {{ t("editorial.col.contributors") }}
+                                    </th>
+                                    <th
+                                        class="border-border-1 border-b px-2 py-2 font-normal"
+                                    >
+                                        {{ t("editorial.col.bibleVerses") }}
+                                    </th>
+                                    <th
+                                        class="border-border-1 border-b px-2 py-2 font-normal"
+                                    >
+                                        {{ t("editorial.col.duration") }}
                                     </th>
                                     <th
                                         class="border-border-1 border-b px-2 py-2 font-normal"
@@ -426,12 +637,17 @@ onBeforeRouteLeave(() => {
                                     <th
                                         class="border-border-1 border-b px-2 py-2 font-normal"
                                     >
-                                        {{ t("editorial.col.duration") }}
+                                        {{ t("editorial.col.comment") }}
                                     </th>
                                     <th
                                         class="border-border-1 border-b px-2 py-2 text-center font-normal"
                                     >
-                                        {{ t("editorial.col.publish") }}
+                                        {{ t("editorial.col.publishBmm") }}
+                                    </th>
+                                    <th
+                                        class="border-border-1 border-b px-2 py-2 text-center font-normal"
+                                    >
+                                        {{ t("editorial.col.publishBcc") }}
                                     </th>
                                     <th
                                         v-if="effectiveMode === 'edit'"
@@ -444,11 +660,18 @@ onBeforeRouteLeave(() => {
                                     v-for="(row, i) in rows"
                                     :key="row.id || `new-${i}`"
                                     class="[&>td]:border-border-1/50 transition-colors [&>td]:border-b"
-                                    :class="
+                                    :class="[
                                         i === activeIndex
                                             ? 'bg-primary-default/10'
-                                            : ''
-                                    "
+                                            : '',
+                                        i === dragIndex ? 'opacity-40' : '',
+                                        dragOverIndex === i && dragIndex !== i
+                                            ? '[&>td]:border-t-primary-default [&>td]:border-t'
+                                            : '',
+                                    ]"
+                                    @dragover.prevent="onDragOver(i)"
+                                    @drop.prevent="onDrop(i)"
+                                    @dragend="onDragEnd"
                                 >
                                     <td class="py-2 pl-2">
                                         <DesignButton
@@ -456,13 +679,16 @@ onBeforeRouteLeave(() => {
                                             size="small"
                                             icon="tabler:player-play"
                                             :disabled="!previewUrl"
+                                            class="border-border-1 border"
                                             @click="preview(row)"
                                         />
                                     </td>
                                     <td class="py-2 pr-2 pl-3">
                                         <DesignInput
-                                            v-if="effectiveMode === 'edit'"
+                                            v-if="canEdit"
                                             v-model="row.name"
+                                            @focusin="nameBeforeEdit = row.name"
+                                            @change="persistName(row)"
                                         />
                                         <span
                                             v-else
@@ -472,17 +698,42 @@ onBeforeRouteLeave(() => {
                                         </span>
                                     </td>
                                     <td class="px-2 py-2">
+                                        <DesignInput
+                                            v-if="effectiveMode === 'edit'"
+                                            v-model="row.contributors"
+                                        />
+                                        <span
+                                            v-else
+                                            class="text-body-3 text-text-muted"
+                                        >
+                                            {{ row.contributors || "—" }}
+                                        </span>
+                                    </td>
+                                    <td class="px-2 py-2">
+                                        <DesignInput
+                                            v-if="effectiveMode === 'edit'"
+                                            v-model="row.bibleVerses"
+                                        />
+                                        <span
+                                            v-else
+                                            class="text-body-3 text-text-muted tabular-nums"
+                                        >
+                                            {{ row.bibleVerses || "—" }}
+                                        </span>
+                                    </td>
+                                    <td
+                                        class="text-body-3 text-text-muted px-2 py-2 tabular-nums"
+                                    >
+                                        {{ durationOf(row) }}
+                                    </td>
+                                    <td class="px-2 py-2">
                                         <DesignSelect
                                             v-if="effectiveMode === 'edit'"
                                             v-model="row.type"
-                                            :items="TYPE_OPTIONS"
+                                            :items="typeItems"
                                         />
-                                        <DesignBadge
-                                            v-else-if="row.type"
-                                            :variant="typeVariant(row.type)"
-                                            class="capitalize"
-                                        >
-                                            {{ row.type }}
+                                        <DesignBadge v-else-if="row.type">
+                                            {{ typeLabel(row.type) }}
                                         </DesignBadge>
                                         <span
                                             v-else
@@ -504,16 +755,38 @@ onBeforeRouteLeave(() => {
                                         </div>
                                     </td>
                                     <td
-                                        class="text-body-3 text-text-muted px-2 py-2 tabular-nums"
+                                        class="px-2 py-2"
+                                        @focusin="
+                                            commentBeforeEdit = row.comment
+                                        "
+                                        @change="persistComment(row)"
                                     >
-                                        {{ durationOf(row) }}
+                                        <DesignInput v-model="row.comment" />
                                     </td>
                                     <td class="px-2 py-2">
                                         <div class="flex justify-center">
                                             <DesignSwitch
-                                                :model-value="row.publish"
+                                                :model-value="row.publishBmm"
                                                 @update:model-value="
-                                                    onPublishToggle(row, $event)
+                                                    onPublishToggle(
+                                                        row,
+                                                        'bmm',
+                                                        $event,
+                                                    )
+                                                "
+                                            />
+                                        </div>
+                                    </td>
+                                    <td class="px-2 py-2">
+                                        <div class="flex justify-center">
+                                            <DesignSwitch
+                                                :model-value="row.publishBcc"
+                                                @update:model-value="
+                                                    onPublishToggle(
+                                                        row,
+                                                        'bcc',
+                                                        $event,
+                                                    )
                                                 "
                                             />
                                         </div>
@@ -523,22 +796,23 @@ onBeforeRouteLeave(() => {
                                         class="py-2 pl-2"
                                     >
                                         <div class="flex items-center gap-0.5">
-                                            <DesignButton
-                                                variant="tertiary"
-                                                size="small"
-                                                icon="tabler:chevron-up"
-                                                :disabled="i === 0"
-                                                @click="move(i, -1)"
-                                            />
-                                            <DesignButton
-                                                variant="tertiary"
-                                                size="small"
-                                                icon="tabler:chevron-down"
-                                                :disabled="
-                                                    i === rows.length - 1
+                                            <button
+                                                type="button"
+                                                :title="t('editorial.reorder')"
+                                                :aria-label="
+                                                    t('editorial.reorder')
                                                 "
-                                                @click="move(i, 1)"
-                                            />
+                                                draggable="true"
+                                                class="text-text-hint hover:text-text-default hover:bg-surface-indent flex cursor-grab items-center rounded-2xl p-1.5 active:cursor-grabbing"
+                                                @dragstart="
+                                                    onDragStart(i, $event)
+                                                "
+                                            >
+                                                <Icon
+                                                    name="tabler:grip-vertical"
+                                                    class="size-4"
+                                                />
+                                            </button>
                                             <DesignButton
                                                 variant="tertiary"
                                                 intent="danger"
@@ -598,14 +872,16 @@ onBeforeRouteLeave(() => {
                                 >
                                     {{ activeMarker.name || "—" }}
                                 </span>
-                                <DesignBadge
-                                    v-if="activeMarker.type"
-                                    :variant="typeVariant(activeMarker.type)"
-                                    class="capitalize"
-                                >
-                                    {{ activeMarker.type }}
+                                <DesignBadge v-if="activeMarker.type">
+                                    {{ typeLabel(activeMarker.type) }}
                                 </DesignBadge>
                             </div>
+                            <p
+                                v-if="activeMarker.contributors"
+                                class="text-body-3 text-text-muted mt-1 truncate"
+                            >
+                                {{ activeMarker.contributors }}
+                            </p>
                             <DesignSlider
                                 v-model="scrubMs"
                                 :min="parseTc(activeMarker.start)"

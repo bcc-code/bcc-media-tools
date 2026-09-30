@@ -100,7 +100,7 @@ func TestEditorialSaveSessionReplacesMarkers(t *testing.T) {
 
 	// First save: two new markers (empty IDs → generated).
 	saved := saveTestSession(t, api, sess.Id, "renamed", []*apiv1.EditorialMarker{
-		{Name: "Speaker A", Type: "appell", StartMs: 1000, EndMs: 5000, Publish: true, Source: editorial.SourceImport},
+		{Name: "Speaker A", Contributors: "Alice, Bob", Comment: "double-check timing", BibleVerses: "John 3:16; Rom 8:1-4", Type: "tale", StartMs: 1000, EndMs: 5000, PublishBmm: true, Source: editorial.SourceImport},
 		{Name: "Song", Type: "sang", StartMs: 6000, EndMs: 9000},
 	})
 	assert.Equal(t, "renamed", saved.Title)
@@ -108,7 +108,11 @@ func TestEditorialSaveSessionReplacesMarkers(t *testing.T) {
 	assert.NotEmpty(t, saved.Markers[0].Id)
 	assert.Equal(t, int32(0), saved.Markers[0].SortOrder)
 	assert.Equal(t, int32(1), saved.Markers[1].SortOrder)
-	assert.True(t, saved.Markers[0].Publish)
+	assert.Equal(t, "Alice, Bob", saved.Markers[0].Contributors)
+	assert.Equal(t, "double-check timing", saved.Markers[0].Comment)
+	assert.Equal(t, "John 3:16; Rom 8:1-4", saved.Markers[0].BibleVerses)
+	assert.True(t, saved.Markers[0].PublishBmm)
+	assert.False(t, saved.Markers[0].PublishBcc)
 	assert.Equal(t, editorial.SourceImport, saved.Markers[0].Source)
 	// Missing source defaults to manual.
 	assert.Equal(t, editorial.SourceManual, saved.Markers[1].Source)
@@ -148,19 +152,21 @@ func TestEditorialSetPublish(t *testing.T) {
 	sess := createTestSession(t, api, "VX-9", "stream")
 	saved := saveTestSession(t, api, sess.Id, "t", []*apiv1.EditorialMarker{
 		{Name: "m1", StartMs: 0, EndMs: 1},
-		{Name: "m2", StartMs: 2, EndMs: 3, Publish: true},
+		{Name: "m2", StartMs: 2, EndMs: 3, PublishBmm: true, PublishBcc: true},
 	})
 
 	_, err := api.SetEditorialPublish(ctx, connect.NewRequest(&apiv1.SetEditorialPublishRequest{
-		SessionId: sess.Id, MarkerId: saved.Markers[0].Id, Publish: true,
+		SessionId: sess.Id, MarkerId: saved.Markers[0].Id, PublishBmm: true, PublishBcc: false,
 	}))
 	require.NoError(t, err)
 
 	got, err := api.loadSession(ctx, sess.Id)
 	require.NoError(t, err)
-	assert.True(t, got.Markers[0].Publish)
+	assert.True(t, got.Markers[0].PublishBmm)
+	assert.False(t, got.Markers[0].PublishBcc)
 	// The other marker is untouched.
-	assert.True(t, got.Markers[1].Publish)
+	assert.True(t, got.Markers[1].PublishBmm)
+	assert.True(t, got.Markers[1].PublishBcc)
 	assert.Equal(t, "m1", got.Markers[0].Name)
 }
 
@@ -168,7 +174,69 @@ func TestEditorialSetPublishNotFound(t *testing.T) {
 	api := newTestEditorialAPI(t)
 	sess := createTestSession(t, api, "VX-9", "stream")
 	_, err := api.SetEditorialPublish(context.Background(), connect.NewRequest(&apiv1.SetEditorialPublishRequest{
-		SessionId: sess.Id, MarkerId: "no-such-marker", Publish: true,
+		SessionId: sess.Id, MarkerId: "no-such-marker", PublishBmm: true, PublishBcc: true,
+	}))
+	requireNotFound(t, err)
+}
+
+func TestEditorialSetComment(t *testing.T) {
+	api := newTestEditorialAPI(t)
+	ctx := context.Background()
+	sess := createTestSession(t, api, "VX-9", "stream")
+	saved := saveTestSession(t, api, sess.Id, "t", []*apiv1.EditorialMarker{
+		{Name: "m1", StartMs: 0, EndMs: 1, PublishBmm: true},
+		{Name: "m2", StartMs: 2, EndMs: 3, Comment: "keep"},
+	})
+
+	_, err := api.SetEditorialComment(ctx, connect.NewRequest(&apiv1.SetEditorialCommentRequest{
+		SessionId: sess.Id, MarkerId: saved.Markers[0].Id, Comment: "check audio",
+	}))
+	require.NoError(t, err)
+
+	got, err := api.loadSession(ctx, sess.Id)
+	require.NoError(t, err)
+	assert.Equal(t, "check audio", got.Markers[0].Comment)
+	// Other fields and markers are untouched.
+	assert.Equal(t, "m1", got.Markers[0].Name)
+	assert.True(t, got.Markers[0].PublishBmm)
+	assert.Equal(t, "keep", got.Markers[1].Comment)
+}
+
+func TestEditorialSetCommentNotFound(t *testing.T) {
+	api := newTestEditorialAPI(t)
+	sess := createTestSession(t, api, "VX-9", "stream")
+	_, err := api.SetEditorialComment(context.Background(), connect.NewRequest(&apiv1.SetEditorialCommentRequest{
+		SessionId: sess.Id, MarkerId: "no-such-marker", Comment: "x",
+	}))
+	requireNotFound(t, err)
+}
+
+func TestEditorialSetName(t *testing.T) {
+	api := newTestEditorialAPI(t)
+	ctx := context.Background()
+	sess := createTestSession(t, api, "VX-9", "stream")
+	saved := saveTestSession(t, api, sess.Id, "t", []*apiv1.EditorialMarker{
+		{Name: "old", Comment: "c", StartMs: 0, EndMs: 1},
+		{Name: "other", StartMs: 2, EndMs: 3},
+	})
+
+	_, err := api.SetEditorialName(ctx, connect.NewRequest(&apiv1.SetEditorialNameRequest{
+		SessionId: sess.Id, MarkerId: saved.Markers[0].Id, Name: "new",
+	}))
+	require.NoError(t, err)
+
+	got, err := api.loadSession(ctx, sess.Id)
+	require.NoError(t, err)
+	assert.Equal(t, "new", got.Markers[0].Name)
+	assert.Equal(t, "c", got.Markers[0].Comment)
+	assert.Equal(t, "other", got.Markers[1].Name)
+}
+
+func TestEditorialSetNameNotFound(t *testing.T) {
+	api := newTestEditorialAPI(t)
+	sess := createTestSession(t, api, "VX-9", "stream")
+	_, err := api.SetEditorialName(context.Background(), connect.NewRequest(&apiv1.SetEditorialNameRequest{
+		SessionId: sess.Id, MarkerId: "no-such-marker", Name: "x",
 	}))
 	requireNotFound(t, err)
 }

@@ -140,8 +140,62 @@ func (e EditorialAPI) SetEditorialPublish(ctx context.Context, req *connect.Requ
 	if req.Msg.GetSessionId() == "" || req.Msg.GetMarkerId() == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("missing session_id or marker_id"))
 	}
-	if err := e.setPublish(ctx, req.Msg.GetSessionId(), req.Msg.GetMarkerId(), req.Msg.GetPublish()); err != nil {
-		return nil, editorialErr(err)
+	sessionID, markerID := req.Msg.GetSessionId(), req.Msg.GetMarkerId()
+	err := e.updateMarker(ctx, sessionID, func(qtx *editorial.Queries, now int64) (int64, error) {
+		return qtx.SetMarkerPublish(ctx, editorial.SetMarkerPublishParams{
+			PublishBmm: req.Msg.GetPublishBmm(),
+			PublishBcc: req.Msg.GetPublishBcc(),
+			UpdatedAt:  now,
+			ID:         markerID,
+			SessionID:  sessionID,
+		})
+	})
+	if err != nil {
+		return nil, editorialErr(fmt.Errorf("editorial: set publish: %w", err))
+	}
+	return connect.NewResponse(&apiv1.Void{}), nil
+}
+
+func (e EditorialAPI) SetEditorialComment(ctx context.Context, req *connect.Request[apiv1.SetEditorialCommentRequest]) (*connect.Response[apiv1.Void], error) {
+	if _, err := requireEditorial(req, false); err != nil {
+		return nil, err
+	}
+	if req.Msg.GetSessionId() == "" || req.Msg.GetMarkerId() == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("missing session_id or marker_id"))
+	}
+	sessionID, markerID := req.Msg.GetSessionId(), req.Msg.GetMarkerId()
+	err := e.updateMarker(ctx, sessionID, func(qtx *editorial.Queries, now int64) (int64, error) {
+		return qtx.SetMarkerComment(ctx, editorial.SetMarkerCommentParams{
+			Comment:   req.Msg.GetComment(),
+			UpdatedAt: now,
+			ID:        markerID,
+			SessionID: sessionID,
+		})
+	})
+	if err != nil {
+		return nil, editorialErr(fmt.Errorf("editorial: set comment: %w", err))
+	}
+	return connect.NewResponse(&apiv1.Void{}), nil
+}
+
+func (e EditorialAPI) SetEditorialName(ctx context.Context, req *connect.Request[apiv1.SetEditorialNameRequest]) (*connect.Response[apiv1.Void], error) {
+	if _, err := requireEditorial(req, true); err != nil {
+		return nil, err
+	}
+	if req.Msg.GetSessionId() == "" || req.Msg.GetMarkerId() == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("missing session_id or marker_id"))
+	}
+	sessionID, markerID := req.Msg.GetSessionId(), req.Msg.GetMarkerId()
+	err := e.updateMarker(ctx, sessionID, func(qtx *editorial.Queries, now int64) (int64, error) {
+		return qtx.SetMarkerName(ctx, editorial.SetMarkerNameParams{
+			Name:      req.Msg.GetName(),
+			UpdatedAt: now,
+			ID:        markerID,
+			SessionID: sessionID,
+		})
+	})
+	if err != nil {
+		return nil, editorialErr(fmt.Errorf("editorial: set name: %w", err))
 	}
 	return connect.NewResponse(&apiv1.Void{}), nil
 }
@@ -213,17 +267,21 @@ func (e EditorialAPI) saveSession(ctx context.Context, id, title string, markers
 			source = editorial.SourceManual
 		}
 		if err := qtx.InsertMarker(ctx, editorial.InsertMarkerParams{
-			ID:        mid,
-			SessionID: id,
-			SortOrder: int64(i),
-			Name:      m.GetName(),
-			Type:      m.GetType(),
-			StartMs:   m.GetStartMs(),
-			EndMs:     m.GetEndMs(),
-			Publish:   m.GetPublish(),
-			Source:    source,
-			CreatedAt: now,
-			UpdatedAt: now,
+			ID:           mid,
+			SessionID:    id,
+			SortOrder:    int64(i),
+			Name:         m.GetName(),
+			Contributors: m.GetContributors(),
+			Comment:      m.GetComment(),
+			BibleVerses:  m.GetBibleVerses(),
+			Type:         m.GetType(),
+			StartMs:      m.GetStartMs(),
+			EndMs:        m.GetEndMs(),
+			PublishBmm:   m.GetPublishBmm(),
+			PublishBcc:   m.GetPublishBcc(),
+			Source:       source,
+			CreatedAt:    now,
+			UpdatedAt:    now,
 		}); err != nil {
 			return fmt.Errorf("editorial: insert marker: %w", err)
 		}
@@ -235,34 +293,30 @@ func (e EditorialAPI) saveSession(ctx context.Context, id, title string, markers
 	return nil
 }
 
-// setPublish updates a single marker's publish flag without touching anything
-// else. This is the write path for reviewers who may accept/reject but not edit
-// markers (the simple view).
-func (e EditorialAPI) setPublish(ctx context.Context, sessionID, markerID string, publish bool) error {
+// updateMarker runs a single-marker update (which returns the affected row
+// count) and bumps the session's updated_at, in one transaction. These are the
+// narrow write paths used by the simple view instead of a full save. Returns
+// errEditorialNotFound if the marker does not exist in the session.
+func (e EditorialAPI) updateMarker(ctx context.Context, sessionID string, update func(qtx *editorial.Queries, now int64) (int64, error)) error {
 	now := time.Now().UnixMilli()
 
 	tx, err := e.db.BeginTx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("editorial: begin tx: %w", err)
+		return fmt.Errorf("begin tx: %w", err)
 	}
 	defer func() { _ = tx.Rollback() }()
 	qtx := e.queries.WithTx(tx)
 
-	n, err := qtx.SetMarkerPublish(ctx, editorial.SetMarkerPublishParams{
-		Publish:   publish,
-		UpdatedAt: now,
-		ID:        markerID,
-		SessionID: sessionID,
-	})
+	n, err := update(qtx, now)
 	if err != nil {
-		return fmt.Errorf("editorial: set publish: %w", err)
+		return err
 	}
 	if n == 0 {
 		return errEditorialNotFound
 	}
 
 	if err := qtx.TouchSession(ctx, editorial.TouchSessionParams{UpdatedAt: now, ID: sessionID}); err != nil {
-		return fmt.Errorf("editorial: touch session: %w", err)
+		return fmt.Errorf("touch session: %w", err)
 	}
 
 	return tx.Commit()
@@ -335,13 +389,17 @@ func editorialSessionToProto(s editorial.Session, markers []editorial.Marker) *a
 
 func editorialMarkerToProto(m editorial.Marker) *apiv1.EditorialMarker {
 	return &apiv1.EditorialMarker{
-		Id:        m.ID,
-		SortOrder: int32(m.SortOrder),
-		Name:      m.Name,
-		Type:      m.Type,
-		StartMs:   m.StartMs,
-		EndMs:     m.EndMs,
-		Publish:   m.Publish,
-		Source:    m.Source,
+		Id:           m.ID,
+		SortOrder:    int32(m.SortOrder),
+		Name:         m.Name,
+		Contributors: m.Contributors,
+		Comment:      m.Comment,
+		BibleVerses:  m.BibleVerses,
+		Type:         m.Type,
+		StartMs:      m.StartMs,
+		EndMs:        m.EndMs,
+		PublishBmm:   m.PublishBmm,
+		PublishBcc:   m.PublishBcc,
+		Source:       m.Source,
 	}
 }

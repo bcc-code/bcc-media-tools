@@ -9,5 +9,7 @@ sql:
         package: editorial
         out: editorial
         overrides:
-          - column: markers.publish
+          - column: markers.publish_bmm
+            go_type: bool
+          - column: markers.publish_bcc
             go_type: bool
