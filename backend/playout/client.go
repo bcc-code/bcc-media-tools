@@ -16,6 +16,10 @@ const (
 	ContentTypeScripture = "SCRIPTURE"
 	ContentTypeSpeaker   = "SPEAKER"
 	ContentTypeSong      = "SONG"
+	ContentTypeTwoLines  = "TWOLINES"
+	// ContentTypeSlide is reserved for screen/slide changes.
+	// The API accepts it as a filter but does not currently emit it
+	ContentTypeSlide = "SLIDE"
 )
 
 type Manifest struct {
@@ -30,6 +34,12 @@ type ManifestEntry struct {
 	Label     string          `json:"label"`
 	Timestamp time.Time       `json:"timestamp"`
 	Data      json.RawMessage `json:"data"`
+}
+
+// TwoLinesData is the Data payload of a TWOLINES manifest entry:
+// An information or banner text shown on screen
+type TwoLinesData struct {
+	Text string `json:"text"`
 }
 
 // Event is one entry from the Event Discovery API. Date and ProductionUnit are
