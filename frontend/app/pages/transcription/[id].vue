@@ -43,6 +43,36 @@ const video = computed(
 const videoelement = ref<HTMLVideoElement>();
 const mediaDuration = ref<number>();
 
+// The preview is fitted to whichever side of the panel runs out first, so a
+// horizontal video takes the full width and a vertical one the full height, and
+// neither is ever cropped or scrolled. The box is sized here rather than with
+// `object-fit` so that it hugs the picture: the subtitle overlay is positioned
+// against it.
+const videoRatio = ref(16 / 9);
+const handleVideoMetadata = () => {
+    const el = videoelement.value;
+    if (!el) return;
+    mediaDuration.value = el.duration;
+    if (el.videoWidth && el.videoHeight) {
+        videoRatio.value = el.videoWidth / el.videoHeight;
+    }
+};
+
+const videocontainer = ref<HTMLElement>();
+const { width: containerWidth, height: containerHeight } =
+    useElementSize(videocontainer);
+const videoBox = computed(() => {
+    const available = Math.min(
+        containerWidth.value,
+        containerHeight.value * videoRatio.value,
+    );
+    if (!available) return undefined;
+    return {
+        width: `${available}px`,
+        height: `${available / videoRatio.value}px`,
+    };
+});
+
 const segmentelements = ref<{
     [key: number]: ComponentPublicInstance;
 }>({});
@@ -280,22 +310,31 @@ const splitterApi = computed(() =>
             </div>
             <div
                 v-bind="splitterApi.getPanelProps({ id: 'right' })"
-                class="flex min-h-0 flex-col overflow-auto bg-neutral-100 dark:bg-neutral-950"
+                class="flex min-h-0 overflow-hidden bg-neutral-100 p-4 dark:bg-neutral-950"
             >
-                <div class="relative mx-auto p-4">
-                    <video
-                        ref="videoelement"
-                        :src="video"
-                        controls
-                        class="bg-surface-default shadow-xl"
-                        @loadedmetadata="mediaDuration = videoelement?.duration"
-                    />
-                    <p
-                        v-if="previewSubtitles && focusedSegment"
-                        class="absolute bottom-16 left-1/2 w-max max-w-[75%] -translate-x-1/2 bg-black/50 p-2 text-center text-2xl text-white"
-                    >
-                        {{ focusedSegment.words.map((w) => w.text).join(" ") }}
-                    </p>
+                <div
+                    ref="videocontainer"
+                    class="flex min-h-0 w-full items-center justify-center"
+                >
+                    <div class="relative" :style="videoBox">
+                        <video
+                            ref="videoelement"
+                            :src="video"
+                            controls
+                            class="bg-surface-default h-full w-full shadow-xl"
+                            @loadedmetadata="handleVideoMetadata"
+                        />
+                        <p
+                            v-if="previewSubtitles && focusedSegment"
+                            class="absolute bottom-16 left-1/2 w-max max-w-[75%] -translate-x-1/2 bg-black/50 p-2 text-center text-2xl text-white"
+                        >
+                            {{
+                                focusedSegment.words
+                                    .map((w) => w.text)
+                                    .join(" ")
+                            }}
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
