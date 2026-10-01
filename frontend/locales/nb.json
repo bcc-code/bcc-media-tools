@@ -26,7 +26,6 @@
         "uploadJsonFileTitle": "Rediger lokal transkripsjon",
         "uploadJsonFileDescription": "Dra og slipp JSON-fil her eller klikk for å browse",
         "resetSuccess": "Transkripsjon er tilbakestilt",
-        "submitSuccess": "Transkripsjon er sendt til Mediabanken",
         "submitError": "Feil ved sending til Mediabanken",
         "changesSavedLocallyAt": "Endringer lagret lokalt kl. {time}",
         "saveFailed": "Endringene blir IKKE lagret",
@@ -37,7 +36,10 @@
         "resetConfirmationMessage": "Dette henter den opprinnelige transkripsjonen på nytt. Alt du har rettet blir borte.",
         "resetConfirmationCancel": "Avbryt",
         "resetConfirmationConfirm": "Ja, forkast",
-        "goToNextSegmentField": "Gå til neste segment"
+        "goToNextSegmentField": "Gå til neste segment",
+        "submittedTitle": "Sendt inn – takk for hjelpen!",
+        "submittedMessage": "Mediabanken har mottatt transkripsjonen og importerer den nå. Du har ikke lenger tilgang til denne filen.",
+        "submittedClose": "Ferdig"
     },
     "bmmUpload": {
         "title": "BMM opplasting",

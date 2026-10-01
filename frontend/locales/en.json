@@ -26,7 +26,6 @@
         "uploadJsonFileTitle": "Edit local transcription",
         "uploadJsonFileDescription": "Drag and drop JSON file here or click to browse",
         "resetSuccess": "Transcription was successfully reset",
-        "submitSuccess": "Transcription was successfully submitted",
         "submitError": "Transcription could not be submitted",
         "changesSavedLocallyAt": "Changes saved locally at {time}",
         "saveFailed": "Changes are NOT being saved",
@@ -37,7 +36,10 @@
         "resetConfirmationMessage": "This loads the original transcription again. Everything you have corrected will be lost.",
         "resetConfirmationCancel": "Cancel",
         "resetConfirmationConfirm": "Yes, discard",
-        "goToNextSegmentField": "Go to next segment"
+        "goToNextSegmentField": "Go to next segment",
+        "submittedTitle": "Submitted — thank you!",
+        "submittedMessage": "Mediabanken has received your transcription and is importing it now. You no longer have access to this file.",
+        "submittedClose": "Done"
     },
     "bmmUpload": {
         "title": "BMM Upload",

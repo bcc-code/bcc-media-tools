@@ -102,13 +102,11 @@ const handleReset = async () => {
 };
 
 const showSubmitConfirmationModal = ref(false);
+const showSubmittedModal = ref(false);
 const submitToMediabanken = async () => {
     if (await submit()) {
-        toaster.create({
-            title: t("transcription.submitSuccess"),
-            type: "success",
-        });
-        navigateTo("/transcription");
+        showSubmitConfirmationModal.value = false;
+        showSubmittedModal.value = true;
     } else {
         toaster.create({
             title: t("transcription.submitError"),
@@ -116,6 +114,14 @@ const submitToMediabanken = async () => {
         });
     }
 };
+
+// The confirmation stays up until the user dismisses it; leaving the asset is
+// what ends the flow, so any way of closing it goes back to the overview.
+watch(showSubmittedModal, (open, wasOpen) => {
+    if (wasOpen && !open) {
+        navigateTo("/transcription");
+    }
+});
 
 onMounted(async () => {
     await load();
@@ -382,6 +388,24 @@ const splitterApi = computed(() =>
                 </DesignButton>
             </div>
         </DesignDialog>
+        <DesignDialog
+            v-model:open="showSubmittedModal"
+            size="sm"
+            icon="tabler:circle-check-filled"
+            icon-variant="success"
+            align="center"
+            :title="$t('transcription.submittedTitle')"
+            :description="$t('transcription.submittedMessage')"
+        >
+            <DesignButton
+                class="w-full"
+                variant="primary"
+                @click="showSubmittedModal = false"
+            >
+                {{ $t("transcription.submittedClose") }}
+            </DesignButton>
+        </DesignDialog>
+        <DesignConfetti v-if="showSubmittedModal" />
     </div>
 </template>
 
