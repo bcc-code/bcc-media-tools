@@ -27,6 +27,10 @@ const {
     saveState,
     savedAt,
     submitting,
+    deletedCount,
+    canUndo,
+    snapshot,
+    undo,
     load,
     reset,
     submit,
@@ -183,6 +187,21 @@ const seekOnFocus = useLocalStorage("seekOnFocus", true);
 const previewSubtitles = useLocalStorage("previewSubtitles", true);
 const { deleteMode } = useDeleteMode();
 
+// Undo is worth a global binding here because one drag can mark a hundred rows:
+// taking that back a row at a time is not a recovery. Fields keep the browser's
+// own undo, which is what the user expects while typing.
+useEventListener(window, "keydown", (event: KeyboardEvent) => {
+    const z = event.key === "z" || event.key === "Z";
+    if (!z || event.shiftKey || !(event.metaKey || event.ctrlKey)) return;
+
+    const target = event.target as HTMLElement | null;
+    if (target?.isContentEditable || target?.closest("input, textarea")) return;
+    if (!canUndo.value) return;
+
+    event.preventDefault();
+    undo();
+});
+
 const showManual = ref(false);
 // Show manual the first time the user opens the tool
 const hasOpenedManual = useLocalStorage("hasOpenedManual", false);
@@ -241,6 +260,26 @@ const splitterApi = computed(() =>
                         {{ $t("transcription.reset") }}
                     </button>
                 </div>
+            </div>
+            <div v-if="deletedCount || canUndo" class="flex items-center gap-3">
+                <p v-if="deletedCount" class="text-text-muted">
+                    {{
+                        $t(
+                            "transcription.markedForDeletion",
+                            { count: deletedCount },
+                            deletedCount,
+                        )
+                    }}
+                </p>
+                <DesignButton
+                    v-if="canUndo"
+                    variant="tertiary"
+                    size="small"
+                    icon="tabler:arrow-back-up"
+                    @click="undo"
+                >
+                    {{ $t("transcription.undo") }}
+                </DesignButton>
             </div>
             <div class="flex items-center gap-4">
                 <DesignSwitch
@@ -305,6 +344,7 @@ const splitterApi = computed(() =>
                     :focused-segment="focusedSegment"
                     :media-duration="mediaDuration"
                     @word-focus="handleWordFocus"
+                    @snapshot="snapshot"
                 />
             </div>
             <div class="flex h-full items-center px-1">

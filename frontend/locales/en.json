@@ -39,7 +39,15 @@
         "goToNextSegmentField": "Go to next segment",
         "submittedTitle": "Submitted — thank you!",
         "submittedMessage": "Mediabanken has received your transcription and is importing it now. You no longer have access to this file.",
-        "submittedClose": "Done"
+        "submittedClose": "Done",
+        "markedForDeletion": "{count} line marked for deletion | {count} lines marked for deletion",
+        "undo": "Undo",
+        "manualKeyboard": "Keyboard",
+        "manualDeleteMode": "Delete mode",
+        "manualClickRow": "Mark a line for deletion, or unmark it",
+        "manualDragRows": "Mark every line you drag over",
+        "manualShiftClick": "Mark every line between the last one and this one",
+        "manualUndo": "Undo the last marking"
     },
     "bmmUpload": {
         "title": "BMM Upload",

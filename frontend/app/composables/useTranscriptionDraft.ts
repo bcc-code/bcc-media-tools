@@ -1,7 +1,7 @@
 import type { DraftStorage } from "~/utils/transcriptionDraft";
 import { readDraft, writeDraft } from "~/utils/transcriptionDraft";
 import type { Segment } from "~/utils/transcription";
-import { toTranscription, withUids } from "~/utils/transcription";
+import { countDeleted, toTranscription, withUids } from "~/utils/transcription";
 
 export type SaveState = "idle" | "saved" | "error";
 
@@ -9,6 +9,7 @@ export type UseTranscriptionDraftOptions = {
     api?: ReturnType<typeof useAPI>;
     storage?: DraftStorage;
     debounceMs?: number;
+    historyLimit?: number;
 };
 
 /**
@@ -32,6 +33,31 @@ export function useTranscriptionDraft(
     const savedAt = ref<Date | null>(null);
     const submittedAt = ref<Date | null>(null);
     const submitting = ref(false);
+
+    // Undo covers the destructive actions — marking rows for deletion, one at a
+    // time or a hundred at a drag. Typing is left to the browser's own undo,
+    // which already works inside a field and is what the user expects there.
+    const history = ref<Segment[][]>([]);
+    const historyLimit = options.historyLimit ?? 50;
+
+    /** Records the document so the *next* change can be undone as one step. */
+    const snapshot = () => {
+        if (segments.value.length === 0) return;
+        history.value = [...history.value, segments.value].slice(-historyLimit);
+    };
+
+    const undo = (): boolean => {
+        const previous = history.value.at(-1);
+        if (!previous) return false;
+
+        history.value = history.value.slice(0, -1);
+        segments.value = previous;
+        return true;
+    };
+
+    const canUndo = computed(() => history.value.length > 0);
+
+    const deletedCount = computed(() => countDeleted(segments.value));
 
     const getStorage = (): DraftStorage | undefined => {
         if (options.storage) return options.storage;
@@ -90,6 +116,8 @@ export function useTranscriptionDraft(
             const result = await api.getTranscription({ VXID: vxid });
             segments.value = withUids(result.segments as unknown as Segment[]);
             submittedAt.value = null;
+            // Nothing from the discarded document is worth undoing back into.
+            history.value = [];
             loading.value = false;
             persist();
             return true;
@@ -111,6 +139,7 @@ export function useTranscriptionDraft(
         }
 
         hydrate(draft.segments);
+        history.value = [];
         submittedAt.value = draft.submittedAt
             ? new Date(draft.submittedAt)
             : null;
@@ -147,6 +176,10 @@ export function useTranscriptionDraft(
         savedAt,
         submittedAt,
         submitting,
+        deletedCount,
+        canUndo,
+        snapshot,
+        undo,
         load,
         reset,
         submit,

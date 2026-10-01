@@ -3,10 +3,14 @@ import { create, fromBinary, toBinary } from "@bufbuild/protobuf";
 import { SubmitTranscriptionRequestSchema } from "~~/src/gen/api/v1/api_pb";
 import type { Segment, Word } from "~/utils/transcription";
 import {
+    countDeleted,
     insertSegmentAt,
     realignWords,
+    previewRange,
+    segmentRange,
     segmentText,
     setSegmentText,
+    setSegmentsDeleted,
     toTranscription,
     toggleSegmentDeleted,
     tokenizeWords,
@@ -514,5 +518,215 @@ describe("toTranscription produces a serializable payload", () => {
         expect(
             decoded.transcription!.segments[0]!.words.map((w) => w.text),
         ).toEqual(["Hei", "alle"]);
+    });
+});
+
+// The gestures in delete mode — drag to paint a run, shift-click to extend —
+// are all `segmentRange` + `setSegmentsDeleted` over the document as it was
+// when the gesture began.
+describe("segmentRange", () => {
+    it("covers both ends, whichever way round they are given", () => {
+        const segments = doc();
+
+        expect(segmentRange(segments, "a", "c")).toEqual(["a", "b", "c"]);
+        expect(segmentRange(segments, "c", "a")).toEqual(["a", "b", "c"]);
+    });
+
+    it("is just the row itself when both ends are the same", () => {
+        expect(segmentRange(doc(), "b", "b")).toEqual(["b"]);
+    });
+
+    it("is empty when a row is not in the document", () => {
+        expect(segmentRange(doc(), "a", "gone")).toEqual([]);
+        expect(segmentRange(doc(), "gone", "a")).toEqual([]);
+    });
+});
+
+describe("setSegmentsDeleted", () => {
+    it("marks a whole range in one step", () => {
+        const segments = doc();
+
+        const next = setSegmentsDeleted(segments, ["a", "b"], true);
+
+        expect(next.map((s) => !!s.deleted)).toEqual([true, true, false]);
+    });
+
+    it("clears marks just as readily", () => {
+        const marked = setSegmentsDeleted(doc(), ["a", "b", "c"], true);
+
+        const next = setSegmentsDeleted(marked, ["a", "c"], false);
+
+        expect(next.map((s) => !!s.deleted)).toEqual([false, true, false]);
+    });
+
+    it("leaves the rows it was not given alone", () => {
+        const segments = doc();
+
+        const next = setSegmentsDeleted(segments, ["b"], true);
+
+        expect(next[0]).toBe(segments[0]);
+        expect(next[2]).toBe(segments[2]);
+    });
+
+    it("returns the same document when nothing changes", () => {
+        const segments = doc();
+
+        // A drag that has not left the row it started on, over and over.
+        expect(setSegmentsDeleted(segments, ["a"], false)).toBe(segments);
+        expect(setSegmentsDeleted(segments, [], true)).toBe(segments);
+    });
+
+    it("ignores uids that are not in the document", () => {
+        const segments = doc();
+
+        const next = setSegmentsDeleted(segments, ["a", "gone"], true);
+
+        expect(next.map((s) => !!s.deleted)).toEqual([true, false, false]);
+    });
+
+    it("re-applied to the starting document, a drag can be taken back", () => {
+        const base = doc();
+
+        // Dragging a → c, then back up to b: the range is recomputed from the
+        // document as it was, so `c` is not left marked behind the pointer.
+        const painted = setSegmentsDeleted(
+            base,
+            segmentRange(base, "a", "c"),
+            true,
+        );
+        const shrunk = setSegmentsDeleted(
+            base,
+            segmentRange(base, "a", "b"),
+            true,
+        );
+
+        expect(painted.map((s) => !!s.deleted)).toEqual([true, true, true]);
+        expect(shrunk.map((s) => !!s.deleted)).toEqual([true, true, false]);
+    });
+
+    it("a drag over rows marked earlier does not disturb them when it shrinks", () => {
+        // `c` was marked before the gesture started, so dragging a → b and back
+        // must leave it marked.
+        const base = setSegmentsDeleted(doc(), ["c"], true);
+
+        const next = setSegmentsDeleted(
+            base,
+            segmentRange(base, "a", "a"),
+            true,
+        );
+
+        expect(next.map((s) => !!s.deleted)).toEqual([true, false, true]);
+    });
+
+    it("keeps the rows out of the submitted payload", () => {
+        const marked = setSegmentsDeleted(doc(), ["a", "b"], true);
+
+        expect(toTranscription(marked).segments).toHaveLength(1);
+    });
+});
+
+describe("countDeleted", () => {
+    it("counts the marked rows", () => {
+        expect(countDeleted(doc())).toBe(0);
+        expect(countDeleted(setSegmentsDeleted(doc(), ["a", "c"], true))).toBe(
+            2,
+        );
+    });
+});
+
+describe("previewRange", () => {
+    const idle = {
+        anchorUid: null,
+        hoveredUid: null,
+        painting: null,
+        shiftHeld: false,
+    };
+
+    it("shows nothing until a row has been pressed", () => {
+        expect(
+            previewRange(doc(), { ...idle, hoveredUid: "b", shiftHeld: true }),
+        ).toBeNull();
+    });
+
+    it("shows nothing when the pointer is off the list", () => {
+        expect(
+            previewRange(doc(), { ...idle, anchorUid: "a", shiftHeld: true }),
+        ).toBeNull();
+    });
+
+    it("shows nothing on a plain hover: that click would hit one row", () => {
+        expect(
+            previewRange(doc(), {
+                ...idle,
+                anchorUid: "a",
+                hoveredUid: "c",
+            }),
+        ).toBeNull();
+    });
+
+    it("previews what a shift-click would mark", () => {
+        // `a` was just marked, so shift-clicking `c` marks the rest too.
+        const segments = setSegmentsDeleted(doc(), ["a"], true);
+
+        const preview = previewRange(segments, {
+            ...idle,
+            anchorUid: "a",
+            hoveredUid: "c",
+            shiftHeld: true,
+        });
+
+        expect([...preview!.uids]).toEqual(["a", "b", "c"]);
+        expect(preview!.deleted).toBe(true);
+    });
+
+    it("previews a shift-click that would clear marks instead", () => {
+        // The anchor was unmarked, so the range would come back with it.
+        const segments = setSegmentsDeleted(doc(), ["b", "c"], true);
+
+        const preview = previewRange(segments, {
+            ...idle,
+            anchorUid: "a",
+            hoveredUid: "c",
+            shiftHeld: true,
+        });
+
+        expect(preview!.deleted).toBe(false);
+    });
+
+    it("follows a drag without needing the shift key", () => {
+        const preview = previewRange(doc(), {
+            ...idle,
+            anchorUid: "c",
+            hoveredUid: "a",
+            painting: true,
+        });
+
+        expect([...preview!.uids]).toEqual(["a", "b", "c"]);
+        expect(preview!.deleted).toBe(true);
+    });
+
+    it("prefers what the drag is painting over the anchor's state", () => {
+        // Mid-drag the shift key is irrelevant: the gesture is already underway.
+        const segments = setSegmentsDeleted(doc(), ["a"], true);
+
+        const preview = previewRange(segments, {
+            anchorUid: "a",
+            hoveredUid: "b",
+            painting: false,
+            shiftHeld: true,
+        });
+
+        expect(preview!.deleted).toBe(false);
+    });
+
+    it("shows nothing when the anchor row is gone", () => {
+        expect(
+            previewRange(doc(), {
+                ...idle,
+                anchorUid: "gone",
+                hoveredUid: "a",
+                painting: true,
+            }),
+        ).toBeNull();
     });
 });

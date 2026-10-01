@@ -89,6 +89,91 @@ export function toggleSegmentDeleted(
     return updateSegment(segments, uid, (s) => ({ ...s, deleted: !s.deleted }));
 }
 
+/**
+ * Marks (or unmarks) many rows at once.
+ *
+ * The same array is returned when nothing actually changes, so a drag that
+ * stays within one row does not churn the document — the draft is saved and the
+ * editor re-renders off that identity.
+ */
+export function setSegmentsDeleted(
+    segments: Segment[],
+    uids: Iterable<string>,
+    deleted: boolean,
+): Segment[] {
+    const targets = new Set(uids);
+    if (targets.size === 0) return segments;
+
+    let changed = false;
+    const next = segments.map((s) => {
+        if (!targets.has(s.uid) || !!s.deleted === deleted) return s;
+        changed = true;
+        return { ...s, deleted };
+    });
+
+    return changed ? next : segments;
+}
+
+/** Uids from one row to another, inclusive, whichever way round they are. */
+export function segmentRange(
+    segments: Segment[],
+    fromUid: string,
+    toUid: string,
+): string[] {
+    const from = segments.findIndex((s) => s.uid === fromUid);
+    const to = segments.findIndex((s) => s.uid === toUid);
+    if (from === -1 || to === -1) return [];
+
+    const [start, end] = from <= to ? [from, to] : [to, from];
+    return segments.slice(start, end + 1).map((s) => s.uid);
+}
+
+/** Where a delete-mode gesture currently stands. */
+export type GestureState = {
+    /** The row the gesture started from. */
+    anchorUid: string | null;
+    /** The row under the pointer. */
+    hoveredUid: string | null;
+    /** What a drag in progress is painting; null when no button is held. */
+    painting: boolean | null;
+    shiftHeld: boolean;
+};
+
+export type RangePreview = { uids: Set<string>; deleted: boolean };
+
+/**
+ * The rows a gesture would affect, and what it would do to them — so the editor
+ * can show the range before it is committed.
+ *
+ * A drag is already applying as it goes, and the preview marks out which rows
+ * belong to *this* gesture rather than to an earlier one. Holding shift changes
+ * nothing yet, so there the preview is the only warning the user gets: the range
+ * takes the anchor's state, which is what the click is about to spread.
+ */
+export function previewRange(
+    segments: Segment[],
+    state: GestureState,
+): RangePreview | null {
+    const { anchorUid, hoveredUid } = state;
+    if (!anchorUid || !hoveredUid) return null;
+
+    const deleted =
+        state.painting ??
+        (state.shiftHeld
+            ? !!segments.find((s) => s.uid === anchorUid)?.deleted
+            : null);
+    if (deleted === null) return null;
+
+    const uids = segmentRange(segments, anchorUid, hoveredUid);
+    if (uids.length === 0) return null;
+
+    return { uids: new Set(uids), deleted };
+}
+
+export function countDeleted(segments: Segment[]): number {
+    return segments.reduce((n, s) => (s.deleted ? n + 1 : n), 0);
+}
+
 export function tokenizeWords(text: string): string[] {
     return text.split(/\s+/).filter((t) => t !== "");
 }

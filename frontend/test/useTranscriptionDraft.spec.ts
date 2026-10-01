@@ -1,7 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import { useTranscriptionDraft } from "~/composables/useTranscriptionDraft";
 import type { Segment } from "~/utils/transcription";
-import { setSegmentText, toggleSegmentDeleted } from "~/utils/transcription";
+import {
+    setSegmentText,
+    setSegmentsDeleted,
+    toggleSegmentDeleted,
+} from "~/utils/transcription";
 import type { DraftStorage } from "~/utils/transcriptionDraft";
 import { draftKey, readDraft } from "~/utils/transcriptionDraft";
 
@@ -323,5 +327,115 @@ describe("submit", () => {
         await submit();
 
         expect(submitting.value).toBe(false);
+    });
+});
+
+// One drag in delete mode can mark a hundred rows, so taking it back has to be
+// one step too.
+describe("undo", () => {
+    const markAll = (segments: { value: Segment[] }) => {
+        segments.value = setSegmentsDeleted(
+            segments.value,
+            segments.value.map((s) => s.uid),
+            true,
+        );
+    };
+
+    it("has nothing to undo on a freshly loaded document", async () => {
+        const { load, canUndo, undo } = setup();
+        await load();
+
+        expect(canUndo.value).toBe(false);
+        expect(undo()).toBe(false);
+    });
+
+    it("takes back a bulk marking as a single step", async () => {
+        const { load, segments, snapshot, undo, canUndo } = setup();
+        await load();
+
+        snapshot();
+        markAll(segments);
+        expect(segments.value.every((s) => s.deleted)).toBe(true);
+
+        expect(undo()).toBe(true);
+        expect(segments.value.some((s) => s.deleted)).toBe(false);
+        expect(canUndo.value).toBe(false);
+    });
+
+    it("unwinds several markings one at a time, most recent first", async () => {
+        const { load, segments, snapshot, undo } = setup();
+        await load();
+
+        snapshot();
+        segments.value = toggleSegmentDeleted(
+            segments.value,
+            segments.value[0]!.uid,
+        );
+        snapshot();
+        segments.value = toggleSegmentDeleted(
+            segments.value,
+            segments.value[1]!.uid,
+        );
+
+        undo();
+        expect(segments.value.map((s) => !!s.deleted)).toEqual([true, false]);
+
+        undo();
+        expect(segments.value.map((s) => !!s.deleted)).toEqual([false, false]);
+    });
+
+    it("keeps the restored document, so it is saved like any other change", async () => {
+        const storage = memoryStorage();
+        const { load, segments, snapshot, undo } = setup({ storage });
+        await load();
+
+        snapshot();
+        markAll(segments);
+        await settled();
+        undo();
+        await settled();
+
+        const saved = readDraft(storage, "VX-123");
+        expect(saved!.segments.some((s) => s.deleted)).toBe(false);
+    });
+
+    it("drops the history when the document is replaced wholesale", async () => {
+        const { load, segments, snapshot, reset, canUndo } = setup();
+        await load();
+
+        snapshot();
+        markAll(segments);
+        expect(canUndo.value).toBe(true);
+
+        // Undoing back into a document the user has discarded would be worse
+        // than having no undo at all.
+        await reset();
+        expect(canUndo.value).toBe(false);
+    });
+
+    it("forgets the oldest steps rather than growing without bound", async () => {
+        const { load, segments, snapshot, undo, canUndo } = setup();
+        await load();
+
+        for (let i = 0; i < 60; i++) {
+            snapshot();
+            segments.value = toggleSegmentDeleted(
+                segments.value,
+                segments.value[0]!.uid,
+            );
+        }
+
+        let steps = 0;
+        while (canUndo.value && undo()) steps++;
+        expect(steps).toBe(50);
+    });
+
+    it("reports what is marked, for the count in the header", async () => {
+        const { load, segments, deletedCount } = setup();
+        await load();
+
+        expect(deletedCount.value).toBe(0);
+        markAll(segments);
+        expect(deletedCount.value).toBe(2);
     });
 });

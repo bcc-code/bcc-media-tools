@@ -2,6 +2,10 @@
 const props = defineProps<{
     segment: Segment;
     focused?: boolean;
+    /** This row is inside the range the current delete-mode gesture would hit. */
+    inRange?: boolean;
+    /** Whether that gesture would mark the range, or clear it. */
+    rangeMarks?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -88,18 +92,70 @@ const handlePaste = (event: ClipboardEvent) => {
 };
 
 const { deleteMode } = useDeleteMode();
+
+/*
+ * A row can be several things at once — marked for deletion, playing right now,
+ * and inside the range a gesture is about to hit — and more than one of those
+ * wants to set the background. Picking one here keeps that decision explicit
+ * rather than leaving it to the order Tailwind happens to emit the classes in.
+ *
+ * The states are told apart by colour and strength rather than by outlines: a
+ * tint plus a stripe down the left edge, which runs unbroken through adjacent
+ * rows so a marked range reads as one block instead of a stack of boxes. Red is
+ * going away, green is coming back, and the strongest tint is always the change
+ * being made right now.
+ */
+const background = computed(() => {
+    if (props.inRange) {
+        return props.rangeMarks
+            ? "bg-red-500/20 border-l-red-500"
+            : "bg-semantic-success/15 border-l-semantic-success";
+    }
+    if (props.segment.deleted) return "bg-red-500/5 border-l-red-500/50";
+    // The stripe's colour is only ever set here — never half in the base class —
+    // so no two utilities can race to set it.
+    if (props.focused) return "bg-surface-indent border-l-transparent";
+    return "border-l-transparent";
+});
+
+// Reserved for the row that is playing, so it stays recognisable whatever else
+// is going on around it.
+const ring = computed(() =>
+    props.focused && !props.inRange
+        ? "ring-text-default ring-2 ring-inset"
+        : "",
+);
+
+/** Shows the outcome: struck through once the row is on its way out. */
+const struck = computed(() =>
+    props.inRange ? !!props.rangeMarks : !!props.segment.deleted,
+);
+
+// The same red/green reading as the tint and the stripe, through the semantic
+// tokens so the text stays legible against either theme's background. Already
+// marked rows sit a shade back, leaving the strongest colour to the change in
+// progress. The strikethrough takes its colour from the text.
+const text = computed(() => {
+    if (props.inRange) {
+        return props.rangeMarks
+            ? "text-semantic-error"
+            : "text-semantic-success";
+    }
+    return props.segment.deleted ? "text-semantic-error/80" : "";
+});
 </script>
 
 <template>
+    <!-- No transition on the row: a drag crosses rows faster than one would
+         run, and tints fading in and out behind the pointer read as lag. -->
     <div
-        class="flex items-center gap-4 px-6 py-4 transition-all ease-out"
-        :class="{
-            'cursor-pointer hover:bg-red-200 hover:text-red-700': deleteMode,
-            'bg-surface-raise opacity-50': segment.deleted,
-            'ring-text-default bg-surface-indent ring-2 ring-inset': focused,
-        }"
+        class="flex items-center gap-4 border-l-4 px-6 py-4"
+        :class="[
+            background,
+            ring,
+            { 'cursor-pointer hover:bg-red-500/10': deleteMode },
+        ]"
         :tabindex="deleteMode ? 0 : -1"
-        @click="deleteMode ? $emit('toggleDelete') : undefined"
         @keydown.enter="deleteMode ? $emit('toggleDelete') : undefined"
         @keydown.space="deleteMode ? $emit('toggleDelete') : undefined"
     >
@@ -117,7 +173,11 @@ const { deleteMode } = useDeleteMode();
                 :tabindex="deleteMode ? -1 : 0"
                 :class="[
                     'focus:border-text-default focus:bg-surface-indent min-h-8 rounded-md border border-transparent px-2 py-0.5 leading-tight focus:outline-none',
-                    { 'pointer-events-none': deleteMode },
+                    text,
+                    {
+                        'pointer-events-none': deleteMode,
+                        'line-through': struck,
+                    },
                 ]"
                 @input="handleInput"
                 @blur="handleBlur"

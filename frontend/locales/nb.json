@@ -39,7 +39,15 @@
         "goToNextSegmentField": "Gå til neste segment",
         "submittedTitle": "Sendt inn – takk for hjelpen!",
         "submittedMessage": "Mediabanken har mottatt transkripsjonen og importerer den nå. Du har ikke lenger tilgang til denne filen.",
-        "submittedClose": "Ferdig"
+        "submittedClose": "Ferdig",
+        "markedForDeletion": "{count} linje markert for sletting | {count} linjer markert for sletting",
+        "undo": "Angre",
+        "manualKeyboard": "Tastatur",
+        "manualDeleteMode": "Slettemodus",
+        "manualClickRow": "Marker en linje for sletting, eller fjern markeringen",
+        "manualDragRows": "Marker alle linjene du drar over",
+        "manualShiftClick": "Marker alle linjene mellom den forrige og denne",
+        "manualUndo": "Angre siste markering"
     },
     "bmmUpload": {
         "title": "BMM opplasting",
