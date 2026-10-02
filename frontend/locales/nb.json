@@ -300,7 +300,7 @@
         "publishYes": "Ja",
         "publishNo": "Nei",
         "recordingWindow": "Opptaksvindu",
-        "recordingWindowFromMetadata": "fra filnavnet",
+        "recordingWindowFromMetadata": "fra opplastingstidspunktet",
         "recordingWindowManual": "satt manuelt",
         "recordingWindowAdjust": "Juster",
         "recordingWindowUnknown": "Fant ikke ut når dette ble tatt opp",

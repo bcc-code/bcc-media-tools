@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -21,9 +20,6 @@ import (
 // needed — a fixed offset would be wrong for half the year.
 const recordingTZ = "Europe/Oslo"
 
-// File names use fieldOriginalFilename (vault.go), not
-// vscommon.FieldOriginalFileName — that Portal field is empty on live ingests.
-
 // recordingWindow is the wall-clock span a Vidispine item covers, in UTC.
 type recordingWindow struct {
 	Start time.Time
@@ -37,28 +33,12 @@ func (w recordingWindow) Contains(t time.Time) bool {
 	return !t.Before(w.Start) && !t.After(w.End)
 }
 
-// recordingDateRE matches the live-ingest naming convention, e.g.
-// "SS26_20260808_1500_CLN_NOR.mxf"; separators on both sides keep it from
-// matching digits inside some other identifier.
-var recordingDateRE = regexp.MustCompile(`(?:^|[_-])(\d{4})(\d{2})(\d{2})(?:[_.-]|$)`)
-
-// recordingDateFromFileName pulls the date out of the file name: Vidispine
-// only stores a time-of-day start, and the ingest timestamp lags past
-// midnight, so the name is what's left. Non-conforming material (edited
-// masters, BMM audio) has no date to find; callers must report that, not guess.
-func recordingDateFromFileName(name string) (year int, month time.Month, day int, ok bool) {
-	m := recordingDateRE.FindStringSubmatch(name)
-	if m == nil {
-		return 0, 0, 0, false
-	}
-	y, _ := strconv.Atoi(m[1])
-	mo, _ := strconv.Atoi(m[2])
-	d, _ := strconv.Atoi(m[3])
-	if mo < 1 || mo > 12 || d < 1 || d > 31 {
-		return 0, 0, 0, false
-	}
-	return y, time.Month(mo), d, true
-}
+// defaultStartTimecodes are the start timecodes that carry no time of day:
+// 00:00:00, 01:00:00 (the default an editor's export inherits) and 10:00:00
+// (the convention short clips are cut on). A live ingest always has a real
+// clock time instead, so these mean the item is not a recording and its window
+// has to be entered by hand.
+var defaultStartTimecodes = map[float64]bool{0: true, 3600: true, 36000: true}
 
 // timecodeToSeconds converts a Vidispine timecode ("<samples>@<timebase>") to
 // seconds. vscommon.TCToSeconds only handles "@PAL", but Mediabanken also
@@ -96,16 +76,48 @@ func durationFromMetadata(meta *vsapi.MetadataResult) (float64, error) {
 	return seconds, nil
 }
 
-// recordingWindowFromMetadata places a recording on the wall clock: date from
-// the file name, start from the start timecode, length from the duration.
-func recordingWindowFromMetadata(meta *vsapi.MetadataResult) (recordingWindow, error) {
-	name := meta.Get(fieldOriginalFilename, "")
-	if name == "" {
-		name = meta.Get(vscommon.FieldTitle, "")
+// recordingDateFromMetadata reads the day the item was recorded off its ingest
+// timestamp. The timecode only gives a time of day, and nothing in Vidispine
+// or in the MXF header records the date — the essence carries zeroed date
+// fields — so ingest time is what is left.
+//
+// portal_ingested comes first: the live ingest workflow writes it as it creates
+// the placeholder, which is the moment recording starts. It is only set on the
+// feed that is ingested live; everything else falls back to created, the time
+// the file was copied in. That is the same day for material ingested the day it
+// was recorded, and a later day for anything delivered afterwards — hence the
+// editor's ability to correct the window.
+//
+// The date is read in Oslo time because the window is built on Oslo wall-clock
+// time: an ingest just after midnight local is still the previous day in UTC.
+func recordingDateFromMetadata(meta *vsapi.MetadataResult, loc *time.Location) (year int, month time.Month, day int, err error) {
+	for _, field := range []vscommon.FieldType{vscommon.FieldIngested, fieldCreated} {
+		raw := meta.Get(field, "")
+		if raw == "" {
+			continue
+		}
+		t, parseErr := time.Parse(time.RFC3339, raw)
+		if parseErr != nil {
+			return 0, 0, 0, fmt.Errorf("parse %s %q: %w", field.Value, raw, parseErr)
+		}
+		y, m, d := t.In(loc).Date()
+		return y, m, d, nil
 	}
-	year, month, day, ok := recordingDateFromFileName(name)
-	if !ok {
-		return recordingWindow{}, fmt.Errorf("no recording date in file name %q", name)
+	return 0, 0, 0, fmt.Errorf("item has no ingest timestamp")
+}
+
+// recordingWindowFromMetadata places a recording on the wall clock: date from
+// the ingest timestamp, start from the start timecode, length from the
+// duration.
+func recordingWindowFromMetadata(meta *vsapi.MetadataResult) (recordingWindow, error) {
+	loc, err := time.LoadLocation(recordingTZ)
+	if err != nil {
+		return recordingWindow{}, fmt.Errorf("load %s: %w", recordingTZ, err)
+	}
+
+	year, month, day, err := recordingDateFromMetadata(meta, loc)
+	if err != nil {
+		return recordingWindow{}, err
 	}
 
 	tc := meta.Get(vscommon.FieldStartTC, "")
@@ -116,15 +128,13 @@ func recordingWindowFromMetadata(meta *vsapi.MetadataResult) (recordingWindow, e
 	if err != nil {
 		return recordingWindow{}, fmt.Errorf("parse start timecode: %w", err)
 	}
+	if defaultStartTimecodes[startSeconds] {
+		return recordingWindow{}, fmt.Errorf("start timecode %s is a default, not a time of day: this is not a live recording", tc)
+	}
 
 	durationSeconds, err := durationFromMetadata(meta)
 	if err != nil {
 		return recordingWindow{}, err
-	}
-
-	loc, err := time.LoadLocation(recordingTZ)
-	if err != nil {
-		return recordingWindow{}, fmt.Errorf("load %s: %w", recordingTZ, err)
 	}
 
 	// time.Date normalizes the offset as wall-clock time before resolving the
@@ -147,8 +157,8 @@ func recordingWindowFromMetadata(meta *vsapi.MetadataResult) (recordingWindow, e
 // pull well over a megabyte per item.
 func fetchRecordingMetadata(vs vidispine.Client, vxID string) (*vsapi.MetadataResult, error) {
 	meta, err := vs.GetMetadataFields(vxID, []string{strings.Join([]string{
-		fieldOriginalFilename.Value,
-		vscommon.FieldTitle.Value,
+		vscommon.FieldIngested.Value,
+		fieldCreated.Value,
 		vscommon.FieldStartTC.Value,
 		vscommon.FieldDurationSeconds.Value,
 	}, ",")})

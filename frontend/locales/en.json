@@ -300,7 +300,7 @@
         "publishYes": "Yes",
         "publishNo": "No",
         "recordingWindow": "Recording window",
-        "recordingWindowFromMetadata": "from file name",
+        "recordingWindowFromMetadata": "from ingest time",
         "recordingWindowManual": "set by hand",
         "recordingWindowAdjust": "Adjust",
         "recordingWindowUnknown": "Couldn't work out when this was recorded",

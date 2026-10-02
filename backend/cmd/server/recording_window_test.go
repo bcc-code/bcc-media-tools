@@ -7,36 +7,56 @@ import (
 	"github.com/bcc-code/bcc-media-flows/services/vidispine/vsapi"
 )
 
-func TestRecordingDateFromFileName(t *testing.T) {
+func TestRecordingDateFromMetadata(t *testing.T) {
+	oslo, err := time.LoadLocation(recordingTZ)
+	if err != nil {
+		t.Fatal(err)
+	}
 	tests := []struct {
-		name string
-		file string
-		want string // empty means "no date"
+		name   string
+		fields map[string]string
+		want   string // empty means "no date"
 	}{
-		// The live-ingest convention this relies on.
-		{"live ingest", "SS26_20260808_1500_CLN_NOR.mxf", "2026-08-08"},
-		{"other event code", "BS26_20261016_0930_CLN_NOR.mxf", "2026-10-16"},
-		{"no extension", "NC26_20260101_1200_CLN", "2026-01-01"},
-		// Material that does not follow it: better to report no date than to
-		// invent one from a digit run that means something else.
-		{"underscored date", "raw_2026_09_04_MAGA_S05_E04_INT.mov", ""},
-		{"edited master", "Josef_Musikal_ny_klipp_MAS_NOR_ENG.wav", ""},
-		{"bmm audio", "BMM-118282-nld.wav", ""},
-		{"still image", "BS26_MOTE_2_LED_Hoved1.png", ""},
-		{"impossible month", "XX26_20261308_1500_CLN.mxf", ""},
-		{"digits run on", "XX26_202608081_1500.mxf", ""},
+		{
+			// VX-519286: the live ingest workflow stamps portal_ingested as
+			// recording starts, so it is the better of the two.
+			name: "prefers the live-ingest stamp",
+			fields: map[string]string{
+				"portal_ingested": "2026-08-08T12:46:05.676Z",
+				"created":         "2026-08-10T09:00:00.000Z",
+			},
+			want: "2026-08-08",
+		},
+		{
+			// VX-519332: only the feeds ingested live carry portal_ingested.
+			name:   "falls back to created",
+			fields: map[string]string{"created": "2026-08-08T15:56:06.342Z"},
+			want:   "2026-08-08",
+		},
+		{
+			// 00:30 Oslo on the 9th is 22:30Z on the 8th. The window is built
+			// on Oslo wall-clock time, so the date has to be read there too.
+			name:   "reads the date in Oslo, not UTC",
+			fields: map[string]string{"created": "2026-08-08T22:30:00.000Z"},
+			want:   "2026-08-09",
+		},
+		{
+			name:   "nothing to read",
+			fields: map[string]string{"startTimeCode": "1327778@PAL"},
+			want:   "",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			y, m, d, ok := recordingDateFromFileName(tt.file)
+			y, m, d, err := recordingDateFromMetadata(metadata(tt.fields), oslo)
 			if tt.want == "" {
-				if ok {
-					t.Fatalf("expected no date, got %04d-%02d-%02d", y, m, d)
+				if err == nil {
+					t.Fatalf("expected an error, got %04d-%02d-%02d", y, m, d)
 				}
 				return
 			}
-			if !ok {
-				t.Fatalf("expected %s, got no date", tt.want)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
 			}
 			got := time.Date(y, m, d, 0, 0, 0, 0, time.UTC).Format("2006-01-02")
 			if got != tt.want {
@@ -95,7 +115,7 @@ func TestRecordingWindowFromMetadata(t *testing.T) {
 	// matching failure rather than a timezone bug — hence both cases.
 	tests := []struct {
 		name      string
-		file      string
+		ingested  string
 		tc        string
 		duration  string
 		wantStart string
@@ -105,7 +125,7 @@ func TestRecordingWindowFromMetadata(t *testing.T) {
 			// Real values from VX-519332. 1327778@PAL = 53111.12s = 14:45:11
 			// local; CEST is UTC+2, so 12:45:11Z.
 			name:      "summer is UTC+2",
-			file:      "SS26_20260808_1500_CLN_NOR.mxf",
+			ingested:  "2026-08-08T12:46:05.676Z",
 			tc:        "1327778@PAL",
 			duration:  "6770.24",
 			wantStart: "2026-08-08T12:45:11Z",
@@ -114,7 +134,7 @@ func TestRecordingWindowFromMetadata(t *testing.T) {
 		{
 			// Same time of day in winter: CET is UTC+1, so 13:45:11Z.
 			name:      "winter is UTC+1",
-			file:      "BS26_20261216_1500_CLN_NOR.mxf",
+			ingested:  "2026-12-16T14:00:00.000Z",
 			tc:        "1327778@PAL",
 			duration:  "3600",
 			wantStart: "2026-12-16T13:45:11Z",
@@ -124,7 +144,7 @@ func TestRecordingWindowFromMetadata(t *testing.T) {
 			// Same instant expressed at 50fps: the timebase must not change
 			// the result. vscommon.TCToSeconds would reject this outright.
 			name:      "50fps timebase",
-			file:      "SS26_20260808_1500_CLN_NOR.mxf",
+			ingested:  "2026-08-08T12:46:05.676Z",
 			tc:        "2655556@50",
 			duration:  "6770.24",
 			wantStart: "2026-08-08T12:45:11Z",
@@ -134,7 +154,7 @@ func TestRecordingWindowFromMetadata(t *testing.T) {
 			// The clocks go forward at 02:00 local on 2026-03-29. A recording
 			// later that day is on the summer offset.
 			name:      "day the clocks change",
-			file:      "EC26_20260329_1500_CLN_NOR.mxf",
+			ingested:  "2026-03-29T13:00:00.000Z",
 			tc:        "1327778@PAL",
 			duration:  "3600",
 			wantStart: "2026-03-29T12:45:11Z",
@@ -144,9 +164,9 @@ func TestRecordingWindowFromMetadata(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			w, err := recordingWindowFromMetadata(metadata(map[string]string{
-				"originalFilename": tt.file,
-				"startTimeCode":    tt.tc,
-				"durationSeconds":  tt.duration,
+				"portal_ingested": tt.ingested,
+				"startTimeCode":   tt.tc,
+				"durationSeconds": tt.duration,
 			}))
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
@@ -161,10 +181,11 @@ func TestRecordingWindowFromMetadata(t *testing.T) {
 	}
 }
 
-func TestRecordingWindowFromMetadataFallsBackToTitle(t *testing.T) {
-	// Live ingests populate originalFilename, but title carries the same name.
+func TestRecordingWindowFromMetadataFallsBackToCreated(t *testing.T) {
+	// Only the live-ingested feed carries portal_ingested; everything else is
+	// placed by the time its file was copied in.
 	w, err := recordingWindowFromMetadata(metadata(map[string]string{
-		"title":           "SS26_20260808_1500_CLN_NOR.mxf",
+		"created":         "2026-08-08T15:56:06.342Z",
 		"startTimeCode":   "1327778@PAL",
 		"durationSeconds": "6770.24",
 	}))
@@ -181,18 +202,40 @@ func TestRecordingWindowFromMetadataErrors(t *testing.T) {
 		name   string
 		fields map[string]string
 	}{
-		{"no date in name", map[string]string{
-			"originalFilename": "Josef_Musikal_ny_klipp_MAS.mov",
-			"startTimeCode":    "90000@PAL",
-			"durationSeconds":  "880.52",
+		{"no ingest timestamp", map[string]string{
+			"startTimeCode":   "1327778@PAL",
+			"durationSeconds": "6770.24",
 		}},
 		{"no start timecode", map[string]string{
-			"originalFilename": "SS26_20260808_1500_CLN_NOR.mxf",
-			"durationSeconds":  "6770.24",
+			"created":         "2026-08-08T15:56:06.342Z",
+			"durationSeconds": "6770.24",
 		}},
 		{"no duration", map[string]string{
-			"originalFilename": "SS26_20260808_1500_CLN_NOR.mxf",
-			"startTimeCode":    "1327778@PAL",
+			"created":       "2026-08-08T15:56:06.342Z",
+			"startTimeCode": "1327778@PAL",
+		}},
+		// Without these guards every edited master would derive a window from
+		// its default timecode on the day it happened to be ingested. VX-519490
+		// (Josef_Musikal_ny_klipp_MAS.mov) is the 01:00:00 case.
+		{"default timecode 01:00:00", map[string]string{
+			"created":         "2026-09-10T12:26:19.151Z",
+			"startTimeCode":   "90000@PAL",
+			"durationSeconds": "880.52",
+		}},
+		{"default timecode 01:00:00 at 48kHz", map[string]string{
+			"created":         "2026-09-25T08:04:53.416Z",
+			"startTimeCode":   "172800000@48000",
+			"durationSeconds": "880.52",
+		}},
+		{"default timecode 10:00:00", map[string]string{
+			"created":         "2026-09-26T13:55:45.179Z",
+			"startTimeCode":   "1800000@50",
+			"durationSeconds": "120",
+		}},
+		{"zero timecode", map[string]string{
+			"created":         "2026-08-18T11:25:12.859Z",
+			"startTimeCode":   "0@PAL",
+			"durationSeconds": "576.2",
 		}},
 	}
 	for _, tt := range tests {
