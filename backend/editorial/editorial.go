@@ -58,56 +58,12 @@ func migrate(ctx context.Context, db *sql.DB) error {
 	if err != nil {
 		return fmt.Errorf("editorial: migrations fs: %w", err)
 	}
-	provider, err := goose.NewProvider(goose.DialectSQLite3, db, fsys,
-		goose.WithGoMigrations(goose.NewGoMigration(2, &goose.GoFunc{RunTx: addMarkerColumns}, nil)),
-	)
+	provider, err := goose.NewProvider(goose.DialectSQLite3, db, fsys)
 	if err != nil {
 		return fmt.Errorf("editorial: migrate: %w", err)
 	}
 	if _, err := provider.Up(ctx); err != nil {
 		return fmt.Errorf("editorial: migrate: %w", err)
-	}
-	return nil
-}
-
-// legacyMarkerColumns were added to markers after databases already existed in
-// production, where they were added ad hoc (so some databases have them and
-// some don't). 00001_init.sql creates them for fresh databases.
-var legacyMarkerColumns = []struct{ name, def string }{
-	{"contributors", "TEXT NOT NULL DEFAULT ''"},
-	{"comment", "TEXT NOT NULL DEFAULT ''"},
-	{"bible_verses", "TEXT NOT NULL DEFAULT ''"},
-	{"publish_bmm", "INTEGER NOT NULL DEFAULT 0"},
-	{"publish_bcc", "INTEGER NOT NULL DEFAULT 0"},
-}
-
-// addMarkerColumns brings pre-goose databases up to the 00001_init.sql schema.
-// It is a Go migration because SQLite has no ADD COLUMN IF NOT EXISTS. The
-// legacy publish column, if present, is left in place and unused.
-func addMarkerColumns(ctx context.Context, tx *sql.Tx) error {
-	existing := map[string]bool{}
-	rows, err := tx.QueryContext(ctx, "SELECT name FROM pragma_table_info('markers')")
-	if err != nil {
-		return fmt.Errorf("editorial: inspect markers: %w", err)
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var name string
-		if err := rows.Scan(&name); err != nil {
-			return fmt.Errorf("editorial: scan markers columns: %w", err)
-		}
-		existing[name] = true
-	}
-	if err := rows.Err(); err != nil {
-		return err
-	}
-	for _, c := range legacyMarkerColumns {
-		if existing[c.name] {
-			continue
-		}
-		if _, err := tx.ExecContext(ctx, fmt.Sprintf("ALTER TABLE markers ADD COLUMN %s %s", c.name, c.def)); err != nil {
-			return fmt.Errorf("editorial: add column markers.%s: %w", c.name, err)
-		}
 	}
 	return nil
 }

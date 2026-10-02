@@ -1,6 +1,7 @@
 -- +goose Up
 -- IF NOT EXISTS so databases created before goose was introduced adopt this
--- migration without error.
+-- migration without error. Those already have this schema (plus an unused
+-- legacy markers.publish column).
 CREATE TABLE IF NOT EXISTS sessions (
     id          TEXT PRIMARY KEY,
     vxid        TEXT NOT NULL,
