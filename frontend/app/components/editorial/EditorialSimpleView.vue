@@ -272,13 +272,11 @@ function onFieldChange(row: EditorialRow, field: EditorialField) {
                     </p>
 
                     <div v-if="verses.length" class="flex flex-wrap gap-2">
-                        <span
+                        <EditorialVerseChip
                             v-for="v in verses"
                             :key="v"
-                            class="bg-surface-indent dark:bg-surface-raise text-body-2 text-text-default rounded-lg px-3 py-1.5"
-                        >
-                            {{ v }}
-                        </span>
+                            :reference="v"
+                        />
                     </div>
                 </div>
 

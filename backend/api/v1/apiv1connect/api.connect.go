@@ -116,6 +116,9 @@ const (
 	// APIServiceUpdateEditorialMarkerProcedure is the fully-qualified name of the APIService's
 	// UpdateEditorialMarker RPC.
 	APIServiceUpdateEditorialMarkerProcedure = "/api.v1.APIService/UpdateEditorialMarker"
+	// APIServiceGetBibleVersesProcedure is the fully-qualified name of the APIService's GetBibleVerses
+	// RPC.
+	APIServiceGetBibleVersesProcedure = "/api.v1.APIService/GetBibleVerses"
 	// APIServiceDeleteEditorialSessionProcedure is the fully-qualified name of the APIService's
 	// DeleteEditorialSession RPC.
 	APIServiceDeleteEditorialSessionProcedure = "/api.v1.APIService/DeleteEditorialSession"
@@ -171,6 +174,8 @@ type APIServiceClient interface {
 	GetEditorialSession(context.Context, *connect.Request[v1.GetEditorialSessionRequest]) (*connect.Response[v1.EditorialSession], error)
 	SaveEditorialSession(context.Context, *connect.Request[v1.SaveEditorialSessionRequest]) (*connect.Response[v1.EditorialSession], error)
 	UpdateEditorialMarker(context.Context, *connect.Request[v1.UpdateEditorialMarkerRequest]) (*connect.Response[v1.Void], error)
+	// Bible verses
+	GetBibleVerses(context.Context, *connect.Request[v1.GetBibleVersesRequest]) (*connect.Response[v1.GetBibleVersesResponse], error)
 	DeleteEditorialSession(context.Context, *connect.Request[v1.DeleteEditorialSessionRequest]) (*connect.Response[v1.Void], error)
 	ImportEditorialMarkers(context.Context, *connect.Request[v1.ImportEditorialMarkersRequest]) (*connect.Response[v1.ImportEditorialMarkersResponse], error)
 }
@@ -366,6 +371,12 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(aPIServiceMethods.ByName("UpdateEditorialMarker")),
 			connect.WithClientOptions(opts...),
 		),
+		getBibleVerses: connect.NewClient[v1.GetBibleVersesRequest, v1.GetBibleVersesResponse](
+			httpClient,
+			baseURL+APIServiceGetBibleVersesProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("GetBibleVerses")),
+			connect.WithClientOptions(opts...),
+		),
 		deleteEditorialSession: connect.NewClient[v1.DeleteEditorialSessionRequest, v1.Void](
 			httpClient,
 			baseURL+APIServiceDeleteEditorialSessionProcedure,
@@ -413,6 +424,7 @@ type aPIServiceClient struct {
 	getEditorialSession    *connect.Client[v1.GetEditorialSessionRequest, v1.EditorialSession]
 	saveEditorialSession   *connect.Client[v1.SaveEditorialSessionRequest, v1.EditorialSession]
 	updateEditorialMarker  *connect.Client[v1.UpdateEditorialMarkerRequest, v1.Void]
+	getBibleVerses         *connect.Client[v1.GetBibleVersesRequest, v1.GetBibleVersesResponse]
 	deleteEditorialSession *connect.Client[v1.DeleteEditorialSessionRequest, v1.Void]
 	importEditorialMarkers *connect.Client[v1.ImportEditorialMarkersRequest, v1.ImportEditorialMarkersResponse]
 }
@@ -567,6 +579,11 @@ func (c *aPIServiceClient) UpdateEditorialMarker(ctx context.Context, req *conne
 	return c.updateEditorialMarker.CallUnary(ctx, req)
 }
 
+// GetBibleVerses calls api.v1.APIService.GetBibleVerses.
+func (c *aPIServiceClient) GetBibleVerses(ctx context.Context, req *connect.Request[v1.GetBibleVersesRequest]) (*connect.Response[v1.GetBibleVersesResponse], error) {
+	return c.getBibleVerses.CallUnary(ctx, req)
+}
+
 // DeleteEditorialSession calls api.v1.APIService.DeleteEditorialSession.
 func (c *aPIServiceClient) DeleteEditorialSession(ctx context.Context, req *connect.Request[v1.DeleteEditorialSessionRequest]) (*connect.Response[v1.Void], error) {
 	return c.deleteEditorialSession.CallUnary(ctx, req)
@@ -624,6 +641,8 @@ type APIServiceHandler interface {
 	GetEditorialSession(context.Context, *connect.Request[v1.GetEditorialSessionRequest]) (*connect.Response[v1.EditorialSession], error)
 	SaveEditorialSession(context.Context, *connect.Request[v1.SaveEditorialSessionRequest]) (*connect.Response[v1.EditorialSession], error)
 	UpdateEditorialMarker(context.Context, *connect.Request[v1.UpdateEditorialMarkerRequest]) (*connect.Response[v1.Void], error)
+	// Bible verses
+	GetBibleVerses(context.Context, *connect.Request[v1.GetBibleVersesRequest]) (*connect.Response[v1.GetBibleVersesResponse], error)
 	DeleteEditorialSession(context.Context, *connect.Request[v1.DeleteEditorialSessionRequest]) (*connect.Response[v1.Void], error)
 	ImportEditorialMarkers(context.Context, *connect.Request[v1.ImportEditorialMarkersRequest]) (*connect.Response[v1.ImportEditorialMarkersResponse], error)
 }
@@ -815,6 +834,12 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(aPIServiceMethods.ByName("UpdateEditorialMarker")),
 		connect.WithHandlerOptions(opts...),
 	)
+	aPIServiceGetBibleVersesHandler := connect.NewUnaryHandler(
+		APIServiceGetBibleVersesProcedure,
+		svc.GetBibleVerses,
+		connect.WithSchema(aPIServiceMethods.ByName("GetBibleVerses")),
+		connect.WithHandlerOptions(opts...),
+	)
 	aPIServiceDeleteEditorialSessionHandler := connect.NewUnaryHandler(
 		APIServiceDeleteEditorialSessionProcedure,
 		svc.DeleteEditorialSession,
@@ -889,6 +914,8 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceSaveEditorialSessionHandler.ServeHTTP(w, r)
 		case APIServiceUpdateEditorialMarkerProcedure:
 			aPIServiceUpdateEditorialMarkerHandler.ServeHTTP(w, r)
+		case APIServiceGetBibleVersesProcedure:
+			aPIServiceGetBibleVersesHandler.ServeHTTP(w, r)
 		case APIServiceDeleteEditorialSessionProcedure:
 			aPIServiceDeleteEditorialSessionHandler.ServeHTTP(w, r)
 		case APIServiceImportEditorialMarkersProcedure:
@@ -1020,6 +1047,10 @@ func (UnimplementedAPIServiceHandler) SaveEditorialSession(context.Context, *con
 
 func (UnimplementedAPIServiceHandler) UpdateEditorialMarker(context.Context, *connect.Request[v1.UpdateEditorialMarkerRequest]) (*connect.Response[v1.Void], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.UpdateEditorialMarker is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) GetBibleVerses(context.Context, *connect.Request[v1.GetBibleVersesRequest]) (*connect.Response[v1.GetBibleVersesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetBibleVerses is not implemented"))
 }
 
 func (UnimplementedAPIServiceHandler) DeleteEditorialSession(context.Context, *connect.Request[v1.DeleteEditorialSessionRequest]) (*connect.Response[v1.Void], error) {

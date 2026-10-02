@@ -2,6 +2,7 @@ package main
 
 import (
 	"bcc-media-tools/api/v1/apiv1connect"
+	"bcc-media-tools/bible"
 	"bcc-media-tools/bmm"
 	"bcc-media-tools/editorial"
 	"fmt"
@@ -59,6 +60,7 @@ type ApiServer struct {
 	VaultAPI
 	EditorialAPI
 	LiveIngestAPI
+	BibleAPI
 }
 
 func withCORS(connectHandler http.Handler) http.Handler {
@@ -149,6 +151,14 @@ func main() {
 	defer editorialStore.Close()
 	editorialAPI := NewEditorialAPI(editorialStore, vidispineClient, cantemoClient)
 
+	// Bible verse lookups for the editorial review view. Defaults to the
+	// Norwegian 1930 translation on the public BCC bible server.
+	bibleID := os.Getenv("BIBLE_ID")
+	if bibleID == "" {
+		bibleID = "nb-1930"
+	}
+	bibleAPI := NewBibleAPI(bible.NewClient(os.Getenv("BIBLE_API_URL"), bibleID))
+
 	api := &ApiServer{
 		PermissionsAPI:   permissionsApi,
 		BMMApi:           *bmmApi,
@@ -159,6 +169,7 @@ func main() {
 		VaultAPI:         *vaultAPI,
 		EditorialAPI:     *editorialAPI,
 		LiveIngestAPI:    *liveIngestAPI,
+		BibleAPI:         *bibleAPI,
 	}
 
 	if os.Getenv("STATIC_FILE_PATH") != "" {

@@ -10,6 +10,9 @@ interface Props {
     closeDelay?: number;
     disabled?: boolean;
     interactive?: boolean;
+    // Extension beyond admin-web: "panel" is a roomier card for content meant
+    // to be read rather than glanced at (pair it with `interactive`).
+    size?: "compact" | "panel";
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -20,6 +23,7 @@ const props = withDefaults(defineProps<Props>(), {
     closeDelay: 150,
     disabled: false,
     interactive: false,
+    size: "compact",
 });
 
 const positioning = computed(() => ({
@@ -43,7 +47,12 @@ const positioning = computed(() => ({
         <Teleport to="#teleports">
             <Tooltip.Positioner>
                 <Tooltip.Content
-                    class="gradient-border bg-surface-raise text-caption-1 text-text-default shadow-floating ease-out-expo max-w-xs origin-[--transform-origin] rounded-lg px-2.5 py-1.5 whitespace-normal transition-[opacity,transform] duration-200 data-[state=closed]:scale-95 data-[state=closed]:opacity-0 data-[state=open]:scale-100 data-[state=open]:opacity-100"
+                    class="gradient-border bg-surface-raise text-text-default shadow-floating ease-out-expo origin-[--transform-origin] whitespace-normal transition-[opacity,transform] duration-200 data-[state=closed]:scale-95 data-[state=closed]:opacity-0 data-[state=open]:scale-100 data-[state=open]:opacity-100"
+                    :class="
+                        size === 'panel'
+                            ? 'max-w-md rounded-2xl p-5'
+                            : 'text-caption-1 max-w-xs rounded-lg px-2.5 py-1.5'
+                    "
                 >
                     <slot name="content">{{ content }}</slot>
                 </Tooltip.Content>

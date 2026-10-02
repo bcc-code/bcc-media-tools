@@ -277,6 +277,9 @@
         "pause": "Pause",
         "publishOn": "På {target}",
         "publishOff": "Ikke på {target}",
+        "verseLoading": "Slår opp…",
+        "verseFailed": "Kunne ikke slå opp verset",
+        "verseNotFound": "Fant ingen tekst for denne referansen",
         "col": {
             "title": "Tittel",
             "contributors": "Medvirkende",

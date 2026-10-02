@@ -538,6 +538,28 @@ message UpdateEditorialMarkerRequest {
   optional bool publish_bcc = 6;
 }
 
+// ---- Bible verses ----
+
+// Look up the text behind a free-text bible reference as editors write it
+// ("1Kor 1,18+23-24"). Served by the BCC bible server; see backend/bible.
+message GetBibleVersesRequest {
+  string reference = 1;
+}
+
+message BibleVerse {
+  int32 number = 1;
+  string text = 2;
+}
+
+message GetBibleVersesResponse {
+  // the reference rendered for display, e.g. "1. Korinterbrev 1,18+23-24"
+  string reference = 1;
+  // the translation the text came from, e.g. "NB 1930"
+  string translation = 2;
+  // empty when the reference could not be resolved to any text
+  repeated BibleVerse verses = 3;
+}
+
 service APIService {
 	// Permissions
 	rpc GetPermissions (Void) returns (Permissions) {}
@@ -594,6 +616,9 @@ service APIService {
   rpc GetEditorialSession(GetEditorialSessionRequest) returns (EditorialSession) {}
   rpc SaveEditorialSession(SaveEditorialSessionRequest) returns (EditorialSession) {}
   rpc UpdateEditorialMarker(UpdateEditorialMarkerRequest) returns (Void) {}
+
+  // Bible verses
+  rpc GetBibleVerses(GetBibleVersesRequest) returns (GetBibleVersesResponse) {}
   rpc DeleteEditorialSession(DeleteEditorialSessionRequest) returns (Void) {}
   rpc ImportEditorialMarkers(ImportEditorialMarkersRequest) returns (ImportEditorialMarkersResponse) {}
 }

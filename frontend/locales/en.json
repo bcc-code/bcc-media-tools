@@ -277,6 +277,9 @@
         "pause": "Pause",
         "publishOn": "On {target}",
         "publishOff": "Not on {target}",
+        "verseLoading": "Looking up…",
+        "verseFailed": "Could not look up the verse",
+        "verseNotFound": "No text found for this reference",
         "col": {
             "title": "Title",
             "contributors": "Contributors",
