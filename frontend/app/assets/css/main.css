@@ -188,6 +188,27 @@
     }
 }
 
+/*
+ * Larger type scale, applied to a container.
+ *
+ * Every `text-*` utility resolves its size through these custom properties, so
+ * redefining them on an element scales all text inside it — design-system
+ * components included — without touching the rest of the app. Used by the
+ * editorial review view, whose reviewers need the bigger type.
+ */
+@utility type-scale-lg {
+    --text-caption-2: 13px;
+    --text-caption-1: 14px;
+    --text-body-3: 17px;
+    --text-body-2: 19px;
+    --text-body-1: 21px;
+    --text-title-3: 18px;
+    --text-title-2: 20px;
+    --text-title-1: 22px;
+    --text-heading-3: 26px;
+    --text-heading-2: 34px;
+}
+
 /* Gradient border using mask-composite on rounded elements */
 @utility gradient-border {
     position: relative;

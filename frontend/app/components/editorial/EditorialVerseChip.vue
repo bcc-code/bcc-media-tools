@@ -59,43 +59,55 @@ async function load() {
         </button>
 
         <template #content>
-            <div class="flex items-baseline justify-between gap-4">
-                <p class="text-title-1 text-text-default">
-                    {{ result?.reference || reference }}
-                </p>
-                <span
-                    v-if="result?.translation"
-                    class="text-body-3 text-text-hint shrink-0"
-                >
-                    {{ result.translation }}
-                </span>
-            </div>
-
-            <div class="mt-3">
-                <p
-                    v-if="loading"
-                    class="text-body-2 text-text-hint flex items-center gap-2"
-                >
-                    <Icon name="svg-spinners:ring-resize" class="size-4" />
-                    {{ t("editorial.verseLoading") }}
-                </p>
-                <p v-else-if="failed" class="text-body-2 text-semantic-error">
-                    {{ t("editorial.verseFailed") }}
-                </p>
-                <p
-                    v-else-if="!result?.verses.length"
-                    class="text-body-2 text-text-hint"
-                >
-                    {{ t("editorial.verseNotFound") }}
-                </p>
-                <p v-else class="text-body-1 text-text-default leading-relaxed">
-                    <span v-for="verse in result.verses" :key="verse.number">
-                        <sup class="text-text-hint mr-0.5 tabular-nums">
-                            {{ verse.number }}
-                        </sup>
-                        {{ verse.text }}
+            <!-- Teleported out of the review view, so it needs the scale too. -->
+            <div class="type-scale-lg">
+                <div class="flex items-baseline justify-between gap-4">
+                    <p class="text-title-1 text-text-default">
+                        {{ result?.reference || reference }}
+                    </p>
+                    <span
+                        v-if="result?.translation"
+                        class="text-body-3 text-text-hint shrink-0"
+                    >
+                        {{ result.translation }}
                     </span>
-                </p>
+                </div>
+
+                <div class="mt-3">
+                    <p
+                        v-if="loading"
+                        class="text-body-2 text-text-hint flex items-center gap-2"
+                    >
+                        <Icon name="svg-spinners:ring-resize" class="size-4" />
+                        {{ t("editorial.verseLoading") }}
+                    </p>
+                    <p
+                        v-else-if="failed"
+                        class="text-body-2 text-semantic-error"
+                    >
+                        {{ t("editorial.verseFailed") }}
+                    </p>
+                    <p
+                        v-else-if="!result?.verses.length"
+                        class="text-body-2 text-text-hint"
+                    >
+                        {{ t("editorial.verseNotFound") }}
+                    </p>
+                    <p
+                        v-else
+                        class="text-body-1 text-text-default leading-relaxed"
+                    >
+                        <span
+                            v-for="verse in result.verses"
+                            :key="verse.number"
+                        >
+                            <sup class="text-text-hint mr-0.5 tabular-nums">
+                                {{ verse.number }}
+                            </sup>
+                            {{ verse.text }}
+                        </span>
+                    </p>
+                </div>
             </div>
         </template>
     </DesignTooltip>

@@ -175,7 +175,8 @@ watch(
 </script>
 
 <template>
-    <div class="flex flex-col gap-8">
+    <!-- type-scale-lg enlarges every text utility inside this view. -->
+    <div class="type-scale-lg flex flex-col gap-8">
         <div
             class="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)]"
         >
