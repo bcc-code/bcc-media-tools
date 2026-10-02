@@ -93,10 +93,10 @@ func TestGetManifestNullableFields(t *testing.T) {
 
 func TestGetManifestRequiresEventID(t *testing.T) {
 	client := NewClient("https://playout.example", "test-key", "tenant")
-	client.httpClient = &http.Client{Transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
+	client.rest.SetTransport(roundTripFunc(func(*http.Request) (*http.Response, error) {
 		t.Error("missing event ID caused an HTTP request")
 		return nil, errors.New("unexpected request")
-	})}
+	}))
 	for _, eventID := range []string{"", " \t\n"} {
 		manifest, err := client.GetManifest(context.Background(), eventID)
 		if err == nil || err.Error() != "playout event id is required" || manifest != nil {

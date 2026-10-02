@@ -64,7 +64,7 @@ func TestListEventsPagination(t *testing.T) {
 			client := NewClient(server.URL+"/api/", "test-key", "tenant/one ?#%")
 			transport := server.Client().Transport
 			var lastBody *trackedBody
-			client.httpClient = &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
+			client.rest.SetTransport(roundTripFunc(func(r *http.Request) (*http.Response, error) {
 				if lastBody != nil && !lastBody.closed {
 					t.Error("previous page's body was not closed before fetching the next page")
 				}
@@ -74,7 +74,7 @@ func TestListEventsPagination(t *testing.T) {
 					resp.Body = lastBody
 				}
 				return resp, err
-			})}
+			}))
 			got, err := client.ListEvents(context.Background())
 			if err != nil {
 				t.Fatalf("ListEvents: %v", err)
@@ -115,16 +115,18 @@ func TestListEventsNullableFields(t *testing.T) {
 
 func TestListEventsLaterPageError(t *testing.T) {
 	for _, tt := range []struct {
-		name   string
-		status int
-		body   string
-		want   string
+		name      string
+		status    int
+		body      string
+		want      string
+		wantPages []string
 	}{
-		{"HTTP error", http.StatusBadGateway, "unavailable", "unexpected status 502 Bad Gateway"},
-		{"decode error", http.StatusOK, `{`, "decode playout events"},
+		// A 502 is transient, so page 2 is retried before giving up.
+		{"HTTP error", http.StatusBadGateway, "unavailable", "unexpected status 502 Bad Gateway", []string{"1", "2", "2", "2"}},
+		{"decode error", http.StatusOK, `{`, "decode playout events", []string{"1", "2"}},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			pages := make(chan string, 3)
+			pages := make(chan string, 5)
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				page := r.URL.Query().Get("page")
 				select {
@@ -156,8 +158,8 @@ func TestListEventsLaterPageError(t *testing.T) {
 			for page := range pages {
 				requested = append(requested, page)
 			}
-			if !reflect.DeepEqual(requested, []string{"1", "2"}) {
-				t.Errorf("requested pages = %v, want [1 2]", requested)
+			if !reflect.DeepEqual(requested, tt.wantPages) {
+				t.Errorf("requested pages = %v, want %v", requested, tt.wantPages)
 			}
 		})
 	}

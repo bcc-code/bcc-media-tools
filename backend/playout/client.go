@@ -6,8 +6,11 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/go-resty/resty/v2"
 )
 
 const DefaultBaseURL = "https://api.playout.studio"
@@ -57,64 +60,93 @@ type eventsResponse struct {
 }
 
 type Client struct {
-	baseURL    string
-	apiKey     string
-	tenantID   string
-	httpClient *http.Client
+	baseURL  string
+	apiKey   string
+	tenantID string
+	rest     *resty.Client
 }
+
+// Retry tuning; variables so tests can shorten the waits.
+var (
+	retryCount       = 2
+	retryWaitTime    = 500 * time.Millisecond
+	retryMaxWaitTime = 2 * time.Second
+)
 
 func NewClient(baseURL, apiKey, tenantID string) *Client {
 	if strings.TrimSpace(baseURL) == "" {
 		baseURL = DefaultBaseURL
 	}
+	rest := resty.New().
+		SetTimeout(30 * time.Second).
+		SetRetryCount(retryCount).
+		SetRetryWaitTime(retryWaitTime).
+		SetRetryMaxWaitTime(retryMaxWaitTime).
+		// Replaces resty's default, so transport errors are retried here too.
+		AddRetryCondition(func(resp *resty.Response, err error) bool {
+			if err != nil {
+				return true
+			}
+			return resp.StatusCode() == http.StatusTooManyRequests || resp.StatusCode() >= http.StatusInternalServerError
+		}).
+		SetDisableWarn(true)
 	return &Client{
-		baseURL:    strings.TrimRight(baseURL, "/"),
-		apiKey:     apiKey,
-		tenantID:   tenantID,
-		httpClient: http.DefaultClient,
+		baseURL:  strings.TrimRight(baseURL, "/"),
+		apiKey:   apiKey,
+		tenantID: tenantID,
+		rest:     rest,
 	}
+}
+
+func (c *Client) configured() bool {
+	return strings.TrimSpace(c.baseURL) != "" && strings.TrimSpace(c.apiKey) != "" && strings.TrimSpace(c.tenantID) != ""
+}
+
+// request starts an authenticated JSON request.
+func (c *Client) request(ctx context.Context) *resty.Request {
+	return c.rest.R().
+		SetContext(ctx).
+		SetHeader("X-Api-Key", c.apiKey).
+		SetHeader("Accept", "application/json").
+		SetPathParam("tenant", c.tenantID)
+}
+
+// get sends req and decodes the JSON body into out. Not SetResult: it skips
+// decoding when the Content-Type isn't JSON.
+func (c *Client) get(req *resty.Request, path, action, what string, out any) error {
+	if _, err := url.Parse(c.baseURL); err != nil {
+		return fmt.Errorf("build playout %s URL: %w", what, err)
+	}
+	resp, err := req.Get(c.baseURL + path)
+	if err != nil {
+		return fmt.Errorf("%s: %w", action, err)
+	}
+	if !resp.IsSuccess() {
+		return fmt.Errorf("%s: unexpected status %s", action, resp.Status())
+	}
+	if err := json.Unmarshal(resp.Body(), out); err != nil {
+		return fmt.Errorf("decode playout %s: %w", what, err)
+	}
+	return nil
 }
 
 // GetManifest returns the timestamped content actions for an event. Types are
 // optional; when supplied they are sent as the API's comma-separated filter.
 func (c *Client) GetManifest(ctx context.Context, eventID string, types ...string) (*Manifest, error) {
-	if strings.TrimSpace(c.baseURL) == "" || strings.TrimSpace(c.apiKey) == "" || strings.TrimSpace(c.tenantID) == "" {
+	if !c.configured() {
 		return nil, fmt.Errorf("playout client is not configured")
 	}
 	if strings.TrimSpace(eventID) == "" {
 		return nil, fmt.Errorf("playout event id is required")
 	}
 
-	endpoint := fmt.Sprintf("%s/manifest/%s/%s", c.baseURL, url.PathEscape(c.tenantID), url.PathEscape(eventID))
-	u, err := url.Parse(endpoint)
-	if err != nil {
-		return nil, fmt.Errorf("build playout manifest URL: %w", err)
-	}
+	req := c.request(ctx).SetPathParam("event", eventID)
 	if len(types) > 0 {
-		query := u.Query()
-		query.Set("type", strings.Join(types, ","))
-		u.RawQuery = query.Encode()
+		req.SetQueryParam("type", strings.Join(types, ","))
 	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
-	if err != nil {
-		return nil, fmt.Errorf("create playout manifest request: %w", err)
-	}
-	req.Header.Set("X-Api-Key", c.apiKey)
-	req.Header.Set("Accept", "application/json")
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("get playout manifest: %w", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return nil, fmt.Errorf("get playout manifest: unexpected status %s", resp.Status)
-	}
-
 	var manifest Manifest
-	if err := json.NewDecoder(resp.Body).Decode(&manifest); err != nil {
-		return nil, fmt.Errorf("decode playout manifest: %w", err)
+	if err := c.get(req, "/manifest/{tenant}/{event}", "get playout manifest", "manifest", &manifest); err != nil {
+		return nil, err
 	}
 	return &manifest, nil
 }
@@ -123,54 +155,22 @@ func (c *Client) GetManifest(ctx context.Context, eventID string, types ...strin
 // allows, minimizing the number of pages ListEvents has to fetch.
 const eventsPageSize = 100
 
-// fetchEventsPage fetches a single page of the Event Discovery API. Separate
-// from ListEvents so each page's body is closed as soon as that page is done.
-func (c *Client) fetchEventsPage(ctx context.Context, page int) (eventsResponse, error) {
-	endpoint := fmt.Sprintf("%s/%s/events", c.baseURL, url.PathEscape(c.tenantID))
-	u, err := url.Parse(endpoint)
-	if err != nil {
-		return eventsResponse{}, fmt.Errorf("build playout events URL: %w", err)
-	}
-	query := u.Query()
-	query.Set("page", fmt.Sprintf("%d", page))
-	query.Set("pageSize", fmt.Sprintf("%d", eventsPageSize))
-	u.RawQuery = query.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
-	if err != nil {
-		return eventsResponse{}, fmt.Errorf("create playout events request: %w", err)
-	}
-	req.Header.Set("X-Api-Key", c.apiKey)
-	req.Header.Set("Accept", "application/json")
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return eventsResponse{}, fmt.Errorf("list playout events: %w", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return eventsResponse{}, fmt.Errorf("list playout events: unexpected status %s", resp.Status)
-	}
-
-	var body eventsResponse
-	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
-		return eventsResponse{}, fmt.Errorf("decode playout events: %w", err)
-	}
-	return body, nil
-}
-
 // ListEvents returns every event known to the tenant, fetching all pages.
 // There is no server-side name search, so callers filter the returned list
 // themselves.
 func (c *Client) ListEvents(ctx context.Context) ([]Event, error) {
-	if strings.TrimSpace(c.baseURL) == "" || strings.TrimSpace(c.apiKey) == "" || strings.TrimSpace(c.tenantID) == "" {
+	if !c.configured() {
 		return nil, fmt.Errorf("playout client is not configured")
 	}
 
 	var events []Event
 	for page := 1; ; page++ {
-		body, err := c.fetchEventsPage(ctx, page)
-		if err != nil {
+		req := c.request(ctx).SetQueryParams(map[string]string{
+			"page":     strconv.Itoa(page),
+			"pageSize": strconv.Itoa(eventsPageSize),
+		})
+		var body eventsResponse
+		if err := c.get(req, "/{tenant}/events", "list playout events", "events", &body); err != nil {
 			return nil, err
 		}
 

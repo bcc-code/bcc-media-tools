@@ -6,10 +6,19 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 	"time"
 )
+
+func TestMain(m *testing.M) {
+	// Keep retried requests fast; the retry count itself is left as-is so the
+	// tests exercise real retry behavior.
+	retryWaitTime = time.Millisecond
+	retryMaxWaitTime = time.Millisecond
+	os.Exit(m.Run())
+}
 
 func TestNewClient(t *testing.T) {
 	for _, tt := range []struct {
@@ -30,8 +39,8 @@ func TestNewClient(t *testing.T) {
 			if client.apiKey != "test-key" || client.tenantID != "test-tenant" {
 				t.Error("client did not retain its API key and tenant ID")
 			}
-			if client.httpClient != http.DefaultClient {
-				t.Error("client should use http.DefaultClient")
+			if client.rest == nil {
+				t.Error("client has no HTTP client")
 			}
 		})
 	}
@@ -67,10 +76,10 @@ func TestClientRequiresConfiguration(t *testing.T) {
 						case "tenant ID":
 							client.tenantID = value
 						}
-						client.httpClient = &http.Client{Transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
+						client.rest.SetTransport(roundTripFunc(func(*http.Request) (*http.Response, error) {
 							t.Error("unconfigured client made an HTTP request")
 							return nil, errors.New("unexpected request")
-						})}
+						}))
 						err := method.request(context.Background(), client)
 						if err == nil || err.Error() != "playout client is not configured" {
 							t.Fatalf("error = %v, want configuration error", err)
@@ -118,6 +127,42 @@ func TestClientResponseErrors(t *testing.T) {
 	}
 }
 
+func TestClientRetries(t *testing.T) {
+	for _, method := range clientMethods {
+		t.Run(method.name, func(t *testing.T) {
+			for _, tt := range []struct {
+				name         string
+				statuses     []int
+				wantRequests int
+				wantErr      bool
+			}{
+				{"recovers from rate limit", []int{http.StatusTooManyRequests, http.StatusOK}, 2, false},
+				{"recovers from server error", []int{http.StatusServiceUnavailable, http.StatusBadGateway, http.StatusOK}, 3, false},
+				{"gives up after retries", []int{http.StatusInternalServerError, http.StatusInternalServerError, http.StatusInternalServerError, http.StatusOK}, 3, true},
+				{"client error is not retried", []int{http.StatusNotFound, http.StatusOK}, 1, true},
+			} {
+				t.Run(tt.name, func(t *testing.T) {
+					var requests int
+					server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						status := tt.statuses[requests]
+						requests++
+						w.WriteHeader(status)
+						io.WriteString(w, `{}`)
+					}))
+					defer server.Close()
+					err := method.request(context.Background(), NewClient(server.URL, "test-key", "tenant"))
+					if (err != nil) != tt.wantErr {
+						t.Fatalf("error = %v, want error: %v", err, tt.wantErr)
+					}
+					if requests != tt.wantRequests {
+						t.Errorf("made %d requests, want %d", requests, tt.wantRequests)
+					}
+				})
+			}
+		})
+	}
+}
+
 func TestClientInvalidURL(t *testing.T) {
 	for _, method := range clientMethods {
 		t.Run(method.name, func(t *testing.T) {
@@ -134,9 +179,9 @@ func TestClientTransportError(t *testing.T) {
 	for _, method := range clientMethods {
 		t.Run(method.name, func(t *testing.T) {
 			client := NewClient("https://playout.example", "test-key", "tenant")
-			client.httpClient = &http.Client{Transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
+			client.rest.SetTransport(roundTripFunc(func(*http.Request) (*http.Response, error) {
 				return nil, wantErr
-			})}
+			}))
 			if err := method.request(context.Background(), client); !errors.Is(err, wantErr) {
 				t.Fatalf("error = %v, want wrapped transport error %v", err, wantErr)
 			}
@@ -157,7 +202,6 @@ func TestClientContextCancellation(t *testing.T) {
 			}))
 			defer server.Close()
 			client := NewClient(server.URL, "test-key", "tenant")
-			client.httpClient = &http.Client{Timeout: 5 * time.Second}
 			if err := method.request(ctx, client); !errors.Is(err, context.Canceled) {
 				t.Fatalf("error = %v, want context.Canceled", err)
 			}
@@ -180,9 +224,9 @@ func TestClientClosesResponseBody(t *testing.T) {
 				t.Run(tt.name, func(t *testing.T) {
 					body := &trackedBody{ReadCloser: io.NopCloser(strings.NewReader(tt.body))}
 					client := NewClient("https://playout.example", "test-key", "tenant")
-					client.httpClient = &http.Client{Transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
+					client.rest.SetTransport(roundTripFunc(func(*http.Request) (*http.Response, error) {
 						return &http.Response{StatusCode: tt.status, Body: body}, nil
-					})}
+					}))
 					method.request(context.Background(), client)
 					if !body.closed {
 						t.Fatal("response body was not closed")
