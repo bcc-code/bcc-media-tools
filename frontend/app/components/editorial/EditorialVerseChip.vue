@@ -46,6 +46,8 @@ async function load() {
         size="panel"
         placement="bottom-start"
         interactive
+        :close-on-scroll="false"
+        :close-on-click="false"
         :open-delay="200"
         :close-delay="200"
     >
@@ -73,7 +75,9 @@ async function load() {
                     </span>
                 </div>
 
-                <div class="mt-3">
+                <div
+                    class="mt-3 max-h-[50vh] overflow-y-auto overscroll-contain"
+                >
                     <p
                         v-if="loading"
                         class="text-body-2 text-text-hint flex items-center gap-2"

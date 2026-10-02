@@ -10,6 +10,10 @@ interface Props {
     closeDelay?: number;
     disabled?: boolean;
     interactive?: boolean;
+    // Ark closes a tooltip on any scroll or click by default. A panel you are
+    // meant to read (and scroll) needs both turned off.
+    closeOnScroll?: boolean;
+    closeOnClick?: boolean;
     // Extension beyond admin-web: "panel" is a roomier card for content meant
     // to be read rather than glanced at (pair it with `interactive`).
     size?: "compact" | "panel";
@@ -23,6 +27,8 @@ const props = withDefaults(defineProps<Props>(), {
     closeDelay: 150,
     disabled: false,
     interactive: false,
+    closeOnScroll: true,
+    closeOnClick: true,
     size: "compact",
 });
 
@@ -39,6 +45,8 @@ const positioning = computed(() => ({
         :close-delay="closeDelay"
         :disabled="disabled"
         :interactive="interactive"
+        :close-on-scroll="closeOnScroll"
+        :close-on-click="closeOnClick"
     >
         <Tooltip.Trigger as-child>
             <slot />
