@@ -280,6 +280,12 @@ function onLanePointerMove(e: PointerEvent) {
                         <p class="text-title-3 text-text-default">
                             {{ block.row.name || "—" }}
                         </p>
+                        <p
+                            v-if="block.row.contributors"
+                            class="text-text-default mt-0.5"
+                        >
+                            {{ block.row.contributors }}
+                        </p>
                         <p class="text-text-muted mt-0.5">
                             {{ typeLabel(block.row.type) }} ·
                             {{ formatMs(block.endMs - block.startMs) }}

@@ -108,11 +108,6 @@ function select(i: number) {
     if (row) seek(parseTc(row.start));
 }
 
-function step(delta: number) {
-    const next = selectedIndex.value + delta;
-    if (next >= 0 && next < props.rows.length) select(next);
-}
-
 // ── Position within the selected item ─────────────────────
 const selectedStartMs = computed(() =>
     selected.value ? parseTc(selected.value.start) : 0,
@@ -256,32 +251,6 @@ watch(
                     <span class="text-title-1 text-text-default">
                         {{ typeLabel(selected.type) || "—" }}
                     </span>
-                    <span
-                        class="text-body-2 text-text-muted ml-auto tabular-nums"
-                    >
-                        {{
-                            t("editorial.itemOf", {
-                                n: selectedIndex + 1,
-                                total: rows.length,
-                            })
-                        }}
-                    </span>
-                    <div class="flex items-center gap-1">
-                        <DesignButton
-                            variant="tertiary"
-                            icon="tabler:chevron-up"
-                            :disabled="selectedIndex === 0"
-                            :aria-label="t('editorial.previousItem')"
-                            @click="step(-1)"
-                        />
-                        <DesignButton
-                            variant="tertiary"
-                            icon="tabler:chevron-down"
-                            :disabled="selectedIndex >= rows.length - 1"
-                            :aria-label="t('editorial.nextItem')"
-                            @click="step(1)"
-                        />
-                    </div>
                 </div>
 
                 <!-- The title is the one thing reviewers rename, so the
