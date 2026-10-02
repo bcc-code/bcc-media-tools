@@ -26,7 +26,7 @@ const { typeLabel } = useEditorialTypes();
 // as long (a 14-minute speech is ~3x a 1-minute prayer rather than 14x), short
 // ones stay legible, and MIN_PX only has to catch the extremes. What that costs
 // is taken from the blocks that have room to give.
-const MIN_PX = 48;
+const MIN_PX = 56;
 const GAP_PX = 4;
 
 const wrapperEl = useTemplateRef<HTMLElement>("wrapperEl");
@@ -140,6 +140,12 @@ function xToTime(x: number): number {
 
 const playheadX = computed(() => timeToX(props.currentMs));
 
+// The knob is centred on the playhead, so keep it a half-width inside the
+// track rather than letting it hang off either end.
+const knobX = computed(() =>
+    Math.min(Math.max(playheadX.value, 8), Math.max(8, contentWidth.value - 8)),
+);
+
 // Ruler ticks: the smallest step from the ladder that keeps them sparse, then
 // anything that would collide with its neighbour after the squeeze is dropped.
 const TICK_STEPS_MS = [
@@ -199,20 +205,24 @@ function onLanePointerMove(e: PointerEvent) {
             class="relative select-none"
             :style="{ width: `${Math.max(contentWidth, 1)}px` }"
         >
-            <!-- Scrub lane: drag anywhere to move the playhead. -->
+            <!-- Programme progress: drag anywhere to move the playhead. -->
             <div
                 ref="laneEl"
-                class="bg-text-default/10 dark:bg-surface-indent relative h-6 cursor-pointer rounded-t-lg"
+                class="group relative mb-3 cursor-pointer py-2"
                 @pointerdown="onLanePointerDown"
                 @pointermove="onLanePointerMove"
             >
                 <div
-                    class="bg-primary-default/30 pointer-events-none absolute inset-y-0 left-0 rounded-tl-lg"
-                    :style="{ width: `${playheadX}px` }"
-                />
-                <div
-                    class="bg-primary-default pointer-events-none absolute inset-y-0 -ml-px w-0.5"
-                    :style="{ left: `${playheadX}px` }"
+                    class="bg-text-default/10 h-2 w-full overflow-hidden rounded-full dark:bg-white/15"
+                >
+                    <div
+                        class="bg-primary-default h-full rounded-full"
+                        :style="{ width: `${playheadX}px` }"
+                    />
+                </div>
+                <span
+                    class="bg-primary-default shadow-resting pointer-events-none absolute top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full transition-transform group-hover:scale-125"
+                    :style="{ left: `${knobX}px` }"
                 />
             </div>
 
@@ -255,23 +265,21 @@ function onLanePointerMove(e: PointerEvent) {
                         >
                             {{ formatMs(block.endMs - block.startMs) }}
                         </span>
-                        <!-- Publish state: left bar is BMM, right is BCC Media. -->
-                        <span class="mt-auto flex gap-1.5">
-                            <span
-                                class="h-1.5 w-4 rounded-full"
-                                :class="
-                                    block.row.publishBmm
-                                        ? 'bg-text-dark-default'
-                                        : 'bg-text-dark-default/20'
-                                "
+                        <!-- Where the item is going, in the same icons as the
+                             publish buttons. Destinations it is not going to
+                             are simply absent. -->
+                        <span class="mt-auto flex gap-1">
+                            <img
+                                v-if="block.row.publishBmm"
+                                src="/images/logos/bmm.png"
+                                alt=""
+                                class="size-4 rounded"
                             />
-                            <span
-                                class="h-1.5 w-4 rounded-full"
-                                :class="
-                                    block.row.publishBcc
-                                        ? 'bg-text-dark-default'
-                                        : 'bg-text-dark-default/20'
-                                "
+                            <img
+                                v-if="block.row.publishBcc"
+                                src="/images/logos/bcc-media.png"
+                                alt=""
+                                class="size-4 rounded"
                             />
                         </span>
                     </button>
@@ -300,7 +308,7 @@ function onLanePointerMove(e: PointerEvent) {
             </div>
 
             <!-- Time ruler -->
-            <div class="relative h-6">
+            <div class="relative mt-3 h-6">
                 <div
                     v-for="tick in ticks"
                     :key="tick.ms"
