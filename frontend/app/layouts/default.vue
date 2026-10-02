@@ -1,7 +1,9 @@
 <script setup lang="ts">
-// Set header height CSS variable
+// Set header height CSS variable. Must be the border box: pages size themselves
+// as `100dvh - var(--header-height)`, and a content-box measurement leaves out
+// the header's padding and border, making them overflow by that much.
 const header = useTemplateRef("header");
-const { height } = useElementSize(header);
+const { height } = useElementSize(header, undefined, { box: "border-box" });
 watch(
     height,
     (h) => {

@@ -28,17 +28,27 @@ useHead({
 <template>
     <div v-if="vxId" class="cantemo-panel">
         <div class="cantemo-chips">
-            <button
+            <DesignTooltip
                 v-for="chip in chips"
-                :key="chip.name"
-                :title="chip.action"
-                class="cantemo-chip"
-                :disabled="loading === chip.name"
-                @click="chip.run()"
+                :key="chip.id"
+                :content="chip.description"
+                placement="bottom"
             >
-                <span class="cantemo-dot" :style="{ background: chip.color }" />
-                {{ chip.name }}
-            </button>
+                <button
+                    class="cantemo-chip"
+                    :disabled="loading === chip.id"
+                    @click="chip.run()"
+                >
+                    <span
+                        class="cantemo-dot"
+                        :style="{ background: chip.color }"
+                    />
+                    {{ chip.label }}
+                    <span v-if="chip.kind === 'open'" class="cantemo-external"
+                        >↗</span
+                    >
+                </button>
+            </DesignTooltip>
         </div>
     </div>
 </template>
@@ -49,6 +59,11 @@ useHead({
     font-family: "Asap", system-ui, sans-serif;
     padding: 22px 24px;
     -webkit-font-smoothing: antialiased;
+}
+
+.cantemo-external {
+    opacity: 0.55;
+    font-size: 0.9em;
 }
 
 .cantemo-chips {

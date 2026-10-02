@@ -48,9 +48,6 @@ const (
 	// APIServiceGetTranscriptionProcedure is the fully-qualified name of the APIService's
 	// GetTranscription RPC.
 	APIServiceGetTranscriptionProcedure = "/api.v1.APIService/GetTranscription"
-	// APIServiceGetTranscriptionPreviewProcedure is the fully-qualified name of the APIService's
-	// GetTranscriptionPreview RPC.
-	APIServiceGetTranscriptionPreviewProcedure = "/api.v1.APIService/GetTranscriptionPreview"
 	// APIServiceGetShortsPreviewProcedure is the fully-qualified name of the APIService's
 	// GetShortsPreview RPC.
 	APIServiceGetShortsPreviewProcedure = "/api.v1.APIService/GetShortsPreview"
@@ -154,7 +151,6 @@ type APIServiceClient interface {
 	// Per-tool preview endpoints: each enforces its own tool permission, so there
 	// is no generic "preview any asset" endpoint. Editorial delivers its preview
 	// URL inside GetEditorialSession instead.
-	GetTranscriptionPreview(context.Context, *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error)
 	GetShortsPreview(context.Context, *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error)
 	SubmitTranscription(context.Context, *connect.Request[v1.SubmitTranscriptionRequest]) (*connect.Response[v1.Void], error)
 	// BMM
@@ -238,12 +234,6 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			httpClient,
 			baseURL+APIServiceGetTranscriptionProcedure,
 			connect.WithSchema(aPIServiceMethods.ByName("GetTranscription")),
-			connect.WithClientOptions(opts...),
-		),
-		getTranscriptionPreview: connect.NewClient[v1.GetPreviewRequest, v1.Preview](
-			httpClient,
-			baseURL+APIServiceGetTranscriptionPreviewProcedure,
-			connect.WithSchema(aPIServiceMethods.ByName("GetTranscriptionPreview")),
 			connect.WithClientOptions(opts...),
 		),
 		getShortsPreview: connect.NewClient[v1.GetPreviewRequest, v1.Preview](
@@ -448,7 +438,6 @@ type aPIServiceClient struct {
 	deletePermissions                 *connect.Client[v1.DeletePermissionsRequest, v1.Void]
 	listPermissions                   *connect.Client[v1.Void, v1.PermissionsList]
 	getTranscription                  *connect.Client[v1.GetTranscriptionReqest, v1.Transcription]
-	getTranscriptionPreview           *connect.Client[v1.GetPreviewRequest, v1.Preview]
 	getShortsPreview                  *connect.Client[v1.GetPreviewRequest, v1.Preview]
 	submitTranscription               *connect.Client[v1.SubmitTranscriptionRequest, v1.Void]
 	getYears                          *connect.Client[v1.GetYearsRequest, v1.GetYearsResponse]
@@ -506,11 +495,6 @@ func (c *aPIServiceClient) ListPermissions(ctx context.Context, req *connect.Req
 // GetTranscription calls api.v1.APIService.GetTranscription.
 func (c *aPIServiceClient) GetTranscription(ctx context.Context, req *connect.Request[v1.GetTranscriptionReqest]) (*connect.Response[v1.Transcription], error) {
 	return c.getTranscription.CallUnary(ctx, req)
-}
-
-// GetTranscriptionPreview calls api.v1.APIService.GetTranscriptionPreview.
-func (c *aPIServiceClient) GetTranscriptionPreview(ctx context.Context, req *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error) {
-	return c.getTranscriptionPreview.CallUnary(ctx, req)
 }
 
 // GetShortsPreview calls api.v1.APIService.GetShortsPreview.
@@ -685,7 +669,6 @@ type APIServiceHandler interface {
 	// Per-tool preview endpoints: each enforces its own tool permission, so there
 	// is no generic "preview any asset" endpoint. Editorial delivers its preview
 	// URL inside GetEditorialSession instead.
-	GetTranscriptionPreview(context.Context, *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error)
 	GetShortsPreview(context.Context, *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error)
 	SubmitTranscription(context.Context, *connect.Request[v1.SubmitTranscriptionRequest]) (*connect.Response[v1.Void], error)
 	// BMM
@@ -765,12 +748,6 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 		APIServiceGetTranscriptionProcedure,
 		svc.GetTranscription,
 		connect.WithSchema(aPIServiceMethods.ByName("GetTranscription")),
-		connect.WithHandlerOptions(opts...),
-	)
-	aPIServiceGetTranscriptionPreviewHandler := connect.NewUnaryHandler(
-		APIServiceGetTranscriptionPreviewProcedure,
-		svc.GetTranscriptionPreview,
-		connect.WithSchema(aPIServiceMethods.ByName("GetTranscriptionPreview")),
 		connect.WithHandlerOptions(opts...),
 	)
 	aPIServiceGetShortsPreviewHandler := connect.NewUnaryHandler(
@@ -977,8 +954,6 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceListPermissionsHandler.ServeHTTP(w, r)
 		case APIServiceGetTranscriptionProcedure:
 			aPIServiceGetTranscriptionHandler.ServeHTTP(w, r)
-		case APIServiceGetTranscriptionPreviewProcedure:
-			aPIServiceGetTranscriptionPreviewHandler.ServeHTTP(w, r)
 		case APIServiceGetShortsPreviewProcedure:
 			aPIServiceGetShortsPreviewHandler.ServeHTTP(w, r)
 		case APIServiceSubmitTranscriptionProcedure:
@@ -1070,10 +1045,6 @@ func (UnimplementedAPIServiceHandler) ListPermissions(context.Context, *connect.
 
 func (UnimplementedAPIServiceHandler) GetTranscription(context.Context, *connect.Request[v1.GetTranscriptionReqest]) (*connect.Response[v1.Transcription], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetTranscription is not implemented"))
-}
-
-func (UnimplementedAPIServiceHandler) GetTranscriptionPreview(context.Context, *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetTranscriptionPreview is not implemented"))
 }
 
 func (UnimplementedAPIServiceHandler) GetShortsPreview(context.Context, *connect.Request[v1.GetPreviewRequest]) (*connect.Response[v1.Preview], error) {
