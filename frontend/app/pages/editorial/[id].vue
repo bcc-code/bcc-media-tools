@@ -36,8 +36,10 @@ const rows = ref<EditorialRow[]>([]);
 const loading = ref(true);
 const notFound = ref(false);
 
-const mode = ref<"simple" | "edit">("simple");
-const effectiveMode = computed(() => (canEdit.value ? mode.value : "simple"));
+const mode = useQueryRef<string>("mode", "simple");
+const effectiveMode = computed<"simple" | "edit">(() =>
+    canEdit.value && mode.value === "edit" ? "edit" : "simple",
+);
 
 // Fixed-width mode control, so switching modes doesn't shift the layout.
 const modeItems = computed(() => [
@@ -45,11 +47,11 @@ const modeItems = computed(() => [
     { label: t("editorial.viewEdit"), value: "edit" },
 ]);
 const modeModel = computed<string>({
-    get: () => mode.value,
+    get: () => effectiveMode.value,
     set: (v) => (mode.value = v === "edit" ? "edit" : "simple"),
 });
 
-watch(mode, () => {
+watch(effectiveMode, () => {
     tableVideoRestored = false;
 });
 

@@ -277,6 +277,8 @@
         "verseLoading": "Looking up…",
         "verseFailed": "Could not look up the verse",
         "verseNotFound": "No text found for this reference",
+        "nextUndecided": "Next without a destination",
+        "allDecided": "Every item has a destination",
         "col": {
             "title": "Title",
             "contributors": "Contributors",

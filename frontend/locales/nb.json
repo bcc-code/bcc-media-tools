@@ -277,6 +277,8 @@
         "verseLoading": "Slår opp…",
         "verseFailed": "Kunne ikke slå opp verset",
         "verseNotFound": "Fant ingen tekst for denne referansen",
+        "nextUndecided": "Neste uten valg",
+        "allDecided": "Alle innslag har et valg",
         "col": {
             "title": "Tittel",
             "contributors": "Medvirkende",

@@ -32,7 +32,7 @@ const { t } = useI18n();
         <img
             :src="logo"
             alt=""
-            class="size-8 shrink-0 rounded-lg transition duration-200"
+            class="size-8 shrink-0 rounded-lg ring-1 ring-black/15 transition duration-200 dark:ring-white/15"
             :class="modelValue ? '' : 'opacity-40 grayscale'"
         />
         <span class="flex-1 text-left">

@@ -108,6 +108,29 @@ function select(i: number) {
     if (row) seek(parseTc(row.start));
 }
 
+// ── Review progress ───────────────────────────────────────
+// There is no explicit "reviewed" flag, so the closest honest signal is where
+// each item is going: an item with neither destination has not been decided on.
+// That drives the "next item still missing a decision" action.
+function isUndecided(row: EditorialRow): boolean {
+    return !row.publishBmm && !row.publishBcc;
+}
+
+const undecidedCount = computed(() => props.rows.filter(isUndecided).length);
+
+// Search forward from the selection and wrap, so repeated presses walk every
+// item that still needs a decision.
+function goToNextUndecided() {
+    const n = props.rows.length;
+    for (let step = 1; step <= n; step++) {
+        const i = (selectedIndex.value + step) % n;
+        if (isUndecided(props.rows[i]!)) {
+            select(i);
+            return;
+        }
+    }
+}
+
 // ── Position within the selected item ─────────────────────
 const selectedStartMs = computed(() =>
     selected.value ? parseTc(selected.value.start) : 0,
@@ -128,6 +151,14 @@ const itemElapsedMs = computed<number>({
 });
 
 // Only needed for the read-only rendering; editors get the chip editor.
+const showsContributors = computed(() => {
+    const row = selected.value;
+    if (!row?.contributors) return false;
+    return (
+        row.contributors.trim().toLowerCase() !== row.name.trim().toLowerCase()
+    );
+});
+
 const verses = computed(() =>
     selected.value ? splitBibleVerses(selected.value.bibleVerses) : [],
 );
@@ -172,9 +203,7 @@ watch(
 <template>
     <!-- type-scale-lg enlarges every text utility inside this view. -->
     <div class="type-scale-lg flex flex-col gap-8">
-        <div
-            class="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)]"
-        >
+        <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)]">
             <!-- Player -->
             <div>
                 <div
@@ -280,7 +309,7 @@ watch(
 
                 <div class="flex flex-col gap-3">
                     <p
-                        v-if="selected.contributors"
+                        v-if="showsContributors"
                         class="text-title-1 text-text-muted"
                     >
                         {{ selected.contributors }}
@@ -323,6 +352,29 @@ watch(
                             emit('publish', selected, 'bcc', $event)
                         "
                     />
+                </div>
+
+                <!-- The main way through the programme, pushed to the bottom
+                     of the column so the next item is one big target away. -->
+                <div class="mt-auto flex flex-col gap-3">
+                    <DesignButton
+                        v-if="undecidedCount"
+                        size="large"
+                        class="w-full"
+                        @click="goToNextUndecided"
+                    >
+                        {{ t("editorial.nextUndecided") }}
+                        <Icon
+                            name="tabler:arrow-right"
+                            class="size-5 shrink-0"
+                        />
+                    </DesignButton>
+                    <span
+                        v-else
+                        class="text-body-2 text-text-muted py-2 text-center"
+                    >
+                        {{ t("editorial.allDecided") }}
+                    </span>
                 </div>
             </div>
         </div>

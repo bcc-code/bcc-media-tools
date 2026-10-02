@@ -17,6 +17,7 @@ const emit = defineEmits<{
     seek: [number];
 }>();
 
+const { t } = useI18n();
 const { typeLabel } = useEditorialTypes();
 
 // A programme runs anything from a 40-second prayer to a half-hour speech, so
@@ -138,6 +139,25 @@ function xToTime(x: number): number {
     return list[list.length - 1]!.endMs;
 }
 
+function blockLabel(block: Block): string {
+    const parts = [
+        `${block.index + 1}. ${block.row.name || t("editorial.untitledItem")}`,
+        typeLabel(block.row.type),
+        formatMs(block.endMs - block.startMs),
+    ];
+    if (block.row.publishBmm) {
+        parts.push(
+            t("editorial.publishOn", { target: t("editorial.col.publishBmm") }),
+        );
+    }
+    if (block.row.publishBcc) {
+        parts.push(
+            t("editorial.publishOn", { target: t("editorial.col.publishBcc") }),
+        );
+    }
+    return parts.filter(Boolean).join(" · ");
+}
+
 const playheadX = computed(() => timeToX(props.currentMs));
 
 // The knob is centred on the playhead, so keep it a half-width inside the
@@ -252,6 +272,8 @@ function onLanePointerMove(e: PointerEvent) {
                             width: `${block.width}px`,
                             backgroundColor: block.color,
                         }"
+                        :aria-label="blockLabel(block)"
+                        :aria-current="block.index === selectedIndex"
                         @click="emit('select', block.index)"
                     >
                         <span
@@ -273,13 +295,13 @@ function onLanePointerMove(e: PointerEvent) {
                                 v-if="block.row.publishBmm"
                                 src="/images/logos/bmm.png"
                                 alt=""
-                                class="size-4 rounded"
+                                class="size-4 rounded ring-1 ring-black/25"
                             />
                             <img
                                 v-if="block.row.publishBcc"
                                 src="/images/logos/bcc-media.png"
                                 alt=""
-                                class="size-4 rounded"
+                                class="size-4 rounded ring-1 ring-black/25"
                             />
                         </span>
                     </button>
@@ -302,7 +324,7 @@ function onLanePointerMove(e: PointerEvent) {
                 </DesignTooltip>
 
                 <div
-                    class="bg-primary-default pointer-events-none absolute inset-y-0 z-20 -ml-px w-0.5"
+                    class="pointer-events-none absolute inset-y-0 z-20 -ml-px w-0.5 bg-black shadow-[0_0_0_1px_rgba(255,255,255,0.9)]"
                     :style="{ left: `${playheadX}px` }"
                 />
             </div>
