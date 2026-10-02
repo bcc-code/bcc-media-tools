@@ -250,7 +250,7 @@ rpc ListEditorialSessions(ListEditorialSessionsRequest) returns (ListEditorialSe
 rpc CreateEditorialSession(CreateEditorialSessionRequest) returns (CreateEditorialSessionResponse) {}
 rpc GetEditorialSession(GetEditorialSessionRequest) returns (GetEditorialSessionResponse) {}
 rpc SaveEditorialSession(SaveEditorialSessionRequest) returns (EditorialSession) {}
-rpc SetEditorialPublish(SetEditorialPublishRequest) returns (Void) {} // publish toggle, non-edit users
+rpc UpdateEditorialMarker(UpdateEditorialMarkerRequest) returns (Void) {} // partial single-marker write
 rpc DeleteEditorialSession(DeleteEditorialSessionRequest) returns (Void) {}
 rpc ImportEditorialMarkers(ImportEditorialMarkersRequest) returns (ImportEditorialMarkersResponse) {}
 rpc ExportEditorialSession(ExportEditorialSessionRequest) returns (ExportEditorialSessionResponse) {}
@@ -265,10 +265,13 @@ rpc ExportEditorialSession(ExportEditorialSessionRequest) returns (ExportEditori
   (Norwegian Excel locale), returns the bytes inline, and marks the session
   `exported` (sets `exported_at`). Columns: Hvem eller hva, Type, Start, Slutt,
   Varighet, Publiseres (Ja/Nei). Timecodes formatted `HH:MM:SS`.
-- **`SetEditorialPublish`** was added beyond the original spec: `SaveEditorialSession`
-  is a structural edit (full marker replace) gated on `CanEditorialEdit`, so
-  non-edit reviewers need a separate lightweight path to persist their Ja/Nei
-  toggle. This single-marker update is gated on `CanEditorial`.
+- **`UpdateEditorialMarker`** was added beyond the original spec: `SaveEditorialSession`
+  is a structural edit (full marker replace) gated on `CanEditorialEdit`, so the
+  review view needs a lightweight path that writes one marker field at a time.
+  Only the fields present on the request are written: title, comment and the two
+  publish flags — everything else is edited in the table and saved in batch.
+  Comment and the publish flags are gated on `CanEditorial` (a reviewer's job);
+  renaming a marker requires `CanEditorialEdit`.
 
 **Save strategy:** `SaveEditorialSession` sends the whole marker list and the
 backend does a transactional full replace (delete + insert within a tx). Markers
@@ -277,8 +280,10 @@ from list position.
 
 **Permission gating (implemented):**
 
-- `CanEditorial` (see + accept/reject): List, Get, SetEditorialPublish, ExportSession.
-- `CanEditorialEdit` (add/remove/edit): Create, Save, Delete, ImportMarkers.
+- `CanEditorial` (see + accept/reject): List, Get, ExportSession, and
+  UpdateEditorialMarker limited to the comment and publish fields.
+- `CanEditorialEdit` (add/remove/edit): Create, Save, Delete, ImportMarkers, and
+  UpdateEditorialMarker when it sets the marker name.
 - `ErrNotFound` → `CodeNotFound`; missing email → `CodeUnauthenticated`.
 
 ## 7. Backend implementation

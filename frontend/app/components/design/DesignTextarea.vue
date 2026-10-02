@@ -10,6 +10,9 @@ interface Props {
     invalid?: boolean;
     helperText?: string;
     errorText?: string;
+    // Extension beyond admin-web: a larger variant for views that need to be
+    // comfortable to read (e.g. the editorial review view).
+    size?: "medium" | "large";
 }
 
 withDefaults(defineProps<Props>(), {
@@ -18,6 +21,7 @@ withDefaults(defineProps<Props>(), {
     rows: 4,
     helperText: undefined,
     errorText: undefined,
+    size: "medium",
 });
 
 const model = defineModel<string>();
@@ -27,7 +31,8 @@ const model = defineModel<string>();
     <Field.Root :disabled="disabled" :required="required" :invalid="invalid">
         <Field.Label
             v-if="label"
-            class="text-body-3 text-text-muted mb-1 block"
+            class="text-text-muted mb-1 block"
+            :class="size === 'large' ? 'text-body-1' : 'text-body-3'"
         >
             {{ label }}
         </Field.Label>
@@ -36,7 +41,12 @@ const model = defineModel<string>();
             :placeholder="placeholder"
             :rows="rows"
             autoresize
-            class="border-border-1 text-body-3 text-text-default placeholder:text-text-hint data-invalid:border-semantic-error ds-focus-ring min-h-24 w-full resize-y rounded-xl border px-3 py-2 disabled:cursor-not-allowed disabled:opacity-50"
+            class="border-border-1 text-text-default placeholder:text-text-hint data-invalid:border-semantic-error ds-focus-ring min-h-24 w-full resize-y rounded-xl border disabled:cursor-not-allowed disabled:opacity-50"
+            :class="
+                size === 'large'
+                    ? 'text-body-1 px-4 py-3'
+                    : 'text-body-3 px-3 py-2'
+            "
         />
         <Field.HelperText
             v-if="helperText && !invalid"

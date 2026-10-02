@@ -118,40 +118,29 @@ func (e EditorialAPI) SaveEditorialSession(ctx context.Context, req *connect.Req
 	return connect.NewResponse(editorialSessionToProto(sess)), nil
 }
 
-func (e EditorialAPI) SetEditorialPublish(ctx context.Context, req *connect.Request[apiv1.SetEditorialPublishRequest]) (*connect.Response[apiv1.Void], error) {
-	if _, err := requireEditorial(req, false); err != nil {
+// UpdateEditorialMarker writes the fields present on the request and nothing
+// else. Renaming a marker is marker content and needs edit rights; the comment
+// and the publish flags are what a reviewer without edit rights is here to set,
+// so those need only tool access.
+func (e EditorialAPI) UpdateEditorialMarker(ctx context.Context, req *connect.Request[apiv1.UpdateEditorialMarkerRequest]) (*connect.Response[apiv1.Void], error) {
+	msg := req.Msg
+	needEdit := msg.Name != nil
+	if _, err := requireEditorial(req, needEdit); err != nil {
 		return nil, err
 	}
-	if req.Msg.GetSessionId() == "" || req.Msg.GetMarkerId() == "" {
+	if msg.GetSessionId() == "" || msg.GetMarkerId() == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("missing session_id or marker_id"))
 	}
-	if err := e.store.SetPublish(ctx, req.Msg.GetSessionId(), req.Msg.GetMarkerId(), req.Msg.GetPublishBmm(), req.Msg.GetPublishBcc()); err != nil {
-		return nil, editorialErr(err)
+	err := e.store.UpdateMarker(ctx, msg.GetSessionId(), msg.GetMarkerId(), editorial.MarkerUpdate{
+		Name:       msg.Name,
+		Comment:    msg.Comment,
+		PublishBMM: msg.PublishBmm,
+		PublishBCC: msg.PublishBcc,
+	})
+	if errors.Is(err, editorial.ErrNoFields) {
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
-	return connect.NewResponse(&apiv1.Void{}), nil
-}
-
-func (e EditorialAPI) SetEditorialComment(ctx context.Context, req *connect.Request[apiv1.SetEditorialCommentRequest]) (*connect.Response[apiv1.Void], error) {
-	if _, err := requireEditorial(req, false); err != nil {
-		return nil, err
-	}
-	if req.Msg.GetSessionId() == "" || req.Msg.GetMarkerId() == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("missing session_id or marker_id"))
-	}
-	if err := e.store.SetComment(ctx, req.Msg.GetSessionId(), req.Msg.GetMarkerId(), req.Msg.GetComment()); err != nil {
-		return nil, editorialErr(err)
-	}
-	return connect.NewResponse(&apiv1.Void{}), nil
-}
-
-func (e EditorialAPI) SetEditorialName(ctx context.Context, req *connect.Request[apiv1.SetEditorialNameRequest]) (*connect.Response[apiv1.Void], error) {
-	if _, err := requireEditorial(req, true); err != nil {
-		return nil, err
-	}
-	if req.Msg.GetSessionId() == "" || req.Msg.GetMarkerId() == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("missing session_id or marker_id"))
-	}
-	if err := e.store.SetName(ctx, req.Msg.GetSessionId(), req.Msg.GetMarkerId(), req.Msg.GetName()); err != nil {
+	if err != nil {
 		return nil, editorialErr(err)
 	}
 	return connect.NewResponse(&apiv1.Void{}), nil

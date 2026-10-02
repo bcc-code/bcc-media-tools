@@ -521,30 +521,43 @@ message ImportEditorialMarkersResponse {
   repeated EditorialMarker markers = 1;
 }
 
-// Set a single marker's publish flags (Ja/Nei per target). This is the write
-// path for reviewers who may accept/reject but not edit markers (simple view).
-message SetEditorialPublishRequest {
+// Partial update of a single marker: only the fields present are written, the
+// rest are left untouched. This is the write path for the review view, where
+// every edit persists on its own instead of through a batched save. Structural
+// edits (timecodes, type, contributors, bible verses, order) go through
+// SaveEditorialSession.
+//
+// The publish flags and the comment are the reviewer's job and need only tool
+// access; renaming a marker is marker content and requires edit rights.
+message UpdateEditorialMarkerRequest {
   string session_id = 1;
   string marker_id = 2;
-  bool publish_bmm = 3;
-  bool publish_bcc = 4;
+  optional string name = 3;
+  optional string comment = 4;
+  optional bool publish_bmm = 5;
+  optional bool publish_bcc = 6;
 }
 
-// Update a single marker's free-text comment. Like SetEditorialPublish this is
-// a write path available in the simple view (no edit rights required).
-message SetEditorialCommentRequest {
-  string session_id = 1;
-  string marker_id = 2;
-  string comment = 3;
+// ---- Bible verses ----
+
+// Look up the text behind a free-text bible reference as editors write it
+// ("1Kor 1,18+23-24"). Served by the BCC bible server; see backend/bible.
+message GetBibleVersesRequest {
+  string reference = 1;
 }
 
-// Update a single marker's title/name without touching anything else. This is
-// the write path for editing a row's title from the simple view; unlike
-// comment/publish it requires edit rights.
-message SetEditorialNameRequest {
-  string session_id = 1;
-  string marker_id = 2;
-  string name = 3;
+message BibleVerse {
+  int32 number = 1;
+  string text = 2;
+}
+
+message GetBibleVersesResponse {
+  // the reference rendered for display, e.g. "1. Korinterbrev 1,18+23-24"
+  string reference = 1;
+  // the translation the text came from, e.g. "NB 1930"
+  string translation = 2;
+  // empty when the reference could not be resolved to any text
+  repeated BibleVerse verses = 3;
 }
 
 service APIService {
@@ -602,9 +615,10 @@ service APIService {
   rpc CreateEditorialSession(CreateEditorialSessionRequest) returns (EditorialSession) {}
   rpc GetEditorialSession(GetEditorialSessionRequest) returns (EditorialSession) {}
   rpc SaveEditorialSession(SaveEditorialSessionRequest) returns (EditorialSession) {}
-  rpc SetEditorialPublish(SetEditorialPublishRequest) returns (Void) {}
-  rpc SetEditorialComment(SetEditorialCommentRequest) returns (Void) {}
-  rpc SetEditorialName(SetEditorialNameRequest) returns (Void) {}
+  rpc UpdateEditorialMarker(UpdateEditorialMarkerRequest) returns (Void) {}
+
+  // Bible verses
+  rpc GetBibleVerses(GetBibleVersesRequest) returns (GetBibleVersesResponse) {}
   rpc DeleteEditorialSession(DeleteEditorialSessionRequest) returns (Void) {}
   rpc ImportEditorialMarkers(ImportEditorialMarkersRequest) returns (ImportEditorialMarkersResponse) {}
 }

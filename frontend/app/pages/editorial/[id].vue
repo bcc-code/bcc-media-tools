@@ -5,14 +5,17 @@ import type {
 } from "~~/src/gen/api/v1/api_pb";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
 import { timestampDate, timestampFromDate } from "@bufbuild/protobuf/wkt";
+import type { EditorialField, EditorialRow } from "~/utils/editorial";
+import { formatMs, parseTc, rowDurationMs } from "~/utils/editorial";
 
 const route = useRoute("editorial-id");
 const sessionId = computed(() => route.params.id as string);
 
-const { t, te } = useI18n();
+const { t } = useI18n();
 const api = useAPI();
 const perms = usePermissions();
 const toaster = useToast();
+const { typeLabel, typeItems } = useEditorialTypes();
 
 const canEdit = perms.canEditEditorial;
 
@@ -27,54 +30,16 @@ onMounted(() =>
     }),
 );
 
-const TYPE_OPTIONS = [
-    "vitnesbyrd",
-    "sang",
-    "allsang",
-    "tale",
-    "bønn",
-    "tydning",
-    "programleder",
-    "video",
-    "intervju",
-    "annet",
-];
-
-// Translated type label; falls back to the raw value for legacy types.
-function typeLabel(type: string): string {
-    const key = `editorial.types.${type}`;
-    if (te(key)) return t(key);
-    return type ? type.charAt(0).toUpperCase() + type.slice(1) : type;
-}
-
-const typeItems = computed(() =>
-    TYPE_OPTIONS.map((value) => ({ label: typeLabel(value), value })),
-);
-
-// A single editable row. Start/End are kept as "HH:MM:SS" strings so text
-// editing is natural; they're parsed to milliseconds only at save/preview.
-interface Row {
-    id: string;
-    name: string;
-    contributors: string;
-    bibleVerses: string;
-    comment: string;
-    type: string;
-    start: string;
-    end: string;
-    publishBmm: boolean;
-    publishBcc: boolean;
-    source: string;
-}
-
 const session = ref<EditorialSession>();
 const title = ref("");
-const rows = ref<Row[]>([]);
+const rows = ref<EditorialRow[]>([]);
 const loading = ref(true);
 const notFound = ref(false);
 
-const mode = ref<"simple" | "edit">("simple");
-const effectiveMode = computed(() => (canEdit.value ? mode.value : "simple"));
+const mode = useQueryRef<string>("mode", "simple");
+const effectiveMode = computed<"simple" | "edit">(() =>
+    canEdit.value && mode.value === "edit" ? "edit" : "simple",
+);
 
 // Fixed-width mode control, so switching modes doesn't shift the layout.
 const modeItems = computed(() => [
@@ -82,21 +47,16 @@ const modeItems = computed(() => [
     { label: t("editorial.viewEdit"), value: "edit" },
 ]);
 const modeModel = computed<string>({
-    get: () => mode.value,
+    get: () => effectiveMode.value,
     set: (v) => (mode.value = v === "edit" ? "edit" : "simple"),
+});
+
+watch(effectiveMode, () => {
+    tableVideoRestored = false;
 });
 
 const dirty = ref(false);
 let hydrated = false;
-
-function formatMs(ms: number): string {
-    const total = Math.max(0, Math.floor(ms / 1000));
-    const h = Math.floor(total / 3600);
-    const m = Math.floor((total % 3600) / 60);
-    const s = total % 60;
-    const pad = (n: number) => String(n).padStart(2, "0");
-    return `${pad(h)}:${pad(m)}:${pad(s)}`;
-}
 
 const dateTimeFormatter = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Europe/Oslo",
@@ -108,19 +68,7 @@ function formatDateTime(ts?: Timestamp): string {
     return dateTimeFormatter.format(timestampDate(ts));
 }
 
-// Parses "HH:MM:SS(.mmm)", "MM:SS" or "SS" into milliseconds; invalid → 0.
-function parseTc(tc: string): number {
-    const parts = tc
-        .trim()
-        .split(":")
-        .map((p) => Number(p));
-    if (parts.some((n) => Number.isNaN(n))) return 0;
-    let seconds = 0;
-    for (const p of parts) seconds = seconds * 60 + p;
-    return Math.max(0, Math.round(seconds * 1000));
-}
-
-function toRow(m: EditorialMarker): Row {
+function toRow(m: EditorialMarker): EditorialRow {
     return {
         id: m.id,
         name: m.name,
@@ -136,14 +84,32 @@ function toRow(m: EditorialMarker): Row {
     };
 }
 
-function durationOf(row: Row): string {
-    return formatMs(parseTc(row.end) - parseTc(row.start));
+function durationOf(row: EditorialRow): string {
+    return formatMs(rowDurationMs(row));
 }
+
+// Summed item durations — what the programme adds up to, gaps excluded.
+const totalDuration = computed(() =>
+    formatMs(rows.value.reduce((sum, r) => sum + rowDurationMs(r), 0)),
+);
 
 const previewUrl = ref<string>();
 const videoEl = useTemplateRef<HTMLVideoElement>("videoEl");
 
-function preview(row: Row) {
+// The playhead lives in the URL as whole seconds, so switching between the
+// review and table views — or reloading — lands back at the same point. The
+// two views have their own video element, and both read and write this.
+const positionSeconds = useQueryRef<number>("t", 0);
+const currentMs = ref(positionSeconds.value * 1000);
+
+function rememberPosition(ms: number) {
+    currentMs.value = ms;
+    // Assigning the same second is a no-op for the query ref, so playback
+    // rewrites the URL once a second rather than on every timeupdate.
+    positionSeconds.value = Math.floor(ms / 1000);
+}
+
+function preview(row: EditorialRow) {
     const el = videoEl.value;
     if (!el) return;
     el.currentTime = parseTc(row.start) / 1000;
@@ -151,10 +117,20 @@ function preview(row: Row) {
 }
 
 // Highlight the marker whose [start, end) range contains the playhead.
-const currentMs = ref(0);
 function onTimeUpdate(e: Event) {
-    currentMs.value = (e.target as HTMLVideoElement).currentTime * 1000;
+    rememberPosition((e.target as HTMLVideoElement).currentTime * 1000);
 }
+
+// The table view's player restores the position once it can be seeked.
+let tableVideoRestored = false;
+function onTableVideoReady(e: Event) {
+    if (tableVideoRestored) return;
+    tableVideoRestored = true;
+    if (currentMs.value > 0) {
+        (e.target as HTMLVideoElement).currentTime = currentMs.value / 1000;
+    }
+}
+
 const activeIndex = computed(() =>
     rows.value.findIndex((r) => {
         const start = parseTc(r.start);
@@ -179,7 +155,7 @@ const scrubMs = computed<number>({
         const el = videoEl.value;
         if (!el) return;
         el.currentTime = v / 1000;
-        currentMs.value = v;
+        rememberPosition(v);
     },
 });
 
@@ -257,18 +233,18 @@ async function tracked<T>(fn: () => Promise<T>): Promise<T> {
 
 // ── Publish toggle ────────────────────────────────────────
 async function onPublishToggle(
-    row: Row,
+    row: EditorialRow,
     target: "bmm" | "bcc",
     value: boolean,
 ) {
     if (target === "bmm") row.publishBmm = value;
     else row.publishBcc = value;
-    // In edit mode the change is persisted on Save. In simple mode there is no
-    // Save button, so persist immediately (both flags, from the row's state).
+    // In edit mode the change is persisted on Save. In the review view there is
+    // no Save button, so persist immediately (both flags, from the row's state).
     if (effectiveMode.value === "edit") return;
     try {
         await tracked(() =>
-            api.setEditorialPublish({
+            api.updateEditorialMarker({
                 sessionId: sessionId.value,
                 markerId: row.id,
                 publishBmm: row.publishBmm,
@@ -282,44 +258,26 @@ async function onPublishToggle(
     }
 }
 
-// ── Row title/name (editable in both views, edit rights required) ──
-const nameBeforeEdit = ref("");
-
-// Edit mode persists on the batch Save; simple mode writes immediately.
-async function persistName(row: Row) {
-    if (effectiveMode.value === "edit") return;
-    if (!row.id || row.name === nameBeforeEdit.value) return;
+// ── Field edits (review view) ─────────────────────────────
+// The review view has no Save button: each field is written on its own as it
+// changes, and rolled back to `before` if the write fails. Edit mode keeps
+// batching everything into saveEditorialSession instead.
+async function persistField(
+    row: EditorialRow,
+    field: EditorialField,
+    before: string,
+) {
+    if (!row.id || row[field] === before) return;
     try {
         await tracked(() =>
-            api.setEditorialName({
+            api.updateEditorialMarker({
                 sessionId: sessionId.value,
                 markerId: row.id,
-                name: row.name,
+                [field]: row[field],
             }),
         );
     } catch {
-        row.name = nameBeforeEdit.value;
-        toaster.create({ title: t("editorial.saveFailed"), type: "error" });
-    }
-}
-
-// ── Comment (editable in both views) ──────────────────────
-const commentBeforeEdit = ref("");
-
-// Edit mode persists on the batch Save; simple mode writes immediately.
-async function persistComment(row: Row) {
-    if (effectiveMode.value === "edit") return;
-    if (!row.id || row.comment === commentBeforeEdit.value) return;
-    try {
-        await tracked(() =>
-            api.setEditorialComment({
-                sessionId: sessionId.value,
-                markerId: row.id,
-                comment: row.comment,
-            }),
-        );
-    } catch {
-        row.comment = commentBeforeEdit.value;
+        row[field] = before;
         toaster.create({ title: t("editorial.saveFailed"), type: "error" });
     }
 }
@@ -484,7 +442,7 @@ onBeforeRouteLeave(() => {
     <div v-else class="mx-auto w-full max-w-[1700px] px-4 py-6">
         <NuxtLink
             to="/editorial/"
-            class="text-caption-1 text-text-hint hover:text-text-default mb-4 inline-flex items-center gap-1"
+            class="text-body-3 text-text-muted hover:text-text-default mb-3 inline-flex items-center gap-1"
         >
             <Icon name="tabler:chevron-left" class="size-4" />
             {{ t("editorial.backToList") }}
@@ -502,47 +460,56 @@ onBeforeRouteLeave(() => {
         </p>
 
         <template v-else>
-            <div class="mb-4 max-w-xl">
-                <DesignInput
-                    v-if="effectiveMode === 'edit'"
-                    v-model="title"
-                    :placeholder="session?.VXID"
-                />
-                <h1 v-else class="text-heading-2 text-text-default truncate">
-                    {{ title || session?.VXID }}
-                </h1>
-                <p
-                    v-if="title && title !== session?.VXID"
-                    class="text-caption-1 text-text-hint mt-1"
-                >
-                    {{ session?.VXID }}
-                </p>
-                <p
-                    v-if="session?.updatedAt"
-                    class="text-caption-1 text-text-hint mt-1"
-                >
-                    {{
-                        t("editorial.lastUpdated", {
-                            date: formatDateTime(session.updatedAt),
-                        })
-                    }}
-                </p>
-            </div>
-
+            <!-- Header: identity on the left, mode and actions on the right. -->
             <div
-                v-if="canEdit || saveStatus !== 'idle'"
-                class="mb-6 flex items-center gap-3"
+                class="border-border-1 mb-6 flex flex-wrap items-end gap-x-6 gap-y-3 border-b pb-4"
             >
-                <DesignSegmentGroup
-                    v-if="canEdit"
-                    v-model="modeModel"
-                    :items="modeItems"
-                    class="border-border-1 border"
-                />
-                <div class="ml-auto flex items-center gap-3">
+                <div class="min-w-0 flex-1">
+                    <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                        <DesignInput
+                            v-if="effectiveMode === 'edit'"
+                            v-model="title"
+                            :placeholder="session?.VXID"
+                            class="max-w-md"
+                        />
+                        <h1
+                            v-else
+                            class="text-heading-2 text-text-default truncate"
+                        >
+                            {{ title || session?.VXID }}
+                        </h1>
+                        <span
+                            v-if="title && title !== session?.VXID"
+                            class="text-body-3 text-text-muted"
+                        >
+                            {{ session?.VXID }}
+                        </span>
+                    </div>
+                    <p class="text-body-3 text-text-muted mt-1.5">
+                        <span v-if="rows.length" class="tabular-nums">
+                            {{
+                                t("editorial.totalDuration", {
+                                    duration: totalDuration,
+                                })
+                            }}
+                        </span>
+                        <span v-if="rows.length && session?.updatedAt">
+                            ·
+                        </span>
+                        <span v-if="session?.updatedAt">
+                            {{
+                                t("editorial.lastUpdated", {
+                                    date: formatDateTime(session.updatedAt),
+                                })
+                            }}
+                        </span>
+                    </p>
+                </div>
+
+                <div class="flex items-center gap-3">
                     <span
                         v-if="saveStatus !== 'idle'"
-                        class="text-caption-1 flex items-center gap-1.5"
+                        class="text-body-3 flex items-center gap-1.5"
                         :class="
                             saveStatus === 'error'
                                 ? 'text-semantic-error'
@@ -569,6 +536,11 @@ onBeforeRouteLeave(() => {
                         </template>
                     </span>
                     <template v-if="canEdit">
+                        <DesignSegmentGroup
+                            v-model="modeModel"
+                            :items="modeItems"
+                            class="border-border-1 border"
+                        />
                         <DesignMenu
                             :items="menuItems"
                             :trigger-label="t('editorial.moreActions')"
@@ -586,7 +558,27 @@ onBeforeRouteLeave(() => {
                 </div>
             </div>
 
-            <div class="grid gap-6 lg:grid-cols-[1fr_500px]">
+            <p
+                v-if="rows.length === 0 && effectiveMode === 'simple'"
+                class="text-body-3 text-text-hint bg-surface-indent rounded-2xl px-4 py-10 text-center"
+            >
+                {{ t("editorial.noMarkers") }}
+            </p>
+
+            <!-- Review view: player, item detail and a timeline of the programme. -->
+            <EditorialSimpleView
+                v-else-if="effectiveMode === 'simple'"
+                :rows="rows"
+                :preview-url="previewUrl"
+                :can-edit="canEdit"
+                :start-ms="currentMs"
+                @position="rememberPosition"
+                @field-change="persistField"
+                @publish="onPublishToggle"
+            />
+
+            <!-- Edit view: the full spreadsheet-style marker table. -->
+            <div v-else class="grid gap-6 lg:grid-cols-[1fr_500px]">
                 <div>
                     <p
                         v-if="rows.length === 0"
@@ -629,7 +621,6 @@ onBeforeRouteLeave(() => {
                                         {{ t("editorial.col.type") }}
                                     </th>
                                     <th
-                                        v-if="effectiveMode === 'edit'"
                                         class="border-border-1 border-b px-2 py-2 font-normal"
                                     >
                                         {{ t("editorial.col.start") }}
@@ -650,7 +641,6 @@ onBeforeRouteLeave(() => {
                                         {{ t("editorial.col.publishBcc") }}
                                     </th>
                                     <th
-                                        v-if="effectiveMode === 'edit'"
                                         class="border-border-1 border-b py-2 pl-2"
                                     ></th>
                                 </tr>
@@ -684,42 +674,17 @@ onBeforeRouteLeave(() => {
                                         />
                                     </td>
                                     <td class="py-2 pr-2 pl-3">
-                                        <DesignInput
-                                            v-if="canEdit"
-                                            v-model="row.name"
-                                            @focusin="nameBeforeEdit = row.name"
-                                            @change="persistName(row)"
-                                        />
-                                        <span
-                                            v-else
-                                            class="text-body-3 text-text-default"
-                                        >
-                                            {{ row.name || "—" }}
-                                        </span>
+                                        <DesignInput v-model="row.name" />
                                     </td>
                                     <td class="px-2 py-2">
                                         <DesignInput
-                                            v-if="effectiveMode === 'edit'"
                                             v-model="row.contributors"
                                         />
-                                        <span
-                                            v-else
-                                            class="text-body-3 text-text-muted"
-                                        >
-                                            {{ row.contributors || "—" }}
-                                        </span>
                                     </td>
                                     <td class="px-2 py-2">
                                         <DesignInput
-                                            v-if="effectiveMode === 'edit'"
                                             v-model="row.bibleVerses"
                                         />
-                                        <span
-                                            v-else
-                                            class="text-body-3 text-text-muted tabular-nums"
-                                        >
-                                            {{ row.bibleVerses || "—" }}
-                                        </span>
                                     </td>
                                     <td
                                         class="text-body-3 text-text-muted px-2 py-2 tabular-nums"
@@ -728,24 +693,11 @@ onBeforeRouteLeave(() => {
                                     </td>
                                     <td class="px-2 py-2">
                                         <DesignSelect
-                                            v-if="effectiveMode === 'edit'"
                                             v-model="row.type"
                                             :items="typeItems"
                                         />
-                                        <DesignBadge v-else-if="row.type">
-                                            {{ typeLabel(row.type) }}
-                                        </DesignBadge>
-                                        <span
-                                            v-else
-                                            class="text-body-3 text-text-hint"
-                                        >
-                                            —
-                                        </span>
                                     </td>
-                                    <td
-                                        v-if="effectiveMode === 'edit'"
-                                        class="px-2 py-2"
-                                    >
+                                    <td class="px-2 py-2">
                                         <div class="flex items-center gap-1">
                                             <DesignInput v-model="row.start" />
                                             <span class="text-text-hint"
@@ -754,13 +706,7 @@ onBeforeRouteLeave(() => {
                                             <DesignInput v-model="row.end" />
                                         </div>
                                     </td>
-                                    <td
-                                        class="px-2 py-2"
-                                        @focusin="
-                                            commentBeforeEdit = row.comment
-                                        "
-                                        @change="persistComment(row)"
-                                    >
+                                    <td class="px-2 py-2">
                                         <DesignInput v-model="row.comment" />
                                     </td>
                                     <td class="px-2 py-2">
@@ -791,10 +737,7 @@ onBeforeRouteLeave(() => {
                                             />
                                         </div>
                                     </td>
-                                    <td
-                                        v-if="effectiveMode === 'edit'"
-                                        class="py-2 pl-2"
-                                    >
+                                    <td class="py-2 pl-2">
                                         <div class="flex items-center gap-0.5">
                                             <button
                                                 type="button"
@@ -828,7 +771,6 @@ onBeforeRouteLeave(() => {
                     </div>
 
                     <DesignButton
-                        v-if="effectiveMode === 'edit'"
                         variant="tertiary"
                         icon="tabler:plus"
                         class="mt-3"
@@ -852,6 +794,7 @@ onBeforeRouteLeave(() => {
                                 controls
                                 class="h-full w-full"
                                 @timeupdate="onTimeUpdate"
+                                @loadedmetadata="onTableVideoReady"
                             />
                             <div
                                 v-else
