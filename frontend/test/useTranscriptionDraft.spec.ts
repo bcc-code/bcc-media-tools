@@ -7,7 +7,12 @@ import {
     toggleSegmentDeleted,
 } from "~/utils/transcription";
 import type { DraftStorage } from "~/utils/transcriptionDraft";
-import { draftKey, readDraft } from "~/utils/transcriptionDraft";
+import {
+    draftKey,
+    encodeDraft,
+    readDraft,
+    writeDraft,
+} from "~/utils/transcriptionDraft";
 
 const DEBOUNCE = 1;
 const settled = () => new Promise((r) => setTimeout(r, DEBOUNCE + 5));
@@ -35,6 +40,10 @@ function memoryStorage(initial: Record<string, string> = {}): DraftStorage {
         getItem: (k) => store.get(k) ?? null,
         setItem: (k, v) => void store.set(k, v),
         removeItem: (k) => void store.delete(k),
+        key: (i) => [...store.keys()][i] ?? null,
+        get length() {
+            return store.size;
+        },
     };
 }
 
@@ -437,5 +446,79 @@ describe("undo", () => {
         expect(deletedCount.value).toBe(0);
         markAll(segments);
         expect(deletedCount.value).toBe(2);
+    });
+});
+
+describe("housekeeping", () => {
+    const DAY = 24 * 60 * 60 * 1000;
+    /** Bulky, so that one of these fills a quota two small drafts would fit in. */
+    const old = (submitted: boolean) => ({
+        segments: Array.from({ length: 20 }, (_, i) => ({
+            ...rawSegment("Gammel"),
+            uid: `x${i}`,
+        })),
+        savedAt: new Date(Date.now() - 30 * DAY).toISOString(),
+        submittedAt: submitted
+            ? new Date(Date.now() - 30 * DAY).toISOString()
+            : undefined,
+    });
+
+    it("clears out old submitted drafts when the editor opens", async () => {
+        const storage = memoryStorage();
+        writeDraft(storage, "VX-done", old(true));
+        const { load } = setup({ storage });
+
+        await load();
+
+        expect(storage.getItem(draftKey("VX-done"))).toBeNull();
+    });
+
+    it("leaves another asset's unsubmitted work alone", async () => {
+        const storage = memoryStorage();
+        writeDraft(storage, "VX-wip", old(false));
+        const { load } = setup({ storage });
+
+        await load();
+
+        expect(storage.getItem(draftKey("VX-wip"))).not.toBeNull();
+    });
+
+    it("saves anyway by making room when the quota is full", async () => {
+        const store = new Map<string, string>();
+        const used = (without: string) =>
+            [...store.entries()]
+                .filter(([k]) => k !== without)
+                .reduce((n, [, v]) => n + v.length, 0);
+        // Room for the bulky submitted draft, or for the one being edited —
+        // not both.
+        const limit = encodeDraft(old(true)).length;
+        const storage: DraftStorage = {
+            getItem: (k) => store.get(k) ?? null,
+            setItem: (k, v) => {
+                if (used(k) + v.length > limit)
+                    throw new DOMException("full", "QuotaExceededError");
+                store.set(k, v);
+            },
+            removeItem: (k) => void store.delete(k),
+            key: (i) => [...store.keys()][i] ?? null,
+            get length() {
+                return store.size;
+            },
+        };
+        // Submitted a while ago, but not old enough for the prune on open.
+        writeDraft(storage, "VX-done", {
+            ...old(true),
+            savedAt: new Date().toISOString(),
+            submittedAt: new Date().toISOString(),
+        });
+
+        const { load, segments, saveState } = setup({ storage });
+        await load();
+        edit(segments, "Hallo");
+        await settled();
+
+        expect(saveState.value).toBe("saved");
+        expect(readDraft(storage, "VX-123")!.segments[0]!.text).toBe("Hallo");
+        expect(storage.getItem(draftKey("VX-done"))).toBeNull();
     });
 });
