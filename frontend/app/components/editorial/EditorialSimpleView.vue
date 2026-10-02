@@ -155,6 +155,23 @@ function captureBefore(value: string) {
 function onFieldChange(row: EditorialRow, field: EditorialField) {
     emit("fieldChange", row, field, beforeEdit.value);
 }
+
+// Titles run long and have to wrap, so the field is a textarea grown to fit its
+// content — on typing, and whenever the selected item changes under it.
+const titleEl = useTemplateRef<HTMLTextAreaElement>("titleEl");
+
+function growTitle() {
+    const el = titleEl.value;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+}
+
+watch(
+    () => selected.value?.name,
+    () => nextTick(growTitle),
+    { immediate: true },
+);
 </script>
 
 <template>
@@ -265,14 +282,27 @@ function onFieldChange(row: EditorialRow, field: EditorialField) {
                     </div>
                 </div>
 
-                <input
-                    v-if="canEdit"
-                    v-model="selected.name"
-                    :placeholder="t('editorial.untitledItem')"
-                    class="text-heading-2 text-text-default placeholder:text-text-hint focus:border-border-1 -mx-1 w-full border-b border-transparent bg-transparent px-1 pb-1 outline-none"
-                    @focusin="captureBefore(selected.name)"
-                    @change="onFieldChange(selected, 'name')"
-                />
+                <!-- The title is the one thing reviewers rename, so the
+                     field has to read as editable without becoming a box:
+                     a standing underline, a tint on hover, and a pencil. -->
+                <div v-if="canEdit" class="group relative -mx-1">
+                    <textarea
+                        ref="titleEl"
+                        v-model="selected.name"
+                        rows="1"
+                        :aria-label="t('editorial.col.title')"
+                        :placeholder="t('editorial.untitledItem')"
+                        class="text-heading-2 text-text-default placeholder:text-text-hint border-border-1 hover:bg-surface-indent focus:border-text-hint dark:hover:bg-text-default/5 w-full resize-none overflow-hidden rounded-t-lg border-b bg-transparent px-1 pt-1 pr-10 pb-1.5 transition-colors outline-none"
+                        @input="growTitle"
+                        @keydown.enter.prevent="titleEl?.blur()"
+                        @focusin="captureBefore(selected.name)"
+                        @change="onFieldChange(selected, 'name')"
+                    />
+                    <Icon
+                        name="tabler:pencil"
+                        class="text-text-hint pointer-events-none absolute top-2 right-2 size-5 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
+                    />
+                </div>
                 <h2 v-else class="text-heading-2 text-text-default">
                     {{ selected.name || t("editorial.untitledItem") }}
                 </h2>
