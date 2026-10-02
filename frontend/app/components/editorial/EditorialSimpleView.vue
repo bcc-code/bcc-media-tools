@@ -12,12 +12,16 @@ const props = defineProps<{
     rows: EditorialRow[];
     previewUrl?: string;
     canEdit: boolean;
+    /** Where the playhead was when this view was opened. */
+    startMs?: number;
 }>();
 
 const emit = defineEmits<{
     /** The row is mutated in place; the previous value allows rollback. */
     fieldChange: [EditorialRow, EditorialField, string];
     publish: [EditorialRow, "bmm" | "bcc", boolean];
+    /** Playhead moved; the page mirrors it into the URL. */
+    position: [number];
 }>();
 
 const { t } = useI18n();
@@ -25,23 +29,33 @@ const { typeLabel } = useEditorialTypes();
 
 // ── Playback ──────────────────────────────────────────────
 const videoEl = useTemplateRef<HTMLVideoElement>("videoEl");
-const currentMs = ref(0);
+const currentMs = ref(props.startMs ?? 0);
 const videoDurationMs = ref(0);
 const playing = ref(false);
 
 function onTimeUpdate(e: Event) {
     currentMs.value = (e.target as HTMLVideoElement).currentTime * 1000;
+    emit("position", currentMs.value);
 }
 
+// The video only accepts a seek once it knows its duration, so the restore
+// waits for metadata — and happens once, not on every later metadata event.
+let restored = false;
 function onLoadedMetadata(e: Event) {
-    const d = (e.target as HTMLVideoElement).duration;
+    const el = e.target as HTMLVideoElement;
+    const d = el.duration;
     videoDurationMs.value = Number.isFinite(d) ? d * 1000 : 0;
+    if (!restored) {
+        restored = true;
+        if (currentMs.value > 0) seek(currentMs.value);
+    }
 }
 
 function seek(ms: number) {
     const el = videoEl.value;
     const clamped = Math.max(0, Math.min(totalMs.value, ms));
     currentMs.value = clamped;
+    emit("position", clamped);
     if (el) el.currentTime = clamped / 1000;
 }
 
@@ -72,7 +86,7 @@ const activeIndex = computed(() =>
     }),
 );
 
-const selectedIndex = ref(0);
+const selectedIndex = ref(Math.max(0, activeIndex.value));
 watch(activeIndex, (i) => {
     if (i >= 0) selectedIndex.value = i;
 });

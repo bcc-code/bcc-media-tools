@@ -49,6 +49,10 @@ const modeModel = computed<string>({
     set: (v) => (mode.value = v === "edit" ? "edit" : "simple"),
 });
 
+watch(mode, () => {
+    tableVideoRestored = false;
+});
+
 const dirty = ref(false);
 let hydrated = false;
 
@@ -90,6 +94,19 @@ const totalDuration = computed(() =>
 const previewUrl = ref<string>();
 const videoEl = useTemplateRef<HTMLVideoElement>("videoEl");
 
+// The playhead lives in the URL as whole seconds, so switching between the
+// review and table views — or reloading — lands back at the same point. The
+// two views have their own video element, and both read and write this.
+const positionSeconds = useQueryRef<number>("t", 0);
+const currentMs = ref(positionSeconds.value * 1000);
+
+function rememberPosition(ms: number) {
+    currentMs.value = ms;
+    // Assigning the same second is a no-op for the query ref, so playback
+    // rewrites the URL once a second rather than on every timeupdate.
+    positionSeconds.value = Math.floor(ms / 1000);
+}
+
 function preview(row: EditorialRow) {
     const el = videoEl.value;
     if (!el) return;
@@ -98,10 +115,20 @@ function preview(row: EditorialRow) {
 }
 
 // Highlight the marker whose [start, end) range contains the playhead.
-const currentMs = ref(0);
 function onTimeUpdate(e: Event) {
-    currentMs.value = (e.target as HTMLVideoElement).currentTime * 1000;
+    rememberPosition((e.target as HTMLVideoElement).currentTime * 1000);
 }
+
+// The table view's player restores the position once it can be seeked.
+let tableVideoRestored = false;
+function onTableVideoReady(e: Event) {
+    if (tableVideoRestored) return;
+    tableVideoRestored = true;
+    if (currentMs.value > 0) {
+        (e.target as HTMLVideoElement).currentTime = currentMs.value / 1000;
+    }
+}
+
 const activeIndex = computed(() =>
     rows.value.findIndex((r) => {
         const start = parseTc(r.start);
@@ -126,7 +153,7 @@ const scrubMs = computed<number>({
         const el = videoEl.value;
         if (!el) return;
         el.currentTime = v / 1000;
-        currentMs.value = v;
+        rememberPosition(v);
     },
 });
 
@@ -542,6 +569,8 @@ onBeforeRouteLeave(() => {
                 :rows="rows"
                 :preview-url="previewUrl"
                 :can-edit="canEdit"
+                :start-ms="currentMs"
+                @position="rememberPosition"
                 @field-change="persistField"
                 @publish="onPublishToggle"
             />
@@ -763,6 +792,7 @@ onBeforeRouteLeave(() => {
                                 controls
                                 class="h-full w-full"
                                 @timeupdate="onTimeUpdate"
+                                @loadedmetadata="onTableVideoReady"
                             />
                             <div
                                 v-else
