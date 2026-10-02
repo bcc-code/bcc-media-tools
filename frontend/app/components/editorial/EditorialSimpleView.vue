@@ -339,6 +339,7 @@ watch(
                     <EditorialPublishToggle
                         :model-value="selected.publishBmm"
                         :target="t('editorial.col.publishBmm')"
+                        logo="/images/logos/bmm.png"
                         @update:model-value="
                             emit('publish', selected, 'bmm', $event)
                         "
@@ -346,6 +347,7 @@ watch(
                     <EditorialPublishToggle
                         :model-value="selected.publishBcc"
                         :target="t('editorial.col.publishBcc')"
+                        logo="/images/logos/bcc-media.png"
                         @update:model-value="
                             emit('publish', selected, 'bcc', $event)
                         "
