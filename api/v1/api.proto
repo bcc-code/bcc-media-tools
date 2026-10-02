@@ -521,30 +521,21 @@ message ImportEditorialMarkersResponse {
   repeated EditorialMarker markers = 1;
 }
 
-// Set a single marker's publish flags (Ja/Nei per target). This is the write
-// path for reviewers who may accept/reject but not edit markers (simple view).
-message SetEditorialPublishRequest {
+// Partial update of a single marker: only the fields present are written, the
+// rest are left untouched. This is the write path for the review view, where
+// every edit persists on its own instead of through a batched save. Structural
+// edits (timecodes, type, contributors, bible verses, order) go through
+// SaveEditorialSession.
+//
+// The publish flags and the comment are the reviewer's job and need only tool
+// access; renaming a marker is marker content and requires edit rights.
+message UpdateEditorialMarkerRequest {
   string session_id = 1;
   string marker_id = 2;
-  bool publish_bmm = 3;
-  bool publish_bcc = 4;
-}
-
-// Update a single marker's free-text comment. Like SetEditorialPublish this is
-// a write path available in the simple view (no edit rights required).
-message SetEditorialCommentRequest {
-  string session_id = 1;
-  string marker_id = 2;
-  string comment = 3;
-}
-
-// Update a single marker's title/name without touching anything else. This is
-// the write path for editing a row's title from the simple view; unlike
-// comment/publish it requires edit rights.
-message SetEditorialNameRequest {
-  string session_id = 1;
-  string marker_id = 2;
-  string name = 3;
+  optional string name = 3;
+  optional string comment = 4;
+  optional bool publish_bmm = 5;
+  optional bool publish_bcc = 6;
 }
 
 service APIService {
@@ -602,9 +593,7 @@ service APIService {
   rpc CreateEditorialSession(CreateEditorialSessionRequest) returns (EditorialSession) {}
   rpc GetEditorialSession(GetEditorialSessionRequest) returns (EditorialSession) {}
   rpc SaveEditorialSession(SaveEditorialSessionRequest) returns (EditorialSession) {}
-  rpc SetEditorialPublish(SetEditorialPublishRequest) returns (Void) {}
-  rpc SetEditorialComment(SetEditorialCommentRequest) returns (Void) {}
-  rpc SetEditorialName(SetEditorialNameRequest) returns (Void) {}
+  rpc UpdateEditorialMarker(UpdateEditorialMarkerRequest) returns (Void) {}
   rpc DeleteEditorialSession(DeleteEditorialSessionRequest) returns (Void) {}
   rpc ImportEditorialMarkers(ImportEditorialMarkersRequest) returns (ImportEditorialMarkersResponse) {}
 }

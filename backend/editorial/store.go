@@ -8,6 +8,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -27,6 +28,9 @@ const (
 
 // ErrNotFound is returned when a session does not exist.
 var ErrNotFound = errors.New("editorial: session not found")
+
+// ErrNoFields is returned for a partial update that sets nothing.
+var ErrNoFields = errors.New("editorial: no fields to update")
 
 // Session is a review session tied to a single Mediabanken asset.
 type Session struct {
@@ -342,38 +346,48 @@ func (s *Store) SaveSession(ctx context.Context, id, title string, markers []Mar
 // else. This is the write path for reviewers who may accept/reject but not edit
 // markers (the simple view). Returns ErrNotFound if the marker does not exist in
 // the session.
-func (s *Store) SetPublish(ctx context.Context, sessionID, markerID string, bmm, bcc bool) error {
-	now := time.Now().UTC()
-
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return fmt.Errorf("editorial: begin tx: %w", err)
-	}
-	defer func() { _ = tx.Rollback() }()
-
-	res, err := tx.ExecContext(ctx,
-		`UPDATE markers SET publish_bmm = ?, publish_bcc = ?, updated_at = ? WHERE id = ? AND session_id = ?`,
-		bmm, bcc, toMillis(now), markerID, sessionID)
-	if err != nil {
-		return fmt.Errorf("editorial: set publish: %w", err)
-	}
-	if n, _ := res.RowsAffected(); n == 0 {
-		return ErrNotFound
-	}
-
-	if _, err := tx.ExecContext(ctx,
-		`UPDATE sessions SET updated_at = ? WHERE id = ?`, toMillis(now), sessionID); err != nil {
-		return fmt.Errorf("editorial: touch session: %w", err)
-	}
-
-	return tx.Commit()
+// MarkerUpdate is a partial marker write: every nil field is left untouched.
+type MarkerUpdate struct {
+	Name       *string
+	Comment    *string
+	PublishBMM *bool
+	PublishBCC *bool
 }
 
-// SetComment updates a single marker's free-text comment without touching
-// anything else. Like SetPublish this is a write path for the simple view.
-// Returns ErrNotFound if the marker does not exist in the session.
-func (s *Store) SetComment(ctx context.Context, sessionID, markerID, comment string) error {
+// UpdateMarker writes just the fields set on u, leaving the rest of the marker
+// (and every other marker) alone. This is the write path behind the review
+// view, where each edit persists on its own rather than through a batched save;
+// structural edits go through SaveSession.
+// Returns ErrNoFields for an empty update and ErrNotFound if the marker does
+// not exist in the session.
+func (s *Store) UpdateMarker(ctx context.Context, sessionID, markerID string, u MarkerUpdate) error {
+	var (
+		sets []string
+		args []any
+	)
+	set := func(column string, value any) {
+		sets = append(sets, column+" = ?")
+		args = append(args, value)
+	}
+	if u.Name != nil {
+		set("name", *u.Name)
+	}
+	if u.Comment != nil {
+		set("comment", *u.Comment)
+	}
+	if u.PublishBMM != nil {
+		set("publish_bmm", *u.PublishBMM)
+	}
+	if u.PublishBCC != nil {
+		set("publish_bcc", *u.PublishBCC)
+	}
+	if len(sets) == 0 {
+		return ErrNoFields
+	}
+
 	now := time.Now().UTC()
+	set("updated_at", toMillis(now))
+	args = append(args, markerID, sessionID)
 
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -382,40 +396,10 @@ func (s *Store) SetComment(ctx context.Context, sessionID, markerID, comment str
 	defer func() { _ = tx.Rollback() }()
 
 	res, err := tx.ExecContext(ctx,
-		`UPDATE markers SET comment = ?, updated_at = ? WHERE id = ? AND session_id = ?`,
-		comment, toMillis(now), markerID, sessionID)
+		`UPDATE markers SET `+strings.Join(sets, ", ")+` WHERE id = ? AND session_id = ?`,
+		args...)
 	if err != nil {
-		return fmt.Errorf("editorial: set comment: %w", err)
-	}
-	if n, _ := res.RowsAffected(); n == 0 {
-		return ErrNotFound
-	}
-
-	if _, err := tx.ExecContext(ctx,
-		`UPDATE sessions SET updated_at = ? WHERE id = ?`, toMillis(now), sessionID); err != nil {
-		return fmt.Errorf("editorial: touch session: %w", err)
-	}
-
-	return tx.Commit()
-}
-
-// SetName updates a single marker's title/name without touching anything else.
-// Like SetComment this is a write path for the simple view. Returns ErrNotFound
-// if the marker does not exist in the session.
-func (s *Store) SetName(ctx context.Context, sessionID, markerID, name string) error {
-	now := time.Now().UTC()
-
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return fmt.Errorf("editorial: begin tx: %w", err)
-	}
-	defer func() { _ = tx.Rollback() }()
-
-	res, err := tx.ExecContext(ctx,
-		`UPDATE markers SET name = ?, updated_at = ? WHERE id = ? AND session_id = ?`,
-		name, toMillis(now), markerID, sessionID)
-	if err != nil {
-		return fmt.Errorf("editorial: set name: %w", err)
+		return fmt.Errorf("editorial: update marker: %w", err)
 	}
 	if n, _ := res.RowsAffected(); n == 0 {
 		return ErrNotFound

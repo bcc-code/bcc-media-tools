@@ -4449,32 +4449,40 @@ func (x *ImportEditorialMarkersResponse) GetMarkers() []*EditorialMarker {
 	return nil
 }
 
-// Set a single marker's publish flags (Ja/Nei per target). This is the write
-// path for reviewers who may accept/reject but not edit markers (simple view).
-type SetEditorialPublishRequest struct {
+// Partial update of a single marker: only the fields present are written, the
+// rest are left untouched. This is the write path for the review view, where
+// every edit persists on its own instead of through a batched save. Structural
+// edits (timecodes, type, contributors, bible verses, order) go through
+// SaveEditorialSession.
+//
+// The publish flags and the comment are the reviewer's job and need only tool
+// access; renaming a marker is marker content and requires edit rights.
+type UpdateEditorialMarkerRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	MarkerId      string                 `protobuf:"bytes,2,opt,name=marker_id,json=markerId,proto3" json:"marker_id,omitempty"`
-	PublishBmm    bool                   `protobuf:"varint,3,opt,name=publish_bmm,json=publishBmm,proto3" json:"publish_bmm,omitempty"`
-	PublishBcc    bool                   `protobuf:"varint,4,opt,name=publish_bcc,json=publishBcc,proto3" json:"publish_bcc,omitempty"`
+	Name          *string                `protobuf:"bytes,3,opt,name=name,proto3,oneof" json:"name,omitempty"`
+	Comment       *string                `protobuf:"bytes,4,opt,name=comment,proto3,oneof" json:"comment,omitempty"`
+	PublishBmm    *bool                  `protobuf:"varint,5,opt,name=publish_bmm,json=publishBmm,proto3,oneof" json:"publish_bmm,omitempty"`
+	PublishBcc    *bool                  `protobuf:"varint,6,opt,name=publish_bcc,json=publishBcc,proto3,oneof" json:"publish_bcc,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *SetEditorialPublishRequest) Reset() {
-	*x = SetEditorialPublishRequest{}
+func (x *UpdateEditorialMarkerRequest) Reset() {
+	*x = UpdateEditorialMarkerRequest{}
 	mi := &file_api_v1_api_proto_msgTypes[73]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *SetEditorialPublishRequest) String() string {
+func (x *UpdateEditorialMarkerRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SetEditorialPublishRequest) ProtoMessage() {}
+func (*UpdateEditorialMarkerRequest) ProtoMessage() {}
 
-func (x *SetEditorialPublishRequest) ProtoReflect() protoreflect.Message {
+func (x *UpdateEditorialMarkerRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_api_v1_api_proto_msgTypes[73]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -4486,162 +4494,51 @@ func (x *SetEditorialPublishRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SetEditorialPublishRequest.ProtoReflect.Descriptor instead.
-func (*SetEditorialPublishRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use UpdateEditorialMarkerRequest.ProtoReflect.Descriptor instead.
+func (*UpdateEditorialMarkerRequest) Descriptor() ([]byte, []int) {
 	return file_api_v1_api_proto_rawDescGZIP(), []int{73}
 }
 
-func (x *SetEditorialPublishRequest) GetSessionId() string {
+func (x *UpdateEditorialMarkerRequest) GetSessionId() string {
 	if x != nil {
 		return x.SessionId
 	}
 	return ""
 }
 
-func (x *SetEditorialPublishRequest) GetMarkerId() string {
+func (x *UpdateEditorialMarkerRequest) GetMarkerId() string {
 	if x != nil {
 		return x.MarkerId
 	}
 	return ""
 }
 
-func (x *SetEditorialPublishRequest) GetPublishBmm() bool {
-	if x != nil {
-		return x.PublishBmm
+func (x *UpdateEditorialMarkerRequest) GetName() string {
+	if x != nil && x.Name != nil {
+		return *x.Name
+	}
+	return ""
+}
+
+func (x *UpdateEditorialMarkerRequest) GetComment() string {
+	if x != nil && x.Comment != nil {
+		return *x.Comment
+	}
+	return ""
+}
+
+func (x *UpdateEditorialMarkerRequest) GetPublishBmm() bool {
+	if x != nil && x.PublishBmm != nil {
+		return *x.PublishBmm
 	}
 	return false
 }
 
-func (x *SetEditorialPublishRequest) GetPublishBcc() bool {
-	if x != nil {
-		return x.PublishBcc
+func (x *UpdateEditorialMarkerRequest) GetPublishBcc() bool {
+	if x != nil && x.PublishBcc != nil {
+		return *x.PublishBcc
 	}
 	return false
-}
-
-// Update a single marker's free-text comment. Like SetEditorialPublish this is
-// a write path available in the simple view (no edit rights required).
-type SetEditorialCommentRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	MarkerId      string                 `protobuf:"bytes,2,opt,name=marker_id,json=markerId,proto3" json:"marker_id,omitempty"`
-	Comment       string                 `protobuf:"bytes,3,opt,name=comment,proto3" json:"comment,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SetEditorialCommentRequest) Reset() {
-	*x = SetEditorialCommentRequest{}
-	mi := &file_api_v1_api_proto_msgTypes[74]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SetEditorialCommentRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SetEditorialCommentRequest) ProtoMessage() {}
-
-func (x *SetEditorialCommentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[74]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SetEditorialCommentRequest.ProtoReflect.Descriptor instead.
-func (*SetEditorialCommentRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{74}
-}
-
-func (x *SetEditorialCommentRequest) GetSessionId() string {
-	if x != nil {
-		return x.SessionId
-	}
-	return ""
-}
-
-func (x *SetEditorialCommentRequest) GetMarkerId() string {
-	if x != nil {
-		return x.MarkerId
-	}
-	return ""
-}
-
-func (x *SetEditorialCommentRequest) GetComment() string {
-	if x != nil {
-		return x.Comment
-	}
-	return ""
-}
-
-// Update a single marker's title/name without touching anything else. This is
-// the write path for editing a row's title from the simple view; unlike
-// comment/publish it requires edit rights.
-type SetEditorialNameRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	MarkerId      string                 `protobuf:"bytes,2,opt,name=marker_id,json=markerId,proto3" json:"marker_id,omitempty"`
-	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SetEditorialNameRequest) Reset() {
-	*x = SetEditorialNameRequest{}
-	mi := &file_api_v1_api_proto_msgTypes[75]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SetEditorialNameRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SetEditorialNameRequest) ProtoMessage() {}
-
-func (x *SetEditorialNameRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[75]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SetEditorialNameRequest.ProtoReflect.Descriptor instead.
-func (*SetEditorialNameRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{75}
-}
-
-func (x *SetEditorialNameRequest) GetSessionId() string {
-	if x != nil {
-		return x.SessionId
-	}
-	return ""
-}
-
-func (x *SetEditorialNameRequest) GetMarkerId() string {
-	if x != nil {
-		return x.MarkerId
-	}
-	return ""
-}
-
-func (x *SetEditorialNameRequest) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
 }
 
 var File_api_v1_api_proto protoreflect.FileDescriptor
@@ -4967,25 +4864,22 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\x1dImportEditorialMarkersRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"S\n" +
 	"\x1eImportEditorialMarkersResponse\x121\n" +
-	"\amarkers\x18\x01 \x03(\v2\x17.api.v1.EditorialMarkerR\amarkers\"\x9a\x01\n" +
-	"\x1aSetEditorialPublishRequest\x12\x1d\n" +
+	"\amarkers\x18\x01 \x03(\v2\x17.api.v1.EditorialMarkerR\amarkers\"\x93\x02\n" +
+	"\x1cUpdateEditorialMarkerRequest\x12\x1d\n" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x1b\n" +
-	"\tmarker_id\x18\x02 \x01(\tR\bmarkerId\x12\x1f\n" +
-	"\vpublish_bmm\x18\x03 \x01(\bR\n" +
-	"publishBmm\x12\x1f\n" +
-	"\vpublish_bcc\x18\x04 \x01(\bR\n" +
-	"publishBcc\"r\n" +
-	"\x1aSetEditorialCommentRequest\x12\x1d\n" +
+	"\tmarker_id\x18\x02 \x01(\tR\bmarkerId\x12\x17\n" +
+	"\x04name\x18\x03 \x01(\tH\x00R\x04name\x88\x01\x01\x12\x1d\n" +
+	"\acomment\x18\x04 \x01(\tH\x01R\acomment\x88\x01\x01\x12$\n" +
+	"\vpublish_bmm\x18\x05 \x01(\bH\x02R\n" +
+	"publishBmm\x88\x01\x01\x12$\n" +
+	"\vpublish_bcc\x18\x06 \x01(\bH\x03R\n" +
+	"publishBcc\x88\x01\x01B\a\n" +
+	"\x05_nameB\n" +
 	"\n" +
-	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x1b\n" +
-	"\tmarker_id\x18\x02 \x01(\tR\bmarkerId\x12\x18\n" +
-	"\acomment\x18\x03 \x01(\tR\acomment\"i\n" +
-	"\x17SetEditorialNameRequest\x12\x1d\n" +
-	"\n" +
-	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x1b\n" +
-	"\tmarker_id\x18\x02 \x01(\tR\bmarkerId\x12\x12\n" +
-	"\x04name\x18\x03 \x01(\tR\x04name*1\n" +
+	"\b_commentB\x0e\n" +
+	"\f_publish_bmmB\x0e\n" +
+	"\f_publish_bcc*1\n" +
 	"\x0eBmmEnvironment\x12\x0e\n" +
 	"\n" +
 	"Production\x10\x00\x12\x0f\n" +
@@ -4995,7 +4889,7 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\x16CANTEMO_ACTION_PREVIEW\x10\x01\x12\x1d\n" +
 	"\x19CANTEMO_ACTION_TRANSCRIBE\x10\x02\x12)\n" +
 	"%CANTEMO_ACTION_SUBTITLE_FROM_SUBTRANS\x10\x03\x12#\n" +
-	"\x1fCANTEMO_ACTION_UPDATE_RELATIONS\x10\x042\xb6\x14\n" +
+	"\x1fCANTEMO_ACTION_UPDATE_RELATIONS\x10\x042\xaa\x13\n" +
 	"\n" +
 	"APIService\x125\n" +
 	"\x0eGetPermissions\x12\f.api.v1.Void\x1a\x13.api.v1.Permissions\"\x00\x12B\n" +
@@ -5026,10 +4920,8 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\x15ListEditorialSessions\x12\f.api.v1.Void\x1a%.api.v1.ListEditorialSessionsResponse\"\x00\x12[\n" +
 	"\x16CreateEditorialSession\x12%.api.v1.CreateEditorialSessionRequest\x1a\x18.api.v1.EditorialSession\"\x00\x12U\n" +
 	"\x13GetEditorialSession\x12\".api.v1.GetEditorialSessionRequest\x1a\x18.api.v1.EditorialSession\"\x00\x12W\n" +
-	"\x14SaveEditorialSession\x12#.api.v1.SaveEditorialSessionRequest\x1a\x18.api.v1.EditorialSession\"\x00\x12I\n" +
-	"\x13SetEditorialPublish\x12\".api.v1.SetEditorialPublishRequest\x1a\f.api.v1.Void\"\x00\x12I\n" +
-	"\x13SetEditorialComment\x12\".api.v1.SetEditorialCommentRequest\x1a\f.api.v1.Void\"\x00\x12C\n" +
-	"\x10SetEditorialName\x12\x1f.api.v1.SetEditorialNameRequest\x1a\f.api.v1.Void\"\x00\x12O\n" +
+	"\x14SaveEditorialSession\x12#.api.v1.SaveEditorialSessionRequest\x1a\x18.api.v1.EditorialSession\"\x00\x12M\n" +
+	"\x15UpdateEditorialMarker\x12$.api.v1.UpdateEditorialMarkerRequest\x1a\f.api.v1.Void\"\x00\x12O\n" +
 	"\x16DeleteEditorialSession\x12%.api.v1.DeleteEditorialSessionRequest\x1a\f.api.v1.Void\"\x00\x12i\n" +
 	"\x16ImportEditorialMarkers\x12%.api.v1.ImportEditorialMarkersRequest\x1a&.api.v1.ImportEditorialMarkersResponse\"\x00B\x1eZ\x1cbcc-media-tools/api/v1;apiv1b\x06proto3"
 
@@ -5046,7 +4938,7 @@ func file_api_v1_api_proto_rawDescGZIP() []byte {
 }
 
 var file_api_v1_api_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_api_v1_api_proto_msgTypes = make([]protoimpl.MessageInfo, 78)
+var file_api_v1_api_proto_msgTypes = make([]protoimpl.MessageInfo, 76)
 var file_api_v1_api_proto_goTypes = []any{
 	(BmmEnvironment)(0),                    // 0: api.v1.BmmEnvironment
 	(CantemoAction)(0),                     // 1: api.v1.CantemoAction
@@ -5123,13 +5015,11 @@ var file_api_v1_api_proto_goTypes = []any{
 	(*DeleteEditorialSessionRequest)(nil),  // 72: api.v1.DeleteEditorialSessionRequest
 	(*ImportEditorialMarkersRequest)(nil),  // 73: api.v1.ImportEditorialMarkersRequest
 	(*ImportEditorialMarkersResponse)(nil), // 74: api.v1.ImportEditorialMarkersResponse
-	(*SetEditorialPublishRequest)(nil),     // 75: api.v1.SetEditorialPublishRequest
-	(*SetEditorialCommentRequest)(nil),     // 76: api.v1.SetEditorialCommentRequest
-	(*SetEditorialNameRequest)(nil),        // 77: api.v1.SetEditorialNameRequest
-	nil,                                    // 78: api.v1.PermissionsList.PermissionsEntry
-	nil,                                    // 79: api.v1.GetYearsResponse.DataEntry
-	(*timestamppb.Timestamp)(nil),          // 80: google.protobuf.Timestamp
-	(*Void)(nil),                           // 81: api.v1.Void
+	(*UpdateEditorialMarkerRequest)(nil),   // 75: api.v1.UpdateEditorialMarkerRequest
+	nil,                                    // 76: api.v1.PermissionsList.PermissionsEntry
+	nil,                                    // 77: api.v1.GetYearsResponse.DataEntry
+	(*timestamppb.Timestamp)(nil),          // 78: google.protobuf.Timestamp
+	(*Void)(nil),                           // 79: api.v1.Void
 }
 var file_api_v1_api_proto_depIdxs = []int32{
 	2,  // 0: api.v1.Permissions.bmm:type_name -> api.v1.BMMPermission
@@ -5142,15 +5032,15 @@ var file_api_v1_api_proto_depIdxs = []int32{
 	10, // 7: api.v1.Permissions.editorial:type_name -> api.v1.EditorialPermission
 	9,  // 8: api.v1.Permissions.live_ingest:type_name -> api.v1.LiveIngestPermission
 	11, // 9: api.v1.SetPermissionsRequest.permissions:type_name -> api.v1.Permissions
-	78, // 10: api.v1.PermissionsList.permissions:type_name -> api.v1.PermissionsList.PermissionsEntry
-	79, // 11: api.v1.GetYearsResponse.data:type_name -> api.v1.GetYearsResponse.DataEntry
+	76, // 10: api.v1.PermissionsList.permissions:type_name -> api.v1.PermissionsList.PermissionsEntry
+	77, // 11: api.v1.GetYearsResponse.data:type_name -> api.v1.GetYearsResponse.DataEntry
 	0,  // 12: api.v1.GetYearsRequest.environment:type_name -> api.v1.BmmEnvironment
 	0,  // 13: api.v1.GetAlbumsRequest.environment:type_name -> api.v1.BmmEnvironment
 	20, // 14: api.v1.AlbumsList.albums:type_name -> api.v1.Album
 	0,  // 15: api.v1.GetAlbumTracksRequest.environment:type_name -> api.v1.BmmEnvironment
 	0,  // 16: api.v1.GetPodcastTracksRequest.environment:type_name -> api.v1.BmmEnvironment
 	0,  // 17: api.v1.GetAvailableLanguagesRequest.environment:type_name -> api.v1.BmmEnvironment
-	80, // 18: api.v1.BMMTrack.publishedAt:type_name -> google.protobuf.Timestamp
+	78, // 18: api.v1.BMMTrack.publishedAt:type_name -> google.protobuf.Timestamp
 	27, // 19: api.v1.BMMTrack.languages:type_name -> api.v1.LanguageList
 	27, // 20: api.v1.BMMTrack.transcriptions:type_name -> api.v1.LanguageList
 	25, // 21: api.v1.TracksList.tracks:type_name -> api.v1.BMMTrack
@@ -5170,18 +5060,18 @@ var file_api_v1_api_proto_depIdxs = []int32{
 	61, // 35: api.v1.VaultSearchResponse.items:type_name -> api.v1.VaultItem
 	62, // 36: api.v1.VaultSearchResponse.facets:type_name -> api.v1.VaultFacet
 	61, // 37: api.v1.GetVaultItemResponse.item:type_name -> api.v1.VaultItem
-	80, // 38: api.v1.EditorialSession.created_at:type_name -> google.protobuf.Timestamp
-	80, // 39: api.v1.EditorialSession.updated_at:type_name -> google.protobuf.Timestamp
+	78, // 38: api.v1.EditorialSession.created_at:type_name -> google.protobuf.Timestamp
+	78, // 39: api.v1.EditorialSession.updated_at:type_name -> google.protobuf.Timestamp
 	66, // 40: api.v1.EditorialSession.markers:type_name -> api.v1.EditorialMarker
 	67, // 41: api.v1.ListEditorialSessionsResponse.sessions:type_name -> api.v1.EditorialSession
 	66, // 42: api.v1.SaveEditorialSessionRequest.markers:type_name -> api.v1.EditorialMarker
 	66, // 43: api.v1.ImportEditorialMarkersResponse.markers:type_name -> api.v1.EditorialMarker
 	11, // 44: api.v1.PermissionsList.PermissionsEntry.value:type_name -> api.v1.Permissions
 	16, // 45: api.v1.GetYearsResponse.DataEntry.value:type_name -> api.v1.BMMYear
-	81, // 46: api.v1.APIService.GetPermissions:input_type -> api.v1.Void
+	79, // 46: api.v1.APIService.GetPermissions:input_type -> api.v1.Void
 	13, // 47: api.v1.APIService.UpdatePermissions:input_type -> api.v1.SetPermissionsRequest
 	14, // 48: api.v1.APIService.DeletePermissions:input_type -> api.v1.DeletePermissionsRequest
-	81, // 49: api.v1.APIService.ListPermissions:input_type -> api.v1.Void
+	79, // 49: api.v1.APIService.ListPermissions:input_type -> api.v1.Void
 	29, // 50: api.v1.APIService.GetTranscription:input_type -> api.v1.GetTranscriptionReqest
 	33, // 51: api.v1.APIService.GetShortsPreview:input_type -> api.v1.GetPreviewRequest
 	36, // 52: api.v1.APIService.SubmitTranscription:input_type -> api.v1.SubmitTranscriptionRequest
@@ -5198,56 +5088,52 @@ var file_api_v1_api_proto_depIdxs = []int32{
 	53, // 63: api.v1.APIService.ResolveAssets:input_type -> api.v1.ResolveAssetsRequest
 	47, // 64: api.v1.APIService.GetVBExportConfig:input_type -> api.v1.GetVBExportConfigRequest
 	50, // 65: api.v1.APIService.StartVBExport:input_type -> api.v1.StartVBExportRequest
-	81, // 66: api.v1.APIService.GetExportDestinations:input_type -> api.v1.Void
+	79, // 66: api.v1.APIService.GetExportDestinations:input_type -> api.v1.Void
 	56, // 67: api.v1.APIService.TriggerCantemoAction:input_type -> api.v1.TriggerCantemoActionRequest
 	57, // 68: api.v1.APIService.FinishLiveIngest:input_type -> api.v1.FinishLiveIngestRequest
 	60, // 69: api.v1.APIService.VaultSearch:input_type -> api.v1.VaultSearchRequest
 	64, // 70: api.v1.APIService.GetVaultItem:input_type -> api.v1.GetVaultItemRequest
-	81, // 71: api.v1.APIService.ListEditorialSessions:input_type -> api.v1.Void
+	79, // 71: api.v1.APIService.ListEditorialSessions:input_type -> api.v1.Void
 	69, // 72: api.v1.APIService.CreateEditorialSession:input_type -> api.v1.CreateEditorialSessionRequest
 	70, // 73: api.v1.APIService.GetEditorialSession:input_type -> api.v1.GetEditorialSessionRequest
 	71, // 74: api.v1.APIService.SaveEditorialSession:input_type -> api.v1.SaveEditorialSessionRequest
-	75, // 75: api.v1.APIService.SetEditorialPublish:input_type -> api.v1.SetEditorialPublishRequest
-	76, // 76: api.v1.APIService.SetEditorialComment:input_type -> api.v1.SetEditorialCommentRequest
-	77, // 77: api.v1.APIService.SetEditorialName:input_type -> api.v1.SetEditorialNameRequest
-	72, // 78: api.v1.APIService.DeleteEditorialSession:input_type -> api.v1.DeleteEditorialSessionRequest
-	73, // 79: api.v1.APIService.ImportEditorialMarkers:input_type -> api.v1.ImportEditorialMarkersRequest
-	11, // 80: api.v1.APIService.GetPermissions:output_type -> api.v1.Permissions
-	81, // 81: api.v1.APIService.UpdatePermissions:output_type -> api.v1.Void
-	81, // 82: api.v1.APIService.DeletePermissions:output_type -> api.v1.Void
-	15, // 83: api.v1.APIService.ListPermissions:output_type -> api.v1.PermissionsList
-	30, // 84: api.v1.APIService.GetTranscription:output_type -> api.v1.Transcription
-	34, // 85: api.v1.APIService.GetShortsPreview:output_type -> api.v1.Preview
-	81, // 86: api.v1.APIService.SubmitTranscription:output_type -> api.v1.Void
-	17, // 87: api.v1.APIService.GetYears:output_type -> api.v1.GetYearsResponse
-	21, // 88: api.v1.APIService.GetAlbums:output_type -> api.v1.AlbumsList
-	26, // 89: api.v1.APIService.GetAlbumTracks:output_type -> api.v1.TracksList
-	26, // 90: api.v1.APIService.GetPodcastTracks:output_type -> api.v1.TracksList
-	27, // 91: api.v1.APIService.GetLanguages:output_type -> api.v1.LanguageList
-	30, // 92: api.v1.APIService.GetBMMTranscription:output_type -> api.v1.Transcription
-	81, // 93: api.v1.APIService.SubmitShort:output_type -> api.v1.Void
-	42, // 94: api.v1.APIService.GetExportConfig:output_type -> api.v1.GetExportConfigResponse
-	45, // 95: api.v1.APIService.StartExport:output_type -> api.v1.StartExportResponse
-	81, // 96: api.v1.APIService.ExportTimedMetadata:output_type -> api.v1.Void
-	55, // 97: api.v1.APIService.ResolveAssets:output_type -> api.v1.ResolveAssetsResponse
-	49, // 98: api.v1.APIService.GetVBExportConfig:output_type -> api.v1.GetVBExportConfigResponse
-	51, // 99: api.v1.APIService.StartVBExport:output_type -> api.v1.StartVBExportResponse
-	52, // 100: api.v1.APIService.GetExportDestinations:output_type -> api.v1.ExportDestinationsResponse
-	81, // 101: api.v1.APIService.TriggerCantemoAction:output_type -> api.v1.Void
-	59, // 102: api.v1.APIService.FinishLiveIngest:output_type -> api.v1.FinishLiveIngestResponse
-	63, // 103: api.v1.APIService.VaultSearch:output_type -> api.v1.VaultSearchResponse
-	65, // 104: api.v1.APIService.GetVaultItem:output_type -> api.v1.GetVaultItemResponse
-	68, // 105: api.v1.APIService.ListEditorialSessions:output_type -> api.v1.ListEditorialSessionsResponse
-	67, // 106: api.v1.APIService.CreateEditorialSession:output_type -> api.v1.EditorialSession
-	67, // 107: api.v1.APIService.GetEditorialSession:output_type -> api.v1.EditorialSession
-	67, // 108: api.v1.APIService.SaveEditorialSession:output_type -> api.v1.EditorialSession
-	81, // 109: api.v1.APIService.SetEditorialPublish:output_type -> api.v1.Void
-	81, // 110: api.v1.APIService.SetEditorialComment:output_type -> api.v1.Void
-	81, // 111: api.v1.APIService.SetEditorialName:output_type -> api.v1.Void
-	81, // 112: api.v1.APIService.DeleteEditorialSession:output_type -> api.v1.Void
-	74, // 113: api.v1.APIService.ImportEditorialMarkers:output_type -> api.v1.ImportEditorialMarkersResponse
-	80, // [80:114] is the sub-list for method output_type
-	46, // [46:80] is the sub-list for method input_type
+	75, // 75: api.v1.APIService.UpdateEditorialMarker:input_type -> api.v1.UpdateEditorialMarkerRequest
+	72, // 76: api.v1.APIService.DeleteEditorialSession:input_type -> api.v1.DeleteEditorialSessionRequest
+	73, // 77: api.v1.APIService.ImportEditorialMarkers:input_type -> api.v1.ImportEditorialMarkersRequest
+	11, // 78: api.v1.APIService.GetPermissions:output_type -> api.v1.Permissions
+	79, // 79: api.v1.APIService.UpdatePermissions:output_type -> api.v1.Void
+	79, // 80: api.v1.APIService.DeletePermissions:output_type -> api.v1.Void
+	15, // 81: api.v1.APIService.ListPermissions:output_type -> api.v1.PermissionsList
+	30, // 82: api.v1.APIService.GetTranscription:output_type -> api.v1.Transcription
+	34, // 83: api.v1.APIService.GetShortsPreview:output_type -> api.v1.Preview
+	79, // 84: api.v1.APIService.SubmitTranscription:output_type -> api.v1.Void
+	17, // 85: api.v1.APIService.GetYears:output_type -> api.v1.GetYearsResponse
+	21, // 86: api.v1.APIService.GetAlbums:output_type -> api.v1.AlbumsList
+	26, // 87: api.v1.APIService.GetAlbumTracks:output_type -> api.v1.TracksList
+	26, // 88: api.v1.APIService.GetPodcastTracks:output_type -> api.v1.TracksList
+	27, // 89: api.v1.APIService.GetLanguages:output_type -> api.v1.LanguageList
+	30, // 90: api.v1.APIService.GetBMMTranscription:output_type -> api.v1.Transcription
+	79, // 91: api.v1.APIService.SubmitShort:output_type -> api.v1.Void
+	42, // 92: api.v1.APIService.GetExportConfig:output_type -> api.v1.GetExportConfigResponse
+	45, // 93: api.v1.APIService.StartExport:output_type -> api.v1.StartExportResponse
+	79, // 94: api.v1.APIService.ExportTimedMetadata:output_type -> api.v1.Void
+	55, // 95: api.v1.APIService.ResolveAssets:output_type -> api.v1.ResolveAssetsResponse
+	49, // 96: api.v1.APIService.GetVBExportConfig:output_type -> api.v1.GetVBExportConfigResponse
+	51, // 97: api.v1.APIService.StartVBExport:output_type -> api.v1.StartVBExportResponse
+	52, // 98: api.v1.APIService.GetExportDestinations:output_type -> api.v1.ExportDestinationsResponse
+	79, // 99: api.v1.APIService.TriggerCantemoAction:output_type -> api.v1.Void
+	59, // 100: api.v1.APIService.FinishLiveIngest:output_type -> api.v1.FinishLiveIngestResponse
+	63, // 101: api.v1.APIService.VaultSearch:output_type -> api.v1.VaultSearchResponse
+	65, // 102: api.v1.APIService.GetVaultItem:output_type -> api.v1.GetVaultItemResponse
+	68, // 103: api.v1.APIService.ListEditorialSessions:output_type -> api.v1.ListEditorialSessionsResponse
+	67, // 104: api.v1.APIService.CreateEditorialSession:output_type -> api.v1.EditorialSession
+	67, // 105: api.v1.APIService.GetEditorialSession:output_type -> api.v1.EditorialSession
+	67, // 106: api.v1.APIService.SaveEditorialSession:output_type -> api.v1.EditorialSession
+	79, // 107: api.v1.APIService.UpdateEditorialMarker:output_type -> api.v1.Void
+	79, // 108: api.v1.APIService.DeleteEditorialSession:output_type -> api.v1.Void
+	74, // 109: api.v1.APIService.ImportEditorialMarkers:output_type -> api.v1.ImportEditorialMarkersResponse
+	78, // [78:110] is the sub-list for method output_type
+	46, // [46:78] is the sub-list for method input_type
 	46, // [46:46] is the sub-list for extension type_name
 	46, // [46:46] is the sub-list for extension extendee
 	0,  // [0:46] is the sub-list for field type_name
@@ -5259,13 +5145,14 @@ func file_api_v1_api_proto_init() {
 		return
 	}
 	file_api_v1_common_proto_init()
+	file_api_v1_api_proto_msgTypes[73].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_v1_api_proto_rawDesc), len(file_api_v1_api_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   78,
+			NumMessages:   76,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

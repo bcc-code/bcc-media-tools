@@ -124,7 +124,7 @@ func TestSaveSessionNotFound(t *testing.T) {
 	assert.ErrorIs(t, err, ErrNotFound)
 }
 
-func TestSetPublish(t *testing.T) {
+func TestUpdateMarkerPublish(t *testing.T) {
 	s := newTestStore(t)
 	ctx := context.Background()
 
@@ -137,7 +137,10 @@ func TestSetPublish(t *testing.T) {
 	require.NoError(t, err)
 	m1ID := saved.Markers[0].ID
 
-	require.NoError(t, s.SetPublish(ctx, sess.ID, m1ID, true, false))
+	require.NoError(t, s.UpdateMarker(ctx, sess.ID, m1ID, MarkerUpdate{
+		PublishBMM: ptr(true),
+		PublishBCC: ptr(false),
+	}))
 
 	got, err := s.GetSession(ctx, sess.ID)
 	require.NoError(t, err)
@@ -149,13 +152,62 @@ func TestSetPublish(t *testing.T) {
 	assert.Equal(t, "m1", got.Markers[0].Name)
 }
 
-func TestSetPublishNotFound(t *testing.T) {
+func TestUpdateMarkerWritesOnlyGivenFields(t *testing.T) {
+	s := newTestStore(t)
+	ctx := context.Background()
+
+	sess, err := s.CreateSession(ctx, "VX-9", "stream", "e@bcc.media")
+	require.NoError(t, err)
+	saved, err := s.SaveSession(ctx, sess.ID, "t", []Marker{{
+		Name:         "m1",
+		Type:         "sang",
+		Contributors: "Someone",
+		BibleVerses:  "Joh 3,16",
+		Comment:      "draft note",
+		PublishBMM:   true,
+		StartMS:      0,
+		EndMS:        1,
+	}})
+	require.NoError(t, err)
+	id := saved.Markers[0].ID
+
+	require.NoError(t, s.UpdateMarker(ctx, sess.ID, id, MarkerUpdate{
+		Name:    ptr("renamed"),
+		Comment: ptr("looks good"),
+	}))
+
+	got, err := s.GetSession(ctx, sess.ID)
+	require.NoError(t, err)
+	m := got.Markers[0]
+	assert.Equal(t, "renamed", m.Name)
+	assert.Equal(t, "looks good", m.Comment)
+	// Fields left out of the update keep their value.
+	assert.Equal(t, "sang", m.Type)
+	assert.Equal(t, "Someone", m.Contributors)
+	assert.Equal(t, "Joh 3,16", m.BibleVerses)
+	assert.True(t, m.PublishBMM)
+	assert.Equal(t, int64(1), m.EndMS)
+}
+
+func TestUpdateMarkerEmpty(t *testing.T) {
 	s := newTestStore(t)
 	ctx := context.Background()
 	sess, err := s.CreateSession(ctx, "VX-9", "stream", "e@bcc.media")
 	require.NoError(t, err)
-	assert.ErrorIs(t, s.SetPublish(ctx, sess.ID, "no-such-marker", true, true), ErrNotFound)
+	assert.ErrorIs(t, s.UpdateMarker(ctx, sess.ID, "any", MarkerUpdate{}), ErrNoFields)
 }
+
+func TestUpdateMarkerNotFound(t *testing.T) {
+	s := newTestStore(t)
+	ctx := context.Background()
+	sess, err := s.CreateSession(ctx, "VX-9", "stream", "e@bcc.media")
+	require.NoError(t, err)
+	assert.ErrorIs(t,
+		s.UpdateMarker(ctx, sess.ID, "no-such-marker", MarkerUpdate{Comment: ptr("x")}),
+		ErrNotFound)
+}
+
+func ptr[T any](v T) *T { return &v }
 
 func TestDeleteSessionCascadesMarkers(t *testing.T) {
 	s := newTestStore(t)
