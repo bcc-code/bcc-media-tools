@@ -51,7 +51,7 @@ async function load() {
     >
         <button
             type="button"
-            class="bg-surface-indent dark:bg-surface-raise hover:bg-text-default/10 dark:hover:bg-text-default/20 text-body-2 text-text-default ds-focus-ring cursor-default rounded-lg px-3 py-1.5 transition-colors"
+            class="bg-text-default/10 hover:bg-text-default/20 dark:bg-surface-raise dark:hover:bg-text-default/25 gradient-border text-body-2 text-text-default ds-focus-ring cursor-default rounded-lg px-3 py-1.5 transition-colors"
             @mouseenter="load"
             @focusin="load"
         >
@@ -67,7 +67,7 @@ async function load() {
                     </p>
                     <span
                         v-if="result?.translation"
-                        class="text-body-3 text-text-hint shrink-0"
+                        class="text-body-3 text-text-muted shrink-0"
                     >
                         {{ result.translation }}
                     </span>

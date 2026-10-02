@@ -440,7 +440,7 @@ onBeforeRouteLeave(() => {
     <div v-else class="mx-auto w-full max-w-[1700px] px-4 py-6">
         <NuxtLink
             to="/editorial/"
-            class="text-body-3 text-text-hint hover:text-text-default mb-3 inline-flex items-center gap-1"
+            class="text-body-3 text-text-muted hover:text-text-default mb-3 inline-flex items-center gap-1"
         >
             <Icon name="tabler:chevron-left" class="size-4" />
             {{ t("editorial.backToList") }}
@@ -478,12 +478,12 @@ onBeforeRouteLeave(() => {
                         </h1>
                         <span
                             v-if="title && title !== session?.VXID"
-                            class="text-body-3 text-text-hint"
+                            class="text-body-3 text-text-muted"
                         >
                             {{ session?.VXID }}
                         </span>
                     </div>
-                    <p class="text-body-3 text-text-hint mt-1.5">
+                    <p class="text-body-3 text-text-muted mt-1.5">
                         <span v-if="rows.length" class="tabular-nums">
                             {{
                                 t("editorial.totalDuration", {

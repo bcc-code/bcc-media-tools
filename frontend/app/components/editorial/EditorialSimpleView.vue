@@ -233,6 +233,7 @@ watch(
                             :max="Math.max(1, selectedDurationMs)"
                             :step="100"
                             :disabled="!selected"
+                            variant="overlay"
                             class="pointer-events-auto"
                         />
                         <span
@@ -256,7 +257,7 @@ watch(
                         {{ typeLabel(selected.type) || "—" }}
                     </span>
                     <span
-                        class="text-body-2 text-text-hint ml-auto tabular-nums"
+                        class="text-body-2 text-text-muted ml-auto tabular-nums"
                     >
                         {{
                             t("editorial.itemOf", {

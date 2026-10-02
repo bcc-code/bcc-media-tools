@@ -10,12 +10,16 @@ interface Props {
     max?: number;
     step?: number;
     disabled?: boolean;
+    // Extension beyond admin-web: "overlay" is for a slider sitting on media,
+    // where the themed track colour disappears against the picture.
+    variant?: "default" | "overlay";
 }
 
 withDefaults(defineProps<Props>(), {
     min: 0,
     max: 100,
     step: 1,
+    variant: "default",
 });
 
 const model = defineModel<number>({ default: 0 });
@@ -38,12 +42,23 @@ const arrayModel = computed<number[]>({
         class="w-full disabled:cursor-not-allowed disabled:opacity-50"
     >
         <Slider.Control class="relative flex items-center py-1">
-            <Slider.Track class="bg-border-1 h-1.5 flex-1 rounded-full">
-                <Slider.Range class="bg-primary-contrast h-full rounded-full" />
+            <Slider.Track
+                class="h-1.5 flex-1 rounded-full"
+                :class="variant === 'overlay' ? 'bg-white/30' : 'bg-border-1'"
+            >
+                <Slider.Range
+                    class="h-full rounded-full"
+                    :class="
+                        variant === 'overlay'
+                            ? 'bg-white'
+                            : 'bg-primary-contrast'
+                    "
+                />
             </Slider.Track>
             <Slider.Thumb
                 :index="0"
-                class="gradient-border shadow-resting ds-focus-ring bg-surface-raise block size-5 cursor-grab rounded-full active:cursor-grabbing"
+                class="gradient-border shadow-resting ds-focus-ring block size-5 cursor-grab rounded-full active:cursor-grabbing"
+                :class="variant === 'overlay' ? 'bg-white' : 'bg-surface-raise'"
             >
                 <Slider.HiddenInput />
             </Slider.Thumb>

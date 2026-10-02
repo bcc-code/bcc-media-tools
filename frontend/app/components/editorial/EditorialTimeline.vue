@@ -106,12 +106,12 @@ function onLanePointerMove(e: PointerEvent) {
             <!-- Scrub lane: drag anywhere to move the playhead. -->
             <div
                 ref="laneEl"
-                class="bg-surface-indent relative h-6 cursor-pointer rounded-t-lg"
+                class="bg-text-default/10 dark:bg-surface-indent relative h-6 cursor-pointer rounded-t-lg"
                 @pointerdown="onLanePointerDown"
                 @pointermove="onLanePointerMove"
             >
                 <div
-                    class="bg-primary-default/20 pointer-events-none absolute inset-y-0 left-0 rounded-tl-lg"
+                    class="bg-primary-default/30 pointer-events-none absolute inset-y-0 left-0 rounded-tl-lg"
                     :style="{ width: `${playheadPercent}%` }"
                 />
                 <div
@@ -181,7 +181,7 @@ function onLanePointerMove(e: PointerEvent) {
                     class="border-border-1 absolute top-0 h-full border-l pl-1"
                     :style="{ left: `${tick.left}%` }"
                 >
-                    <span class="text-body-3 text-text-hint tabular-nums">
+                    <span class="text-body-3 text-text-muted tabular-nums">
                         {{ tick.label }}
                     </span>
                 </div>
