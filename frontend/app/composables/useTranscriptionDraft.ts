@@ -1,5 +1,5 @@
 import type { DraftStorage } from "~/utils/transcriptionDraft";
-import { readDraft, writeDraft } from "~/utils/transcriptionDraft";
+import { pruneDrafts, readDraft, storeDraft } from "~/utils/transcriptionDraft";
 import type { Segment } from "~/utils/transcription";
 import { countDeleted, toTranscription, withUids } from "~/utils/transcription";
 
@@ -75,11 +75,18 @@ export function useTranscriptionDraft(
         if (!storage || segments.value.length === 0) return;
 
         const now = new Date();
-        const result = writeDraft(storage, vxid, {
+        const result = storeDraft(storage, vxid, {
             segments: segments.value,
             submittedAt: submittedAt.value?.toISOString(),
             savedAt: now.toISOString(),
         });
+
+        if (result.evicted.length > 0) {
+            console.info(
+                "Made room for this transcription by dropping submitted drafts",
+                result.evicted,
+            );
+        }
 
         if (result.ok) {
             saveState.value = "saved";
@@ -131,6 +138,11 @@ export function useTranscriptionDraft(
 
     const load = async (): Promise<void> => {
         const storage = getStorage();
+        // Opening the editor is the one moment where clearing out finished work
+        // costs nothing, and it is what keeps the quota from filling up in the
+        // first place. The asset being opened is exempt.
+        if (storage) pruneDrafts(storage, { keep: vxid });
+
         const draft = storage ? readDraft(storage, vxid) : null;
 
         if (!draft) {

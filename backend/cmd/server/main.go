@@ -148,12 +148,12 @@ func main() {
 	if editorialDBPath == "" {
 		editorialDBPath = filepath.Join(os.Getenv("CONFIG_ROOT"), "editorial.db")
 	}
-	editorialStore, err := editorial.Open(editorialDBPath)
+	editorialDB, err := editorial.Open(editorialDBPath)
 	if err != nil {
 		panic(err)
 	}
-	defer editorialStore.Close()
-	editorialAPI := NewEditorialAPI(editorialStore, vidispineClient, cantemoClient, playoutClient)
+	defer editorialDB.Close()
+	editorialAPI := NewEditorialAPI(editorialDB, vidispineClient, cantemoClient, playoutClient)
 
 	api := &ApiServer{
 		PermissionsAPI:   permissionsApi,
