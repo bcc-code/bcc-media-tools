@@ -1,11 +1,18 @@
 # Shorts Tool — Bugs & Improvements
 
-> Status: **§1 bugs done** (B1–B5, B7) · **[I1](#i1) transcript done** ·
-> **[I3](#i3) crop guide done** · Owner: TBD
+> **Done:** §1 bugs (B1–B5, B7) · [I1](#i1) transcript · [I3](#i3) crop guide
+>
+> **Next:** [I4](#i4) workflow ids + status, then [I2](#i2) multi-cut
+>
+> **Owner:** TBD
 >
 > Notes from a review of the shorts generation tool (`/shorts/generate`) on
-> 2026-10-02. Bug fixes and the transcript panel landed 2026-10-05; [I2](#i2)
-> and everything in §3 are still open.
+> 2026-10-02. Everything marked done landed on 2026-10-05 and is committed
+> (`795bf5f`, `3b3aa9e`, plus the crop guide). Nothing done here has been used
+> in a real editing session yet — see [Still to confirm](#confirm).
+>
+> [B6](#b6) is the one open item that affects **already-generated** shorts
+> rather than future work, and it costs ten minutes to settle.
 
 **Scope — this is a clip-selection tool, not an editor.** The user's whole job is
 to find the good 30 seconds in a 20-minute talk, mark in/out, and submit. The
@@ -104,6 +111,8 @@ errors, pre-dating this round of work. Fixed with an explicit
 ## 2. The three improvements worth doing
 
 Discussed and prioritised 2026-10-02. Everything in §3 is secondary to these.
+[I1](#i1) and [I3](#i3) are done; [I2](#i2) is the one still open, and it wants
+[I4](#i4) to land first.
 
 ### <a id="i1"></a>I1 — Use the transcript to find the clip · ✅ done
 
@@ -237,7 +246,7 @@ Split accordingly:
 
 ## 3. Smaller improvements
 
-### I4 — Submit is fire-and-forget
+### <a id="i4"></a>I4 — Submit is fire-and-forget
 
 `SubmitShort` returns `Void` and discards the Temporal handle. The user gets a
 toast and then has no idea whether the short succeeded, failed, or is still
@@ -245,7 +254,7 @@ rendering ten minutes later. `StartExport` already returns `workflow_ids`
 (`api.proto:301-303`) — do the same, then add a "My shorts" list on `/shorts`
 polling status. Prerequisite for the status chips in [I2](#i2).
 
-### I5 — Orientation and sharing
+### <a id="i5"></a>I5 — Orientation and sharing
 
 - **No asset title anywhere on the page.** You see a video and a VX-ID in the
   URL. `ResolveAssets` already returns titles.
@@ -256,7 +265,7 @@ polling status. Prerequisite for the status chips in [I2](#i2).
 - **`/shorts` only accepts a VX-ID.** Accept a pasted Mediabanken URL and show
   recent assets.
 
-### I6 — Keyboard and timeline controls
+### <a id="i6"></a>I6 — Keyboard and timeline controls
 
 - Arrow keys step 1 s and nothing else. Add shift+arrow for 10 s, `,`/`.` for
   frame steps, and `J/K/L` — standard for anyone coming from a real NLE.
@@ -266,21 +275,21 @@ polling status. Prerequisite for the status chips in [I2](#i2).
 - Zoom slider is unlabelled and sits far from the timeline. Ctrl/Cmd+scroll to
   zoom at the cursor plus a "Fit" button is what people reach for.
 
-### I7 — Show scene cuts on the timeline
+### <a id="i7"></a>I7 — Show scene cuts on the timeline
 
 The workflow already runs `FFmpegGetSceneChanges` (`generate_short.go:125`) —
 but only _after_ submission. Exposing those as timeline markers with snap-to-cut
 for in/out would stop people cutting mid-shot, using data we already compute.
 Needs an endpoint that can produce them pre-submit.
 
-### I8 — Audio and subtitles are hardcoded
+### <a id="i8"></a>I8 — Audio and subtitles are hardcoded
 
 The workflow takes Norwegian audio only (`generate_short.go:189-192`) and subtitle
 burn-in is commented out (`:200`). A source without a `nor` audio file
 silently produces a short with no audio. At minimum warn when `nor` is missing;
 better, offer the choice the way the export tool does.
 
-### I9 — i18n gaps
+### <a id="i9"></a>I9 — i18n gaps
 
 - `useTools.ts:46-52` hardcodes English `"Shorts generation"` /
   `"Generate shorts from existing videos"` while every other tool uses `t()`.
@@ -299,27 +308,60 @@ better, offer the choice the way the export tool does.
 | **4 — multi-cut**     | [I2](#i2)                                   | Most UI surface; benefits from I4 having landed.                      |
 | **5 — polish**        | [I5](#i5)–[I9](#i9), [B6](#b6) if confirmed |                                                                       |
 
-## 5. Open questions
+## <a id="confirm"></a>5. Still to confirm in use
 
-- Should >60 s **block** submission or stay a warning? ([B1](#b1))
-- Is widening transcript access to shorts users acceptable? ([I1](#i1))
-- Is the scene-change frame dropping in `CropShortActivity` intentional?
-  ([B6](#b6)) → check a generated short for drift.
+Everything in §2 was verified by tests, typecheck and build, but **none of it
+has been through a real editing session**. These are the parts most likely to
+need adjusting once someone actually cuts a short with them:
+
+| Thing                   | Why it may be wrong                                                                                                                                     |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Follow-along pause      | Playback scrolling stands down for 3 s after a wheel or pointer gesture. The number is a guess; nobody has watched it run during a real read-through.   |
+| Scroll-to-selection     | Recenters on the moved edge with `block: "center"`. For a short clip already on screen it may jump when it should sit still — `"nearest"` would not.    |
+| Pre-roll / tail         | 0.2 s and 0.15 s around a word selection. Tuned by reasoning about where Whisper puts boundaries, not by listening to the result.                       |
+| Highlight strength      | `30%` light / `50%` dark, after one round of feedback. Fine on the two assets seen so far.                                                              |
+| Crop guide accuracy     | Exact only when the shorts service returns no keyframes. Nobody has compared the guide against a generated short's real framing.                        |
+| Long transcripts        | No virtualisation. ~450 segments for a 38-minute talk is fine; a two-hour recording is ~11k word spans and may scroll badly. Depends on typical length. |
+| Copying transcript text | The word-drag gesture calls `preventDefault`, so the text cannot be selected for copying. Deliberate, but untested against how people actually work.    |
+
+## 6. Open questions
+
+- ~~Should >60 s **block** submission or stay a warning?~~ **Answered
+  (2026-10-05): stays a warning.** It is editorial advice, not a constraint the
+  pipeline enforces, so [B1](#b1) blocks only on `in >= out`.
+- **Taken, not ratified:** transcript access was widened to shorts users
+  ([I1](#i1)), on the grounds that the transcript is derived from audio the same
+  permission already streams. Still worth a conscious yes/no from whoever owns
+  the permission model — reversing it is a one-line change to the gate in
+  `GetShortsTranscript`.
+- **Open, and worth 10 minutes:** is the scene-change frame dropping in
+  `CropShortActivity` intentional? ([B6](#b6)) It drops ~0.02 s of video per
+  scene change without dropping audio, so if it is a bug every short generated
+  so far drifts. → play a generated short with many cuts to the end and listen
+  for sync.
 - Should `ModelSize` / `DebugMode` (hardcoded `"n"` / `false` in `shorts.go:66`)
   be exposed as advanced options, or stay fixed?
 - Does subtitle burn-in want to come back? It is commented out upstream, and
   shorts normally need burned subs. ([I8](#i8))
 
-## 6. Files involved
+## 7. Files involved
 
 ```
 frontend/app/pages/shorts/generate.vue                        player, in/out state, submit
 frontend/app/pages/shorts/index.vue                           VX-ID entry point
 frontend/app/components/shorts/ShortsTimelineScrubber.vue     filmstrip, selection, ruler, playhead
+frontend/app/components/shorts/ShortsTranscriptPanel.vue      transcript rail, word drag, search, follow
+frontend/app/components/shorts/ShortsCropGuide.vue            9:16 overlay
+frontend/app/utils/shortsTranscript.ts                        flatten, selection -> range, highlight
+frontend/app/utils/shortsCrop.ts                              crop geometry
+frontend/test/shortsTranscript.spec.ts                        29 cases
+frontend/test/shortsCrop.spec.ts                              7 cases
 frontend/app/composables/useVideoKeyboardControls.ts          space / arrows / I / O
 frontend/app/composables/useTools.ts                          tool list entry (hardcoded strings)
 frontend/app/pages/vault/[id].vue                             "Create short" entry point
-backend/cmd/server/shorts.go                                  GetShortsPreview, SubmitShort
+backend/cmd/server/shorts.go                                  GetShortsPreview, SubmitShort, GetShortsTranscript
+backend/cmd/server/shorts_test.go                             range validation
+backend/cmd/server/transcription.go                           mapTranscriptionToAPI (shared with shorts)
 backend/cmd/server/vault_proxy.go                             /vault/thumbnail (filmstrip frames)
 api/v1/api.proto                                              SubmitShortRequest, Preview, ShortsPermission
 ```
