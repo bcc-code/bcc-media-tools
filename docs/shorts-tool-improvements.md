@@ -206,10 +206,17 @@ Model: promote the single selection to a **list of clips**.
   submits, and their last clip is missing because they never pressed Add.
 - The page keeps working through `activeStart` / `activeEnd` writable computeds,
   so the timeline, transcript and crop guide did not have to learn about lists.
-- `ShortsClipList.vue` above the timeline: index, in–out, length, a warning tint
-  past a minute, an overlap hint, and remove. `ShortsTimelineScrubber` draws
-  every clip — inactive ones as bands above the dimming, the active one keeping
-  its handles — and clicking a band activates it.
+- `ShortsClipList.vue` is a bordered panel in the right rail under the
+  transcript: a vertical row per clip with its number, label, in–out, length, a
+  warning tint past a minute, an overlap hint, and remove. It started as a strip
+  of chips above the timeline and moved after a round of feedback — see the
+  [UI pass](#ui). `ShortsTimelineScrubber` draws every clip — inactive ones as
+  bands above the dimming, the active one keeping its handles — and clicking a
+  band activates it.
+- **Clips are listed in creation order, not time order.** Sorting by start time
+  renumbers the list whenever a clip is trimmed earlier, so the row the user was
+  looking at changes number under their hands. The number says which clip it is;
+  the timecode says where it sits.
 - `A` adds a 30 s clip at the playhead. On first load the list seeds with one
   clip spanning the whole asset, which is how the editor behaved before.
 - `SubmitShorts` RPC takes `repeated ShortClip` and returns a per-clip
@@ -220,11 +227,18 @@ Model: promote the single selection to a **list of clips**.
   localStorage read: clips come back from storage in whatever shape an older
   build or a hand edit left, and a bad entry must not take the editor down.
 
-**Not built — blocked upstream:** per-clip naming. `GenerateShortDataParams`
-(`generate_short.go:28`) has no `Name` field, so a name entered here would have
-nowhere to go; the output stays `<title>_short_<timestamp>`. The list uses index
-and timecode instead, which is unambiguous but does not help find the result in
-Mediabanken. Needs a `bcc-media-flows` change first.
+**Labels come from the transcript, not from the user.** Each row shows the
+opening words spoken inside the clip (`labelForRange`), which identifies it
+better than anything someone would be willing to type and costs them nothing. It
+reads from where the _range_ starts rather than the segment, so a clip beginning
+mid-sentence still labels from the right word, and falls back to a muted "no
+transcript" line.
+
+**Still blocked upstream:** the label is local to the editor. The _output_ name
+stays `<title>_short_<timestamp>` because `GenerateShortDataParams`
+(`generate_short.go:28`) has no `Name` field, so five shorts from one talk are
+still indistinguishable in Mediabanken. Needs a `bcc-media-flows` change first;
+the label is already there to send once there is somewhere to send it.
 
 **Still to do:** the clip list is the right home for render status, which is
 [I4](#i4) — the returned workflow ids are already there to poll.
@@ -269,6 +283,47 @@ Split accordingly:
   step. The keyframes are already returned in `GenerateShortResult`
   (`generate_short.go:222`), so a review view could replay the tracked crop over
   the source.
+
+## <a id="ui"></a>2b. UI pass after going full-width (2026-10-05)
+
+The page was widened to fill the window, which broke several things that had
+been fine inside `max-w-7xl` and exposed assumptions that did not survive a
+96-minute asset.
+
+**Layout is a viewport-height shell.** `lg:h-[calc(100dvh-var(--header-height))]`
+with the media row as the only flexing child, so the timeline can never be pushed
+below the fold however wide the window gets. The `--header-height` variable is
+published by `layouts/default.vue` precisely for this and is already used by the
+transcription pages — `h-dvh` alone is one header too tall. Below `lg` the page
+scrolls normally, since a stacked layout has no height to redistribute.
+
+**The clip actions moved under the video.** The readout and the buttons that
+change it were at opposite ends of a 2000 px row, with the buttons sitting under
+the transcript they have nothing to do with. They now live in the video column
+directly under the player, with the 9:16 guide separated off as a view toggle
+rather than a clip action.
+
+**Activating a clip seeks to it.** `activate` only set `activeId`, so picking a
+clip at 27:52 while the playhead sat at 80:00 left both the player and the
+timeline where they were and the chosen clip off-screen.
+
+**Inactive clip bands have a floor width** (`MIN_BAND_PX`). A 35 s clip on a
+96-minute asset is ~12 px zoomed out and sub-pixel beyond that, so clips were
+invisible on the timeline. The _active_ band keeps its true width deliberately:
+widening it would put its edges out of step with the dimming, which is what shows
+where the clip really starts and ends.
+
+**Timestamps are hour-aware.** `formatClock` takes the asset length and uses
+`h:mm:ss` for every value from an asset over an hour, so the transcript, the clip
+rows and the timeline ruler agree. Lengths pass no total and stay `m:ss`, so a
+35 s clip reads `0:35` and not `0:00:35`.
+
+> A correction worth keeping: the original `formatClock` deliberately did _not_
+> wrap minutes into hours, on the reasoning that assets over an hour would be
+> rare. They are not — ordinary conference recordings here run past 90 minutes.
+> The result was the transcript reading `80:15` while the readout for the same
+> moment read `01:20:19.110`. Assumptions about typical asset length should be
+> checked against VAULT rather than guessed.
 
 ## 3. Smaller improvements
 
@@ -340,15 +395,15 @@ Everything in §2 was verified by tests, typecheck and build, but **none of it
 has been through a real editing session**. These are the parts most likely to
 need adjusting once someone actually cuts a short with them:
 
-| Thing                   | Why it may be wrong                                                                                                                                     |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Follow-along pause      | Playback scrolling stands down for 3 s after a wheel or pointer gesture. The number is a guess; nobody has watched it run during a real read-through.   |
-| Scroll-to-selection     | Recenters on the moved edge with `block: "center"`. For a short clip already on screen it may jump when it should sit still — `"nearest"` would not.    |
-| Pre-roll / tail         | 0.2 s and 0.15 s around a word selection. Tuned by reasoning about where Whisper puts boundaries, not by listening to the result.                       |
-| Highlight strength      | `30%` light / `50%` dark, after one round of feedback. Fine on the two assets seen so far.                                                              |
-| Crop guide accuracy     | Exact only when the shorts service returns no keyframes. Nobody has compared the guide against a generated short's real framing.                        |
-| Long transcripts        | No virtualisation. ~450 segments for a 38-minute talk is fine; a two-hour recording is ~11k word spans and may scroll badly. Depends on typical length. |
-| Copying transcript text | The word-drag gesture calls `preventDefault`, so the text cannot be selected for copying. Deliberate, but untested against how people actually work.    |
+| Thing                   | Why it may be wrong                                                                                                                                                    |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Follow-along pause      | Playback scrolling stands down for 3 s after a wheel or pointer gesture. The number is a guess; nobody has watched it run during a real read-through.                  |
+| Scroll-to-selection     | Scrolls the moved edge to the top (`block: "start"`, after feedback). For a clip already on screen it may still jump when it should sit still — `"nearest"` would not. |
+| Pre-roll / tail         | 0.2 s and 0.15 s around a word selection. Tuned by reasoning about where Whisper puts boundaries, not by listening to the result.                                      |
+| Highlight strength      | `30%` light / `50%` dark, after one round of feedback. Fine on the two assets seen so far.                                                                             |
+| Crop guide accuracy     | Exact only when the shorts service returns no keyframes. Nobody has compared the guide against a generated short's real framing.                                       |
+| Long transcripts        | No virtualisation. ~450 segments for a 38-minute talk is fine; a two-hour recording is ~11k word spans and may scroll badly. Depends on typical length.                |
+| Copying transcript text | The word-drag gesture calls `preventDefault`, so the text cannot be selected for copying. Deliberate, but untested against how people actually work.                   |
 
 ## 6. Open questions
 
@@ -378,9 +433,14 @@ frontend/app/pages/shorts/index.vue                           VX-ID entry point
 frontend/app/components/shorts/ShortsTimelineScrubber.vue     filmstrip, selection, ruler, playhead
 frontend/app/components/shorts/ShortsTranscriptPanel.vue      transcript rail, word drag, search, follow
 frontend/app/components/shorts/ShortsCropGuide.vue            9:16 overlay
-frontend/app/utils/shortsTranscript.ts                        flatten, selection -> range, highlight
+frontend/app/components/shorts/ShortsClipList.vue             clip rail panel
+frontend/app/composables/useShortsClips.ts                    clip list state, active clip, localStorage
+frontend/app/utils/shortsClips.ts                             clip ranges, overlap, sanitising, formatClock
+frontend/test/shortsClips.spec.ts                             28 cases
+frontend/test/locales.spec.ts                                 en/nb key parity, plural forms
+frontend/app/utils/shortsTranscript.ts                        flatten, selection -> range, highlight, clip labels
 frontend/app/utils/shortsCrop.ts                              crop geometry
-frontend/test/shortsTranscript.spec.ts                        29 cases
+frontend/test/shortsTranscript.spec.ts                        36 cases
 frontend/test/shortsCrop.spec.ts                              7 cases
 frontend/app/composables/useVideoKeyboardControls.ts          space / arrows / I / O
 frontend/app/composables/useTools.ts                          tool list entry (hardcoded strings)
