@@ -1,10 +1,11 @@
 # Shorts Tool — Bugs & Improvements
 
-> Status: **§1 bugs done** (B1–B5, B7) · **[I1](#i1) transcript done** · Owner: TBD
+> Status: **§1 bugs done** (B1–B5, B7) · **[I1](#i1) transcript done** ·
+> **[I3](#i3) crop guide done** · Owner: TBD
 >
 > Notes from a review of the shorts generation tool (`/shorts/generate`) on
 > 2026-10-02. Bug fixes and the transcript panel landed 2026-10-05; [I2](#i2)
-> and [I3](#i3) and everything in §3 are still open.
+> and everything in §3 are still open.
 
 **Scope — this is a clip-selection tool, not an editor.** The user's whole job is
 to find the good 30 seconds in a 20-minute talk, mark in/out, and submit. The
@@ -193,7 +194,7 @@ becomes one response instead of N.
 Also: persist the clip list in `useLocalStorage` keyed by VX-ID. Losing one
 selection to a reload is annoying; losing five cuts is a setback.
 
-### <a id="i3"></a>I3 — Preview the actual 9:16 crop
+### <a id="i3"></a>I3 — Preview the actual 9:16 crop · ✅ static guide done
 
 Users only ever see the 16:9 source, but the output is a vertical crop driven by
 AI keyframe tracking. "Preview short" currently previews something that is not
@@ -219,7 +220,16 @@ to be in frame?") with no backend work at all.
 
 Split accordingly:
 
-- **Now:** static centre-crop guide overlay. An afternoon.
+- **Built:** a toggled centre-crop overlay (`ShortsCropGuide.vue`, geometry in
+  `app/utils/shortsCrop.ts`, 7 tests). It derives the column from the source's
+  real dimensions rather than assuming 16:9, since the crop is defined against
+  the frame _height_, and measures against the letterboxed picture rather than
+  the video element, so a 4:3 or scope source lands in the right place. A source
+  already at or narrower than 9:16 is kept whole. The toggle persists in
+  `localStorage`, default off.
+- The button's tooltip says the guide is approximate, because it is: it matches
+  the output exactly only when the shorts service returns no keyframes. Worth
+  keeping that wording honest if the overlay is ever made more prominent.
 - **Later:** seeing the real tracked crop becomes a _post-generation review_
   step. The keyframes are already returned in `GenerateShortResult`
   (`generate_short.go:222`), so a review view could replay the tracked crop over
@@ -284,7 +294,7 @@ better, offer the choice the way the export tool does.
 | --------------------- | ------------------------------------------- | --------------------------------------------------------------------- |
 | **0 — bugs** ✅       | [B1](#b1)–[B5](#b5), [B7](#b7)              | Small, self-contained, and B1/B3 are the ones users actually hit.     |
 | **1 — transcript** ✅ | [I1](#i1)                                   | Biggest change to how the tool is used; the permission work is small. |
-| **2 — crop guide**    | [I3](#i3) (static overlay only)             | An afternoon, and it stops the output being a surprise.               |
+| **2 — crop guide** ✅ | [I3](#i3) (static overlay only)             | An afternoon, and it stops the output being a surprise.               |
 | **3 — status**        | [I4](#i4)                                   | Prerequisite for the clip-list status chips.                          |
 | **4 — multi-cut**     | [I2](#i2)                                   | Most UI surface; benefits from I4 having landed.                      |
 | **5 — polish**        | [I5](#i5)–[I9](#i9), [B6](#b6) if confirmed |                                                                       |

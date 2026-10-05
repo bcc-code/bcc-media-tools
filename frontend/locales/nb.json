@@ -103,7 +103,9 @@
             "transcriptSearch": "Søk i transkripsjonen",
             "transcriptHint": "Dra over teksten for å sette klippet, eller klikk på et ord for å hoppe dit.",
             "noTranscript": "Dette elementet har ingen transkripsjon, så klippet må finnes på tidslinjen.",
-            "transcriptFailed": "Transkripsjonen kunne ikke lastes. Klippet kan fortsatt finnes på tidslinjen."
+            "transcriptFailed": "Transkripsjonen kunne ikke lastes. Klippet kan fortsatt finnes på tidslinjen.",
+            "cropGuide": "9:16-guide",
+            "cropGuideHint": "Viser omtrent hva den vertikale shortsen beholder. Omtrentlig: den genererte shortsen følger den som snakker, så det faktiske utsnittet kan bevege seg sideveis."
         }
     },
     "export": {

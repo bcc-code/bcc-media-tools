@@ -103,7 +103,9 @@
             "transcriptSearch": "Search the transcript",
             "transcriptHint": "Drag across the text to set the clip, or click a word to jump there.",
             "noTranscript": "This asset has no transcript, so the clip has to be found on the timeline.",
-            "transcriptFailed": "The transcript could not be loaded. The clip can still be found on the timeline."
+            "transcriptFailed": "The transcript could not be loaded. The clip can still be found on the timeline.",
+            "cropGuide": "9:16 guide",
+            "cropGuideHint": "Shows roughly what the vertical short keeps. Approximate: the generated short tracks the speaker, so the real crop may pan sideways."
         }
     },
     "export": {

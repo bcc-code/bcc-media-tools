@@ -52,7 +52,13 @@ const videoElement = useTemplateRef("videoElement");
 // tallest child, so without an explicit bound the transcript sets the row height
 // and grows the page instead of scrolling — pushing the timeline below the fold.
 // Bounding it to the measured video height keeps both columns the same height.
-const { height: videoHeight } = useElementSize(videoElement);
+const { width: videoBoxWidth, height: videoHeight } =
+    useElementSize(videoElement);
+
+// The 9:16 guide is derived from the source's real dimensions rather than an
+// assumed 16:9, since the crop is defined in terms of the frame height.
+const videoSize = ref({ width: 0, height: 0 });
+const showCropGuide = useLocalStorage("shortsCropGuide", false);
 
 const duration = ref<number | undefined>(0);
 const startTime = ref<number | undefined>(0);
@@ -76,9 +82,13 @@ useEventListener(
     videoElement,
     "loadeddata",
     () => {
-        duration.value = videoElement.value?.duration;
+        const el = videoElement.value;
+        duration.value = el?.duration;
         startTime.value = 0;
         endTime.value = duration.value;
+        if (el?.videoWidth && el?.videoHeight) {
+            videoSize.value = { width: el.videoWidth, height: el.videoHeight };
+        }
     },
     { once: true },
 );
@@ -281,12 +291,21 @@ useVideoKeyboardControls({
                     '--video-h': videoHeight ? `${videoHeight}px` : '60vh',
                 }"
             >
-                <video
-                    ref="videoElement"
-                    :src="videoUrl"
-                    controls
-                    class="bg-surface-default aspect-video w-full shadow-xl"
-                />
+                <div class="relative self-start">
+                    <video
+                        ref="videoElement"
+                        :src="videoUrl"
+                        controls
+                        class="bg-surface-default aspect-video w-full shadow-xl"
+                    />
+                    <ShortsCropGuide
+                        v-if="showCropGuide"
+                        :element-width="videoBoxWidth"
+                        :element-height="videoHeight"
+                        :video-width="videoSize.width"
+                        :video-height="videoSize.height"
+                    />
+                </div>
 
                 <ShortsTranscriptPanel
                     v-if="transcriptSegments?.length"
@@ -372,6 +391,15 @@ useVideoKeyboardControls({
                 >
                     {{ $t("shorts.generation.previewShort") }}
                 </DesignButton>
+                <DesignTooltip :content="$t('shorts.generation.cropGuideHint')">
+                    <DesignButton
+                        class="border-border-1 border"
+                        :variant="showCropGuide ? 'primary' : 'secondary'"
+                        @click="showCropGuide = !showCropGuide"
+                    >
+                        {{ $t("shorts.generation.cropGuide") }}
+                    </DesignButton>
+                </DesignTooltip>
             </div>
             <ShortsTimelineScrubber
                 v-if="
