@@ -221,6 +221,12 @@ async function submit() {
     }
 }
 
+function activateClip(id: string) {
+    activate(id);
+    const clip = clips.value.find((c) => c.id === id);
+    if (clip) onSeek(clip.start);
+}
+
 function addClip() {
     const clip = addClipAt(currentTime.value);
     if (clip) onSeek(clip.start);
@@ -355,22 +361,92 @@ useVideoKeyboardControls({
             <div
                 class="grid gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]"
             >
-                <div
-                    class="relative self-start lg:h-full lg:min-h-0 lg:self-stretch"
-                >
-                    <video
-                        ref="videoElement"
-                        :src="videoUrl"
-                        controls
-                        class="bg-surface-default aspect-video w-full shadow-xl lg:aspect-auto lg:h-full lg:object-contain"
-                    />
-                    <ShortsCropGuide
-                        v-if="showCropGuide"
-                        :element-width="videoBoxWidth"
-                        :element-height="videoHeight"
-                        :video-width="videoSize.width"
-                        :video-height="videoSize.height"
-                    />
+                <div class="flex flex-col gap-3 lg:min-h-0">
+                    <div class="relative lg:min-h-0 lg:flex-1">
+                        <video
+                            ref="videoElement"
+                            :src="videoUrl"
+                            controls
+                            class="bg-surface-default aspect-video w-full shadow-xl lg:aspect-auto lg:h-full lg:object-contain"
+                        />
+                        <ShortsCropGuide
+                            v-if="showCropGuide"
+                            :element-width="videoBoxWidth"
+                            :element-height="videoHeight"
+                            :video-width="videoSize.width"
+                            :video-height="videoSize.height"
+                        />
+                    </div>
+                    <div class="flex shrink-0 flex-wrap items-center gap-2">
+                        <div class="tabular-nums">
+                            <p
+                                :class="[
+                                    'font-bold',
+                                    {
+                                        'text-red-600 dark:text-red-300':
+                                            shortDuration > 60,
+                                    },
+                                ]"
+                            >
+                                {{ formattedDuration(shortDuration) }}
+                                <span
+                                    v-if="shortDuration > 60"
+                                    class="ml-1 inline-block origin-left font-normal opacity-50"
+                                >
+                                    {{
+                                        $t("shorts.generation.durationWarning")
+                                    }}
+                                </span>
+                            </p>
+                            <p
+                                v-if="
+                                    startTime != undefined &&
+                                    endTime != undefined
+                                "
+                                class="text-text-hint text-sm"
+                            >
+                                {{ formatTime(startTime) }} -
+                                {{ formatTime(endTime) }}
+                            </p>
+                        </div>
+                        <DesignButton
+                            class="border-border-1 ml-auto border"
+                            variant="secondary"
+                            @click="setStartPoint"
+                        >
+                            {{ $t("shorts.generation.setStartPoint") }}
+                            <span class="text-text-hint ml-1 text-xs">I</span>
+                        </DesignButton>
+                        <DesignButton
+                            class="border-border-1 border"
+                            variant="secondary"
+                            @click="setEndPoint"
+                        >
+                            {{ $t("shorts.generation.setEndPoint") }}
+                            <span class="text-text-hint ml-1 text-xs">O</span>
+                        </DesignButton>
+                        <DesignButton
+                            class="border-border-1 border"
+                            variant="secondary"
+                            @click="previewShort"
+                        >
+                            {{ $t("shorts.generation.previewShort") }}
+                        </DesignButton>
+                        <div class="bg-border-1 mx-1 h-6 w-px" />
+                        <DesignTooltip
+                            :content="$t('shorts.generation.cropGuideHint')"
+                        >
+                            <DesignButton
+                                class="border-border-1 border"
+                                :variant="
+                                    showCropGuide ? 'primary' : 'secondary'
+                                "
+                                @click="showCropGuide = !showCropGuide"
+                            >
+                                {{ $t("shorts.generation.cropGuide") }}
+                            </DesignButton>
+                        </DesignTooltip>
+                    </div>
                 </div>
 
                 <ShortsTranscriptPanel
@@ -408,71 +484,13 @@ useVideoKeyboardControls({
                     {{ $t("shorts.generation.noTranscript") }}
                 </DesignBanner>
             </div>
-            <div class="flex shrink-0 items-center gap-2">
-                <div class="tabular-nums">
-                    <p
-                        :class="[
-                            'font-bold',
-                            {
-                                'text-red-600 dark:text-red-300':
-                                    shortDuration > 60,
-                            },
-                        ]"
-                    >
-                        {{ formattedDuration(shortDuration) }}
-                        <span
-                            v-if="shortDuration > 60"
-                            class="ml-1 inline-block origin-left font-normal opacity-50"
-                        >
-                            {{ $t("shorts.generation.durationWarning") }}
-                        </span>
-                    </p>
-                    <p
-                        v-if="startTime != undefined && endTime != undefined"
-                        class="text-text-hint text-sm"
-                    >
-                        {{ formatTime(startTime) }} - {{ formatTime(endTime) }}
-                    </p>
-                </div>
-                <DesignButton
-                    class="border-border-1 ml-auto border"
-                    variant="secondary"
-                    @click="setStartPoint"
-                >
-                    {{ $t("shorts.generation.setStartPoint") }}
-                    <span class="text-text-hint ml-1 text-xs">I</span>
-                </DesignButton>
-                <DesignButton
-                    class="border-border-1 border"
-                    variant="secondary"
-                    @click="setEndPoint"
-                >
-                    {{ $t("shorts.generation.setEndPoint") }}
-                    <span class="text-text-hint ml-1 text-xs">O</span>
-                </DesignButton>
-                <DesignButton
-                    class="border-border-1 border"
-                    variant="secondary"
-                    @click="previewShort"
-                >
-                    {{ $t("shorts.generation.previewShort") }}
-                </DesignButton>
-                <DesignTooltip :content="$t('shorts.generation.cropGuideHint')">
-                    <DesignButton
-                        class="border-border-1 border"
-                        :variant="showCropGuide ? 'primary' : 'secondary'"
-                        @click="showCropGuide = !showCropGuide"
-                    >
-                        {{ $t("shorts.generation.cropGuide") }}
-                    </DesignButton>
-                </DesignTooltip>
-            </div>
             <ShortsClipList
                 class="shrink-0"
+                :duration="duration ?? 0"
                 :clips="clips"
                 :active-id="activeId"
                 :overlapping="overlapping"
-                @activate="activate"
+                @activate="activateClip"
                 @remove="removeClip"
                 @add="addClip"
             />
@@ -496,7 +514,7 @@ useVideoKeyboardControls({
                 v-model:start="startTime"
                 v-model:end="endTime"
                 @seek="onSeek"
-                @activate="activate"
+                @activate="activateClip"
             />
             <DesignSlider
                 class="shrink-0"

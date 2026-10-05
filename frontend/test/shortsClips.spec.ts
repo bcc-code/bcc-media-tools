@@ -171,17 +171,36 @@ describe("clipLength and isValidClip", () => {
 });
 
 describe("formatClock", () => {
-    it("formats as m:ss", () => {
+    it("formats a short value as m:ss", () => {
         expect(formatClock(0)).toBe("0:00");
         expect(formatClock(9)).toBe("0:09");
         expect(formatClock(75)).toBe("1:15");
     });
 
-    it("does not wrap minutes into hours", () => {
-        expect(formatClock(4512)).toBe("75:12");
+    it("uses h:mm:ss for every value from an asset over an hour", () => {
+        const ninetySixMinutes = 5760;
+
+        expect(formatClock(4819, ninetySixMinutes)).toBe("1:20:19");
+        // Same asset, early on: still h:mm:ss, so the page does not mix shapes.
+        expect(formatClock(75, ninetySixMinutes)).toBe("0:01:15");
+    });
+
+    it("keeps m:ss for an asset under an hour", () => {
+        expect(formatClock(2312, 3000)).toBe("38:32");
+    });
+
+    it("falls back to the value itself when no asset length is given", () => {
+        expect(formatClock(4512)).toBe("1:15:12");
+        expect(formatClock(2312)).toBe("38:32");
+    });
+
+    it("formats a clip length as m:ss regardless of a long asset", () => {
+        // Lengths are passed without a total, so a 35 s clip stays 0:35.
+        expect(formatClock(35)).toBe("0:35");
     });
 
     it("treats negatives as zero", () => {
         expect(formatClock(-5)).toBe("0:00");
+        expect(formatClock(-5, 5760)).toBe("0:00:00");
     });
 });

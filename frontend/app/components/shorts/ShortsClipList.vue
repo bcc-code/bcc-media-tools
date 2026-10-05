@@ -5,6 +5,8 @@ const props = defineProps<{
     clips: Clip[];
     activeId?: string;
     overlapping: Set<string>;
+    /** Length of the asset, so timestamps match the rest of the page. */
+    duration: number;
 }>();
 
 const emit = defineEmits<{
@@ -41,7 +43,9 @@ const longClips = computed(
             >
                 <span class="font-semibold tabular-nums">{{ index + 1 }}</span>
                 <span class="tabular-nums">
-                    {{ formatClock(clip.start) }}–{{ formatClock(clip.end) }}
+                    {{ formatClock(clip.start, duration) }}–{{
+                        formatClock(clip.end, duration)
+                    }}
                 </span>
                 <span
                     :class="[

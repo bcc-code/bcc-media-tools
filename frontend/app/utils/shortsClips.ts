@@ -98,12 +98,21 @@ export function sanitiseClips(value: unknown, duration?: number): Clip[] {
     return clips;
 }
 
+const pad = (n: number) => String(n).padStart(2, "0");
+
 /**
- * `m:ss`, matching the timeline ruler. Minutes are not wrapped into hours, so a
- * point 75 minutes into a recording reads as 75:12 — long enough to be rare,
- * and unambiguous when it happens.
+ * A position or a length, as `m:ss` or `h:mm:ss`.
+ *
+ * `total` is the length of the asset the value belongs to, and decides the shape
+ * for *every* value from that asset: reading `80:15` in one place and
+ * `01:20:19` in another for the same moment is worse than either on its own.
+ * Omit it for a duration, which stays `m:ss` until it passes an hour itself.
  */
-export function formatClock(seconds: number): string {
-    const total = Math.max(0, Math.round(seconds));
-    return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
+export function formatClock(seconds: number, total = 0): string {
+    const value = Math.max(0, Math.round(seconds));
+    const minutes = Math.floor(value / 60);
+    const secs = value % 60;
+
+    if (Math.max(total, value) < 3600) return `${minutes}:${pad(secs)}`;
+    return `${Math.floor(minutes / 60)}:${pad(minutes % 60)}:${pad(secs)}`;
 }

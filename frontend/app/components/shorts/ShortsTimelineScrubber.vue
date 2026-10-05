@@ -26,9 +26,18 @@ const otherClips = computed(() =>
     props.clips.filter((clip) => clip.id !== props.activeId),
 );
 
+/*
+ * A clip on a long asset is sub-pixel when zoomed out — a 35 s clip in a
+ * 96-minute talk is about 12 px, and narrower than that once you zoom out to
+ * see the whole thing. Inactive bands are indicators, not handles, so they are
+ * given a floor width to stay findable. The active band keeps its true width,
+ * because widening it would put its edges out of step with the dimming.
+ */
+const MIN_BAND_PX = 5;
+
 const bandStyle = (clip: Clip) => ({
-    left: `${(clip.start / props.max) * 100}%`,
-    width: `${((clip.end - clip.start) / props.max) * 100}%`,
+    left: `${clip.start * props.zoom}px`,
+    width: `${Math.max((clip.end - clip.start) * props.zoom, MIN_BAND_PX)}px`,
 });
 
 // Filmstrip. Two independent concerns:
@@ -89,11 +98,7 @@ const ticks = computed(() => {
     }
     return out;
 });
-const tickLabel = (t: number) => {
-    const m = Math.floor(t / 60);
-    const s = Math.floor(t % 60);
-    return `${m}:${String(s).padStart(2, "0")}`;
-};
+const tickLabel = (t: number) => formatClock(t, props.max);
 
 const style = computed(() => {
     return {
@@ -256,7 +261,7 @@ watch([start, end], ([s, e]) => {
                     v-for="clip in otherClips"
                     :key="clip.id"
                     :class="[
-                        'absolute top-0 z-2 h-full cursor-pointer border-y-2 bg-white/10 hover:bg-white/20',
+                        'absolute top-0 z-2 h-full cursor-pointer border-2 bg-white/15 hover:bg-white/25',
                         props.overlapping?.has(clip.id)
                             ? 'border-amber-300/80'
                             : 'border-white/45',
