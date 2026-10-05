@@ -71,6 +71,11 @@ const (
 	APIServiceGetBMMTranscriptionProcedure = "/api.v1.APIService/GetBMMTranscription"
 	// APIServiceSubmitShortProcedure is the fully-qualified name of the APIService's SubmitShort RPC.
 	APIServiceSubmitShortProcedure = "/api.v1.APIService/SubmitShort"
+	// APIServiceSubmitShortsProcedure is the fully-qualified name of the APIService's SubmitShorts RPC.
+	APIServiceSubmitShortsProcedure = "/api.v1.APIService/SubmitShorts"
+	// APIServiceGetShortsTranscriptProcedure is the fully-qualified name of the APIService's
+	// GetShortsTranscript RPC.
+	APIServiceGetShortsTranscriptProcedure = "/api.v1.APIService/GetShortsTranscript"
 	// APIServiceGetExportConfigProcedure is the fully-qualified name of the APIService's
 	// GetExportConfig RPC.
 	APIServiceGetExportConfigProcedure = "/api.v1.APIService/GetExportConfig"
@@ -162,6 +167,13 @@ type APIServiceClient interface {
 	GetBMMTranscription(context.Context, *connect.Request[v1.GetBMMTranscriptionRequest]) (*connect.Response[v1.Transcription], error)
 	// Shorts
 	SubmitShort(context.Context, *connect.Request[v1.SubmitShortRequest]) (*connect.Response[v1.Void], error)
+	// Submit several clips from one asset. Partial failure is reported per clip
+	// rather than failing the whole batch.
+	SubmitShorts(context.Context, *connect.Request[v1.SubmitShortsRequest]) (*connect.Response[v1.SubmitShortsResponse], error)
+	// Read-only transcript used to pick a clip range in the shorts editor. Gated
+	// on shorts permission alone: it is derived from the audio of a video the
+	// same permission already streams via GetShortsPreview.
+	GetShortsTranscript(context.Context, *connect.Request[v1.GetTranscriptionReqest]) (*connect.Response[v1.Transcription], error)
 	// Export
 	GetExportConfig(context.Context, *connect.Request[v1.GetExportConfigRequest]) (*connect.Response[v1.GetExportConfigResponse], error)
 	StartExport(context.Context, *connect.Request[v1.StartExportRequest]) (*connect.Response[v1.StartExportResponse], error)
@@ -288,6 +300,18 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			httpClient,
 			baseURL+APIServiceSubmitShortProcedure,
 			connect.WithSchema(aPIServiceMethods.ByName("SubmitShort")),
+			connect.WithClientOptions(opts...),
+		),
+		submitShorts: connect.NewClient[v1.SubmitShortsRequest, v1.SubmitShortsResponse](
+			httpClient,
+			baseURL+APIServiceSubmitShortsProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("SubmitShorts")),
+			connect.WithClientOptions(opts...),
+		),
+		getShortsTranscript: connect.NewClient[v1.GetTranscriptionReqest, v1.Transcription](
+			httpClient,
+			baseURL+APIServiceGetShortsTranscriptProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("GetShortsTranscript")),
 			connect.WithClientOptions(opts...),
 		),
 		getExportConfig: connect.NewClient[v1.GetExportConfigRequest, v1.GetExportConfigResponse](
@@ -447,6 +471,8 @@ type aPIServiceClient struct {
 	getLanguages                      *connect.Client[v1.GetAvailableLanguagesRequest, v1.LanguageList]
 	getBMMTranscription               *connect.Client[v1.GetBMMTranscriptionRequest, v1.Transcription]
 	submitShort                       *connect.Client[v1.SubmitShortRequest, v1.Void]
+	submitShorts                      *connect.Client[v1.SubmitShortsRequest, v1.SubmitShortsResponse]
+	getShortsTranscript               *connect.Client[v1.GetTranscriptionReqest, v1.Transcription]
 	getExportConfig                   *connect.Client[v1.GetExportConfigRequest, v1.GetExportConfigResponse]
 	startExport                       *connect.Client[v1.StartExportRequest, v1.StartExportResponse]
 	exportTimedMetadata               *connect.Client[v1.ExportTimedMetadataRequest, v1.Void]
@@ -540,6 +566,16 @@ func (c *aPIServiceClient) GetBMMTranscription(ctx context.Context, req *connect
 // SubmitShort calls api.v1.APIService.SubmitShort.
 func (c *aPIServiceClient) SubmitShort(ctx context.Context, req *connect.Request[v1.SubmitShortRequest]) (*connect.Response[v1.Void], error) {
 	return c.submitShort.CallUnary(ctx, req)
+}
+
+// SubmitShorts calls api.v1.APIService.SubmitShorts.
+func (c *aPIServiceClient) SubmitShorts(ctx context.Context, req *connect.Request[v1.SubmitShortsRequest]) (*connect.Response[v1.SubmitShortsResponse], error) {
+	return c.submitShorts.CallUnary(ctx, req)
+}
+
+// GetShortsTranscript calls api.v1.APIService.GetShortsTranscript.
+func (c *aPIServiceClient) GetShortsTranscript(ctx context.Context, req *connect.Request[v1.GetTranscriptionReqest]) (*connect.Response[v1.Transcription], error) {
+	return c.getShortsTranscript.CallUnary(ctx, req)
 }
 
 // GetExportConfig calls api.v1.APIService.GetExportConfig.
@@ -680,6 +716,13 @@ type APIServiceHandler interface {
 	GetBMMTranscription(context.Context, *connect.Request[v1.GetBMMTranscriptionRequest]) (*connect.Response[v1.Transcription], error)
 	// Shorts
 	SubmitShort(context.Context, *connect.Request[v1.SubmitShortRequest]) (*connect.Response[v1.Void], error)
+	// Submit several clips from one asset. Partial failure is reported per clip
+	// rather than failing the whole batch.
+	SubmitShorts(context.Context, *connect.Request[v1.SubmitShortsRequest]) (*connect.Response[v1.SubmitShortsResponse], error)
+	// Read-only transcript used to pick a clip range in the shorts editor. Gated
+	// on shorts permission alone: it is derived from the audio of a video the
+	// same permission already streams via GetShortsPreview.
+	GetShortsTranscript(context.Context, *connect.Request[v1.GetTranscriptionReqest]) (*connect.Response[v1.Transcription], error)
 	// Export
 	GetExportConfig(context.Context, *connect.Request[v1.GetExportConfigRequest]) (*connect.Response[v1.GetExportConfigResponse], error)
 	StartExport(context.Context, *connect.Request[v1.StartExportRequest]) (*connect.Response[v1.StartExportResponse], error)
@@ -802,6 +845,18 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 		APIServiceSubmitShortProcedure,
 		svc.SubmitShort,
 		connect.WithSchema(aPIServiceMethods.ByName("SubmitShort")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aPIServiceSubmitShortsHandler := connect.NewUnaryHandler(
+		APIServiceSubmitShortsProcedure,
+		svc.SubmitShorts,
+		connect.WithSchema(aPIServiceMethods.ByName("SubmitShorts")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aPIServiceGetShortsTranscriptHandler := connect.NewUnaryHandler(
+		APIServiceGetShortsTranscriptProcedure,
+		svc.GetShortsTranscript,
+		connect.WithSchema(aPIServiceMethods.ByName("GetShortsTranscript")),
 		connect.WithHandlerOptions(opts...),
 	)
 	aPIServiceGetExportConfigHandler := connect.NewUnaryHandler(
@@ -972,6 +1027,10 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceGetBMMTranscriptionHandler.ServeHTTP(w, r)
 		case APIServiceSubmitShortProcedure:
 			aPIServiceSubmitShortHandler.ServeHTTP(w, r)
+		case APIServiceSubmitShortsProcedure:
+			aPIServiceSubmitShortsHandler.ServeHTTP(w, r)
+		case APIServiceGetShortsTranscriptProcedure:
+			aPIServiceGetShortsTranscriptHandler.ServeHTTP(w, r)
 		case APIServiceGetExportConfigProcedure:
 			aPIServiceGetExportConfigHandler.ServeHTTP(w, r)
 		case APIServiceStartExportProcedure:
@@ -1081,6 +1140,14 @@ func (UnimplementedAPIServiceHandler) GetBMMTranscription(context.Context, *conn
 
 func (UnimplementedAPIServiceHandler) SubmitShort(context.Context, *connect.Request[v1.SubmitShortRequest]) (*connect.Response[v1.Void], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.SubmitShort is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) SubmitShorts(context.Context, *connect.Request[v1.SubmitShortsRequest]) (*connect.Response[v1.SubmitShortsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.SubmitShorts is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) GetShortsTranscript(context.Context, *connect.Request[v1.GetTranscriptionReqest]) (*connect.Response[v1.Transcription], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetShortsTranscript is not implemented"))
 }
 
 func (UnimplementedAPIServiceHandler) GetExportConfig(context.Context, *connect.Request[v1.GetExportConfigRequest]) (*connect.Response[v1.GetExportConfigResponse], error) {

@@ -237,6 +237,28 @@ message SubmitShortRequest {
   double OutSeconds = 3;
 }
 
+// One clip of a multi-clip submission.
+message ShortClip {
+  double InSeconds = 1;
+  double OutSeconds = 2;
+}
+
+message SubmitShortsRequest {
+  string VXID = 1;
+  repeated ShortClip clips = 2;
+}
+
+// Per-clip outcome, in the order the clips were sent. A clip that could not be
+// started reports why without failing the clips that did start.
+message SubmitShortResult {
+  string workflow_id = 1;
+  string error = 2;
+}
+
+message SubmitShortsResponse {
+  repeated SubmitShortResult results = 1;
+}
+
 // ---- Export ----
 
 message ExportResolution {
@@ -616,6 +638,13 @@ service APIService {
 
   // Shorts
   rpc SubmitShort(SubmitShortRequest) returns (Void) {}
+  // Submit several clips from one asset. Partial failure is reported per clip
+  // rather than failing the whole batch.
+  rpc SubmitShorts(SubmitShortsRequest) returns (SubmitShortsResponse) {}
+  // Read-only transcript used to pick a clip range in the shorts editor. Gated
+  // on shorts permission alone: it is derived from the audio of a video the
+  // same permission already streams via GetShortsPreview.
+  rpc GetShortsTranscript(GetTranscriptionReqest) returns (Transcription) {}
 
   // Export
   rpc GetExportConfig(GetExportConfigRequest) returns (GetExportConfigResponse) {}

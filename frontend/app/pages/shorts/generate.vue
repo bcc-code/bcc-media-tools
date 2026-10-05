@@ -20,17 +20,61 @@ useHead({
 const api = useAPI();
 const base = useRuntimeConfig().public.grpcUrl;
 
-const { data: videoUrl, status } = useAsyncData(
+const {
+    data: videoUrl,
+    status,
+    error,
+    refresh,
+} = useAsyncData(
     () => `preview:${vxId.value}`,
     () => api.getShortsPreview({ VXID: vxId.value }),
     { transform: (data) => data.url },
 );
 
+// Assets without a preview shape are common enough that the error state offers
+// the Cantemo action which creates one, for users whose permissions include it.
+const { chips } = useCantemoActions(vxId);
+const previewChip = computed(() => chips.value.find((c) => c.id === "preview"));
+
+// Optional: the page is fully usable without it, so it loads on its own and
+// never gates rendering.
+const { data: transcriptSegments, status: transcriptStatus } = useAsyncData(
+    () => `shorts-transcript:${vxId.value}`,
+    () => api.getShortsTranscript({ VXID: vxId.value }),
+    // Flattened here rather than in the panel because the page needs the same
+    // result to decide whether there is anything worth showing.
+    { transform: (data) => flattenSegments(data.segments ?? []) },
+);
+
 const videoElement = useTemplateRef("videoElement");
 
+// The transcript sits in a grid cell next to the video. Grid rows size to their
+// tallest child, so without an explicit bound the transcript sets the row height
+// and grows the page instead of scrolling — pushing the timeline below the fold.
+// Bounding it to the measured video height keeps both columns the same height.
+const { width: videoBoxWidth, height: videoHeight } =
+    useElementSize(videoElement);
+
+// The 9:16 guide is derived from the source's real dimensions rather than an
+// assumed 16:9, since the crop is defined in terms of the frame height.
+const videoSize = ref({ width: 0, height: 0 });
+const showCropGuide = useLocalStorage("shortsCropGuide", false);
+
 const duration = ref<number | undefined>(0);
-const startTime = ref<number | undefined>(0);
-const endTime = ref<number | undefined>(0);
+
+const {
+    clips,
+    activeId,
+    activeStart: startTime,
+    activeEnd: endTime,
+    overlapping,
+    submittable,
+    activate,
+    add: addClipAt,
+    remove: removeClip,
+    clear: clearClips,
+    initialise: initialiseClips,
+} = useShortsClips(vxId, duration);
 
 const shortDuration = computed(() => {
     if (startTime.value == undefined || endTime.value == undefined) return 0;
@@ -41,9 +85,12 @@ useEventListener(
     videoElement,
     "loadeddata",
     () => {
-        duration.value = videoElement.value?.duration;
-        startTime.value = 0;
-        endTime.value = duration.value;
+        const el = videoElement.value;
+        duration.value = el?.duration;
+        initialiseClips();
+        if (el?.videoWidth && el?.videoHeight) {
+            videoSize.value = { width: el.videoWidth, height: el.videoHeight };
+        }
     },
     { once: true },
 );
@@ -102,32 +149,95 @@ onMounted(() => {
 const zoom = ref(1);
 const scrubber = useTemplateRef("scrubber");
 const { width: scrubberWidth } = useElementSize(() => scrubber.value?.$el);
+
+// Fit the whole video in the track until the user takes over the zoom —
+// otherwise every resize refits and discards the level they set.
+const zoomPinned = ref(false);
 watch([duration, scrubberWidth], ([d, s]) => {
-    if (!d || !s) return;
+    if (zoomPinned.value || !d || !s) return;
     zoom.value = s / d;
 });
+function onZoomInput(value: number) {
+    zoomPinned.value = true;
+    zoom.value = value;
+}
 
 const toaster = useToast();
+const { t } = useI18n();
 const confirmSubmit = ref(false);
+
+// Every clip in the list has to be usable: submitting a batch that silently
+// drops one is worse than refusing until it is fixed.
+const canSubmit = computed(
+    () =>
+        clips.value.length > 0 &&
+        submittable.value.length === clips.value.length,
+);
+const submitting = ref(false);
 async function submit() {
+    if (!canSubmit.value || submitting.value) return;
+    submitting.value = true;
+
+    const sent = submittable.value;
     try {
-        await api.submitShort({
+        const { results } = await api.submitShorts({
             VXID: vxId.value,
-            InSeconds: startTime.value,
-            OutSeconds: endTime.value,
+            clips: sent.map((clip) => ({
+                InSeconds: clip.start,
+                OutSeconds: clip.end,
+            })),
         });
-        toaster.create({
-            title: "Short submitted successfully",
-            type: "success",
-        });
-        navigateTo("/shorts");
+
+        // Clips are started independently, so some can fail while others run.
+        const failed = results.filter((r) => r.error);
         confirmSubmit.value = false;
+
+        if (failed.length === 0) {
+            toaster.create({
+                title: t("shorts.generation.submitted", { count: sent.length }),
+                type: "success",
+            });
+            clearClips();
+            navigateTo("/shorts");
+            return;
+        }
+
+        toaster.create({
+            title: t("shorts.generation.submittedPartly", {
+                ok: results.length - failed.length,
+                failed: failed.length,
+            }),
+            description: failed[0]?.error,
+            type: failed.length === results.length ? "error" : "warning",
+        });
     } catch (err) {
         toaster.create({
-            title: "Failed to submit short",
+            title: t("shorts.generation.submitFailed"),
+            description: (err as Error)?.message,
             type: "error",
         });
+    } finally {
+        submitting.value = false;
     }
+}
+
+function activateClip(id: string) {
+    activate(id);
+    const clip = clips.value.find((c) => c.id === id);
+    if (clip) onSeek(clip.start);
+}
+
+function addClip() {
+    const clip = addClipAt(currentTime.value);
+    if (clip) onSeek(clip.start);
+}
+
+// Written continuously while a transcript drag is in progress, so it must not
+// seek: the panel emits a single seek of its own once the drag ends.
+function setRangeFromTranscript(from: number, to: number) {
+    const max = duration.value ?? to;
+    startTime.value = Math.max(0, Math.min(from, max));
+    endTime.value = Math.max(startTime.value, Math.min(to, max));
 }
 
 function setStartPoint() {
@@ -172,12 +282,15 @@ useVideoKeyboardControls({
     },
     setStartPoint,
     setEndPoint,
+    addClip,
 });
 </script>
 
 <template>
-    <div class="mx-auto flex w-full max-w-7xl flex-col gap-4 p-8">
-        <header class="mb-4 flex items-center justify-between">
+    <div
+        class="flex w-full flex-col gap-4 p-8 lg:h-[calc(100dvh-var(--header-height))] lg:overflow-hidden"
+    >
+        <header class="mb-4 flex shrink-0 items-center justify-between">
             <div>
                 <h1 class="text-heading-3 text-text-default">
                     {{ $t("shorts.generation.title") }}
@@ -186,14 +299,46 @@ useVideoKeyboardControls({
                     {{ $t("shorts.generation.description") }}
                 </p>
             </div>
-            <DesignButton icon="tabler:send" @click="confirmSubmit = true">
+            <DesignButton
+                icon="tabler:send"
+                :disabled="!canSubmit || status !== 'success'"
+                :loading="submitting"
+                @click="confirmSubmit = true"
+            >
                 {{ $t("shorts.generation.submit") }}
             </DesignButton>
             <DesignDialog
                 v-model:open="confirmSubmit"
                 :title="$t('shorts.generation.submitConfirmationTitle')"
-                :description="$t('shorts.generation.submitConfirmationMessage')"
+                :description="
+                    $t('shorts.generation.submitConfirmationMessage', {
+                        count: submittable.length,
+                    })
+                "
             >
+                <ul class="mb-4 flex flex-col gap-1">
+                    <li
+                        v-for="(clip, index) in submittable"
+                        :key="clip.id"
+                        class="text-text-muted flex gap-3 text-sm tabular-nums"
+                    >
+                        <span class="text-text-hint w-4">{{ index + 1 }}</span>
+                        <span>
+                            {{ formatClock(clip.start) }}–{{
+                                formatClock(clip.end)
+                            }}
+                        </span>
+                        <span
+                            :class="
+                                clipLength(clip) > 60
+                                    ? 'text-semantic-warning'
+                                    : 'text-text-hint'
+                            "
+                        >
+                            {{ formatClock(clipLength(clip)) }}
+                        </span>
+                    </li>
+                </ul>
                 <div class="flex w-full justify-end gap-2">
                     <DesignButton
                         variant="tertiary"
@@ -201,68 +346,157 @@ useVideoKeyboardControls({
                     >
                         {{ $t("shorts.generation.submitConfirmationCancel") }}
                     </DesignButton>
-                    <DesignButton variant="primary" @click="submit">
+                    <DesignButton
+                        variant="primary"
+                        :disabled="!canSubmit"
+                        :loading="submitting"
+                        @click="submit"
+                    >
                         {{ $t("shorts.generation.submitConfirmationSubmit") }}
                     </DesignButton>
                 </div>
             </DesignDialog>
         </header>
-        <template v-if="status == 'success'">
-            <video
-                ref="videoElement"
-                :src="videoUrl"
-                controls
-                class="bg-surface-default aspect-video w-full shadow-xl"
-            />
-            <div class="flex items-center gap-2">
-                <div class="tabular-nums">
-                    <p
-                        :class="[
-                            'font-bold',
-                            {
-                                'text-red-600 dark:text-red-300':
-                                    shortDuration > 60,
-                            },
-                        ]"
-                    >
-                        {{ formattedDuration(shortDuration) }}
-                        <span
-                            v-if="shortDuration > 60"
-                            class="ml-1 inline-block origin-left font-normal opacity-50"
+        <template v-if="status === 'success'">
+            <div
+                class="grid gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]"
+            >
+                <div class="flex flex-col gap-3 lg:min-h-0">
+                    <div class="relative lg:min-h-0 lg:flex-1">
+                        <video
+                            ref="videoElement"
+                            :src="videoUrl"
+                            controls
+                            class="bg-surface-default aspect-video w-full shadow-xl lg:aspect-auto lg:h-full lg:object-contain"
+                        />
+                        <ShortsCropGuide
+                            v-if="showCropGuide"
+                            :element-width="videoBoxWidth"
+                            :element-height="videoHeight"
+                            :video-width="videoSize.width"
+                            :video-height="videoSize.height"
+                        />
+                    </div>
+                    <div class="flex shrink-0 flex-wrap items-center gap-2">
+                        <div class="tabular-nums">
+                            <p
+                                :class="[
+                                    'font-bold',
+                                    {
+                                        'text-red-600 dark:text-red-300':
+                                            shortDuration > 60,
+                                    },
+                                ]"
+                            >
+                                {{ formattedDuration(shortDuration) }}
+                                <span
+                                    v-if="shortDuration > 60"
+                                    class="ml-1 inline-block origin-left font-normal opacity-50"
+                                >
+                                    {{
+                                        $t("shorts.generation.durationWarning")
+                                    }}
+                                </span>
+                            </p>
+                            <p
+                                v-if="
+                                    startTime != undefined &&
+                                    endTime != undefined
+                                "
+                                class="text-text-hint text-sm"
+                            >
+                                {{ formatTime(startTime) }} -
+                                {{ formatTime(endTime) }}
+                            </p>
+                        </div>
+                        <DesignButton
+                            class="border-border-1 ml-auto border"
+                            variant="secondary"
+                            @click="setStartPoint"
                         >
-                            {{ $t("shorts.generation.durationWarning") }}
-                        </span>
-                    </p>
-                    <p
-                        v-if="startTime != undefined && endTime != undefined"
-                        class="text-text-hint text-sm"
-                    >
-                        {{ formatTime(startTime) }} - {{ formatTime(endTime) }}
-                    </p>
+                            {{ $t("shorts.generation.setStartPoint") }}
+                            <span class="text-text-hint ml-1 text-xs">I</span>
+                        </DesignButton>
+                        <DesignButton
+                            class="border-border-1 border"
+                            variant="secondary"
+                            @click="setEndPoint"
+                        >
+                            {{ $t("shorts.generation.setEndPoint") }}
+                            <span class="text-text-hint ml-1 text-xs">O</span>
+                        </DesignButton>
+                        <DesignButton
+                            class="border-border-1 border"
+                            variant="secondary"
+                            @click="previewShort"
+                        >
+                            {{ $t("shorts.generation.previewShort") }}
+                        </DesignButton>
+                        <div class="bg-border-1 mx-1 h-6 w-px" />
+                        <DesignTooltip
+                            :content="$t('shorts.generation.cropGuideHint')"
+                        >
+                            <DesignButton
+                                class="border-border-1 border"
+                                :variant="
+                                    showCropGuide ? 'primary' : 'secondary'
+                                "
+                                @click="showCropGuide = !showCropGuide"
+                            >
+                                {{ $t("shorts.generation.cropGuide") }}
+                            </DesignButton>
+                        </DesignTooltip>
+                    </div>
                 </div>
-                <DesignButton
-                    class="border-border-1 ml-auto border"
-                    variant="secondary"
-                    @click="setStartPoint"
-                >
-                    {{ $t("shorts.generation.setStartPoint") }}
-                    <span class="text-text-hint ml-1 text-xs">I</span>
-                </DesignButton>
-                <DesignButton
-                    class="border-border-1 border"
-                    variant="secondary"
-                    @click="setEndPoint"
-                >
-                    {{ $t("shorts.generation.setEndPoint") }}
-                    <span class="text-text-hint ml-1 text-xs">O</span>
-                </DesignButton>
-                <DesignButton
-                    class="border-border-1 border"
-                    variant="secondary"
-                    @click="previewShort"
-                >
-                    {{ $t("shorts.generation.previewShort") }}
-                </DesignButton>
+
+                <div class="flex flex-col gap-3 lg:min-h-0">
+                    <ShortsTranscriptPanel
+                        v-if="transcriptSegments?.length"
+                        :segments="transcriptSegments"
+                        :current-time="currentTime"
+                        :duration="duration ?? 0"
+                        :start="startTime ?? 0"
+                        :end="endTime ?? 0"
+                        class="max-h-[60vh] lg:max-h-none lg:min-h-0 lg:flex-1"
+                        @seek="onSeek"
+                        @set-range="setRangeFromTranscript"
+                    />
+                    <div
+                        v-else-if="transcriptStatus === 'pending'"
+                        class="max-h-[60vh] space-y-2 lg:max-h-none"
+                    >
+                        <DesignSkeleton class="h-9 w-full" />
+                        <DesignSkeleton class="h-40 w-full" />
+                    </div>
+                    <DesignBanner
+                        v-else-if="transcriptStatus === 'error'"
+                        icon="tabler:alert-triangle"
+                        variant="warning"
+                        class="self-start"
+                    >
+                        {{ $t("shorts.generation.transcriptFailed") }}
+                    </DesignBanner>
+                    <DesignBanner
+                        v-else
+                        icon="tabler:file-text-off"
+                        variant="neutral"
+                        class="self-start"
+                    >
+                        {{ $t("shorts.generation.noTranscript") }}
+                    </DesignBanner>
+
+                    <ShortsClipList
+                        class="max-h-56 shrink-0 lg:max-h-[40%]"
+                        :clips="clips"
+                        :active-id="activeId"
+                        :overlapping="overlapping"
+                        :duration="duration ?? 0"
+                        :segments="transcriptSegments ?? []"
+                        @activate="activateClip"
+                        @remove="removeClip"
+                        @add="addClip"
+                    />
+                </div>
             </div>
             <ShortsTimelineScrubber
                 v-if="
@@ -275,15 +509,52 @@ useVideoKeyboardControls({
                 :max="duration"
                 :current="currentTime"
                 :zoom="zoom"
+                class="shrink-0"
                 :vxid="vxId ?? ''"
                 :base="base"
+                :clips="clips"
+                :active-id="activeId"
+                :overlapping="overlapping"
                 v-model:start="startTime"
                 v-model:end="endTime"
                 @seek="onSeek"
+                @activate="activateClip"
             />
-            <DesignSlider v-model="zoom" :min="0.1" :max="10" :step="0.01" />
+            <DesignSlider
+                class="shrink-0"
+                :model-value="zoom"
+                :min="0.1"
+                :max="10"
+                :step="0.01"
+                @update:model-value="onZoomInput"
+            />
         </template>
-        <template v-if="status != 'success'">
+        <div
+            v-else-if="status === 'error'"
+            class="flex flex-col items-center gap-4 py-16"
+        >
+            <Icon name="tabler:alert-triangle" class="text-text-hint size-10" />
+            <p class="text-text-muted max-w-md text-center">
+                {{ error?.message ?? $t("shorts.generation.previewFailed") }}
+            </p>
+            <p class="text-text-hint max-w-md text-center text-sm">
+                {{ $t("shorts.generation.previewFailedHint") }}
+            </p>
+            <div class="flex gap-2">
+                <DesignButton variant="secondary" @click="refresh()">
+                    {{ $t("shorts.generation.retry") }}
+                </DesignButton>
+                <DesignButton
+                    v-if="previewChip"
+                    variant="secondary"
+                    @click="previewChip.run()"
+                >
+                    {{ previewChip.label }}
+                </DesignButton>
+            </div>
+        </div>
+
+        <template v-else>
             <DesignSkeleton class="aspect-video w-full" />
             <div class="flex items-center gap-2">
                 <div class="space-y-2">
