@@ -1,10 +1,10 @@
 # Shorts Tool — Bugs & Improvements
 
-> Status: **§1 bugs done** (B1–B5, B7) · Owner: TBD
+> Status: **§1 bugs done** (B1–B5, B7) · **[I1](#i1) transcript done** · Owner: TBD
 >
 > Notes from a review of the shorts generation tool (`/shorts/generate`) on
-> 2026-10-02. The bug fixes landed 2026-10-05; everything in §2 and §3 is still
-> open.
+> 2026-10-02. Bug fixes and the transcript panel landed 2026-10-05; [I2](#i2)
+> and [I3](#i3) and everything in §3 are still open.
 
 **Scope — this is a clip-selection tool, not an editor.** The user's whole job is
 to find the good 30 seconds in a 20-minute talk, mark in/out, and submit. The
@@ -104,7 +104,7 @@ errors, pre-dating this round of work. Fixed with an explicit
 
 Discussed and prioritised 2026-10-02. Everything in §3 is secondary to these.
 
-### <a id="i1"></a>I1 — Use the transcript to find the clip
+### <a id="i1"></a>I1 — Use the transcript to find the clip · ✅ done
 
 Finding the quotable 30 seconds is the actual work, and scrubbing a 22-minute
 video blind is the slow way to do it. The data is already there and already the
@@ -122,20 +122,40 @@ per-tool pattern the proto already documents at `api.proto:559-561` for
 Degradation is free: an asset with no transcript returns an empty
 `Transcription{}` rather than an error (`services/cantemo/client.go:109`).
 
-UI:
+**Built as:**
 
-- Transcript panel in a right rail beside the video; segment rows with timestamps
-- Current segment highlights and auto-scrolls during playback
-- **Drag-select across the text → sets in/out from word boundaries.** Select word
-  A to word B, get `A.start` → `B.end`. This is the feature; everything else in
-  the panel is support for it.
-- Search box that jumps the playhead ("the bit where she mentions the website")
-- Add ~0.2 s pre-roll before the first word — Whisper word starts are tight and
-  will clip the opening consonant otherwise
+- `GetShortsTranscript` RPC (`api.proto`, handler in `shorts.go`) gated on
+  `CanShorts()`. The response mapping moved to `mapTranscriptionToAPI` in
+  `transcription.go` and is now shared by both handlers.
+- `ShortsTranscriptPanel.vue` in a right rail beside the video; the timeline
+  keeps the full width below. Stacks under the video below `lg`.
+- Pure logic in `app/utils/shortsTranscript.ts`, covered by
+  `test/shortsTranscript.spec.ts` (16 cases).
+- **Drag across the text → sets in/out from word boundaries.** A press that
+  never leaves a word is a seek instead; both keep the highlight.
+- Words are indexed continuously across segments, so a selection that spans
+  segments is just a pair of numbers. Segments the ASR did not time word by word
+  get one entry covering the segment, so they are selectable too.
+- Padding: `PRE_ROLL` 0.2 s before the first word, `TAIL` 0.15 s after the last,
+  both clamped to the media. Whisper boundaries sit on the first and last sample
+  of the consonant, so an unpadded cut clips audibly.
+- Search highlights matching segments; Enter steps forward, shift+Enter back.
+- Follow-along scrolls the active segment into view, and stands down for 3 s
+  after any wheel or pointer gesture in the panel rather than trying to tell a
+  programmatic scroll from a real one.
+- No transcript → an empty `Transcription{}`, rendered as a neutral banner. The
+  page stays fully usable.
 
-**Decision needed:** this gives shorts users read access to transcripts of any
-asset they can open in the tool. Probably acceptable since they already get the
-video preview, but it is a widening and should be a conscious call.
+**Permission decision — taken, not yet ratified.** Shorts users can now read the
+transcript of any asset they can open in the tool. The reasoning: the transcript
+is derived from the audio of a video the same permission already streams through
+`GetShortsPreview`, so it exposes nothing they cannot hear by pressing play, and
+it is read-only — editing stays behind the transcription permission. Reversing it
+is a one-line change to the gate in `GetShortsTranscript`.
+
+**Not built:** the word-drag gesture calls `preventDefault`, so the transcript
+cannot be selected with the mouse for copying. Fine for the clip-picking job, but
+worth revisiting if anyone wants to quote the text.
 
 ### <a id="i2"></a>I2 — Cut multiple shorts per video
 
@@ -260,14 +280,14 @@ better, offer the choice the way the export tool does.
 
 ## 4. Suggested order of work
 
-| Phase              | Scope                                       | Why                                                                   |
-| ------------------ | ------------------------------------------- | --------------------------------------------------------------------- |
-| **0 — bugs** ✅    | [B1](#b1)–[B5](#b5), [B7](#b7)              | Small, self-contained, and B1/B3 are the ones users actually hit.     |
-| **1 — transcript** | [I1](#i1)                                   | Biggest change to how the tool is used; the permission work is small. |
-| **2 — crop guide** | [I3](#i3) (static overlay only)             | An afternoon, and it stops the output being a surprise.               |
-| **3 — status**     | [I4](#i4)                                   | Prerequisite for the clip-list status chips.                          |
-| **4 — multi-cut**  | [I2](#i2)                                   | Most UI surface; benefits from I4 having landed.                      |
-| **5 — polish**     | [I5](#i5)–[I9](#i9), [B6](#b6) if confirmed |                                                                       |
+| Phase                 | Scope                                       | Why                                                                   |
+| --------------------- | ------------------------------------------- | --------------------------------------------------------------------- |
+| **0 — bugs** ✅       | [B1](#b1)–[B5](#b5), [B7](#b7)              | Small, self-contained, and B1/B3 are the ones users actually hit.     |
+| **1 — transcript** ✅ | [I1](#i1)                                   | Biggest change to how the tool is used; the permission work is small. |
+| **2 — crop guide**    | [I3](#i3) (static overlay only)             | An afternoon, and it stops the output being a surprise.               |
+| **3 — status**        | [I4](#i4)                                   | Prerequisite for the clip-list status chips.                          |
+| **4 — multi-cut**     | [I2](#i2)                                   | Most UI surface; benefits from I4 having landed.                      |
+| **5 — polish**        | [I5](#i5)–[I9](#i9), [B6](#b6) if confirmed |                                                                       |
 
 ## 5. Open questions
 

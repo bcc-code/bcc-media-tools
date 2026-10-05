@@ -99,7 +99,11 @@
             "durationWarning": "Shorts should be less than 1 minute",
             "previewFailed": "Could not load the preview for this asset.",
             "previewFailedHint": "This usually means the asset has no preview file yet. Generating one takes a few minutes; reload once it is done.",
-            "retry": "Try again"
+            "retry": "Try again",
+            "transcriptSearch": "Search the transcript",
+            "transcriptHint": "Drag across the text to set the clip, or click a word to jump there.",
+            "noTranscript": "This asset has no transcript, so the clip has to be found on the timeline.",
+            "transcriptFailed": "The transcript could not be loaded. The clip can still be found on the timeline."
         }
     },
     "export": {

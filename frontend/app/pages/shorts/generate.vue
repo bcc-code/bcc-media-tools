@@ -36,7 +36,23 @@ const {
 const { chips } = useCantemoActions(vxId);
 const previewChip = computed(() => chips.value.find((c) => c.id === "preview"));
 
+// Optional: the page is fully usable without it, so it loads on its own and
+// never gates rendering.
+const { data: transcriptSegments, status: transcriptStatus } = useAsyncData(
+    () => `shorts-transcript:${vxId.value}`,
+    () => api.getShortsTranscript({ VXID: vxId.value }),
+    // Flattened here rather than in the panel because the page needs the same
+    // result to decide whether there is anything worth showing.
+    { transform: (data) => flattenSegments(data.segments ?? []) },
+);
+
 const videoElement = useTemplateRef("videoElement");
+
+// The transcript sits in a grid cell next to the video. Grid rows size to their
+// tallest child, so without an explicit bound the transcript sets the row height
+// and grows the page instead of scrolling — pushing the timeline below the fold.
+// Bounding it to the measured video height keeps both columns the same height.
+const { height: videoHeight } = useElementSize(videoElement);
 
 const duration = ref<number | undefined>(0);
 const startTime = ref<number | undefined>(0);
@@ -163,6 +179,14 @@ async function submit() {
     }
 }
 
+// Written continuously while a transcript drag is in progress, so it must not
+// seek: the panel emits a single seek of its own once the drag ends.
+function setRangeFromTranscript(from: number, to: number) {
+    const max = duration.value ?? to;
+    startTime.value = Math.max(0, Math.min(from, max));
+    endTime.value = Math.max(startTime.value, Math.min(to, max));
+}
+
 function setStartPoint() {
     if (endTime.value == undefined) {
         startTime.value = currentTime.value;
@@ -251,12 +275,54 @@ useVideoKeyboardControls({
             </DesignDialog>
         </header>
         <template v-if="status === 'success'">
-            <video
-                ref="videoElement"
-                :src="videoUrl"
-                controls
-                class="bg-surface-default aspect-video w-full shadow-xl"
-            />
+            <div
+                class="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]"
+                :style="{
+                    '--video-h': videoHeight ? `${videoHeight}px` : '60vh',
+                }"
+            >
+                <video
+                    ref="videoElement"
+                    :src="videoUrl"
+                    controls
+                    class="bg-surface-default aspect-video w-full shadow-xl"
+                />
+
+                <ShortsTranscriptPanel
+                    v-if="transcriptSegments?.length"
+                    :segments="transcriptSegments"
+                    :current-time="currentTime"
+                    :duration="duration ?? 0"
+                    :start="startTime ?? 0"
+                    :end="endTime ?? 0"
+                    class="max-h-[60vh] lg:max-h-(--video-h)"
+                    @seek="onSeek"
+                    @set-range="setRangeFromTranscript"
+                />
+                <div
+                    v-else-if="transcriptStatus === 'pending'"
+                    class="max-h-[60vh] space-y-2 lg:max-h-(--video-h)"
+                >
+                    <DesignSkeleton class="h-9 w-full" />
+                    <DesignSkeleton class="h-40 w-full" />
+                </div>
+                <DesignBanner
+                    v-else-if="transcriptStatus === 'error'"
+                    icon="tabler:alert-triangle"
+                    variant="warning"
+                    class="self-start"
+                >
+                    {{ $t("shorts.generation.transcriptFailed") }}
+                </DesignBanner>
+                <DesignBanner
+                    v-else
+                    icon="tabler:file-text-off"
+                    variant="neutral"
+                    class="self-start"
+                >
+                    {{ $t("shorts.generation.noTranscript") }}
+                </DesignBanner>
+            </div>
             <div class="flex items-center gap-2">
                 <div class="tabular-nums">
                     <p

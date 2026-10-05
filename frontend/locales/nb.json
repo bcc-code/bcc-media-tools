@@ -99,7 +99,11 @@
             "durationWarning": "Shorts bør være mindre enn 1 minutt",
             "previewFailed": "Kunne ikke laste forhåndsvisningen for dette elementet.",
             "previewFailedHint": "Dette betyr som regel at elementet ikke har en forhåndsvisningsfil ennå. Det tar noen minutter å generere en; last inn siden på nytt når den er klar.",
-            "retry": "Prøv igjen"
+            "retry": "Prøv igjen",
+            "transcriptSearch": "Søk i transkripsjonen",
+            "transcriptHint": "Dra over teksten for å sette klippet, eller klikk på et ord for å hoppe dit.",
+            "noTranscript": "Dette elementet har ingen transkripsjon, så klippet må finnes på tidslinjen.",
+            "transcriptFailed": "Transkripsjonen kunne ikke lastes. Klippet kan fortsatt finnes på tidslinjen."
         }
     },
     "export": {

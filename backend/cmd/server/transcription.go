@@ -80,6 +80,16 @@ func (t TranscriptionAPI) GetTranscription(ctx context.Context, req *connect.Req
 		return nil, err
 	}
 
+	return connect.NewResponse(mapTranscriptionToAPI(transcription)), nil
+}
+
+// mapTranscriptionToAPI converts a Cantemo transcription_json document to the
+// wire type. Shared with the shorts editor, which reads the same document.
+func mapTranscriptionToAPI(transcription *cantemo.Transcription) *apiv1.Transcription {
+	if transcription == nil {
+		return &apiv1.Transcription{}
+	}
+
 	tr := apiv1.Transcription{
 		Text:     transcription.Text,
 		Segments: make([]*apiv1.Segments, len(transcription.Segments)),
@@ -111,7 +121,7 @@ func (t TranscriptionAPI) GetTranscription(ctx context.Context, req *connect.Req
 		}
 	}
 
-	return connect.NewResponse(&tr), nil
+	return &tr
 }
 
 func (t TranscriptionAPI) SubmitTranscription(ctx context.Context, req *connect.Request[apiv1.SubmitTranscriptionRequest]) (*connect.Response[apiv1.Void], error) {

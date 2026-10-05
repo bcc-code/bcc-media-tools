@@ -5374,7 +5374,7 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\x16CANTEMO_ACTION_PREVIEW\x10\x01\x12\x1d\n" +
 	"\x19CANTEMO_ACTION_TRANSCRIBE\x10\x02\x12)\n" +
 	"%CANTEMO_ACTION_SUBTITLE_FROM_SUBTRANS\x10\x03\x12#\n" +
-	"\x1fCANTEMO_ACTION_UPDATE_RELATIONS\x10\x042\xf2\x16\n" +
+	"\x1fCANTEMO_ACTION_UPDATE_RELATIONS\x10\x042\xc2\x17\n" +
 	"\n" +
 	"APIService\x125\n" +
 	"\x0eGetPermissions\x12\f.api.v1.Void\x1a\x13.api.v1.Permissions\"\x00\x12B\n" +
@@ -5390,7 +5390,8 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\x10GetPodcastTracks\x12\x1f.api.v1.GetPodcastTracksRequest\x1a\x12.api.v1.TracksList\"\x00\x12L\n" +
 	"\fGetLanguages\x12$.api.v1.GetAvailableLanguagesRequest\x1a\x14.api.v1.LanguageList\"\x00\x12R\n" +
 	"\x13GetBMMTranscription\x12\".api.v1.GetBMMTranscriptionRequest\x1a\x15.api.v1.Transcription\"\x00\x129\n" +
-	"\vSubmitShort\x12\x1a.api.v1.SubmitShortRequest\x1a\f.api.v1.Void\"\x00\x12T\n" +
+	"\vSubmitShort\x12\x1a.api.v1.SubmitShortRequest\x1a\f.api.v1.Void\"\x00\x12N\n" +
+	"\x13GetShortsTranscript\x12\x1e.api.v1.GetTranscriptionReqest\x1a\x15.api.v1.Transcription\"\x00\x12T\n" +
 	"\x0fGetExportConfig\x12\x1e.api.v1.GetExportConfigRequest\x1a\x1f.api.v1.GetExportConfigResponse\"\x00\x12H\n" +
 	"\vStartExport\x12\x1a.api.v1.StartExportRequest\x1a\x1b.api.v1.StartExportResponse\"\x00\x12I\n" +
 	"\x13ExportTimedMetadata\x12\".api.v1.ExportTimedMetadataRequest\x1a\f.api.v1.Void\"\x00\x12N\n" +
@@ -5585,68 +5586,70 @@ var file_api_v1_api_proto_depIdxs = []int32{
 	24, // 62: api.v1.APIService.GetLanguages:input_type -> api.v1.GetAvailableLanguagesRequest
 	35, // 63: api.v1.APIService.GetBMMTranscription:input_type -> api.v1.GetBMMTranscriptionRequest
 	37, // 64: api.v1.APIService.SubmitShort:input_type -> api.v1.SubmitShortRequest
-	41, // 65: api.v1.APIService.GetExportConfig:input_type -> api.v1.GetExportConfigRequest
-	44, // 66: api.v1.APIService.StartExport:input_type -> api.v1.StartExportRequest
-	46, // 67: api.v1.APIService.ExportTimedMetadata:input_type -> api.v1.ExportTimedMetadataRequest
-	53, // 68: api.v1.APIService.ResolveAssets:input_type -> api.v1.ResolveAssetsRequest
-	47, // 69: api.v1.APIService.GetVBExportConfig:input_type -> api.v1.GetVBExportConfigRequest
-	50, // 70: api.v1.APIService.StartVBExport:input_type -> api.v1.StartVBExportRequest
-	87, // 71: api.v1.APIService.GetExportDestinations:input_type -> api.v1.Void
-	56, // 72: api.v1.APIService.TriggerCantemoAction:input_type -> api.v1.TriggerCantemoActionRequest
-	57, // 73: api.v1.APIService.FinishLiveIngest:input_type -> api.v1.FinishLiveIngestRequest
-	60, // 74: api.v1.APIService.VaultSearch:input_type -> api.v1.VaultSearchRequest
-	64, // 75: api.v1.APIService.GetVaultItem:input_type -> api.v1.GetVaultItemRequest
-	87, // 76: api.v1.APIService.ListEditorialSessions:input_type -> api.v1.Void
-	69, // 77: api.v1.APIService.CreateEditorialSession:input_type -> api.v1.CreateEditorialSessionRequest
-	70, // 78: api.v1.APIService.GetEditorialSession:input_type -> api.v1.GetEditorialSessionRequest
-	71, // 79: api.v1.APIService.SaveEditorialSession:input_type -> api.v1.SaveEditorialSessionRequest
-	81, // 80: api.v1.APIService.SetEditorialPublish:input_type -> api.v1.SetEditorialPublishRequest
-	82, // 81: api.v1.APIService.SetEditorialComment:input_type -> api.v1.SetEditorialCommentRequest
-	83, // 82: api.v1.APIService.SetEditorialName:input_type -> api.v1.SetEditorialNameRequest
-	72, // 83: api.v1.APIService.DeleteEditorialSession:input_type -> api.v1.DeleteEditorialSessionRequest
-	73, // 84: api.v1.APIService.ImportEditorialMarkers:input_type -> api.v1.ImportEditorialMarkersRequest
-	75, // 85: api.v1.APIService.ImportEditorialMarkersFromPlayout:input_type -> api.v1.ImportEditorialMarkersFromPlayoutRequest
-	79, // 86: api.v1.APIService.ListPlayoutEvents:input_type -> api.v1.ListPlayoutEventsRequest
-	76, // 87: api.v1.APIService.GetRecordingWindow:input_type -> api.v1.GetRecordingWindowRequest
-	11, // 88: api.v1.APIService.GetPermissions:output_type -> api.v1.Permissions
-	87, // 89: api.v1.APIService.UpdatePermissions:output_type -> api.v1.Void
-	87, // 90: api.v1.APIService.DeletePermissions:output_type -> api.v1.Void
-	15, // 91: api.v1.APIService.ListPermissions:output_type -> api.v1.PermissionsList
-	30, // 92: api.v1.APIService.GetTranscription:output_type -> api.v1.Transcription
-	34, // 93: api.v1.APIService.GetShortsPreview:output_type -> api.v1.Preview
-	87, // 94: api.v1.APIService.SubmitTranscription:output_type -> api.v1.Void
-	17, // 95: api.v1.APIService.GetYears:output_type -> api.v1.GetYearsResponse
-	21, // 96: api.v1.APIService.GetAlbums:output_type -> api.v1.AlbumsList
-	26, // 97: api.v1.APIService.GetAlbumTracks:output_type -> api.v1.TracksList
-	26, // 98: api.v1.APIService.GetPodcastTracks:output_type -> api.v1.TracksList
-	27, // 99: api.v1.APIService.GetLanguages:output_type -> api.v1.LanguageList
-	30, // 100: api.v1.APIService.GetBMMTranscription:output_type -> api.v1.Transcription
-	87, // 101: api.v1.APIService.SubmitShort:output_type -> api.v1.Void
-	42, // 102: api.v1.APIService.GetExportConfig:output_type -> api.v1.GetExportConfigResponse
-	45, // 103: api.v1.APIService.StartExport:output_type -> api.v1.StartExportResponse
-	87, // 104: api.v1.APIService.ExportTimedMetadata:output_type -> api.v1.Void
-	55, // 105: api.v1.APIService.ResolveAssets:output_type -> api.v1.ResolveAssetsResponse
-	49, // 106: api.v1.APIService.GetVBExportConfig:output_type -> api.v1.GetVBExportConfigResponse
-	51, // 107: api.v1.APIService.StartVBExport:output_type -> api.v1.StartVBExportResponse
-	52, // 108: api.v1.APIService.GetExportDestinations:output_type -> api.v1.ExportDestinationsResponse
-	87, // 109: api.v1.APIService.TriggerCantemoAction:output_type -> api.v1.Void
-	59, // 110: api.v1.APIService.FinishLiveIngest:output_type -> api.v1.FinishLiveIngestResponse
-	63, // 111: api.v1.APIService.VaultSearch:output_type -> api.v1.VaultSearchResponse
-	65, // 112: api.v1.APIService.GetVaultItem:output_type -> api.v1.GetVaultItemResponse
-	68, // 113: api.v1.APIService.ListEditorialSessions:output_type -> api.v1.ListEditorialSessionsResponse
-	67, // 114: api.v1.APIService.CreateEditorialSession:output_type -> api.v1.EditorialSession
-	67, // 115: api.v1.APIService.GetEditorialSession:output_type -> api.v1.EditorialSession
-	67, // 116: api.v1.APIService.SaveEditorialSession:output_type -> api.v1.EditorialSession
-	87, // 117: api.v1.APIService.SetEditorialPublish:output_type -> api.v1.Void
-	87, // 118: api.v1.APIService.SetEditorialComment:output_type -> api.v1.Void
-	87, // 119: api.v1.APIService.SetEditorialName:output_type -> api.v1.Void
-	87, // 120: api.v1.APIService.DeleteEditorialSession:output_type -> api.v1.Void
-	74, // 121: api.v1.APIService.ImportEditorialMarkers:output_type -> api.v1.ImportEditorialMarkersResponse
-	74, // 122: api.v1.APIService.ImportEditorialMarkersFromPlayout:output_type -> api.v1.ImportEditorialMarkersResponse
-	80, // 123: api.v1.APIService.ListPlayoutEvents:output_type -> api.v1.ListPlayoutEventsResponse
-	77, // 124: api.v1.APIService.GetRecordingWindow:output_type -> api.v1.GetRecordingWindowResponse
-	88, // [88:125] is the sub-list for method output_type
-	51, // [51:88] is the sub-list for method input_type
+	29, // 65: api.v1.APIService.GetShortsTranscript:input_type -> api.v1.GetTranscriptionReqest
+	41, // 66: api.v1.APIService.GetExportConfig:input_type -> api.v1.GetExportConfigRequest
+	44, // 67: api.v1.APIService.StartExport:input_type -> api.v1.StartExportRequest
+	46, // 68: api.v1.APIService.ExportTimedMetadata:input_type -> api.v1.ExportTimedMetadataRequest
+	53, // 69: api.v1.APIService.ResolveAssets:input_type -> api.v1.ResolveAssetsRequest
+	47, // 70: api.v1.APIService.GetVBExportConfig:input_type -> api.v1.GetVBExportConfigRequest
+	50, // 71: api.v1.APIService.StartVBExport:input_type -> api.v1.StartVBExportRequest
+	87, // 72: api.v1.APIService.GetExportDestinations:input_type -> api.v1.Void
+	56, // 73: api.v1.APIService.TriggerCantemoAction:input_type -> api.v1.TriggerCantemoActionRequest
+	57, // 74: api.v1.APIService.FinishLiveIngest:input_type -> api.v1.FinishLiveIngestRequest
+	60, // 75: api.v1.APIService.VaultSearch:input_type -> api.v1.VaultSearchRequest
+	64, // 76: api.v1.APIService.GetVaultItem:input_type -> api.v1.GetVaultItemRequest
+	87, // 77: api.v1.APIService.ListEditorialSessions:input_type -> api.v1.Void
+	69, // 78: api.v1.APIService.CreateEditorialSession:input_type -> api.v1.CreateEditorialSessionRequest
+	70, // 79: api.v1.APIService.GetEditorialSession:input_type -> api.v1.GetEditorialSessionRequest
+	71, // 80: api.v1.APIService.SaveEditorialSession:input_type -> api.v1.SaveEditorialSessionRequest
+	81, // 81: api.v1.APIService.SetEditorialPublish:input_type -> api.v1.SetEditorialPublishRequest
+	82, // 82: api.v1.APIService.SetEditorialComment:input_type -> api.v1.SetEditorialCommentRequest
+	83, // 83: api.v1.APIService.SetEditorialName:input_type -> api.v1.SetEditorialNameRequest
+	72, // 84: api.v1.APIService.DeleteEditorialSession:input_type -> api.v1.DeleteEditorialSessionRequest
+	73, // 85: api.v1.APIService.ImportEditorialMarkers:input_type -> api.v1.ImportEditorialMarkersRequest
+	75, // 86: api.v1.APIService.ImportEditorialMarkersFromPlayout:input_type -> api.v1.ImportEditorialMarkersFromPlayoutRequest
+	79, // 87: api.v1.APIService.ListPlayoutEvents:input_type -> api.v1.ListPlayoutEventsRequest
+	76, // 88: api.v1.APIService.GetRecordingWindow:input_type -> api.v1.GetRecordingWindowRequest
+	11, // 89: api.v1.APIService.GetPermissions:output_type -> api.v1.Permissions
+	87, // 90: api.v1.APIService.UpdatePermissions:output_type -> api.v1.Void
+	87, // 91: api.v1.APIService.DeletePermissions:output_type -> api.v1.Void
+	15, // 92: api.v1.APIService.ListPermissions:output_type -> api.v1.PermissionsList
+	30, // 93: api.v1.APIService.GetTranscription:output_type -> api.v1.Transcription
+	34, // 94: api.v1.APIService.GetShortsPreview:output_type -> api.v1.Preview
+	87, // 95: api.v1.APIService.SubmitTranscription:output_type -> api.v1.Void
+	17, // 96: api.v1.APIService.GetYears:output_type -> api.v1.GetYearsResponse
+	21, // 97: api.v1.APIService.GetAlbums:output_type -> api.v1.AlbumsList
+	26, // 98: api.v1.APIService.GetAlbumTracks:output_type -> api.v1.TracksList
+	26, // 99: api.v1.APIService.GetPodcastTracks:output_type -> api.v1.TracksList
+	27, // 100: api.v1.APIService.GetLanguages:output_type -> api.v1.LanguageList
+	30, // 101: api.v1.APIService.GetBMMTranscription:output_type -> api.v1.Transcription
+	87, // 102: api.v1.APIService.SubmitShort:output_type -> api.v1.Void
+	30, // 103: api.v1.APIService.GetShortsTranscript:output_type -> api.v1.Transcription
+	42, // 104: api.v1.APIService.GetExportConfig:output_type -> api.v1.GetExportConfigResponse
+	45, // 105: api.v1.APIService.StartExport:output_type -> api.v1.StartExportResponse
+	87, // 106: api.v1.APIService.ExportTimedMetadata:output_type -> api.v1.Void
+	55, // 107: api.v1.APIService.ResolveAssets:output_type -> api.v1.ResolveAssetsResponse
+	49, // 108: api.v1.APIService.GetVBExportConfig:output_type -> api.v1.GetVBExportConfigResponse
+	51, // 109: api.v1.APIService.StartVBExport:output_type -> api.v1.StartVBExportResponse
+	52, // 110: api.v1.APIService.GetExportDestinations:output_type -> api.v1.ExportDestinationsResponse
+	87, // 111: api.v1.APIService.TriggerCantemoAction:output_type -> api.v1.Void
+	59, // 112: api.v1.APIService.FinishLiveIngest:output_type -> api.v1.FinishLiveIngestResponse
+	63, // 113: api.v1.APIService.VaultSearch:output_type -> api.v1.VaultSearchResponse
+	65, // 114: api.v1.APIService.GetVaultItem:output_type -> api.v1.GetVaultItemResponse
+	68, // 115: api.v1.APIService.ListEditorialSessions:output_type -> api.v1.ListEditorialSessionsResponse
+	67, // 116: api.v1.APIService.CreateEditorialSession:output_type -> api.v1.EditorialSession
+	67, // 117: api.v1.APIService.GetEditorialSession:output_type -> api.v1.EditorialSession
+	67, // 118: api.v1.APIService.SaveEditorialSession:output_type -> api.v1.EditorialSession
+	87, // 119: api.v1.APIService.SetEditorialPublish:output_type -> api.v1.Void
+	87, // 120: api.v1.APIService.SetEditorialComment:output_type -> api.v1.Void
+	87, // 121: api.v1.APIService.SetEditorialName:output_type -> api.v1.Void
+	87, // 122: api.v1.APIService.DeleteEditorialSession:output_type -> api.v1.Void
+	74, // 123: api.v1.APIService.ImportEditorialMarkers:output_type -> api.v1.ImportEditorialMarkersResponse
+	74, // 124: api.v1.APIService.ImportEditorialMarkersFromPlayout:output_type -> api.v1.ImportEditorialMarkersResponse
+	80, // 125: api.v1.APIService.ListPlayoutEvents:output_type -> api.v1.ListPlayoutEventsResponse
+	77, // 126: api.v1.APIService.GetRecordingWindow:output_type -> api.v1.GetRecordingWindowResponse
+	89, // [89:127] is the sub-list for method output_type
+	51, // [51:89] is the sub-list for method input_type
 	51, // [51:51] is the sub-list for extension type_name
 	51, // [51:51] is the sub-list for extension extendee
 	0,  // [0:51] is the sub-list for field type_name

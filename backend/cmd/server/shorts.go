@@ -43,6 +43,32 @@ func (s ShortsAPI) GetShortsPreview(ctx context.Context, req *connect.Request[ap
 	return connect.NewResponse(&apiv1.Preview{Url: url}), nil
 }
 
+// GetShortsTranscript returns the automatic transcript for an asset so the
+// editor can offer the text as a way of finding a clip range.
+//
+// Gated on shorts permission alone, deliberately: the transcript is derived
+// from the audio of a video that GetShortsPreview already streams to the same
+// user, so it exposes nothing they cannot hear by pressing play. It is
+// read-only — editing transcripts stays behind the transcription permission.
+func (s ShortsAPI) GetShortsTranscript(ctx context.Context, req *connect.Request[apiv1.GetTranscriptionReqest]) (*connect.Response[apiv1.Transcription], error) {
+	email := getEmail(req)
+	if email == "" {
+		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("missing email header"))
+	}
+	if !PermissionsForEmail(email).CanShorts() {
+		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("not enough permissions to create shorts"))
+	}
+
+	// An asset with no transcription_json yields an empty document rather than
+	// an error, which the editor renders as "no transcript".
+	transcription, err := s.cantemoClient.GetTranscriptionJSON(req.Msg.VXID)
+	if err != nil {
+		return nil, err
+	}
+
+	return connect.NewResponse(mapTranscriptionToAPI(transcription)), nil
+}
+
 // validateShortRange mirrors the range checks in the GenerateShort workflow so
 // an unusable range is refused at the API boundary rather than deep in Temporal.
 func validateShortRange(msg *apiv1.SubmitShortRequest) error {
