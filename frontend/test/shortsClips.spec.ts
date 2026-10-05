@@ -7,7 +7,6 @@ import {
     nextClipRange,
     overlappingClipIds,
     sanitiseClips,
-    sortClips,
 } from "~/utils/shortsClips";
 
 const clip = (id: string, start: number, end: number) => ({ id, start, end });
@@ -65,25 +64,6 @@ describe("overlappingClipIds", () => {
 
     it("has nothing to report for one clip", () => {
         expect(overlappingClipIds([clip("a", 0, 30)]).size).toBe(0);
-    });
-});
-
-describe("sortClips", () => {
-    it("orders by start, then by end", () => {
-        const sorted = sortClips([
-            clip("c", 50, 60),
-            clip("a", 10, 40),
-            clip("b", 10, 20),
-        ]);
-
-        expect(sorted.map((c) => c.id)).toEqual(["b", "a", "c"]);
-    });
-
-    it("leaves the input alone", () => {
-        const input = [clip("b", 50, 60), clip("a", 10, 20)];
-        sortClips(input);
-
-        expect(input.map((c) => c.id)).toEqual(["b", "a"]);
     });
 });
 

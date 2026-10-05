@@ -17,7 +17,13 @@ export function useShortsClips(
     const storageKey = computed(() => `shortsClips:${toValue(vxId) ?? "none"}`);
     const stored = useLocalStorage<Clip[]>(storageKey, []);
 
-    const clips = computed(() => sortClips(stored.value));
+    /*
+     * Creation order, deliberately not time order. Sorting by start time means
+     * trimming a clip earlier renumbers the list under the user's hands, so the
+     * "clip 3" they were just looking at becomes clip 2. The timecode on each
+     * row says where it sits; the number says which one it is.
+     */
+    const clips = computed(() => stored.value);
     const activeId = ref<string>();
 
     const activeClip = computed(() =>
@@ -72,9 +78,7 @@ export function useShortsClips(
         stored.value = remaining;
 
         if (activeId.value !== id) return;
-        // Hand the selection to whatever is nearest in time, so removing a clip
-        // mid-list does not dump the user back at the top.
-        activeId.value = sortClips(remaining)[0]?.id;
+        activeId.value = remaining[0]?.id;
     }
 
     /**
@@ -90,7 +94,7 @@ export function useShortsClips(
         stored.value = restored.length
             ? restored
             : [{ id: newId(), start: 0, end: total }];
-        activeId.value = sortClips(stored.value)[0]?.id;
+        activeId.value = stored.value[0]?.id;
     }
 
     /** Called once a batch is away, so a reload does not re-offer sent clips. */

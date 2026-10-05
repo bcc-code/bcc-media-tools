@@ -114,7 +114,8 @@
             "clipsTooLong": "1 clip is longer than a minute. | {count} clips are longer than a minute.",
             "submitted": "Short submitted | {count} shorts submitted",
             "submittedPartly": "{ok} submitted, {failed} could not be started",
-            "submitFailed": "Could not submit"
+            "submitFailed": "Could not submit",
+            "clipUnlabelled": "No transcript for this clip"
         }
     },
     "export": {

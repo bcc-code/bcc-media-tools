@@ -449,51 +449,55 @@ useVideoKeyboardControls({
                     </div>
                 </div>
 
-                <ShortsTranscriptPanel
-                    v-if="transcriptSegments?.length"
-                    :segments="transcriptSegments"
-                    :current-time="currentTime"
-                    :duration="duration ?? 0"
-                    :start="startTime ?? 0"
-                    :end="endTime ?? 0"
-                    class="max-h-[60vh] lg:h-full lg:max-h-none lg:min-h-0"
-                    @seek="onSeek"
-                    @set-range="setRangeFromTranscript"
-                />
-                <div
-                    v-else-if="transcriptStatus === 'pending'"
-                    class="max-h-[60vh] space-y-2 lg:max-h-none"
-                >
-                    <DesignSkeleton class="h-9 w-full" />
-                    <DesignSkeleton class="h-40 w-full" />
+                <div class="flex flex-col gap-3 lg:min-h-0">
+                    <ShortsTranscriptPanel
+                        v-if="transcriptSegments?.length"
+                        :segments="transcriptSegments"
+                        :current-time="currentTime"
+                        :duration="duration ?? 0"
+                        :start="startTime ?? 0"
+                        :end="endTime ?? 0"
+                        class="max-h-[60vh] lg:max-h-none lg:min-h-0 lg:flex-1"
+                        @seek="onSeek"
+                        @set-range="setRangeFromTranscript"
+                    />
+                    <div
+                        v-else-if="transcriptStatus === 'pending'"
+                        class="max-h-[60vh] space-y-2 lg:max-h-none"
+                    >
+                        <DesignSkeleton class="h-9 w-full" />
+                        <DesignSkeleton class="h-40 w-full" />
+                    </div>
+                    <DesignBanner
+                        v-else-if="transcriptStatus === 'error'"
+                        icon="tabler:alert-triangle"
+                        variant="warning"
+                        class="self-start"
+                    >
+                        {{ $t("shorts.generation.transcriptFailed") }}
+                    </DesignBanner>
+                    <DesignBanner
+                        v-else
+                        icon="tabler:file-text-off"
+                        variant="neutral"
+                        class="self-start"
+                    >
+                        {{ $t("shorts.generation.noTranscript") }}
+                    </DesignBanner>
+
+                    <ShortsClipList
+                        class="max-h-56 shrink-0 lg:max-h-[40%]"
+                        :clips="clips"
+                        :active-id="activeId"
+                        :overlapping="overlapping"
+                        :duration="duration ?? 0"
+                        :segments="transcriptSegments ?? []"
+                        @activate="activateClip"
+                        @remove="removeClip"
+                        @add="addClip"
+                    />
                 </div>
-                <DesignBanner
-                    v-else-if="transcriptStatus === 'error'"
-                    icon="tabler:alert-triangle"
-                    variant="warning"
-                    class="self-start"
-                >
-                    {{ $t("shorts.generation.transcriptFailed") }}
-                </DesignBanner>
-                <DesignBanner
-                    v-else
-                    icon="tabler:file-text-off"
-                    variant="neutral"
-                    class="self-start"
-                >
-                    {{ $t("shorts.generation.noTranscript") }}
-                </DesignBanner>
             </div>
-            <ShortsClipList
-                class="shrink-0"
-                :duration="duration ?? 0"
-                :clips="clips"
-                :active-id="activeId"
-                :overlapping="overlapping"
-                @activate="activateClip"
-                @remove="removeClip"
-                @add="addClip"
-            />
             <ShortsTimelineScrubber
                 v-if="
                     duration != undefined &&

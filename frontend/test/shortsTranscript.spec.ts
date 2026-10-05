@@ -7,6 +7,7 @@ import {
     TAIL,
     clipHighlightRange,
     flattenSegments,
+    labelForRange,
     matchingSegments,
     rangeFromSelection,
     overlapsRange,
@@ -243,5 +244,59 @@ describe("overlapsRange", () => {
 
         expect(overlapsRange(seg, { start: 19, end: 40 })).toBe(true);
         expect(overlapsRange(seg, { start: 20, end: 40 })).toBe(false);
+    });
+});
+
+describe("labelForRange", () => {
+    const flat = flattenSegments([
+        segment("Gud bevare hjerte min", 10, 14, [
+            ["Gud", 10, 11],
+            ["bevare", 11, 12],
+            ["hjerte", 12, 13],
+            ["min", 13, 14],
+        ]),
+        segment("til min siste stund", 14, 18, [
+            ["til", 14, 15],
+            ["min", 15, 16],
+            ["siste", 16, 17],
+            ["stund", 17, 18],
+        ]),
+        segment("helt andre ord", 90, 93, [
+            ["helt", 90, 91],
+            ["andre", 91, 92],
+            ["ord", 92, 93],
+        ]),
+    ]);
+
+    it("takes the opening words spoken in the range", () => {
+        expect(labelForRange(flat, { start: 10, end: 13 })).toBe(
+            "Gud bevare hjerte",
+        );
+    });
+
+    it("runs across segment boundaries", () => {
+        expect(labelForRange(flat, { start: 10, end: 20 }, 6)).toBe(
+            "Gud bevare hjerte min til min",
+        );
+    });
+
+    it("stops at the word limit", () => {
+        expect(labelForRange(flat, { start: 10, end: 20 }, 2)).toBe(
+            "Gud bevare",
+        );
+    });
+
+    it("starts from where the range starts, not the segment", () => {
+        expect(labelForRange(flat, { start: 12.5, end: 15.5 }, 3)).toBe(
+            "hjerte min til",
+        );
+    });
+
+    it("is undefined when no transcript falls in the range", () => {
+        expect(labelForRange(flat, { start: 40, end: 50 })).toBeUndefined();
+    });
+
+    it("is undefined when there is no transcript at all", () => {
+        expect(labelForRange([], { start: 0, end: 30 })).toBeUndefined();
     });
 });

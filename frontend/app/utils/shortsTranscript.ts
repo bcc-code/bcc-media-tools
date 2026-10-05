@@ -155,3 +155,29 @@ export function overlapsRange(
 ): boolean {
     return span.end > range.start && span.start < range.end;
 }
+
+/**
+ * The opening words spoken inside a range, for labelling a clip.
+ *
+ * A clip's own first line tells you what it is far better than anything the
+ * user would be willing to type, and it costs them nothing. Returns undefined
+ * when there is no transcript, or none of it falls inside the range.
+ */
+export function labelForRange(
+    segments: FlatSegment[],
+    range: ClipRange,
+    maxWords = 7,
+): string | undefined {
+    const words: string[] = [];
+
+    for (const segment of segments) {
+        if (!overlapsRange(segment, range)) continue;
+        for (const word of segment.words) {
+            if (!overlapsRange(word, range)) continue;
+            words.push(word.text);
+            if (words.length >= maxWords) return words.join(" ");
+        }
+    }
+
+    return words.length ? words.join(" ") : undefined;
+}

@@ -58,11 +58,6 @@ export function overlappingClipIds(clips: Clip[]): Set<string> {
     return overlapping;
 }
 
-/** Clips in timeline order, which is how the list and the submit are read. */
-export function sortClips(clips: Clip[]): Clip[] {
-    return [...clips].sort((a, b) => a.start - b.start || a.end - b.end);
-}
-
 /**
  * Drops anything that is not a usable clip.
  *

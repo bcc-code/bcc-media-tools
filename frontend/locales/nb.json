@@ -114,7 +114,8 @@
             "clipsTooLong": "1 klipp er lengre enn ett minutt. | {count} klipp er lengre enn ett minutt.",
             "submitted": "Short sendt inn | {count} shorts sendt inn",
             "submittedPartly": "{ok} sendt inn, {failed} kunne ikke startes",
-            "submitFailed": "Kunne ikke sende inn"
+            "submitFailed": "Kunne ikke sende inn",
+            "clipUnlabelled": "Ingen transkripsjon for dette klippet"
         }
     },
     "export": {
