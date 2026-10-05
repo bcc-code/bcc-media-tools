@@ -46,3 +46,7 @@ WHERE id = ? AND session_id = ?;
 -- name: SetMarkerName :execrows
 UPDATE markers SET name = ?, updated_at = ?
 WHERE id = ? AND session_id = ?;
+
+-- name: SetPlayoutWindow :execrows
+UPDATE sessions SET playout_event_id = ?, recording_start_ms = ?, recording_end_ms = ?, updated_at = ?
+WHERE id = ?;

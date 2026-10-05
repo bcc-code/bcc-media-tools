@@ -23,11 +23,14 @@ type Marker struct {
 }
 
 type Session struct {
-	ID        string
-	Vxid      string
-	Title     string
-	Status    string
-	CreatedBy string
-	CreatedAt int64
-	UpdatedAt int64
+	ID               string
+	Vxid             string
+	Title            string
+	Status           string
+	CreatedBy        string
+	CreatedAt        int64
+	UpdatedAt        int64
+	PlayoutEventID   string
+	RecordingStartMs int64
+	RecordingEndMs   int64
 }
