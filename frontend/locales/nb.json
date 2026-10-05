@@ -96,7 +96,10 @@
             "setStartPoint": "Sett startpunkt",
             "setEndPoint": "Sett sluttpunkt",
             "previewShort": "Forhåndsvis short",
-            "durationWarning": "Shorts bør være mindre enn 1 minutt"
+            "durationWarning": "Shorts bør være mindre enn 1 minutt",
+            "previewFailed": "Kunne ikke laste forhåndsvisningen for dette elementet.",
+            "previewFailedHint": "Dette betyr som regel at elementet ikke har en forhåndsvisningsfil ennå. Det tar noen minutter å generere en; last inn siden på nytt når den er klar.",
+            "retry": "Prøv igjen"
         }
     },
     "export": {

@@ -20,11 +20,21 @@ useHead({
 const api = useAPI();
 const base = useRuntimeConfig().public.grpcUrl;
 
-const { data: videoUrl, status } = useAsyncData(
+const {
+    data: videoUrl,
+    status,
+    error,
+    refresh,
+} = useAsyncData(
     () => `preview:${vxId.value}`,
     () => api.getShortsPreview({ VXID: vxId.value }),
     { transform: (data) => data.url },
 );
+
+// Assets without a preview shape are common enough that the error state offers
+// the Cantemo action which creates one, for users whose permissions include it.
+const { chips } = useCantemoActions(vxId);
+const previewChip = computed(() => chips.value.find((c) => c.id === "preview"));
 
 const videoElement = useTemplateRef("videoElement");
 
@@ -36,6 +46,15 @@ const shortDuration = computed(() => {
     if (startTime.value == undefined || endTime.value == undefined) return 0;
     return Math.ceil(endTime.value - startTime.value);
 });
+
+// The >60s rule is deliberately not part of this: it is editorial advice, not a
+// constraint the pipeline enforces, so it stays a warning.
+const isValidRange = computed(
+    () =>
+        startTime.value != undefined &&
+        endTime.value != undefined &&
+        endTime.value > startTime.value,
+);
 
 useEventListener(
     videoElement,
@@ -102,14 +121,25 @@ onMounted(() => {
 const zoom = ref(1);
 const scrubber = useTemplateRef("scrubber");
 const { width: scrubberWidth } = useElementSize(() => scrubber.value?.$el);
+
+// Fit the whole video in the track until the user takes over the zoom —
+// otherwise every resize refits and discards the level they set.
+const zoomPinned = ref(false);
 watch([duration, scrubberWidth], ([d, s]) => {
-    if (!d || !s) return;
+    if (zoomPinned.value || !d || !s) return;
     zoom.value = s / d;
 });
+function onZoomInput(value: number) {
+    zoomPinned.value = true;
+    zoom.value = value;
+}
 
 const toaster = useToast();
 const confirmSubmit = ref(false);
+const submitting = ref(false);
 async function submit() {
+    if (!isValidRange.value || submitting.value) return;
+    submitting.value = true;
     try {
         await api.submitShort({
             VXID: vxId.value,
@@ -120,13 +150,16 @@ async function submit() {
             title: "Short submitted successfully",
             type: "success",
         });
-        navigateTo("/shorts");
         confirmSubmit.value = false;
+        navigateTo("/shorts");
     } catch (err) {
         toaster.create({
             title: "Failed to submit short",
+            description: (err as Error)?.message,
             type: "error",
         });
+    } finally {
+        submitting.value = false;
     }
 }
 
@@ -186,7 +219,12 @@ useVideoKeyboardControls({
                     {{ $t("shorts.generation.description") }}
                 </p>
             </div>
-            <DesignButton icon="tabler:send" @click="confirmSubmit = true">
+            <DesignButton
+                icon="tabler:send"
+                :disabled="!isValidRange || status !== 'success'"
+                :loading="submitting"
+                @click="confirmSubmit = true"
+            >
                 {{ $t("shorts.generation.submit") }}
             </DesignButton>
             <DesignDialog
@@ -201,13 +239,18 @@ useVideoKeyboardControls({
                     >
                         {{ $t("shorts.generation.submitConfirmationCancel") }}
                     </DesignButton>
-                    <DesignButton variant="primary" @click="submit">
+                    <DesignButton
+                        variant="primary"
+                        :disabled="!isValidRange"
+                        :loading="submitting"
+                        @click="submit"
+                    >
                         {{ $t("shorts.generation.submitConfirmationSubmit") }}
                     </DesignButton>
                 </div>
             </DesignDialog>
         </header>
-        <template v-if="status == 'success'">
+        <template v-if="status === 'success'">
             <video
                 ref="videoElement"
                 :src="videoUrl"
@@ -281,9 +324,40 @@ useVideoKeyboardControls({
                 v-model:end="endTime"
                 @seek="onSeek"
             />
-            <DesignSlider v-model="zoom" :min="0.1" :max="10" :step="0.01" />
+            <DesignSlider
+                :model-value="zoom"
+                :min="0.1"
+                :max="10"
+                :step="0.01"
+                @update:model-value="onZoomInput"
+            />
         </template>
-        <template v-if="status != 'success'">
+        <div
+            v-else-if="status === 'error'"
+            class="flex flex-col items-center gap-4 py-16"
+        >
+            <Icon name="tabler:alert-triangle" class="text-text-hint size-10" />
+            <p class="text-text-muted max-w-md text-center">
+                {{ error?.message ?? $t("shorts.generation.previewFailed") }}
+            </p>
+            <p class="text-text-hint max-w-md text-center text-sm">
+                {{ $t("shorts.generation.previewFailedHint") }}
+            </p>
+            <div class="flex gap-2">
+                <DesignButton variant="secondary" @click="refresh()">
+                    {{ $t("shorts.generation.retry") }}
+                </DesignButton>
+                <DesignButton
+                    v-if="previewChip"
+                    variant="secondary"
+                    @click="previewChip.run()"
+                >
+                    {{ previewChip.label }}
+                </DesignButton>
+            </div>
+        </div>
+
+        <template v-else>
             <DesignSkeleton class="aspect-video w-full" />
             <div class="flex items-center gap-2">
                 <div class="space-y-2">

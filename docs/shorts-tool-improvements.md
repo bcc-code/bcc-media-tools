@@ -1,9 +1,10 @@
 # Shorts Tool — Bugs & Improvements
 
-> Status: **not started** · Owner: TBD
+> Status: **§1 bugs done** (B1–B5, B7) · Owner: TBD
 >
 > Notes from a review of the shorts generation tool (`/shorts/generate`) on
-> 2026-10-02. Nothing here has been implemented yet.
+> 2026-10-02. The bug fixes landed 2026-10-05; everything in §2 and §3 is still
+> open.
 
 **Scope — this is a clip-selection tool, not an editor.** The user's whole job is
 to find the good 30 seconds in a 20-minute talk, mark in/out, and submit. The
@@ -15,7 +16,7 @@ neither are not worth the surface area.
 
 ## 1. Bugs
 
-### <a id="b1"></a>B1 — Nothing validates the range, and the failure is invisible · **high**
+### <a id="b1"></a>B1 — Nothing validates the range, and the failure is invisible · **high** · ✅ fixed
 
 Neither `submit()` (`generate.vue:112`) nor `SubmitShort` (`shorts.go:44`)
 checks that `start < end`. The workflow does validate
@@ -24,18 +25,20 @@ Temporal `ValidationError` the user never sees — they get a success toast and 
 navigated away. The submit button is also always enabled, and the <60 s rule is
 only a visual warning.
 
-**Fix:** disable submit when `start >= end`; validate server-side in
-`SubmitShort` and return a real error; decide whether >60 s should block or just
-warn.
+**Fixed:** `isValidRange` disables both submit buttons and guards `submit()`;
+`validateShortRange` in `shorts.go` rejects with `CodeInvalidArgument` and the
+error toast now carries the server message. Covered by
+`cmd/server/shorts_test.go`. **>60 s stays a warning** — it is editorial advice,
+not something the pipeline enforces.
 
-### <a id="b2"></a>B2 — Dragging the selection past an edge stretches it · **high**
+### <a id="b2"></a>B2 — Dragging the selection past an edge stretches it · **high** · ✅ fixed
 
 `ShortsTimelineScrubber.vue:169` clamps `start` and `end` independently:
 
 ```ts
 watch([start, end], ([s, e]) => {
-    if (s < props.min) start.value = props.min;
-    if (e > props.max) end.value = props.max;
+  if (s < props.min) start.value = props.min;
+  if (e > props.max) end.value = props.max;
 });
 ```
 
@@ -43,33 +46,41 @@ A `move` drag (`:148`) adds the same delta to both. Drag the whole selection lef
 past 0 and `start` pins to 0 while `end` keeps travelling — a 30 s clip silently
 becomes 45 s.
 
-**Fix:** clamp the delta before applying it, not the result.
+**Fixed:** drags now resolve against a `DragOrigin` baseline captured at
+`pointerdown`, and `move` clamps the _offset_ to `[min - start, max - end]` so
+the span keeps its length at both edges. The independent clamp watch remains as
+a safety net for values set by the parent.
 
-### <a id="b3"></a>B3 — Preview failure shows skeletons forever · **high**
+### <a id="b3"></a>B3 — Preview failure shows skeletons forever · **high** · ✅ fixed
 
 `generate.vue:286` renders the loading state with `v-if="status != 'success'"`,
 so an **error** renders a permanent shimmer. Assets with no preview shape are
 common, which makes this the first thing a new user hits.
 
-**Fix:** handle the error branch explicitly; offer a "Generate preview" action —
-`CANTEMO_ACTION_PREVIEW` is already wired up in the Cantemo tool.
+**Fixed:** the template is now a proper `success` / `error` / `loading` chain.
+The error state explains the likely cause and offers **Try again** plus the
+Cantemo **Generate preview** chip, the latter only for users who hold
+`canCantemoPreview`.
 
-### <a id="b4"></a>B4 — Zoom resets on every window resize · **medium**
+### <a id="b4"></a>B4 — Zoom resets on every window resize · **medium** · ✅ fixed
 
 `generate.vue:105` watches `scrubberWidth`, so any resize (or sidebar toggle)
 recomputes `zoom` to fit and throws away whatever the user had set.
 
-**Fix:** fit-on-load only, or stop overriding once the user has touched the zoom
-control.
+**Fixed:** a `zoomPinned` flag stops the refit as soon as the user moves the
+slider. A "Fit" button to get back to the fitted level is still open — see
+[I6](#i6).
 
-### <a id="b5"></a>B5 — Drag uses `event.movementX` · **medium**
+### <a id="b5"></a>B5 — Drag uses `event.movementX` · **medium** · ✅ fixed
 
 `ShortsTimelineScrubber.vue:146` derives the delta from `movementX`, which
 accumulates rounding error and drops samples on fast drags. `seekFromEvent`
 (`:125`) already does the correct thing — `clientX` relative to the track rect.
 
-**Fix:** compute position from `clientX` for all drag modes. Moving to pointer
-events at the same time gets touch/pen support for free.
+**Fixed:** all drag modes derive position from `clientX` against the track rect.
+Switched to pointer events
+(`pointerdown`/`pointermove`/`pointerup`/`pointercancel`) with `touch-none` on
+the track, so touch and pen now work.
 
 ### <a id="b6"></a>B6 — Possible A/V drift from scene-change frame dropping · **medium, upstream, unconfirmed**
 
@@ -81,6 +92,13 @@ changes would end ~0.4 s out of sync.
 
 May well be intentional. Worth confirming against a generated short before
 treating it as a bug — it lives in `bcc-media-flows`, not here.
+
+### <a id="b7"></a>B7 — `defineModel` narrowed the selection type to `0` · **low** · ✅ fixed
+
+`defineModel("start", { default: 0 })` inferred the literal type `0` rather than
+`number`, so every assignment to `start`/`end` failed `pnpm typecheck` — eight
+errors, pre-dating this round of work. Fixed with an explicit
+`defineModel<number>`; `pnpm typecheck` is clean again.
 
 ## 2. The three improvements worth doing
 
@@ -94,7 +112,7 @@ right shape: `Segments` carry `start`/`end`/`text` with nested `Words` that have
 word-level `start`/`end`/`confidence` (`api.proto:188-213`).
 
 **The blocker is permissions, not data.** `GetTranscription`
-(`transcription.go:72`) requires *transcription* permission **and** the asset
+(`transcription.go:72`) requires _transcription_ permission **and** the asset
 inheriting ACLs from `_AccessibleByTools` (VX-2677). A shorts user has neither.
 
 **Needed:** a `GetShortsTranscript` RPC gated on `CanShorts()` alone — the
@@ -163,7 +181,7 @@ what gets made.
 
 **The real AI crop cannot be previewed pre-submit.** The keyframes come from an
 external service (`SHORTS_SERVICE_URL`, `activities/shorts.go:18`) that runs on
-the *already-cut* clip, polled in a 5 s loop inside the workflow
+the _already-cut_ clip, polled in a 5 s loop inside the workflow
 (`generate_short.go:154-176`). Getting them early means running the same
 expensive job.
 
@@ -182,7 +200,7 @@ to be in frame?") with no backend work at all.
 Split accordingly:
 
 - **Now:** static centre-crop guide overlay. An afternoon.
-- **Later:** seeing the real tracked crop becomes a *post-generation review*
+- **Later:** seeing the real tracked crop becomes a _post-generation review_
   step. The keyframes are already returned in `GenerateShortResult`
   (`generate_short.go:222`), so a review view could replay the tracked crop over
   the source.
@@ -221,7 +239,7 @@ polling status. Prerequisite for the status chips in [I2](#i2).
 ### I7 — Show scene cuts on the timeline
 
 The workflow already runs `FFmpegGetSceneChanges` (`generate_short.go:125`) —
-but only *after* submission. Exposing those as timeline markers with snap-to-cut
+but only _after_ submission. Exposing those as timeline markers with snap-to-cut
 for in/out would stop people cutting mid-shot, using data we already compute.
 Needs an endpoint that can produce them pre-submit.
 
@@ -242,14 +260,14 @@ better, offer the choice the way the export tool does.
 
 ## 4. Suggested order of work
 
-| Phase                 | Scope                                                        | Why                                                                                   |
-| --------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
-| **0 — bugs**          | [B1](#b1)–[B5](#b5)                                          | Small, self-contained, and B1/B3 are the ones users actually hit.                     |
-| **1 — transcript**    | [I1](#i1)                                                    | Biggest change to how the tool is used; the permission work is small.                 |
-| **2 — crop guide**    | [I3](#i3) (static overlay only)                              | An afternoon, and it stops the output being a surprise.                               |
-| **3 — status**        | [I4](#i4)                                                    | Prerequisite for the clip-list status chips.                                          |
-| **4 — multi-cut**     | [I2](#i2)                                                    | Most UI surface; benefits from I4 having landed.                                      |
-| **5 — polish**        | [I5](#i5)–[I9](#i9), [B6](#b6) if confirmed                  |                                                                                       |
+| Phase              | Scope                                       | Why                                                                   |
+| ------------------ | ------------------------------------------- | --------------------------------------------------------------------- |
+| **0 — bugs** ✅    | [B1](#b1)–[B5](#b5), [B7](#b7)              | Small, self-contained, and B1/B3 are the ones users actually hit.     |
+| **1 — transcript** | [I1](#i1)                                   | Biggest change to how the tool is used; the permission work is small. |
+| **2 — crop guide** | [I3](#i3) (static overlay only)             | An afternoon, and it stops the output being a surprise.               |
+| **3 — status**     | [I4](#i4)                                   | Prerequisite for the clip-list status chips.                          |
+| **4 — multi-cut**  | [I2](#i2)                                   | Most UI surface; benefits from I4 having landed.                      |
+| **5 — polish**     | [I5](#i5)–[I9](#i9), [B6](#b6) if confirmed |                                                                       |
 
 ## 5. Open questions
 

@@ -96,7 +96,10 @@
             "setStartPoint": "Set start point",
             "setEndPoint": "Set end point",
             "previewShort": "Preview short",
-            "durationWarning": "Shorts should be less than 1 minute"
+            "durationWarning": "Shorts should be less than 1 minute",
+            "previewFailed": "Could not load the preview for this asset.",
+            "previewFailedHint": "This usually means the asset has no preview file yet. Generating one takes a few minutes; reload once it is done.",
+            "retry": "Try again"
         }
     },
     "export": {
