@@ -30,7 +30,7 @@ func newTestEditorialAPI(t *testing.T) *EditorialAPI {
 	t.Cleanup(func() { PermissionsFile = oldPerms })
 	t.Setenv("DEBUG_AUTH_EMAIL", "editor@bcc.media")
 
-	return NewEditorialAPI(db, nil, nil)
+	return NewEditorialAPI(db, nil, nil, nil)
 }
 
 func createTestSession(t *testing.T, api *EditorialAPI, vxID, title string) *apiv1.EditorialSession {

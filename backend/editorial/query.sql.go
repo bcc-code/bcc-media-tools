@@ -61,7 +61,7 @@ func (q *Queries) DeleteSession(ctx context.Context, id string) (int64, error) {
 }
 
 const getSession = `-- name: GetSession :one
-SELECT id, vxid, title, status, created_by, created_at, updated_at FROM sessions
+SELECT id, vxid, title, status, created_by, created_at, updated_at, playout_event_id, recording_start_ms, recording_end_ms FROM sessions
 WHERE id = ?
 `
 
@@ -76,6 +76,9 @@ func (q *Queries) GetSession(ctx context.Context, id string) (Session, error) {
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.PlayoutEventID,
+		&i.RecordingStartMs,
+		&i.RecordingEndMs,
 	)
 	return i, err
 }
@@ -170,7 +173,7 @@ func (q *Queries) ListMarkersForSession(ctx context.Context, sessionID string) (
 }
 
 const listSessions = `-- name: ListSessions :many
-SELECT id, vxid, title, status, created_by, created_at, updated_at FROM sessions
+SELECT id, vxid, title, status, created_by, created_at, updated_at, playout_event_id, recording_start_ms, recording_end_ms FROM sessions
 ORDER BY created_at DESC
 `
 
@@ -191,6 +194,9 @@ func (q *Queries) ListSessions(ctx context.Context) ([]Session, error) {
 			&i.CreatedBy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.PlayoutEventID,
+			&i.RecordingStartMs,
+			&i.RecordingEndMs,
 		); err != nil {
 			return nil, err
 		}
@@ -275,6 +281,33 @@ func (q *Queries) SetMarkerPublish(ctx context.Context, arg SetMarkerPublishPara
 		arg.UpdatedAt,
 		arg.ID,
 		arg.SessionID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const setPlayoutWindow = `-- name: SetPlayoutWindow :execrows
+UPDATE sessions SET playout_event_id = ?, recording_start_ms = ?, recording_end_ms = ?, updated_at = ?
+WHERE id = ?
+`
+
+type SetPlayoutWindowParams struct {
+	PlayoutEventID   string
+	RecordingStartMs int64
+	RecordingEndMs   int64
+	UpdatedAt        int64
+	ID               string
+}
+
+func (q *Queries) SetPlayoutWindow(ctx context.Context, arg SetPlayoutWindowParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, setPlayoutWindow,
+		arg.PlayoutEventID,
+		arg.RecordingStartMs,
+		arg.RecordingEndMs,
+		arg.UpdatedAt,
+		arg.ID,
 	)
 	if err != nil {
 		return 0, err

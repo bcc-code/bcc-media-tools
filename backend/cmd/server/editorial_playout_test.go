@@ -121,14 +121,14 @@ func TestImportFromPlayoutOutsideEveryMeeting(t *testing.T) {
 // needs Vidispine and is covered by the recordingWindow tests.
 func TestResolveWindowPriority(t *testing.T) {
 	stored := editorial.Session{
-		VXID:           "VX-1",
-		RecordingStart: ts(t, "2026-07-26T12:00:00Z"),
-		RecordingEnd:   ts(t, "2026-07-26T13:45:00Z"),
+		Vxid:             "VX-1",
+		RecordingStartMs: ts(t, "2026-07-26T12:00:00Z").UnixMilli(),
+		RecordingEndMs:   ts(t, "2026-07-26T13:45:00Z").UnixMilli(),
 	}
 	api := EditorialAPI{}
 
 	t.Run("request overrides the stored window", func(t *testing.T) {
-		w, manual, err := api.resolveWindow(&stored,
+		w, manual, err := api.resolveWindow(stored,
 			timestamppb.New(ts(t, "2026-07-26T14:00:00Z")),
 			timestamppb.New(ts(t, "2026-07-26T15:00:00Z")))
 		if err != nil {
@@ -143,20 +143,20 @@ func TestResolveWindowPriority(t *testing.T) {
 	})
 
 	t.Run("stored window is used when nothing is supplied", func(t *testing.T) {
-		w, manual, err := api.resolveWindow(&stored, nil, nil)
+		w, manual, err := api.resolveWindow(stored, nil, nil)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 		if manual {
 			t.Error("reusing a stored window should not re-save it")
 		}
-		if !w.Start.Equal(stored.RecordingStart) || !w.End.Equal(stored.RecordingEnd) {
+		if w.Start.UnixMilli() != stored.RecordingStartMs || w.End.UnixMilli() != stored.RecordingEndMs {
 			t.Errorf("got %s–%s", w.Start, w.End)
 		}
 	})
 
 	t.Run("end must be after start", func(t *testing.T) {
-		_, _, err := api.resolveWindow(&stored,
+		_, _, err := api.resolveWindow(stored,
 			timestamppb.New(ts(t, "2026-07-26T15:00:00Z")),
 			timestamppb.New(ts(t, "2026-07-26T14:00:00Z")))
 		if err == nil {
