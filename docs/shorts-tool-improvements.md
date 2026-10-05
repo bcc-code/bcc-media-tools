@@ -1,8 +1,10 @@
 # Shorts Tool — Bugs & Improvements
 
-> **Done:** §1 bugs (B1–B5, B7) · [I1](#i1) transcript · [I3](#i3) crop guide
+> **Done:** §1 bugs (B1–B5, B7, B8) · [I1](#i1) transcript · [I3](#i3) crop
+> guide · [I2](#i2) multi-cut
 >
-> **Next:** [I4](#i4) workflow ids + status, then [I2](#i2) multi-cut
+> **Next:** [I4](#i4) status polling — the backend half already landed with
+> [I2](#i2); what is left is a "my shorts" view that polls the returned ids
 >
 > **Owner:** TBD
 >
@@ -108,11 +110,20 @@ treating it as a bug — it lives in `bcc-media-flows`, not here.
 errors, pre-dating this round of work. Fixed with an explicit
 `defineModel<number>`; `pnpm typecheck` is clean again.
 
+### <a id="b8"></a>B8 — Shortcuts fired while typing in the transcript search · **high** · ✅ fixed
+
+`useVideoKeyboardControls` bound bare letters and space with no check on where
+the keystroke landed, so a space in the transcript search box played the video
+and an "o" set the out point. Introduced by [I1](#i1)'s search field and found
+while adding the `A` shortcut for [I2](#i2).
+
+**Fixed:** every shortcut now ignores events whose target is an input, textarea,
+select or contenteditable.
+
 ## 2. The three improvements worth doing
 
-Discussed and prioritised 2026-10-02. Everything in §3 is secondary to these.
-[I1](#i1) and [I3](#i3) are done; [I2](#i2) is the one still open, and it wants
-[I4](#i4) to land first.
+Discussed and prioritised 2026-10-02. All three are done; everything in §3 was
+always secondary to them.
 
 ### <a id="i1"></a>I1 — Use the transcript to find the clip · ✅ done
 
@@ -167,7 +178,7 @@ is a one-line change to the gate in `GetShortsTranscript`.
 cannot be selected with the mouse for copying. Fine for the clip-picking job, but
 worth revisiting if anyone wants to quote the text.
 
-### <a id="i2"></a>I2 — Cut multiple shorts per video
+### <a id="i2"></a>I2 — Cut multiple shorts per video · ✅ done
 
 Cutting 3–5 clips from one talk is the normal case; today that is five round
 trips through the same video. The constraint is UI — this is only worth doing if
@@ -187,21 +198,36 @@ Model: promote the single selection to a **list of clips**.
 - Overlapping clips are legitimate (variants of the same moment) — allow them,
   but hint at the overlap visually
 
-Two things this unlocks cheaply:
+**Built as:**
 
-- **An editable name per clip.** The workflow currently auto-names
-  `<title>_short_<timestamp>` (`generate_short.go:100`), so five shorts from one
-  talk are indistinguishable in Mediabanken. Needs a `Name` field threaded
-  through `SubmitShortRequest` → `GenerateShortDataParams`.
-- **A natural home for render status** — the clip list is already the right place
-  to show rendering / done / failed, which pairs with [I3](#i3).
+- `useShortsClips` holds the list, the active clip, and localStorage per asset.
+  **There is no separate draft range**: the active clip _is_ what the timeline
+  and transcript edit, which removes the failure where someone trims a range,
+  submits, and their last clip is missing because they never pressed Add.
+- The page keeps working through `activeStart` / `activeEnd` writable computeds,
+  so the timeline, transcript and crop guide did not have to learn about lists.
+- `ShortsClipList.vue` above the timeline: index, in–out, length, a warning tint
+  past a minute, an overlap hint, and remove. `ShortsTimelineScrubber` draws
+  every clip — inactive ones as bands above the dimming, the active one keeping
+  its handles — and clicking a band activates it.
+- `A` adds a 30 s clip at the playhead. On first load the list seeds with one
+  clip spanning the whole asset, which is how the editor behaved before.
+- `SubmitShorts` RPC takes `repeated ShortClip` and returns a per-clip
+  `{workflow_id, error}`, so one bad clip reports itself and the rest still run.
+  `SubmitShort` now delegates to the same `startShort`, so the workflow
+  parameters live in one place.
+- Pure logic in `app/utils/shortsClips.ts`, 25 tests. `sanitiseClips` hardens the
+  localStorage read: clips come back from storage in whatever shape an older
+  build or a hand edit left, and a bad entry must not take the editor down.
 
-Backend: add `SubmitShorts` taking `repeated ShortRequest` and returning
-`repeated string workflow_ids`, rather than looping client-side — partial failure
-becomes one response instead of N.
+**Not built — blocked upstream:** per-clip naming. `GenerateShortDataParams`
+(`generate_short.go:28`) has no `Name` field, so a name entered here would have
+nowhere to go; the output stays `<title>_short_<timestamp>`. The list uses index
+and timecode instead, which is unambiguous but does not help find the result in
+Mediabanken. Needs a `bcc-media-flows` change first.
 
-Also: persist the clip list in `useLocalStorage` keyed by VX-ID. Losing one
-selection to a reload is annoying; losing five cuts is a setback.
+**Still to do:** the clip list is the right home for render status, which is
+[I4](#i4) — the returned workflow ids are already there to poll.
 
 ### <a id="i3"></a>I3 — Preview the actual 9:16 crop · ✅ static guide done
 
@@ -301,11 +327,11 @@ better, offer the choice the way the export tool does.
 
 | Phase                 | Scope                                       | Why                                                                   |
 | --------------------- | ------------------------------------------- | --------------------------------------------------------------------- |
-| **0 — bugs** ✅       | [B1](#b1)–[B5](#b5), [B7](#b7)              | Small, self-contained, and B1/B3 are the ones users actually hit.     |
+| **0 — bugs** ✅       | [B1](#b1)–[B5](#b5), [B7](#b7), [B8](#b8)   | Small, self-contained, and B1/B3 are the ones users actually hit.     |
 | **1 — transcript** ✅ | [I1](#i1)                                   | Biggest change to how the tool is used; the permission work is small. |
 | **2 — crop guide** ✅ | [I3](#i3) (static overlay only)             | An afternoon, and it stops the output being a surprise.               |
 | **3 — status**        | [I4](#i4)                                   | Prerequisite for the clip-list status chips.                          |
-| **4 — multi-cut**     | [I2](#i2)                                   | Most UI surface; benefits from I4 having landed.                      |
+| **4 — multi-cut** ✅  | [I2](#i2)                                   | Most UI surface; benefits from I4 having landed.                      |
 | **5 — polish**        | [I5](#i5)–[I9](#i9), [B6](#b6) if confirmed |                                                                       |
 
 ## <a id="confirm"></a>5. Still to confirm in use

@@ -84,6 +84,75 @@ func validateShortRange(msg *apiv1.SubmitShortRequest) error {
 	return nil
 }
 
+// SubmitShorts starts one GenerateShort workflow per clip.
+//
+// Clips are independent, so one bad or unstartable clip reports itself and the
+// rest still run: losing four good cuts because the fifth was malformed would
+// mean redoing the whole session.
+func (s ShortsAPI) SubmitShorts(ctx context.Context, req *connect.Request[apiv1.SubmitShortsRequest]) (*connect.Response[apiv1.SubmitShortsResponse], error) {
+	email := getEmail(req)
+	if email == "" {
+		return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("missing email header"))
+	}
+	if !PermissionsForEmail(email).CanShorts() {
+		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("not enough permissions to create shorts"))
+	}
+	if len(req.Msg.GetClips()) == 0 {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no clips to submit"))
+	}
+
+	results := make([]*apiv1.SubmitShortResult, 0, len(req.Msg.GetClips()))
+	for _, clip := range req.Msg.GetClips() {
+		single := &apiv1.SubmitShortRequest{
+			VXID:       req.Msg.GetVXID(),
+			InSeconds:  clip.GetInSeconds(),
+			OutSeconds: clip.GetOutSeconds(),
+		}
+
+		if err := validateShortRange(single); err != nil {
+			results = append(results, &apiv1.SubmitShortResult{Error: err.Error()})
+			continue
+		}
+
+		run, err := s.startShort(ctx, single)
+		if err != nil {
+			log.L.Error().Err(err).
+				Str("vxid", single.GetVXID()).
+				Float64("in", single.GetInSeconds()).
+				Float64("out", single.GetOutSeconds()).
+				Msg("shorts: could not start generation")
+			results = append(results, &apiv1.SubmitShortResult{Error: err.Error()})
+			continue
+		}
+
+		results = append(results, &apiv1.SubmitShortResult{WorkflowId: run.GetID()})
+	}
+
+	return connect.NewResponse(&apiv1.SubmitShortsResponse{Results: results}), nil
+}
+
+// startShort launches the generation workflow for one already-validated clip.
+func (s ShortsAPI) startShort(ctx context.Context, msg *apiv1.SubmitShortRequest) (client.WorkflowRun, error) {
+	log.L.Info().
+		Str("vxid", msg.GetVXID()).
+		Float64("in", msg.GetInSeconds()).
+		Float64("out", msg.GetOutSeconds()).
+		Msg("shorts: submitting for generation")
+
+	workflowOptions := client.StartWorkflowOptions{
+		TaskQueue: getQueue(),
+	}
+
+	return s.temporalClient.ExecuteWorkflow(ctx, workflowOptions, exportworkflows.GenerateShort, exportworkflows.GenerateShortDataParams{
+		VXID:          msg.GetVXID(),
+		InSeconds:     msg.GetInSeconds(),
+		OutSeconds:    msg.GetOutSeconds(),
+		OutputDirPath: "/mnt/isilon/Input/shorts",
+		ModelSize:     "n",
+		DebugMode:     false,
+	})
+}
+
 func (s ShortsAPI) SubmitShort(ctx context.Context, req *connect.Request[apiv1.SubmitShortRequest]) (*connect.Response[apiv1.Void], error) {
 	email := getEmail(req)
 	if email == "" {
@@ -97,27 +166,7 @@ func (s ShortsAPI) SubmitShort(ctx context.Context, req *connect.Request[apiv1.S
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
-	log.L.Info().
-		Str("vxid", req.Msg.GetVXID()).
-		Float64("in", req.Msg.GetInSeconds()).
-		Float64("out", req.Msg.GetOutSeconds()).
-		Msg("shorts: submitting for generation")
-
-	// Trigger flow
-	queue := getQueue()
-	workflowOptions := client.StartWorkflowOptions{
-		TaskQueue: queue,
-	}
-
-	_, err := s.temporalClient.ExecuteWorkflow(ctx, workflowOptions, exportworkflows.GenerateShort, exportworkflows.GenerateShortDataParams{
-		VXID:          req.Msg.VXID,
-		InSeconds:     req.Msg.InSeconds,
-		OutSeconds:    req.Msg.OutSeconds,
-		OutputDirPath: "/mnt/isilon/Input/shorts",
-		ModelSize:     "n",
-		DebugMode:     false,
-	})
-	if err != nil {
+	if _, err := s.startShort(ctx, req.Msg); err != nil {
 		return nil, err
 	}
 

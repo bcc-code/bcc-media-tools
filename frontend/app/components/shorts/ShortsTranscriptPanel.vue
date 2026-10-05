@@ -114,7 +114,7 @@ const rows = useTemplateRef<HTMLElement[]>("rows");
 function scrollSegmentIntoView(index: number) {
     rows.value
         ?.find((el) => Number(el.dataset.index) === index)
-        ?.scrollIntoView({ block: "center", behavior: "smooth" });
+        ?.scrollIntoView({ block: "start", behavior: "smooth" });
 }
 
 const activeSegment = computed(() =>
@@ -211,7 +211,7 @@ const formatStamp = (seconds: number) => {
                 ref="rows"
                 :data-index="segment.index"
                 :class="[
-                    'flex items-baseline gap-2 rounded-lg px-2 py-1.5',
+                    'flex scroll-mt-2 items-baseline gap-2 rounded-lg px-2 py-1.5',
                     {
                         'bg-surface-indent':
                             activeSegment?.index === segment.index,

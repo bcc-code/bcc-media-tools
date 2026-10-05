@@ -61,22 +61,25 @@ const videoSize = ref({ width: 0, height: 0 });
 const showCropGuide = useLocalStorage("shortsCropGuide", false);
 
 const duration = ref<number | undefined>(0);
-const startTime = ref<number | undefined>(0);
-const endTime = ref<number | undefined>(0);
+
+const {
+    clips,
+    activeId,
+    activeStart: startTime,
+    activeEnd: endTime,
+    overlapping,
+    submittable,
+    activate,
+    add: addClipAt,
+    remove: removeClip,
+    clear: clearClips,
+    initialise: initialiseClips,
+} = useShortsClips(vxId, duration);
 
 const shortDuration = computed(() => {
     if (startTime.value == undefined || endTime.value == undefined) return 0;
     return Math.ceil(endTime.value - startTime.value);
 });
-
-// The >60s rule is deliberately not part of this: it is editorial advice, not a
-// constraint the pipeline enforces, so it stays a warning.
-const isValidRange = computed(
-    () =>
-        startTime.value != undefined &&
-        endTime.value != undefined &&
-        endTime.value > startTime.value,
-);
 
 useEventListener(
     videoElement,
@@ -84,8 +87,7 @@ useEventListener(
     () => {
         const el = videoElement.value;
         duration.value = el?.duration;
-        startTime.value = 0;
-        endTime.value = duration.value;
+        initialiseClips();
         if (el?.videoWidth && el?.videoHeight) {
             videoSize.value = { width: el.videoWidth, height: el.videoHeight };
         }
@@ -161,32 +163,67 @@ function onZoomInput(value: number) {
 }
 
 const toaster = useToast();
+const { t } = useI18n();
 const confirmSubmit = ref(false);
+
+// Every clip in the list has to be usable: submitting a batch that silently
+// drops one is worse than refusing until it is fixed.
+const canSubmit = computed(
+    () =>
+        clips.value.length > 0 &&
+        submittable.value.length === clips.value.length,
+);
 const submitting = ref(false);
 async function submit() {
-    if (!isValidRange.value || submitting.value) return;
+    if (!canSubmit.value || submitting.value) return;
     submitting.value = true;
+
+    const sent = submittable.value;
     try {
-        await api.submitShort({
+        const { results } = await api.submitShorts({
             VXID: vxId.value,
-            InSeconds: startTime.value,
-            OutSeconds: endTime.value,
+            clips: sent.map((clip) => ({
+                InSeconds: clip.start,
+                OutSeconds: clip.end,
+            })),
         });
-        toaster.create({
-            title: "Short submitted successfully",
-            type: "success",
-        });
+
+        // Clips are started independently, so some can fail while others run.
+        const failed = results.filter((r) => r.error);
         confirmSubmit.value = false;
-        navigateTo("/shorts");
+
+        if (failed.length === 0) {
+            toaster.create({
+                title: t("shorts.generation.submitted", { count: sent.length }),
+                type: "success",
+            });
+            clearClips();
+            navigateTo("/shorts");
+            return;
+        }
+
+        toaster.create({
+            title: t("shorts.generation.submittedPartly", {
+                ok: results.length - failed.length,
+                failed: failed.length,
+            }),
+            description: failed[0]?.error,
+            type: failed.length === results.length ? "error" : "warning",
+        });
     } catch (err) {
         toaster.create({
-            title: "Failed to submit short",
+            title: t("shorts.generation.submitFailed"),
             description: (err as Error)?.message,
             type: "error",
         });
     } finally {
         submitting.value = false;
     }
+}
+
+function addClip() {
+    const clip = addClipAt(currentTime.value);
+    if (clip) onSeek(clip.start);
 }
 
 // Written continuously while a transcript drag is in progress, so it must not
@@ -239,12 +276,15 @@ useVideoKeyboardControls({
     },
     setStartPoint,
     setEndPoint,
+    addClip,
 });
 </script>
 
 <template>
-    <div class="mx-auto flex w-full max-w-7xl flex-col gap-4 p-8">
-        <header class="mb-4 flex items-center justify-between">
+    <div
+        class="flex w-full flex-col gap-4 p-8 lg:h-[calc(100dvh-var(--header-height))] lg:overflow-hidden"
+    >
+        <header class="mb-4 flex shrink-0 items-center justify-between">
             <div>
                 <h1 class="text-heading-3 text-text-default">
                     {{ $t("shorts.generation.title") }}
@@ -255,7 +295,7 @@ useVideoKeyboardControls({
             </div>
             <DesignButton
                 icon="tabler:send"
-                :disabled="!isValidRange || status !== 'success'"
+                :disabled="!canSubmit || status !== 'success'"
                 :loading="submitting"
                 @click="confirmSubmit = true"
             >
@@ -264,8 +304,35 @@ useVideoKeyboardControls({
             <DesignDialog
                 v-model:open="confirmSubmit"
                 :title="$t('shorts.generation.submitConfirmationTitle')"
-                :description="$t('shorts.generation.submitConfirmationMessage')"
+                :description="
+                    $t('shorts.generation.submitConfirmationMessage', {
+                        count: submittable.length,
+                    })
+                "
             >
+                <ul class="mb-4 flex flex-col gap-1">
+                    <li
+                        v-for="(clip, index) in submittable"
+                        :key="clip.id"
+                        class="text-text-muted flex gap-3 text-sm tabular-nums"
+                    >
+                        <span class="text-text-hint w-4">{{ index + 1 }}</span>
+                        <span>
+                            {{ formatClock(clip.start) }}–{{
+                                formatClock(clip.end)
+                            }}
+                        </span>
+                        <span
+                            :class="
+                                clipLength(clip) > 60
+                                    ? 'text-semantic-warning'
+                                    : 'text-text-hint'
+                            "
+                        >
+                            {{ formatClock(clipLength(clip)) }}
+                        </span>
+                    </li>
+                </ul>
                 <div class="flex w-full justify-end gap-2">
                     <DesignButton
                         variant="tertiary"
@@ -275,7 +342,7 @@ useVideoKeyboardControls({
                     </DesignButton>
                     <DesignButton
                         variant="primary"
-                        :disabled="!isValidRange"
+                        :disabled="!canSubmit"
                         :loading="submitting"
                         @click="submit"
                     >
@@ -286,17 +353,16 @@ useVideoKeyboardControls({
         </header>
         <template v-if="status === 'success'">
             <div
-                class="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]"
-                :style="{
-                    '--video-h': videoHeight ? `${videoHeight}px` : '60vh',
-                }"
+                class="grid gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]"
             >
-                <div class="relative self-start">
+                <div
+                    class="relative self-start lg:h-full lg:min-h-0 lg:self-stretch"
+                >
                     <video
                         ref="videoElement"
                         :src="videoUrl"
                         controls
-                        class="bg-surface-default aspect-video w-full shadow-xl"
+                        class="bg-surface-default aspect-video w-full shadow-xl lg:aspect-auto lg:h-full lg:object-contain"
                     />
                     <ShortsCropGuide
                         v-if="showCropGuide"
@@ -314,13 +380,13 @@ useVideoKeyboardControls({
                     :duration="duration ?? 0"
                     :start="startTime ?? 0"
                     :end="endTime ?? 0"
-                    class="max-h-[60vh] lg:max-h-(--video-h)"
+                    class="max-h-[60vh] lg:h-full lg:max-h-none lg:min-h-0"
                     @seek="onSeek"
                     @set-range="setRangeFromTranscript"
                 />
                 <div
                     v-else-if="transcriptStatus === 'pending'"
-                    class="max-h-[60vh] space-y-2 lg:max-h-(--video-h)"
+                    class="max-h-[60vh] space-y-2 lg:max-h-none"
                 >
                     <DesignSkeleton class="h-9 w-full" />
                     <DesignSkeleton class="h-40 w-full" />
@@ -342,7 +408,7 @@ useVideoKeyboardControls({
                     {{ $t("shorts.generation.noTranscript") }}
                 </DesignBanner>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex shrink-0 items-center gap-2">
                 <div class="tabular-nums">
                     <p
                         :class="[
@@ -401,6 +467,15 @@ useVideoKeyboardControls({
                     </DesignButton>
                 </DesignTooltip>
             </div>
+            <ShortsClipList
+                class="shrink-0"
+                :clips="clips"
+                :active-id="activeId"
+                :overlapping="overlapping"
+                @activate="activate"
+                @remove="removeClip"
+                @add="addClip"
+            />
             <ShortsTimelineScrubber
                 v-if="
                     duration != undefined &&
@@ -412,13 +487,19 @@ useVideoKeyboardControls({
                 :max="duration"
                 :current="currentTime"
                 :zoom="zoom"
+                class="shrink-0"
                 :vxid="vxId ?? ''"
                 :base="base"
+                :clips="clips"
+                :active-id="activeId"
+                :overlapping="overlapping"
                 v-model:start="startTime"
                 v-model:end="endTime"
                 @seek="onSeek"
+                @activate="activate"
             />
             <DesignSlider
+                class="shrink-0"
                 :model-value="zoom"
                 :min="0.1"
                 :max="10"

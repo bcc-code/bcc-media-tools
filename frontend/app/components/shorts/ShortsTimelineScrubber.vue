@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { Clip } from "~/utils/shortsClips";
+
 const props = defineProps<{
     min: number;
     max: number;
@@ -6,13 +8,28 @@ const props = defineProps<{
     zoom: number;
     vxid: string;
     base: string;
+    /** Every clip being cut from this asset, including the active one. */
+    clips: Clip[];
+    activeId?: string;
+    overlapping?: Set<string>;
 }>();
 
 // Explicit <number>: `default: 0` alone narrows the model type to the literal 0.
 const start = defineModel<number>("start", { default: 0 });
 const end = defineModel<number>("end", { default: 0 });
 
-const emit = defineEmits<{ seek: [time: number] }>();
+const emit = defineEmits<{ seek: [time: number]; activate: [id: string] }>();
+
+// The active clip is drawn from start/end rather than from the list, so it
+// stays in step with a drag that has not been written back yet.
+const otherClips = computed(() =>
+    props.clips.filter((clip) => clip.id !== props.activeId),
+);
+
+const bandStyle = (clip: Clip) => ({
+    left: `${(clip.start / props.max) * 100}%`,
+    width: `${((clip.end - clip.start) / props.max) * 100}%`,
+});
 
 // Filmstrip. Two independent concerns:
 //  - We only ever fetch from a fixed pool of fractions (GRID) so the backend
@@ -77,11 +94,6 @@ const tickLabel = (t: number) => {
     const s = Math.floor(t % 60);
     return `${m}:${String(s).padStart(2, "0")}`;
 };
-
-onMounted(() => {
-    start.value = props.min;
-    end.value = props.max;
-});
 
 const style = computed(() => {
     return {
@@ -241,7 +253,19 @@ watch([start, end], ([s, e]) => {
                     :style="{ left: endPct, right: 0 }"
                 />
                 <div
-                    class="absolute z-2 h-full cursor-grab shadow-[inset_0_0_0_2px_rgba(255,255,255,0.95),inset_0_0_0_3px_rgba(0,0,0,0.55)] active:cursor-grabbing"
+                    v-for="clip in otherClips"
+                    :key="clip.id"
+                    :class="[
+                        'absolute top-0 z-2 h-full cursor-pointer border-y-2 bg-white/10 hover:bg-white/20',
+                        props.overlapping?.has(clip.id)
+                            ? 'border-amber-300/80'
+                            : 'border-white/45',
+                    ]"
+                    :style="bandStyle(clip)"
+                    @pointerdown.stop="emit('activate', clip.id)"
+                />
+                <div
+                    class="absolute z-3 h-full cursor-grab shadow-[inset_0_0_0_2px_rgba(255,255,255,0.95),inset_0_0_0_3px_rgba(0,0,0,0.55)] active:cursor-grabbing"
                     :style
                     @pointerdown.stop="startDrag('move', $event)"
                 >

@@ -90,7 +90,7 @@
             "description": "En enkelt verktøy for å generere shorts",
             "submit": "Send inn og generer",
             "submitConfirmationTitle": "Er du sikker på at du vil sende inn?",
-            "submitConfirmationMessage": "Dette vil starte å generere en short og sende den til Mediabanken.",
+            "submitConfirmationMessage": "Dette vil starte å generere 1 short og sende den til Mediabanken. | Dette vil starte å generere {count} shorts og sende dem til Mediabanken.",
             "submitConfirmationCancel": "Avbryt",
             "submitConfirmationSubmit": "Ja, send inn",
             "setStartPoint": "Sett startpunkt",
@@ -105,7 +105,16 @@
             "noTranscript": "Dette elementet har ingen transkripsjon, så klippet må finnes på tidslinjen.",
             "transcriptFailed": "Transkripsjonen kunne ikke lastes. Klippet kan fortsatt finnes på tidslinjen.",
             "cropGuide": "9:16-guide",
-            "cropGuideHint": "Viser omtrent hva den vertikale shortsen beholder. Omtrentlig: den genererte shortsen følger den som snakker, så det faktiske utsnittet kan bevege seg sideveis."
+            "cropGuideHint": "Viser omtrent hva den vertikale shortsen beholder. Omtrentlig: den genererte shortsen følger den som snakker, så det faktiske utsnittet kan bevege seg sideveis.",
+            "clipCount": "Ingen klipp | 1 klipp | {count} klipp",
+            "addClip": "Legg til klipp",
+            "addClipHint": "Legger til et 30-sekunders klipp ved avspillingspunktet, klart til å trimmes.",
+            "removeClip": "Fjern klipp",
+            "clipOverlaps": "Overlapper et annet klipp. Det er lov, men sjekk at det er med vilje.",
+            "clipsTooLong": "1 klipp er lengre enn ett minutt. | {count} klipp er lengre enn ett minutt.",
+            "submitted": "Short sendt inn | {count} shorts sendt inn",
+            "submittedPartly": "{ok} sendt inn, {failed} kunne ikke startes",
+            "submitFailed": "Kunne ikke sende inn"
         }
     },
     "export": {
