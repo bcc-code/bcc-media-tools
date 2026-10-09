@@ -87,13 +87,15 @@ const description = (style: string) => infoText(style, "description");
                         />
                     </div>
                 </div>
-                <div class="space-y-0.5 px-3 py-2">
-                    <p class="text-caption-1 text-text-default truncate">
+                <div class="space-y-1 px-3 py-2.5">
+                    <p
+                        class="text-body-3 text-text-default truncate font-medium"
+                    >
                         {{ title(style) }}
                     </p>
                     <p
                         v-if="description(style)"
-                        class="text-caption-2 text-text-muted"
+                        class="text-caption-1 text-text-muted font-normal"
                     >
                         {{ description(style) }}
                     </p>
