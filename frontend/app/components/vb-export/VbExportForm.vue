@@ -28,7 +28,13 @@ const destChecked = reactive<Record<string, boolean>>(
 );
 
 const subtitleShape = ref(props.config.subtitleShapes[0] ?? "None");
-const subtitleStyle = ref(props.config.subtitleStyles[0] ?? "");
+
+// The backend lists every file in its styles directory; the allowlist in
+// utils/subtitleStyles.ts decides which of them are selectable here.
+const subtitleStyles = computed(() =>
+    allowedSubtitleStyles(props.config.subtitleStyles),
+);
+const subtitleStyle = ref(subtitleStyles.value[0] ?? "");
 
 // Backend base URL, where the /subtitle-style-preview handler lives.
 const base = useRuntimeConfig().public.grpcUrl;
@@ -277,7 +283,7 @@ function startExport() {
                     </label>
                     <VbExportSubtitleStylePicker
                         v-model="subtitleStyle"
-                        :styles="config.subtitleStyles"
+                        :styles="subtitleStyles"
                         :base="base"
                     />
                 </div>

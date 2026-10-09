@@ -33,7 +33,7 @@ const lightboxOpen = computed({
 const previewUrl = (style: string) =>
     `${props.base}/subtitle-style-preview?name=${encodeURIComponent(style)}`;
 
-const label = (style: string) => style.replace(/\.[^./]+$/, "");
+const label = (style: string) => subtitleStyleLabel(style);
 </script>
 
 <template>
