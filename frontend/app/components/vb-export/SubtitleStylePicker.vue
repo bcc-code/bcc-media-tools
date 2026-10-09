@@ -33,7 +33,21 @@ const lightboxOpen = computed({
 const previewUrl = (style: string) =>
     `${props.base}/subtitle-style-preview?name=${encodeURIComponent(style)}`;
 
+const { t, te } = useI18n();
+
 const label = (style: string) => subtitleStyleLabel(style);
+
+// Styles can carry a friendly title and an explainer in the locale files; both
+// are optional, so fall back to the bare style name and no description.
+const infoText = (style: string, field: "title" | "description") => {
+    const key = subtitleStyleInfoKey(style);
+    if (!key) return undefined;
+    const path = `vbExport.subtitleStyleInfo.${key}.${field}`;
+    return te(path) ? t(path) : undefined;
+};
+
+const title = (style: string) => infoText(style, "title") ?? label(style);
+const description = (style: string) => infoText(style, "description");
 </script>
 
 <template>
@@ -73,9 +87,17 @@ const label = (style: string) => subtitleStyleLabel(style);
                         />
                     </div>
                 </div>
-                <p class="text-caption-1 text-text-default truncate px-3 py-2">
-                    {{ label(style) }}
-                </p>
+                <div class="space-y-0.5 px-3 py-2">
+                    <p class="text-caption-1 text-text-default truncate">
+                        {{ title(style) }}
+                    </p>
+                    <p
+                        v-if="description(style)"
+                        class="text-caption-2 text-text-muted"
+                    >
+                        {{ description(style) }}
+                    </p>
+                </div>
                 <span
                     v-if="model === style"
                     class="bg-primary-default text-on-primary ring-surface-raise shadow-resting absolute top-1.5 right-1.5 flex size-5 items-center justify-center rounded-full ring-2"
@@ -101,8 +123,14 @@ const label = (style: string) => subtitleStyleLabel(style);
     <DesignDialog
         v-model:open="lightboxOpen"
         size="xl"
-        :title="enlarged ? label(enlarged) : undefined"
+        :title="enlarged ? title(enlarged) : undefined"
     >
+        <p
+            v-if="enlarged && description(enlarged)"
+            class="text-body-3 text-text-muted mb-3"
+        >
+            {{ description(enlarged) }}
+        </p>
         <div
             v-if="enlarged"
             class="bg-surface-indent max-h-[70vh] w-full overflow-hidden rounded-xl"
