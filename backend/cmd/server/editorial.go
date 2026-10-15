@@ -35,6 +35,8 @@ type EditorialAPI struct {
 	playout   playoutClient
 	// Tells open pages when a session changes.
 	hub *editorialHub
+	// Writes chapters (subclips); nil when Vidispine isn't configured.
+	vsMetadata vidispineMetadata
 }
 
 type playoutClient interface {

@@ -68,6 +68,21 @@ func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) er
 	return err
 }
 
+const deleteExportedChapter = `-- name: DeleteExportedChapter :exec
+DELETE FROM exported_chapters
+WHERE session_id = ? AND uuid = ?
+`
+
+type DeleteExportedChapterParams struct {
+	SessionID string
+	Uuid      string
+}
+
+func (q *Queries) DeleteExportedChapter(ctx context.Context, arg DeleteExportedChapterParams) error {
+	_, err := q.db.ExecContext(ctx, deleteExportedChapter, arg.SessionID, arg.Uuid)
+	return err
+}
+
 const deleteMarkersForSession = `-- name: DeleteMarkersForSession :exec
 DELETE FROM markers
 WHERE session_id = ?
@@ -129,6 +144,32 @@ func (q *Queries) GetSession(ctx context.Context, id string) (Session, error) {
 		&i.ClockStartMs,
 	)
 	return i, err
+}
+
+const insertExportedChapter = `-- name: InsertExportedChapter :exec
+INSERT INTO exported_chapters (session_id, vxid, uuid, start_tc, end_tc, exported_at)
+VALUES (?, ?, ?, ?, ?, ?)
+`
+
+type InsertExportedChapterParams struct {
+	SessionID  string
+	Vxid       string
+	Uuid       string
+	StartTc    string
+	EndTc      string
+	ExportedAt int64
+}
+
+func (q *Queries) InsertExportedChapter(ctx context.Context, arg InsertExportedChapterParams) error {
+	_, err := q.db.ExecContext(ctx, insertExportedChapter,
+		arg.SessionID,
+		arg.Vxid,
+		arg.Uuid,
+		arg.StartTc,
+		arg.EndTc,
+		arg.ExportedAt,
+	)
+	return err
 }
 
 const insertMarker = `-- name: InsertMarker :exec
@@ -197,6 +238,46 @@ func (q *Queries) ListDismissedPlayoutKeys(ctx context.Context, sessionID string
 			return nil, err
 		}
 		items = append(items, playout_key)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listExportedChapters = `-- name: ListExportedChapters :many
+SELECT session_id, vxid, uuid, start_tc, end_tc, exported_at FROM exported_chapters
+WHERE session_id = ? AND vxid = ?
+`
+
+type ListExportedChaptersParams struct {
+	SessionID string
+	Vxid      string
+}
+
+func (q *Queries) ListExportedChapters(ctx context.Context, arg ListExportedChaptersParams) ([]ExportedChapter, error) {
+	rows, err := q.db.QueryContext(ctx, listExportedChapters, arg.SessionID, arg.Vxid)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ExportedChapter
+	for rows.Next() {
+		var i ExportedChapter
+		if err := rows.Scan(
+			&i.SessionID,
+			&i.Vxid,
+			&i.Uuid,
+			&i.StartTc,
+			&i.EndTc,
+			&i.ExportedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

@@ -169,6 +169,9 @@ const (
 	// APIServiceGetServerTimeProcedure is the fully-qualified name of the APIService's GetServerTime
 	// RPC.
 	APIServiceGetServerTimeProcedure = "/api.v1.APIService/GetServerTime"
+	// APIServiceExportEditorialChaptersProcedure is the fully-qualified name of the APIService's
+	// ExportEditorialChapters RPC.
+	APIServiceExportEditorialChaptersProcedure = "/api.v1.APIService/ExportEditorialChapters"
 )
 
 // APIServiceClient is a client for the api.v1.APIService service.
@@ -241,6 +244,7 @@ type APIServiceClient interface {
 	SetEditorialPresence(context.Context, *connect.Request[v1.SetEditorialPresenceRequest]) (*connect.Response[v1.Void], error)
 	TakeEditorialSync(context.Context, *connect.Request[v1.TakeEditorialSyncRequest]) (*connect.Response[v1.Void], error)
 	GetServerTime(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.ServerTime], error)
+	ExportEditorialChapters(context.Context, *connect.Request[v1.ExportEditorialChaptersRequest]) (*connect.Response[v1.ExportEditorialChaptersResponse], error)
 }
 
 // NewAPIServiceClient constructs a client for the api.v1.APIService service. By default, it uses
@@ -542,6 +546,12 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(aPIServiceMethods.ByName("GetServerTime")),
 			connect.WithClientOptions(opts...),
 		),
+		exportEditorialChapters: connect.NewClient[v1.ExportEditorialChaptersRequest, v1.ExportEditorialChaptersResponse](
+			httpClient,
+			baseURL+APIServiceExportEditorialChaptersProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("ExportEditorialChapters")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -595,6 +605,7 @@ type aPIServiceClient struct {
 	setEditorialPresence              *connect.Client[v1.SetEditorialPresenceRequest, v1.Void]
 	takeEditorialSync                 *connect.Client[v1.TakeEditorialSyncRequest, v1.Void]
 	getServerTime                     *connect.Client[v1.Void, v1.ServerTime]
+	exportEditorialChapters           *connect.Client[v1.ExportEditorialChaptersRequest, v1.ExportEditorialChaptersResponse]
 }
 
 // GetPermissions calls api.v1.APIService.GetPermissions.
@@ -837,6 +848,11 @@ func (c *aPIServiceClient) GetServerTime(ctx context.Context, req *connect.Reque
 	return c.getServerTime.CallUnary(ctx, req)
 }
 
+// ExportEditorialChapters calls api.v1.APIService.ExportEditorialChapters.
+func (c *aPIServiceClient) ExportEditorialChapters(ctx context.Context, req *connect.Request[v1.ExportEditorialChaptersRequest]) (*connect.Response[v1.ExportEditorialChaptersResponse], error) {
+	return c.exportEditorialChapters.CallUnary(ctx, req)
+}
+
 // APIServiceHandler is an implementation of the api.v1.APIService service.
 type APIServiceHandler interface {
 	// Permissions
@@ -907,6 +923,7 @@ type APIServiceHandler interface {
 	SetEditorialPresence(context.Context, *connect.Request[v1.SetEditorialPresenceRequest]) (*connect.Response[v1.Void], error)
 	TakeEditorialSync(context.Context, *connect.Request[v1.TakeEditorialSyncRequest]) (*connect.Response[v1.Void], error)
 	GetServerTime(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.ServerTime], error)
+	ExportEditorialChapters(context.Context, *connect.Request[v1.ExportEditorialChaptersRequest]) (*connect.Response[v1.ExportEditorialChaptersResponse], error)
 }
 
 // NewAPIServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -1204,6 +1221,12 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(aPIServiceMethods.ByName("GetServerTime")),
 		connect.WithHandlerOptions(opts...),
 	)
+	aPIServiceExportEditorialChaptersHandler := connect.NewUnaryHandler(
+		APIServiceExportEditorialChaptersProcedure,
+		svc.ExportEditorialChapters,
+		connect.WithSchema(aPIServiceMethods.ByName("ExportEditorialChapters")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/api.v1.APIService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case APIServiceGetPermissionsProcedure:
@@ -1302,6 +1325,8 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceTakeEditorialSyncHandler.ServeHTTP(w, r)
 		case APIServiceGetServerTimeProcedure:
 			aPIServiceGetServerTimeHandler.ServeHTTP(w, r)
+		case APIServiceExportEditorialChaptersProcedure:
+			aPIServiceExportEditorialChaptersHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -1501,4 +1526,8 @@ func (UnimplementedAPIServiceHandler) TakeEditorialSync(context.Context, *connec
 
 func (UnimplementedAPIServiceHandler) GetServerTime(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.ServerTime], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetServerTime is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) ExportEditorialChapters(context.Context, *connect.Request[v1.ExportEditorialChaptersRequest]) (*connect.Response[v1.ExportEditorialChaptersResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.ExportEditorialChapters is not implemented"))
 }

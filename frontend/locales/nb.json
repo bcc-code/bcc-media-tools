@@ -411,7 +411,14 @@
         "syncedInYourOtherTab": "Playout-synk kjører i den andre fanen din",
         "clockAhead": "Klokken på denne maskinen går {seconds} s foran serveren (±{plusMinus} s). Markørene bruker klokken på denne maskinen.",
         "clockBehind": "Klokken på denne maskinen går {seconds} s etter serveren (±{plusMinus} s). Markørene bruker klokken på denne maskinen.",
-        "clockInSync": "Klokken stemmer med serveren (innenfor {ms} ms)"
+        "clockInSync": "Klokken stemmer med serveren (innenfor {ms} ms)",
+        "saveChapters": "Lagre kapitler i Mediabanken",
+        "saveChaptersMessage": "Skriver de {n} lagrede markørene til {vxid} som kapitler, med tittel, type, medvirkende og bibelvers (som beskrivelse). Kapitler som er lagret herfra før, erstattes; kapitler laget i Cantemo blir stående. Kommentarer sendes ikke.",
+        "saveChaptersUnsaved": "Du har endringer som ikke er lagret. Lagre først: bare lagrede markører sendes.",
+        "chaptersSaved": "Lagret {n} kapittel/kapitler i Mediabanken",
+        "chaptersReplaced": "Erstattet {n} fra før.",
+        "chaptersSkipped": "{n} markør(er) uten lengde ble utelatt.",
+        "chaptersFailed": "Kunne ikke lagre kapitler"
     },
     "vault": {
         "searchPlaceholder": "Søk i vault",

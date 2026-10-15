@@ -112,6 +112,10 @@ func TestEditorialRoleAccess(t *testing.T) {
 			_, err := api.AttachEditorialRecording(ctx, connect.NewRequest(&apiv1.AttachEditorialRecordingRequest{Id: rec.Id, VXID: "VX-2"}))
 			return err
 		}},
+		"save chapters": {apiv1.EditorialLive, func() error {
+			_, err := api.ExportEditorialChapters(ctx, connect.NewRequest(&apiv1.ExportEditorialChaptersRequest{Id: rec.Id}))
+			return err
+		}},
 		"Playout events": {apiv1.EditorialLive, func() error {
 			_, err := api.ListPlayoutEvents(ctx, connect.NewRequest(&apiv1.ListPlayoutEventsRequest{}))
 			return err

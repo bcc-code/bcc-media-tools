@@ -68,3 +68,15 @@ WHERE session_id = ?;
 -- name: DismissPlayoutKey :exec
 INSERT OR IGNORE INTO playout_dismissed (session_id, playout_key)
 VALUES (?, ?);
+
+-- name: ListExportedChapters :many
+SELECT * FROM exported_chapters
+WHERE session_id = ? AND vxid = ?;
+
+-- name: DeleteExportedChapter :exec
+DELETE FROM exported_chapters
+WHERE session_id = ? AND uuid = ?;
+
+-- name: InsertExportedChapter :exec
+INSERT INTO exported_chapters (session_id, vxid, uuid, start_tc, end_tc, exported_at)
+VALUES (?, ?, ?, ?, ?, ?);

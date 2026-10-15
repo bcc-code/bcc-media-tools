@@ -154,6 +154,11 @@ func main() {
 	}
 	defer editorialDB.Close()
 	editorialAPI := NewEditorialAPI(editorialDB, vidispineClient, cantemoClient, playoutClient)
+	editorialAPI.vsMetadata = newVidispineMetadata(
+		os.Getenv("VIDISPINE_BASE_URL"),
+		os.Getenv("VIDISPINE_USERNAME"),
+		os.Getenv("VIDISPINE_PASSWORD"),
+	)
 
 	api := &ApiServer{
 		PermissionsAPI:   permissionsApi,

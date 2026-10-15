@@ -411,7 +411,14 @@
         "syncedInYourOtherTab": "Playout sync runs in your other tab",
         "clockAhead": "This computer's clock is {seconds} s ahead of the server (±{plusMinus} s). Markers use this computer's clock.",
         "clockBehind": "This computer's clock is {seconds} s behind the server (±{plusMinus} s). Markers use this computer's clock.",
-        "clockInSync": "Clock matches the server (within {ms} ms)"
+        "clockInSync": "Clock matches the server (within {ms} ms)",
+        "saveChapters": "Save chapters to Mediabanken",
+        "saveChaptersMessage": "Writes the {n} saved marker(s) to {vxid} as chapters, with title, type, contributors and Bible verses (as description). Chapters saved from here before are replaced; chapters made in Cantemo are left alone. Comments aren't sent.",
+        "saveChaptersUnsaved": "You have unsaved changes. Save first: only the saved markers are sent.",
+        "chaptersSaved": "Saved {n} chapter(s) to Mediabanken",
+        "chaptersReplaced": "Replaced {n} from before.",
+        "chaptersSkipped": "{n} marker(s) without a length were left out.",
+        "chaptersFailed": "Could not save chapters"
     },
     "vault": {
         "searchPlaceholder": "Search the vault",

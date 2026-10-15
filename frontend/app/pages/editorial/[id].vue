@@ -1298,6 +1298,16 @@ const menuItems = computed(() => [
               },
           ]
         : []),
+    ...(!isLive.value && session.value?.VXID && canLive.value
+        ? [
+              {
+                  value: "chapters",
+                  label: t("editorial.saveChapters"),
+                  icon: "tabler:list-details",
+                  disabled: mutationInProgress.value,
+              },
+          ]
+        : []),
     ...(effectiveMode.value === "edit" && !isLive.value
         ? [
               {
@@ -1331,6 +1341,44 @@ function onMenuSelect(value: string) {
     else if (value === "import-playout") void openPlayoutPicker();
     else if (value === "attach") openAttach();
     else if (value === "export") void exportExcel();
+    else if (value === "chapters") chaptersOpen.value = true;
+}
+
+// ── Save chapters to Mediabanken ──────────────────────────
+// Writes the saved markers to the asset as Cantemo subclips, replacing the
+// ones an earlier save wrote; chapters made by hand in Cantemo stay.
+const chaptersOpen = ref(false);
+const savingChapters = ref(false);
+
+async function saveChapters() {
+    if (savingChapters.value) return;
+    savingChapters.value = true;
+    try {
+        const res = await api.exportEditorialChapters({ id: sessionId.value });
+        chaptersOpen.value = false;
+        toaster.create({
+            title: t("editorial.chaptersSaved", { n: res.written }),
+            description: [
+                res.removed
+                    ? t("editorial.chaptersReplaced", { n: res.removed })
+                    : "",
+                res.skipped
+                    ? t("editorial.chaptersSkipped", { n: res.skipped })
+                    : "",
+            ]
+                .filter(Boolean)
+                .join(" "),
+            type: "success",
+        });
+    } catch (e) {
+        toaster.create({
+            title: t("editorial.chaptersFailed"),
+            description: e instanceof Error ? e.message : undefined,
+            type: "error",
+        });
+    } finally {
+        savingChapters.value = false;
+    }
 }
 
 // ── Excel export ──────────────────────────────────────────
@@ -2449,6 +2497,40 @@ onBeforeRouteLeave(() => {
             <DesignButton variant="primary" @click="resolveImportMerge(true)">
                 {{ t("editorial.importMergeReplace") }}
             </DesignButton>
+        </div>
+    </DesignDialog>
+
+    <DesignDialog
+        v-model:open="chaptersOpen"
+        :title="t('editorial.saveChapters')"
+        :description="
+            t('editorial.saveChaptersMessage', {
+                n: rows.length,
+                vxid: session?.VXID ?? '',
+            })
+        "
+    >
+        <div class="flex flex-col gap-4">
+            <DesignBanner
+                v-if="dirty"
+                variant="warning"
+                icon="tabler:alert-triangle"
+            >
+                {{ t("editorial.saveChaptersUnsaved") }}
+            </DesignBanner>
+            <div class="flex justify-end gap-2">
+                <DesignButton variant="secondary" @click="chaptersOpen = false">
+                    {{ t("editorial.cancel") }}
+                </DesignButton>
+                <DesignButton
+                    icon="tabler:upload"
+                    :loading="savingChapters"
+                    :disabled="dirty"
+                    @click="saveChapters"
+                >
+                    {{ t("editorial.saveChapters") }}
+                </DesignButton>
+            </div>
         </div>
     </DesignDialog>
 

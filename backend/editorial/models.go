@@ -4,6 +4,15 @@
 
 package editorial
 
+type ExportedChapter struct {
+	SessionID  string
+	Vxid       string
+	Uuid       string
+	StartTc    string
+	EndTc      string
+	ExportedAt int64
+}
+
 type Marker struct {
 	ID            string
 	SessionID     string

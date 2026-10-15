@@ -608,6 +608,21 @@ message SetEditorialPresenceRequest {
   string marker_id = 4;
 }
 
+// Write the session's markers to its asset in Mediabanken as chapters
+// (Cantemo subclips), replacing the ones an earlier export wrote. Chapters
+// made by hand in Cantemo are left alone.
+message ExportEditorialChaptersRequest {
+  string id = 1;
+}
+
+message ExportEditorialChaptersResponse {
+  int32 written = 1;
+  // chapters from an earlier export that were replaced
+  int32 removed = 2;
+  // markers with no length, which can't be chapters
+  int32 skipped = 3;
+}
+
 // Merge the live session's Playout manifest into its markers and save.
 message SyncEditorialSessionFromPlayoutRequest {
   string id = 1;
@@ -820,4 +835,5 @@ service APIService {
   rpc SetEditorialPresence(SetEditorialPresenceRequest) returns (Void) {}
   rpc TakeEditorialSync(TakeEditorialSyncRequest) returns (Void) {}
   rpc GetServerTime(Void) returns (ServerTime) {}
+  rpc ExportEditorialChapters(ExportEditorialChaptersRequest) returns (ExportEditorialChaptersResponse) {}
 }
