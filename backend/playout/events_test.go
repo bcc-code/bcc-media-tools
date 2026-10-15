@@ -113,6 +113,26 @@ func TestListEventsNullableFields(t *testing.T) {
 	}
 }
 
+func TestListEventsSkipsEventsWithoutAnID(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		io.WriteString(w, `{"data":[
+			{"id":"newEvent","name":"LNMS 26","status":"archived"},
+			{"id":"1023","name":"test 1000","status":"archived"},
+			{"id":"","name":"No id","status":"draft"},
+			{"id":"newEvent","name":"Årvollfest","status":"archived"}
+		]}`)
+	}))
+	defer server.Close()
+	got, err := NewClient(server.URL, "test-key", "tenant").ListEvents(context.Background())
+	if err != nil {
+		t.Fatalf("ListEvents: %v", err)
+	}
+	want := []Event{{ID: "1023", Name: "test 1000", Status: "archived"}}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("events = %+v, want %+v", got, want)
+	}
+}
+
 func TestListEventsLaterPageError(t *testing.T) {
 	for _, tt := range []struct {
 		name      string

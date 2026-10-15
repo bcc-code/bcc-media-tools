@@ -155,9 +155,14 @@ func (c *Client) GetManifest(ctx context.Context, eventID string, types ...strin
 // allows, minimizing the number of pages ListEvents has to fetch.
 const eventsPageSize = 100
 
+// placeholderEventID is the id Playout reports for events that were never
+// given a real one. Many events share it, and it addresses no manifest.
+const placeholderEventID = "newEvent"
+
 // ListEvents returns every event known to the tenant, fetching all pages.
 // There is no server-side name search, so callers filter the returned list
-// themselves.
+// themselves. Events without a usable id are left out: nothing can be fetched
+// for them, and their shared id makes them indistinguishable.
 func (c *Client) ListEvents(ctx context.Context) ([]Event, error) {
 	if !c.configured() {
 		return nil, fmt.Errorf("playout client is not configured")
@@ -174,7 +179,12 @@ func (c *Client) ListEvents(ctx context.Context) ([]Event, error) {
 			return nil, err
 		}
 
-		events = append(events, body.Data...)
+		for _, ev := range body.Data {
+			if ev.ID == "" || ev.ID == placeholderEventID {
+				continue
+			}
+			events = append(events, ev)
+		}
 		// A page short of the requested size is the last one. This doesn't
 		// rely on the response's totalPages/page fields being accurate.
 		if len(body.Data) < eventsPageSize {
