@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { EditorialSession } from "~~/src/gen/api/v1/api_pb";
+import type { EditorialSession, PlayoutEvent } from "~~/src/gen/api/v1/api_pb";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
-import { timestampDate } from "@bufbuild/protobuf/wkt";
+import { timestampDate, timestampFromDate } from "@bufbuild/protobuf/wkt";
 
 const { t } = useI18n();
 const api = useAPI();
@@ -42,18 +42,70 @@ const newVxid = ref("");
 const newTitle = ref("");
 const creating = ref(false);
 
+// A live meeting is logged in real time, before its recording is in
+// Mediabanken; it needs the Playout event to sync names and songs from.
+const newKind = ref<"recording" | "live">("recording");
+const kindItems = computed(() => [
+    { label: t("editorial.kindRecording"), value: "recording" },
+    { label: t("editorial.kindLive"), value: "live" },
+]);
+const kindModel = computed<string>({
+    get: () => newKind.value,
+    set: (v) => (newKind.value = v === "live" ? "live" : "recording"),
+});
+const newEvent = ref<PlayoutEvent>();
+// When the meeting started: Playout content from then on is synced, so a
+// session opened late still picks up the beginning.
+const newStartDate = ref("");
+const newStartTime = ref("");
+watch(createOpen, (open) => {
+    if (!open) return;
+    const now = new Date();
+    newStartDate.value = osloDateInput(now);
+    newStartTime.value = osloTimeInput(now);
+});
+const newStart = computed(() =>
+    osloToDate(newStartDate.value, newStartTime.value),
+);
+const playoutEvents = ref<PlayoutEvent[]>([]);
+const loadingPlayoutEvents = ref(false);
+let playoutEventsLoaded = false;
+
+watch([newKind, createOpen], async ([kind, open]) => {
+    if (kind !== "live" || !open || playoutEventsLoaded) return;
+    loadingPlayoutEvents.value = true;
+    try {
+        playoutEvents.value = (await api.listPlayoutEvents({})).events;
+        playoutEventsLoaded = true;
+    } catch {
+        toaster.create({ title: t("editorial.importFailed"), type: "error" });
+    } finally {
+        loadingPlayoutEvents.value = false;
+    }
+});
+
+const canCreate = computed(() =>
+    newKind.value === "live"
+        ? !!newEvent.value && !!newStart.value
+        : !!newVxid.value.trim(),
+);
+
 async function create() {
-    const vxid = newVxid.value.trim();
-    if (!vxid) return;
+    if (!canCreate.value) return;
+    const live = newKind.value === "live";
     creating.value = true;
     try {
         const sess = await api.createEditorialSession({
-            VXID: vxid,
+            VXID: live ? "" : newVxid.value.trim(),
             title: newTitle.value.trim(),
+            live,
+            playoutEventId: live ? newEvent.value!.id : "",
+            clockStart: live ? timestampFromDate(newStart.value!) : undefined,
         });
         createOpen.value = false;
         newVxid.value = "";
         newTitle.value = "";
+        newEvent.value = undefined;
         await navigateTo(`/editorial/${sess.id}`);
     } catch {
         toaster.create({ title: t("editorial.saveFailed"), type: "error" });
@@ -100,11 +152,21 @@ async function create() {
                     class="bg-surface-raise gradient-border shadow-resting ds-focus-ring hover:bg-surface-indent flex items-center justify-between gap-4 rounded-2xl px-4 py-3 transition-colors"
                 >
                     <div class="min-w-0">
-                        <p class="text-title-2 text-text-default truncate">
-                            {{ s.title || s.VXID }}
-                        </p>
+                        <div class="flex min-w-0 items-center gap-2">
+                            <p class="text-title-2 text-text-default truncate">
+                                {{ s.title || s.VXID }}
+                            </p>
+                            <DesignBadge
+                                v-if="s.kind === 'live'"
+                                variant="warning"
+                                class="shrink-0"
+                            >
+                                {{ t("editorial.live") }}
+                            </DesignBadge>
+                        </div>
                         <p class="text-caption-1 text-text-hint truncate">
-                            {{ s.VXID }} · {{ s.createdBy }}
+                            {{ s.VXID || t("editorial.notInMediabanken") }} ·
+                            {{ s.createdBy }}
                             <template v-if="s.updatedAt">
                                 ·
                                 {{
@@ -120,10 +182,20 @@ async function create() {
         </ul>
     </div>
 
-    <DesignDialog v-model:open="createOpen" :title="t('editorial.createTitle')">
+    <DesignDialog
+        v-model:open="createOpen"
+        :title="t('editorial.createTitle')"
+        :size="newKind === 'live' ? 'lg' : undefined"
+    >
         <template #default="{ initialFocus }">
             <form class="flex flex-col gap-4" @submit.prevent="create">
+                <DesignSegmentGroup
+                    v-model="kindModel"
+                    :items="kindItems"
+                    class="border-border-1 border"
+                />
                 <DesignInput
+                    v-if="newKind === 'recording'"
                     :ref="initialFocus"
                     v-model="newVxid"
                     :label="t('editorial.vxidLabel')"
@@ -133,6 +205,37 @@ async function create() {
                     v-model="newTitle"
                     :label="t('editorial.titleLabel')"
                 />
+                <template v-if="newKind === 'live'">
+                    <div class="flex flex-wrap gap-3">
+                        <DesignInput
+                            v-model="newStartDate"
+                            type="date"
+                            :label="t('editorial.meetingDate')"
+                            class="min-w-40 grow"
+                        />
+                        <DesignInput
+                            v-model="newStartTime"
+                            placeholder="HH:MM"
+                            :invalid="
+                                !!newStartTime && !isClockTime(newStartTime)
+                            "
+                            :label="t('editorial.meetingStart')"
+                            class="min-w-28 grow"
+                        />
+                    </div>
+                    <p class="text-caption-1 text-text-muted">
+                        {{ t("editorial.playoutEventLabel") }}
+                    </p>
+                    <EditorialPlayoutEventList
+                        :events="playoutEvents"
+                        :loading="loadingPlayoutEvents"
+                        :selected-id="newEvent?.id"
+                        @select="newEvent = $event"
+                    />
+                    <p class="text-caption-1 text-text-hint">
+                        {{ t("editorial.liveHint") }}
+                    </p>
+                </template>
                 <div class="flex justify-end gap-2">
                     <DesignButton
                         variant="secondary"
@@ -144,9 +247,13 @@ async function create() {
                     <DesignButton
                         type="submit"
                         :loading="creating"
-                        :disabled="!newVxid.trim()"
+                        :disabled="!canCreate"
                     >
-                        {{ t("editorial.create") }}
+                        {{
+                            newKind === "live"
+                                ? t("editorial.startLogging")
+                                : t("editorial.create")
+                        }}
                     </DesignButton>
                 </div>
             </form>

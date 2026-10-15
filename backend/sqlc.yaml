@@ -13,3 +13,5 @@ sql:
             go_type: bool
           - column: markers.publish_bcc
             go_type: bool
+          - column: markers.playout_synced
+            go_type: bool

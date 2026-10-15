@@ -65,9 +65,14 @@ interface Row {
     type: string;
     start: string;
     end: string;
+    // what start/end showed when loaded, and their exact values: an untouched
+    // field saves its original milliseconds instead of a rounded re-parse
+    shown: { start: string; end: string; startMs: number; endMs: number };
     publishBmm: boolean;
     publishBcc: boolean;
     source: string;
+    playoutKey: string;
+    playoutSynced: boolean;
 }
 
 const session = ref<EditorialSession>();
@@ -75,6 +80,15 @@ const title = ref("");
 const rows = ref<Row[]>([]);
 const loading = ref(true);
 const notFound = ref(false);
+
+// A live session is logged in real time: no recording yet, times are this
+// computer's clock (shown in Oslo time), and Playout fills in the details.
+const isLive = computed(() => session.value?.kind === "live");
+const clockStartMs = computed(() =>
+    session.value?.clockStart
+        ? timestampDate(session.value.clockStart).getTime()
+        : 0,
+);
 
 const mode = ref<"simple" | "edit">("simple");
 const effectiveMode = computed(() => (canEdit.value ? mode.value : "simple"));
@@ -111,6 +125,41 @@ function formatDateTime(ts?: Timestamp): string {
     return dateTimeFormatter.format(timestampDate(ts));
 }
 
+const osloClock = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Oslo",
+    hourCycle: "h23",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+});
+
+// Live rows show the time of day; recording rows show the offset.
+function displayMs(ms: number): string {
+    if (!isLive.value) return formatMs(ms);
+    return osloClock.format(new Date(clockStartMs.value + ms));
+}
+
+// Inverse of displayMs. A live time of day is read as the moment on or after
+// the session's start, so a meeting can run past midnight.
+function parseDisplay(text: string): number {
+    if (!isLive.value) return parseTc(text);
+    const base = parseTc(osloClock.format(new Date(clockStartMs.value)));
+    let offset = parseTc(text) - base;
+    // the clock start itself has sub-second precision the display drops
+    offset -= clockStartMs.value % 1000;
+    if (offset < -12 * 3600_000) offset += 24 * 3600_000;
+    return offset;
+}
+
+function startMsOf(row: Row): number {
+    return row.start === row.shown.start
+        ? row.shown.startMs
+        : parseDisplay(row.start);
+}
+function endMsOf(row: Row): number {
+    return row.end === row.shown.end ? row.shown.endMs : parseDisplay(row.end);
+}
+
 // Parses "HH:MM:SS(.mmm)", "MM:SS" or "SS" into milliseconds; invalid → 0.
 function parseTc(tc: string): number {
     const parts = tc
@@ -127,6 +176,10 @@ let rowSeq = 0;
 const nextRowKey = () => `r${++rowSeq}`;
 
 function toRow(m: EditorialMarker): Row {
+    const startMs = Number(m.startMs);
+    const endMs = Number(m.endMs);
+    const start = displayMs(startMs);
+    const end = displayMs(endMs);
     return {
         key: nextRowKey(),
         id: m.id,
@@ -135,16 +188,33 @@ function toRow(m: EditorialMarker): Row {
         bibleVerses: m.bibleVerses,
         comment: m.comment,
         type: m.type,
-        start: formatMs(Number(m.startMs)),
-        end: formatMs(Number(m.endMs)),
+        start,
+        end,
+        shown: { start, end, startMs, endMs },
         publishBmm: m.publishBmm,
         publishBcc: m.publishBcc,
         source: m.source || "manual",
+        playoutKey: m.playoutKey,
+        playoutSynced: m.playoutSynced,
     };
 }
 
-function durationOf(row: Row): string {
-    return formatMs(parseTc(row.end) - parseTc(row.start));
+function durationOf(row: Row, i: number): string {
+    if (isLive.value) {
+        // A live row runs until the next one; the last is still running.
+        const next = rows.value[i + 1];
+        if (!next) return t("editorial.running");
+        return formatMs(startMsOf(next) - startMsOf(row));
+    }
+    return formatMs(endMsOf(row) - startMsOf(row));
+}
+
+// Where a live row's details came from, for the "From" column.
+function sourceLabel(row: Row): string {
+    if (row.source === "import") return t("editorial.fromPlayout");
+    if (row.playoutKey) return t("editorial.fromYouFilled");
+    if (!row.name && !row.contributors) return t("editorial.fromYouWaiting");
+    return t("editorial.fromYou");
 }
 
 const previewUrl = ref<string>();
@@ -153,7 +223,7 @@ const videoEl = useTemplateRef<HTMLVideoElement>("videoEl");
 function preview(row: Row) {
     const el = videoEl.value;
     if (!el) return;
-    el.currentTime = parseTc(row.start) / 1000;
+    el.currentTime = startMsOf(row) / 1000;
     void el.play();
 }
 
@@ -164,8 +234,8 @@ function onTimeUpdate(e: Event) {
 }
 const activeIndex = computed(() =>
     rows.value.findIndex((r) => {
-        const start = parseTc(r.start);
-        const end = parseTc(r.end);
+        const start = startMsOf(r);
+        const end = endMsOf(r);
         return end > start && currentMs.value >= start && currentMs.value < end;
     }),
 );
@@ -178,8 +248,8 @@ const scrubMs = computed<number>({
     get() {
         const m = activeMarker.value;
         if (!m) return 0;
-        const start = parseTc(m.start);
-        const end = parseTc(m.end);
+        const start = startMsOf(m);
+        const end = endMsOf(m);
         return Math.min(end, Math.max(start, currentMs.value));
     },
     set(v) {
@@ -200,6 +270,7 @@ async function load() {
         title.value = s.title;
         rows.value = s.markers.map(toRow);
         previewUrl.value = s.previewUrl || undefined;
+        if (s.kind === "live") lastSyncedAt.value = Date.now();
     } catch {
         notFound.value = true;
     } finally {
@@ -341,11 +412,14 @@ function addRow() {
         bibleVerses: "",
         comment: "",
         type: "",
-        start: "00:00:00",
-        end: "00:00:00",
+        start: displayMs(0),
+        end: displayMs(0),
+        shown: { start: displayMs(0), end: displayMs(0), startMs: 0, endMs: 0 },
         publishBmm: false,
         publishBcc: false,
         source: "manual",
+        playoutKey: "",
+        playoutSynced: false,
     });
 }
 
@@ -445,9 +519,210 @@ function onDragEnd() {
 const importing = ref(false);
 const importingPlayout = ref(false);
 const saving = ref(false);
+const syncing = ref(false);
+const attaching = ref(false);
 const mutationInProgress = computed(
-    () => importing.value || importingPlayout.value || saving.value,
+    () =>
+        importing.value ||
+        importingPlayout.value ||
+        saving.value ||
+        syncing.value ||
+        attaching.value,
 );
+
+// Replace local state with what the server saved, without counting it as an
+// unsaved edit.
+async function applyServerSession(s: EditorialSession) {
+    hydrated = false;
+    session.value = s;
+    title.value = s.title;
+    rows.value = s.markers.map(toRow);
+    if (s.previewUrl) previewUrl.value = s.previewUrl;
+    await nextTick();
+    dirty.value = false;
+    hydrated = true;
+}
+
+// ── Live logging ──────────────────────────────────────────
+const marking = ref(false);
+
+// Saved at once with this computer's clock: the moment the editor saw.
+async function markNow() {
+    if (!isLive.value || !canEdit.value || marking.value) return;
+    const at = new Date();
+    marking.value = true;
+    try {
+        const m = await tracked(() =>
+            api.addEditorialMarker({
+                sessionId: sessionId.value,
+                at: timestampFromDate(at),
+            }),
+        );
+        // Adding a saved row is not an unsaved edit: keep sync running.
+        const wasDirty = dirty.value;
+        rows.value.push(toRow(m));
+        await nextTick();
+        dirty.value = wasDirty;
+    } catch {
+        toaster.create({ title: t("editorial.saveFailed"), type: "error" });
+    } finally {
+        marking.value = false;
+    }
+}
+
+function onKeydown(e: KeyboardEvent) {
+    if (e.key !== "m" && e.key !== "M") return;
+    if (e.metaKey || e.ctrlKey || e.altKey || e.repeat) return;
+    const el = e.target as HTMLElement | null;
+    if (
+        el &&
+        (el.isContentEditable ||
+            ["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName))
+    )
+        return;
+    e.preventDefault();
+    void markNow();
+}
+
+// Playout is re-read every two minutes while the session is open. Paused
+// while there are unsaved edits (a Save would overwrite what arrived) or the
+// editor is typing in a row.
+const SYNC_INTERVAL_MS = 2 * 60_000;
+const lastSyncedAt = ref<number>();
+const syncFailed = ref(false);
+const nowTick = ref(Date.now());
+let syncTimer: ReturnType<typeof setInterval> | undefined;
+let clockTimer: ReturnType<typeof setInterval> | undefined;
+
+const nextSyncIn = computed(() => {
+    if (!lastSyncedAt.value) return 0;
+    return Math.max(0, lastSyncedAt.value + SYNC_INTERVAL_MS - nowTick.value);
+});
+const syncPaused = computed(
+    () => dirty.value && effectiveMode.value === "edit",
+);
+
+function editingARow(): boolean {
+    const el = document.activeElement as HTMLElement | null;
+    return !!el && ["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName);
+}
+
+async function syncNow() {
+    if (!isLive.value || mutationInProgress.value) return;
+    if (dirty.value) return;
+    syncing.value = true;
+    try {
+        // Viewers can't write: they just pick up what editors synced.
+        const s = canEdit.value
+            ? await api.syncEditorialSessionFromPlayout({ id: sessionId.value })
+            : await api.getEditorialSession({ id: sessionId.value });
+        // Edits made while the request was out win; try again next round.
+        if (!dirty.value) await applyServerSession(s);
+        syncFailed.value = false;
+    } catch {
+        syncFailed.value = true;
+    } finally {
+        lastSyncedAt.value = Date.now();
+        syncing.value = false;
+    }
+}
+
+function scheduledSync() {
+    if (editingARow()) return;
+    void syncNow();
+}
+
+watch(isLive, (live) => {
+    clearInterval(syncTimer);
+    clearInterval(clockTimer);
+    if (!live) return;
+    syncTimer = setInterval(scheduledSync, SYNC_INTERVAL_MS);
+    clockTimer = setInterval(() => (nowTick.value = Date.now()), 1000);
+    void syncNow();
+});
+onMounted(() => window.addEventListener("keydown", onKeydown));
+onBeforeUnmount(() => {
+    clearInterval(syncTimer);
+    clearInterval(clockTimer);
+    window.removeEventListener("keydown", onKeydown);
+});
+
+function formatCountdown(ms: number): string {
+    const total = Math.ceil(ms / 1000);
+    return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
+}
+
+// ── Send to Mediabanken (attach the recording) ────────────
+const attachOpen = ref(false);
+const windowDialogOpen = computed({
+    get: () => playoutPickerOpen.value || attachOpen.value,
+    set: (open: boolean) => {
+        if (open) return;
+        playoutPickerOpen.value = false;
+        attachOpen.value = false;
+    },
+});
+const attachVxid = ref("");
+// The VXID the shown window belongs to.
+const attachLookedUp = ref("");
+
+function openAttach() {
+    if (mutationInProgress.value) return;
+    attachVxid.value = "";
+    attachLookedUp.value = "";
+    recWindow.value = undefined;
+    recAdjusting.value = false;
+    attachOpen.value = true;
+}
+
+async function lookUpAttachWindow() {
+    const vxid = attachVxid.value.trim();
+    if (!vxid || vxid === attachLookedUp.value) return;
+    attachLookedUp.value = vxid;
+    await loadRecordingWindow(vxid);
+}
+
+// Rows whose clock time falls outside the recording: kept, but the editor
+// should know before attaching.
+const markersOutsideRecording = computed(() => {
+    const w = recWindow.value;
+    if (!w?.start || !w?.end || !isLive.value) return 0;
+    const start = timestampDate(w.start).getTime();
+    const end = timestampDate(w.end).getTime();
+    return rows.value.filter((r) => {
+        const at = clockStartMs.value + startMsOf(r);
+        return at < start || at > end;
+    }).length;
+});
+
+async function attachRecording() {
+    const vxid = attachVxid.value.trim();
+    if (!vxid || mutationInProgress.value) return;
+    const range = adjustedWindow();
+    if (!range) return;
+    attaching.value = true;
+    try {
+        const s = await api.attachEditorialRecording({
+            id: sessionId.value,
+            VXID: vxid,
+            recordingStart: range.start
+                ? timestampFromDate(range.start)
+                : undefined,
+            recordingEnd: range.end ? timestampFromDate(range.end) : undefined,
+        });
+        attachOpen.value = false;
+        await applyServerSession(s);
+        toaster.create({ title: t("editorial.attached"), type: "success" });
+    } catch (e) {
+        toaster.create({
+            title: t("editorial.attachFailed"),
+            description: e instanceof Error ? e.message : undefined,
+            type: "error",
+        });
+    } finally {
+        attaching.value = false;
+    }
+}
 const deleteOpen = ref(false);
 
 // ── Import merge ──────────────────────────────────────────
@@ -491,12 +766,6 @@ function resolveImportMerge(replace: boolean) {
 const playoutPickerOpen = ref(false);
 const playoutEvents = ref<PlayoutEvent[]>([]);
 const loadingPlayoutEvents = ref(false);
-const playoutSearch = ref("");
-const filteredPlayoutEvents = computed(() => {
-    const q = playoutSearch.value.trim().toLowerCase();
-    if (!q) return playoutEvents.value;
-    return playoutEvents.value.filter((e) => e.name.toLowerCase().includes(q));
-});
 
 // ── Recording window ──────────────────────────────────────
 // A Playout event covers a whole conference, so the import needs this
@@ -516,44 +785,6 @@ const osloTime = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Europe/Oslo",
     timeStyle: "short",
 });
-
-// Europe/Oslo's offset at an instant: format it there, read it back as UTC,
-// and the gap is the offset. The inputs are wall-clock; the API is UTC.
-function osloOffsetMs(at: Date): number {
-    const parts = new Intl.DateTimeFormat("en-GB", {
-        timeZone: "Europe/Oslo",
-        hourCycle: "h23",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-    }).formatToParts(at);
-    const n = (type: string) =>
-        Number(parts.find((p) => p.type === type)?.value ?? 0);
-    return (
-        Date.UTC(
-            n("year"),
-            n("month") - 1,
-            n("day"),
-            n("hour"),
-            n("minute"),
-            n("second"),
-        ) - at.getTime()
-    );
-}
-
-// Reads "YYYY-MM-DD" + "HH:MM" as Oslo wall-clock time. Resolved twice: the
-// first pass can land on the wrong side of a DST change.
-function osloToDate(date: string, time: string): Date | undefined {
-    const d = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date.trim());
-    const t = /^(\d{1,2}):(\d{2})$/.exec(time.trim());
-    if (!d || !t) return undefined;
-    const naive = Date.UTC(+d[1]!, +d[2]! - 1, +d[3]!, +t[1]!, +t[2]!);
-    const first = new Date(naive - osloOffsetMs(new Date(naive)));
-    return new Date(naive - osloOffsetMs(first));
-}
 
 function formatDuration(ms: number): string {
     const minutes = Math.round(ms / 60000);
@@ -601,11 +832,7 @@ watch([recDate, recStartTime], () => {
 function fillRecInputs(w?: GetRecordingWindowResponse) {
     const start = w?.start ? timestampDate(w.start) : undefined;
     const end = w?.end ? timestampDate(w.end) : undefined;
-    const osloDate = (d: Date) =>
-        new Intl.DateTimeFormat("en-CA", {
-            timeZone: "Europe/Oslo",
-        }).format(d);
-    recDate.value = start ? osloDate(start) : "";
+    recDate.value = start ? osloDateInput(start) : "";
     recStartTime.value = start ? osloTime.format(start) : "";
     setEndTime(end ? osloTime.format(end) : "");
     // A stored end that isn't just start + duration was chosen deliberately;
@@ -619,12 +846,15 @@ function fillRecInputs(w?: GetRecordingWindowResponse) {
     );
 }
 
-async function loadRecordingWindow() {
+async function loadRecordingWindow(vxid = "") {
     loadingRecWindow.value = true;
     recAdjusting.value = false;
     recWindow.value = undefined;
     try {
-        const w = await api.getRecordingWindow({ sessionId: sessionId.value });
+        const w = await api.getRecordingWindow({
+            sessionId: sessionId.value,
+            VXID: vxid,
+        });
         recWindow.value = w;
         fillRecInputs(w);
         // Nothing to confirm without a window — ask straight away.
@@ -643,7 +873,17 @@ async function loadRecordingWindow() {
 
 // Secondary/destructive actions live in the overflow menu; Save stays primary.
 const menuItems = computed(() => [
-    ...(effectiveMode.value === "edit"
+    ...(isLive.value
+        ? [
+              {
+                  value: "attach",
+                  label: t("editorial.sendToMediabanken"),
+                  icon: "tabler:upload",
+                  disabled: mutationInProgress.value,
+              },
+          ]
+        : []),
+    ...(effectiveMode.value === "edit" && !isLive.value
         ? [
               {
                   value: "import",
@@ -670,11 +910,11 @@ function onMenuSelect(value: string) {
     if (value === "delete") deleteOpen.value = true;
     else if (value === "import") void importMarkers();
     else if (value === "import-playout") void openPlayoutPicker();
+    else if (value === "attach") openAttach();
 }
 
 async function openPlayoutPicker() {
     if (mutationInProgress.value) return;
-    playoutSearch.value = "";
     playoutPickerOpen.value = true;
     loadingPlayoutEvents.value = true;
     void loadRecordingWindow();
@@ -689,41 +929,38 @@ async function openPlayoutPicker() {
     }
 }
 
+// The window typed into the adjust inputs, or an empty one when they weren't
+// opened (the server then derives it). undefined: invalid, already reported.
+function adjustedWindow(): { start?: Date; end?: Date } | undefined {
+    if (!recAdjusting.value) return {};
+    const invalid = () => {
+        toaster.create({
+            title: t("editorial.recordingWindowInvalid"),
+            type: "error",
+        });
+        return undefined;
+    };
+    const start = osloToDate(recDate.value, recStartTime.value);
+    if (!start) return invalid();
+    let end: Date | undefined;
+    if (recEndTime.value.trim()) {
+        end = osloToDate(recDate.value, recEndTime.value);
+        if (!end) return invalid();
+        // An earlier end means the recording ran past midnight.
+        if (end <= start) end = new Date(end.getTime() + 86400000);
+    } else if (recNeedsEnd.value) {
+        return invalid();
+    }
+    return { start, end };
+}
+
 function selectPlayoutEvent(eventId: string) {
     // Only send a window if the inputs were opened; otherwise the server
     // re-derives it, keeping the untouched case at two clicks.
-    let start: Date | undefined;
-    let end: Date | undefined;
-    if (recAdjusting.value) {
-        start = osloToDate(recDate.value, recStartTime.value);
-        if (!start) {
-            toaster.create({
-                title: t("editorial.recordingWindowInvalid"),
-                type: "error",
-            });
-            return;
-        }
-        if (recEndTime.value.trim()) {
-            end = osloToDate(recDate.value, recEndTime.value);
-            if (!end) {
-                toaster.create({
-                    title: t("editorial.recordingWindowInvalid"),
-                    type: "error",
-                });
-                return;
-            }
-            // An earlier end means the recording ran past midnight.
-            if (end <= start) end = new Date(end.getTime() + 86400000);
-        } else if (recNeedsEnd.value) {
-            toaster.create({
-                title: t("editorial.recordingWindowInvalid"),
-                type: "error",
-            });
-            return;
-        }
-    }
+    const range = adjustedWindow();
+    if (!range) return;
     playoutPickerOpen.value = false;
-    void importPlayoutMarkers(eventId, start, end);
+    void importPlayoutMarkers(eventId, range.start, range.end);
 }
 
 async function importMarkers() {
@@ -786,18 +1023,15 @@ async function save() {
                 bibleVerses: r.bibleVerses,
                 comment: r.comment,
                 type: r.type,
-                startMs: BigInt(parseTc(r.start)),
-                endMs: BigInt(parseTc(r.end)),
+                startMs: BigInt(startMsOf(r)),
+                endMs: BigInt(endMsOf(r)),
                 publishBmm: r.publishBmm,
                 publishBcc: r.publishBcc,
                 source: r.source,
+                playoutKey: r.playoutKey,
             })),
         });
-        session.value = s;
-        title.value = s.title;
-        rows.value = s.markers.map(toRow);
-        await nextTick();
-        dirty.value = false;
+        await applyServerSession(s);
         toaster.create({ title: t("editorial.saved"), type: "success" });
     } catch {
         toaster.create({ title: t("editorial.saveFailed"), type: "error" });
@@ -857,11 +1091,19 @@ onBeforeRouteLeave(() => {
                     v-model="title"
                     :placeholder="session?.VXID"
                 />
-                <h1 v-else class="text-heading-2 text-text-default truncate">
-                    {{ title || session?.VXID }}
-                </h1>
+                <div v-else class="flex min-w-0 items-center gap-3">
+                    <h1 class="text-heading-2 text-text-default truncate">
+                        {{ title || session?.VXID }}
+                    </h1>
+                    <DesignBadge v-if="isLive" variant="warning">
+                        {{ t("editorial.live") }}
+                    </DesignBadge>
+                </div>
+                <p v-if="isLive" class="text-caption-1 text-text-hint mt-1">
+                    {{ t("editorial.notInMediabanken") }}
+                </p>
                 <p
-                    v-if="title && title !== session?.VXID"
+                    v-else-if="title && title !== session?.VXID"
                     class="text-caption-1 text-text-hint mt-1"
                 >
                     {{ session?.VXID }}
@@ -879,8 +1121,8 @@ onBeforeRouteLeave(() => {
             </div>
 
             <div
-                v-if="canEdit || saveStatus !== 'idle'"
-                class="mb-6 flex items-center gap-3"
+                v-if="canEdit || isLive || saveStatus !== 'idle'"
+                class="mb-6 flex flex-wrap items-center gap-3"
             >
                 <DesignSegmentGroup
                     v-if="canEdit"
@@ -888,7 +1130,70 @@ onBeforeRouteLeave(() => {
                     :items="modeItems"
                     class="border-border-1 border"
                 />
-                <div class="ml-auto flex items-center gap-3">
+                <DesignButton
+                    v-if="isLive && canEdit"
+                    size="large"
+                    icon="tabler:plus"
+                    :loading="marking"
+                    :title="t('editorial.markNowHint')"
+                    @click="markNow"
+                >
+                    {{ t("editorial.markNow") }}
+                    <span
+                        class="text-caption-2 rounded-md border border-current px-1.5 opacity-70"
+                        >M</span
+                    >
+                </DesignButton>
+                <div class="ml-auto flex flex-wrap items-center gap-3">
+                    <template v-if="isLive">
+                        <span
+                            class="text-caption-1 flex items-center gap-1.5"
+                            :class="
+                                syncFailed
+                                    ? 'text-semantic-error'
+                                    : 'text-text-hint'
+                            "
+                        >
+                            <Icon
+                                v-if="syncing"
+                                name="svg-spinners:ring-resize"
+                                class="size-4"
+                            />
+                            <Icon
+                                v-else-if="syncFailed"
+                                name="tabler:alert-triangle"
+                                class="size-4"
+                            />
+                            <template v-if="syncing">
+                                {{ t("editorial.syncing") }}
+                            </template>
+                            <template v-else-if="syncPaused">
+                                {{ t("editorial.syncPaused") }}
+                            </template>
+                            <template v-else-if="syncFailed">
+                                {{ t("editorial.syncFailed") }}
+                            </template>
+                            <template v-else-if="lastSyncedAt">
+                                {{
+                                    t("editorial.syncStatus", {
+                                        time: osloTime.format(
+                                            new Date(lastSyncedAt),
+                                        ),
+                                        next: formatCountdown(nextSyncIn),
+                                    })
+                                }}
+                            </template>
+                        </span>
+                        <DesignButton
+                            variant="tertiary"
+                            icon="tabler:refresh"
+                            class="border-border-1 border"
+                            :disabled="mutationInProgress || dirty"
+                            @click="syncNow"
+                        >
+                            {{ t("editorial.syncNow") }}
+                        </DesignButton>
+                    </template>
                     <span
                         v-if="saveStatus !== 'idle'"
                         class="text-caption-1 flex items-center gap-1.5"
@@ -936,13 +1241,20 @@ onBeforeRouteLeave(() => {
                 </div>
             </div>
 
-            <div class="grid gap-6 lg:grid-cols-[1fr_500px]">
+            <div
+                class="grid gap-6"
+                :class="isLive ? '' : 'lg:grid-cols-[1fr_500px]'"
+            >
                 <div>
                     <p
                         v-if="rows.length === 0"
                         class="text-body-3 text-text-hint bg-surface-indent rounded-2xl px-4 py-10 text-center"
                     >
-                        {{ t("editorial.noMarkers") }}
+                        {{
+                            isLive
+                                ? t("editorial.noMarkersLive")
+                                : t("editorial.noMarkers")
+                        }}
                     </p>
                     <!--
                         Floats over the page rather than sitting in the flow:
@@ -1011,8 +1323,15 @@ onBeforeRouteLeave(() => {
                                         />
                                     </th>
                                     <th
+                                        v-if="!isLive"
                                         class="border-border-1 w-10 border-b py-2 pl-2"
                                     ></th>
+                                    <th
+                                        v-else
+                                        class="border-border-1 border-b py-2 pl-3 font-normal"
+                                    >
+                                        {{ t("editorial.col.time") }}
+                                    </th>
                                     <th
                                         class="border-border-1 border-b py-2 pr-2 pl-3 font-normal"
                                     >
@@ -1039,7 +1358,9 @@ onBeforeRouteLeave(() => {
                                         {{ t("editorial.col.type") }}
                                     </th>
                                     <th
-                                        v-if="effectiveMode === 'edit'"
+                                        v-if="
+                                            effectiveMode === 'edit' && !isLive
+                                        "
                                         class="border-border-1 border-b px-2 py-2 font-normal"
                                     >
                                         {{ t("editorial.col.start") }}
@@ -1058,6 +1379,12 @@ onBeforeRouteLeave(() => {
                                         class="border-border-1 border-b px-2 py-2 text-center font-normal"
                                     >
                                         {{ t("editorial.col.publishBcc") }}
+                                    </th>
+                                    <th
+                                        v-if="isLive"
+                                        class="border-border-1 border-b px-2 py-2 font-normal"
+                                    >
+                                        {{ t("editorial.col.from") }}
                                     </th>
                                     <th
                                         v-if="effectiveMode === 'edit'"
@@ -1101,7 +1428,23 @@ onBeforeRouteLeave(() => {
                                             "
                                         />
                                     </td>
-                                    <td class="py-2 pl-2">
+                                    <td
+                                        v-if="isLive"
+                                        class="py-2 pl-3 whitespace-nowrap"
+                                    >
+                                        <DesignInput
+                                            v-if="effectiveMode === 'edit'"
+                                            v-model="row.start"
+                                            class="w-28"
+                                        />
+                                        <span
+                                            v-else
+                                            class="text-body-3 text-text-default tabular-nums"
+                                        >
+                                            {{ row.start }}
+                                        </span>
+                                    </td>
+                                    <td v-else class="py-2 pl-2">
                                         <DesignButton
                                             variant="tertiary"
                                             size="small"
@@ -1152,7 +1495,7 @@ onBeforeRouteLeave(() => {
                                     <td
                                         class="text-body-3 text-text-muted px-2 py-2 tabular-nums"
                                     >
-                                        {{ durationOf(row) }}
+                                        {{ durationOf(row, i) }}
                                     </td>
                                     <td class="px-2 py-2">
                                         <DesignSelect
@@ -1171,7 +1514,9 @@ onBeforeRouteLeave(() => {
                                         </span>
                                     </td>
                                     <td
-                                        v-if="effectiveMode === 'edit'"
+                                        v-if="
+                                            effectiveMode === 'edit' && !isLive
+                                        "
                                         class="px-2 py-2"
                                     >
                                         <div class="flex items-center gap-1">
@@ -1220,11 +1565,18 @@ onBeforeRouteLeave(() => {
                                         </div>
                                     </td>
                                     <td
+                                        v-if="isLive"
+                                        class="text-caption-1 text-text-muted px-2 py-2 whitespace-nowrap"
+                                    >
+                                        {{ sourceLabel(row) }}
+                                    </td>
+                                    <td
                                         v-if="effectiveMode === 'edit'"
                                         class="py-2 pl-2"
                                     >
                                         <div class="flex items-center gap-0.5">
                                             <button
+                                                v-if="!isLive"
                                                 type="button"
                                                 :title="t('editorial.reorder')"
                                                 :aria-label="
@@ -1256,7 +1608,7 @@ onBeforeRouteLeave(() => {
                     </div>
 
                     <DesignButton
-                        v-if="effectiveMode === 'edit'"
+                        v-if="effectiveMode === 'edit' && !isLive"
                         variant="tertiary"
                         icon="tabler:plus"
                         class="mt-3"
@@ -1266,7 +1618,7 @@ onBeforeRouteLeave(() => {
                     </DesignButton>
                 </div>
 
-                <div>
+                <div v-if="!isLive">
                     <div
                         class="gradient-border shadow-resting sticky top-[calc(var(--header-height)+1rem)] overflow-hidden rounded-2xl"
                     >
@@ -1312,8 +1664,8 @@ onBeforeRouteLeave(() => {
                             </p>
                             <DesignSlider
                                 v-model="scrubMs"
-                                :min="parseTc(activeMarker.start)"
-                                :max="parseTc(activeMarker.end)"
+                                :min="startMsOf(activeMarker)"
+                                :max="endMsOf(activeMarker)"
                                 :step="100"
                                 class="mt-3 mb-2 flex-1"
                             />
@@ -1376,17 +1728,52 @@ onBeforeRouteLeave(() => {
         </div>
     </DesignDialog>
 
+    <!--
+        Shared by the Playout import and "Send to Mediabanken": both need the
+        recording's window on the wall clock, and both let the editor fix it.
+    -->
     <DesignDialog
-        v-model:open="playoutPickerOpen"
-        :title="t('editorial.selectPlayoutEvent')"
+        v-model:open="windowDialogOpen"
+        :title="
+            attachOpen
+                ? t('editorial.sendToMediabanken')
+                : t('editorial.selectPlayoutEvent')
+        "
         size="lg"
     >
         <div class="flex flex-col gap-3">
+            <template v-if="attachOpen">
+                <p class="text-body-3 text-text-muted">
+                    {{ t("editorial.attachDescription") }}
+                </p>
+                <form
+                    class="flex items-end gap-2"
+                    @submit.prevent="lookUpAttachWindow"
+                >
+                    <DesignInput
+                        v-model="attachVxid"
+                        :label="t('editorial.recordingVxid')"
+                        placeholder="VX-123456"
+                        class="grow"
+                        @change="lookUpAttachWindow"
+                    />
+                    <DesignButton
+                        type="submit"
+                        variant="secondary"
+                        :disabled="!attachVxid.trim()"
+                    >
+                        {{ t("editorial.lookUp") }}
+                    </DesignButton>
+                </form>
+            </template>
             <!--
                 The window the import will use. Above the list because picking
                 an event imports at once — the only moment to catch a bad one.
             -->
-            <div class="flex flex-col gap-2">
+            <div
+                v-if="!attachOpen || attachLookedUp"
+                class="flex flex-col gap-2"
+            >
                 <DesignSkeleton
                     v-if="loadingRecWindow"
                     class="h-16 rounded-xl"
@@ -1459,67 +1846,73 @@ onBeforeRouteLeave(() => {
                             />
                             <DesignInput
                                 v-model="recStartTime"
-                                type="time"
+                                placeholder="HH:MM"
+                                :invalid="
+                                    !!recStartTime && !isClockTime(recStartTime)
+                                "
                                 :label="t('editorial.recordingStartTime')"
                                 class="min-w-28 grow"
                             />
                             <DesignInput
                                 v-model="recEndTime"
-                                type="time"
+                                placeholder="HH:MM"
+                                :invalid="
+                                    !!recEndTime && !isClockTime(recEndTime)
+                                "
                                 :label="t('editorial.recordingEndTime')"
                                 class="min-w-28 grow"
                             />
                         </div>
                         <p class="text-caption-1 text-text-hint">
-                            {{ t("editorial.recordingWindowHint") }}
+                            {{
+                                attachOpen
+                                    ? t("editorial.attachWindowHint")
+                                    : t("editorial.recordingWindowHint")
+                            }}
                         </p>
                     </div>
                 </template>
             </div>
 
-            <DesignInput
-                v-model="playoutSearch"
-                leading-icon="tabler:search"
-                :placeholder="t('editorial.searchPlayoutEvents')"
-            />
-
-            <div v-if="loadingPlayoutEvents" class="flex flex-col gap-2">
-                <DesignSkeleton
-                    v-for="i in 4"
-                    :key="i"
-                    class="h-14 rounded-xl"
-                />
-            </div>
-
-            <p
-                v-else-if="filteredPlayoutEvents.length === 0"
-                class="text-body-3 text-text-hint py-8 text-center"
-            >
-                {{ t("editorial.noPlayoutEvents") }}
-            </p>
-
-            <ul v-else class="flex max-h-96 flex-col gap-2 overflow-y-auto">
-                <li v-for="e in filteredPlayoutEvents" :key="e.id">
-                    <button
-                        type="button"
-                        class="bg-surface-raise gradient-border shadow-resting ds-focus-ring hover:bg-surface-indent flex w-full items-center justify-between gap-4 rounded-xl px-4 py-2.5 text-left transition-colors"
-                        @click="selectPlayoutEvent(e.id)"
+            <template v-if="attachOpen">
+                <DesignBanner
+                    v-if="markersOutsideRecording"
+                    variant="warning"
+                    icon="tabler:alert-triangle"
+                >
+                    {{
+                        t("editorial.markersOutsideRecording", {
+                            n: markersOutsideRecording,
+                        })
+                    }}
+                </DesignBanner>
+                <div class="flex justify-end gap-2">
+                    <DesignButton
+                        variant="secondary"
+                        @click="attachOpen = false"
                     >
-                        <div class="min-w-0">
-                            <p class="text-title-2 text-text-default truncate">
-                                {{ e.name || e.id }}
-                            </p>
-                            <p class="text-caption-1 text-text-hint truncate">
-                                {{
-                                    [e.date, e.status, e.productionUnit]
-                                        .filter(Boolean)
-                                        .join(" · ")
-                                }}
-                            </p>
-                        </div>
-                    </button>
-                </li>
-            </ul>
+                        {{ t("editorial.cancel") }}
+                    </DesignButton>
+                    <DesignButton
+                        :loading="attaching"
+                        :disabled="
+                            !attachLookedUp ||
+                            attachLookedUp !== attachVxid.trim() ||
+                            loadingRecWindow ||
+                            (!recWindow?.start && !recAdjusting)
+                        "
+                        @click="attachRecording"
+                    >
+                        {{ t("editorial.attachRecording") }}
+                    </DesignButton>
+                </div>
+            </template>
+            <EditorialPlayoutEventList
+                v-else
+                :events="playoutEvents"
+                :loading="loadingPlayoutEvents"
+                @select="selectPlayoutEvent($event.id)"
+            />
         </div>
     </DesignDialog>
 </template>

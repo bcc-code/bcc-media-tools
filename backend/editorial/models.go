@@ -5,21 +5,28 @@
 package editorial
 
 type Marker struct {
-	ID           string
-	SessionID    string
-	SortOrder    int64
-	Name         string
-	Contributors string
-	Comment      string
-	BibleVerses  string
-	Type         string
-	StartMs      int64
-	EndMs        int64
-	PublishBmm   bool
-	PublishBcc   bool
-	Source       string
-	CreatedAt    int64
-	UpdatedAt    int64
+	ID            string
+	SessionID     string
+	SortOrder     int64
+	Name          string
+	Contributors  string
+	Comment       string
+	BibleVerses   string
+	Type          string
+	StartMs       int64
+	EndMs         int64
+	PublishBmm    bool
+	PublishBcc    bool
+	Source        string
+	CreatedAt     int64
+	UpdatedAt     int64
+	PlayoutKey    string
+	PlayoutSynced bool
+}
+
+type PlayoutDismissed struct {
+	SessionID  string
+	PlayoutKey string
 }
 
 type Session struct {
@@ -33,4 +40,6 @@ type Session struct {
 	PlayoutEventID   string
 	RecordingStartMs int64
 	RecordingEndMs   int64
+	Kind             string
+	ClockStartMs     int64
 }

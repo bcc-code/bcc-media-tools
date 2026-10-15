@@ -26,6 +26,13 @@ const (
 	StatusDraft = "draft"
 )
 
+// Session kind values. A live session is logged in real time before its
+// recording exists; attaching the recording turns it into a recording session.
+const (
+	KindRecording = "recording"
+	KindLive      = "live"
+)
+
 // Marker source values.
 const (
 	SourceManual = "manual"

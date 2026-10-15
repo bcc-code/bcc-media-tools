@@ -491,6 +491,12 @@ message EditorialMarker {
   // Ja/Nei publish toggles, one per publishing target
   bool publish_bmm = 12;
   bool publish_bcc = 13;
+  // the Playout manifest entry this row was created or filled from; empty for
+  // rows Playout never touched. Round-trip it on save.
+  string playout_key = 14;
+  // true while Playout still refreshes the row; cleared when an editor changes
+  // a field Playout fills. Server-managed, ignored on save.
+  bool playout_synced = 15;
 }
 
 // A review session tied to a single Mediabanken asset.
@@ -507,6 +513,12 @@ message EditorialSession {
   repeated EditorialMarker markers = 9;
   // source-video preview URL, resolved server-side; only set by GetEditorialSession
   string preview_url = 10;
+  // "recording" or "live". A live session has no VXID yet; its marker offsets
+  // count from clock_start.
+  string kind = 11;
+  string playout_event_id = 12;
+  // only set on live sessions
+  google.protobuf.Timestamp clock_start = 13;
 }
 
 message ListEditorialSessionsResponse {
@@ -514,8 +526,39 @@ message ListEditorialSessionsResponse {
 }
 
 message CreateEditorialSessionRequest {
+  // required unless live
   string VXID = 1;
   string title = 2;
+  // log markers in real time, with no Mediabanken asset yet
+  bool live = 3;
+  // required when live: the event the Playout sync reads
+  string playout_event_id = 4;
+  // when the meeting started, so Playout content from before the session was
+  // created is synced too; defaults to now. Live only.
+  google.protobuf.Timestamp clock_start = 5;
+}
+
+// Add one marker to a live session at the client's clock time, saved at once.
+message AddEditorialMarkerRequest {
+  string session_id = 1;
+  google.protobuf.Timestamp at = 2;
+  string type = 3;
+}
+
+// Merge the live session's Playout manifest into its markers and save.
+message SyncEditorialSessionFromPlayoutRequest {
+  string id = 1;
+}
+
+// Attach the ingested recording to a live session ("Send to Mediabanken"):
+// markers move onto the recording's timeline. recording_start overrides the
+// window derived from metadata; recording_end is only needed when the
+// duration is unknown.
+message AttachEditorialRecordingRequest {
+  string id = 1;
+  string VXID = 2;
+  google.protobuf.Timestamp recording_start = 3;
+  google.protobuf.Timestamp recording_end = 4;
 }
 
 message GetEditorialSessionRequest {
@@ -557,6 +600,8 @@ message ImportEditorialMarkersFromPlayoutRequest {
 // conference-wide event. Fetched when the dialog opens so it can be corrected.
 message GetRecordingWindowRequest {
   string session_id = 1;
+  // look up this asset instead of the session's (a live session has none yet)
+  string VXID = 2;
 }
 
 message GetRecordingWindowResponse {
@@ -683,4 +728,7 @@ service APIService {
   rpc ImportEditorialMarkersFromPlayout(ImportEditorialMarkersFromPlayoutRequest) returns (ImportEditorialMarkersResponse) {}
   rpc ListPlayoutEvents(ListPlayoutEventsRequest) returns (ListPlayoutEventsResponse) {}
   rpc GetRecordingWindow(GetRecordingWindowRequest) returns (GetRecordingWindowResponse) {}
+  rpc AddEditorialMarker(AddEditorialMarkerRequest) returns (EditorialMarker) {}
+  rpc SyncEditorialSessionFromPlayout(SyncEditorialSessionFromPlayoutRequest) returns (EditorialSession) {}
+  rpc AttachEditorialRecording(AttachEditorialRecordingRequest) returns (EditorialSession) {}
 }

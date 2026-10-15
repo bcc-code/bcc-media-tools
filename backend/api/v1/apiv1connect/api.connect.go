@@ -142,6 +142,15 @@ const (
 	// APIServiceGetRecordingWindowProcedure is the fully-qualified name of the APIService's
 	// GetRecordingWindow RPC.
 	APIServiceGetRecordingWindowProcedure = "/api.v1.APIService/GetRecordingWindow"
+	// APIServiceAddEditorialMarkerProcedure is the fully-qualified name of the APIService's
+	// AddEditorialMarker RPC.
+	APIServiceAddEditorialMarkerProcedure = "/api.v1.APIService/AddEditorialMarker"
+	// APIServiceSyncEditorialSessionFromPlayoutProcedure is the fully-qualified name of the
+	// APIService's SyncEditorialSessionFromPlayout RPC.
+	APIServiceSyncEditorialSessionFromPlayoutProcedure = "/api.v1.APIService/SyncEditorialSessionFromPlayout"
+	// APIServiceAttachEditorialRecordingProcedure is the fully-qualified name of the APIService's
+	// AttachEditorialRecording RPC.
+	APIServiceAttachEditorialRecordingProcedure = "/api.v1.APIService/AttachEditorialRecording"
 )
 
 // APIServiceClient is a client for the api.v1.APIService service.
@@ -205,6 +214,9 @@ type APIServiceClient interface {
 	ImportEditorialMarkersFromPlayout(context.Context, *connect.Request[v1.ImportEditorialMarkersFromPlayoutRequest]) (*connect.Response[v1.ImportEditorialMarkersResponse], error)
 	ListPlayoutEvents(context.Context, *connect.Request[v1.ListPlayoutEventsRequest]) (*connect.Response[v1.ListPlayoutEventsResponse], error)
 	GetRecordingWindow(context.Context, *connect.Request[v1.GetRecordingWindowRequest]) (*connect.Response[v1.GetRecordingWindowResponse], error)
+	AddEditorialMarker(context.Context, *connect.Request[v1.AddEditorialMarkerRequest]) (*connect.Response[v1.EditorialMarker], error)
+	SyncEditorialSessionFromPlayout(context.Context, *connect.Request[v1.SyncEditorialSessionFromPlayoutRequest]) (*connect.Response[v1.EditorialSession], error)
+	AttachEditorialRecording(context.Context, *connect.Request[v1.AttachEditorialRecordingRequest]) (*connect.Response[v1.EditorialSession], error)
 }
 
 // NewAPIServiceClient constructs a client for the api.v1.APIService service. By default, it uses
@@ -452,6 +464,24 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(aPIServiceMethods.ByName("GetRecordingWindow")),
 			connect.WithClientOptions(opts...),
 		),
+		addEditorialMarker: connect.NewClient[v1.AddEditorialMarkerRequest, v1.EditorialMarker](
+			httpClient,
+			baseURL+APIServiceAddEditorialMarkerProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("AddEditorialMarker")),
+			connect.WithClientOptions(opts...),
+		),
+		syncEditorialSessionFromPlayout: connect.NewClient[v1.SyncEditorialSessionFromPlayoutRequest, v1.EditorialSession](
+			httpClient,
+			baseURL+APIServiceSyncEditorialSessionFromPlayoutProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("SyncEditorialSessionFromPlayout")),
+			connect.WithClientOptions(opts...),
+		),
+		attachEditorialRecording: connect.NewClient[v1.AttachEditorialRecordingRequest, v1.EditorialSession](
+			httpClient,
+			baseURL+APIServiceAttachEditorialRecordingProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("AttachEditorialRecording")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -496,6 +526,9 @@ type aPIServiceClient struct {
 	importEditorialMarkersFromPlayout *connect.Client[v1.ImportEditorialMarkersFromPlayoutRequest, v1.ImportEditorialMarkersResponse]
 	listPlayoutEvents                 *connect.Client[v1.ListPlayoutEventsRequest, v1.ListPlayoutEventsResponse]
 	getRecordingWindow                *connect.Client[v1.GetRecordingWindowRequest, v1.GetRecordingWindowResponse]
+	addEditorialMarker                *connect.Client[v1.AddEditorialMarkerRequest, v1.EditorialMarker]
+	syncEditorialSessionFromPlayout   *connect.Client[v1.SyncEditorialSessionFromPlayoutRequest, v1.EditorialSession]
+	attachEditorialRecording          *connect.Client[v1.AttachEditorialRecordingRequest, v1.EditorialSession]
 }
 
 // GetPermissions calls api.v1.APIService.GetPermissions.
@@ -693,6 +726,21 @@ func (c *aPIServiceClient) GetRecordingWindow(ctx context.Context, req *connect.
 	return c.getRecordingWindow.CallUnary(ctx, req)
 }
 
+// AddEditorialMarker calls api.v1.APIService.AddEditorialMarker.
+func (c *aPIServiceClient) AddEditorialMarker(ctx context.Context, req *connect.Request[v1.AddEditorialMarkerRequest]) (*connect.Response[v1.EditorialMarker], error) {
+	return c.addEditorialMarker.CallUnary(ctx, req)
+}
+
+// SyncEditorialSessionFromPlayout calls api.v1.APIService.SyncEditorialSessionFromPlayout.
+func (c *aPIServiceClient) SyncEditorialSessionFromPlayout(ctx context.Context, req *connect.Request[v1.SyncEditorialSessionFromPlayoutRequest]) (*connect.Response[v1.EditorialSession], error) {
+	return c.syncEditorialSessionFromPlayout.CallUnary(ctx, req)
+}
+
+// AttachEditorialRecording calls api.v1.APIService.AttachEditorialRecording.
+func (c *aPIServiceClient) AttachEditorialRecording(ctx context.Context, req *connect.Request[v1.AttachEditorialRecordingRequest]) (*connect.Response[v1.EditorialSession], error) {
+	return c.attachEditorialRecording.CallUnary(ctx, req)
+}
+
 // APIServiceHandler is an implementation of the api.v1.APIService service.
 type APIServiceHandler interface {
 	// Permissions
@@ -754,6 +802,9 @@ type APIServiceHandler interface {
 	ImportEditorialMarkersFromPlayout(context.Context, *connect.Request[v1.ImportEditorialMarkersFromPlayoutRequest]) (*connect.Response[v1.ImportEditorialMarkersResponse], error)
 	ListPlayoutEvents(context.Context, *connect.Request[v1.ListPlayoutEventsRequest]) (*connect.Response[v1.ListPlayoutEventsResponse], error)
 	GetRecordingWindow(context.Context, *connect.Request[v1.GetRecordingWindowRequest]) (*connect.Response[v1.GetRecordingWindowResponse], error)
+	AddEditorialMarker(context.Context, *connect.Request[v1.AddEditorialMarkerRequest]) (*connect.Response[v1.EditorialMarker], error)
+	SyncEditorialSessionFromPlayout(context.Context, *connect.Request[v1.SyncEditorialSessionFromPlayoutRequest]) (*connect.Response[v1.EditorialSession], error)
+	AttachEditorialRecording(context.Context, *connect.Request[v1.AttachEditorialRecordingRequest]) (*connect.Response[v1.EditorialSession], error)
 }
 
 // NewAPIServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -997,6 +1048,24 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(aPIServiceMethods.ByName("GetRecordingWindow")),
 		connect.WithHandlerOptions(opts...),
 	)
+	aPIServiceAddEditorialMarkerHandler := connect.NewUnaryHandler(
+		APIServiceAddEditorialMarkerProcedure,
+		svc.AddEditorialMarker,
+		connect.WithSchema(aPIServiceMethods.ByName("AddEditorialMarker")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aPIServiceSyncEditorialSessionFromPlayoutHandler := connect.NewUnaryHandler(
+		APIServiceSyncEditorialSessionFromPlayoutProcedure,
+		svc.SyncEditorialSessionFromPlayout,
+		connect.WithSchema(aPIServiceMethods.ByName("SyncEditorialSessionFromPlayout")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aPIServiceAttachEditorialRecordingHandler := connect.NewUnaryHandler(
+		APIServiceAttachEditorialRecordingProcedure,
+		svc.AttachEditorialRecording,
+		connect.WithSchema(aPIServiceMethods.ByName("AttachEditorialRecording")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/api.v1.APIService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case APIServiceGetPermissionsProcedure:
@@ -1077,6 +1146,12 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceListPlayoutEventsHandler.ServeHTTP(w, r)
 		case APIServiceGetRecordingWindowProcedure:
 			aPIServiceGetRecordingWindowHandler.ServeHTTP(w, r)
+		case APIServiceAddEditorialMarkerProcedure:
+			aPIServiceAddEditorialMarkerHandler.ServeHTTP(w, r)
+		case APIServiceSyncEditorialSessionFromPlayoutProcedure:
+			aPIServiceSyncEditorialSessionFromPlayoutHandler.ServeHTTP(w, r)
+		case APIServiceAttachEditorialRecordingProcedure:
+			aPIServiceAttachEditorialRecordingHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -1240,4 +1315,16 @@ func (UnimplementedAPIServiceHandler) ListPlayoutEvents(context.Context, *connec
 
 func (UnimplementedAPIServiceHandler) GetRecordingWindow(context.Context, *connect.Request[v1.GetRecordingWindowRequest]) (*connect.Response[v1.GetRecordingWindowResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetRecordingWindow is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) AddEditorialMarker(context.Context, *connect.Request[v1.AddEditorialMarkerRequest]) (*connect.Response[v1.EditorialMarker], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.AddEditorialMarker is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) SyncEditorialSessionFromPlayout(context.Context, *connect.Request[v1.SyncEditorialSessionFromPlayoutRequest]) (*connect.Response[v1.EditorialSession], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.SyncEditorialSessionFromPlayout is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) AttachEditorialRecording(context.Context, *connect.Request[v1.AttachEditorialRecordingRequest]) (*connect.Response[v1.EditorialSession], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.AttachEditorialRecording is not implemented"))
 }

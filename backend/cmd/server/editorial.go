@@ -90,28 +90,43 @@ func (e EditorialAPI) CreateEditorialSession(ctx context.Context, req *connect.R
 	if err != nil {
 		return nil, err
 	}
-	vxID := req.Msg.GetVXID()
-	if vxID == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("missing VXID"))
-	}
 	now := time.Now().UnixMilli()
 	sess := editorial.Session{
 		ID:        uuid.NewString(),
-		Vxid:      vxID,
+		Vxid:      req.Msg.GetVXID(),
 		Title:     req.Msg.GetTitle(),
 		Status:    editorial.StatusDraft,
 		CreatedBy: email,
 		CreatedAt: now,
 		UpdatedAt: now,
+		Kind:      editorial.KindRecording,
+	}
+	if req.Msg.GetLive() {
+		// Not in Mediabanken yet: the recording is attached when logging is done.
+		if req.Msg.GetPlayoutEventId() == "" {
+			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("missing playout_event_id"))
+		}
+		sess.Vxid = ""
+		sess.Kind = editorial.KindLive
+		sess.PlayoutEventID = req.Msg.GetPlayoutEventId()
+		sess.ClockStartMs = now
+		if start := req.Msg.GetClockStart(); start != nil {
+			sess.ClockStartMs = start.AsTime().UnixMilli()
+		}
+	} else if sess.Vxid == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("missing VXID"))
 	}
 	if err := e.queries.CreateSession(ctx, editorial.CreateSessionParams{
-		ID:        sess.ID,
-		Vxid:      sess.Vxid,
-		Title:     sess.Title,
-		Status:    sess.Status,
-		CreatedBy: sess.CreatedBy,
-		CreatedAt: sess.CreatedAt,
-		UpdatedAt: sess.UpdatedAt,
+		ID:             sess.ID,
+		Vxid:           sess.Vxid,
+		Title:          sess.Title,
+		Status:         sess.Status,
+		CreatedBy:      sess.CreatedBy,
+		CreatedAt:      sess.CreatedAt,
+		UpdatedAt:      sess.UpdatedAt,
+		Kind:           sess.Kind,
+		PlayoutEventID: sess.PlayoutEventID,
+		ClockStartMs:   sess.ClockStartMs,
 	}); err != nil {
 		return nil, editorialErr(fmt.Errorf("editorial: create session: %w", err))
 	}
@@ -129,8 +144,11 @@ func (e EditorialAPI) GetEditorialSession(ctx context.Context, req *connect.Requ
 	// The session (which the caller is authorized to see) is the authorization
 	// for its preview — resolve the URL here so the client never asks for a
 	// video by VXID. Best-effort: a preview failure shouldn't block the review.
-	if url, err := e.cantemo.GetPreviewUrl(out.VXID); err == nil {
-		out.PreviewUrl = url
+	// A live session has no asset to preview yet.
+	if out.VXID != "" {
+		if url, err := e.cantemo.GetPreviewUrl(out.VXID); err == nil {
+			out.PreviewUrl = url
+		}
 	}
 	return connect.NewResponse(out), nil
 }
@@ -250,7 +268,12 @@ func (e EditorialAPI) loadSession(ctx context.Context, id string) (*apiv1.Editor
 // saveSession updates the session title and fully replaces its markers in a
 // single transaction. Markers with an empty ID are treated as new and get a
 // generated id; sort_order is assigned from slice position so the caller
-// controls ordering (any incoming sort_order is ignored).
+// controls ordering (any incoming sort_order is ignored). Live sessions are
+// kept in time order instead.
+//
+// Playout bookkeeping is server-side: a row stays synced only while the
+// fields Playout fills are unchanged, and a Playout row that is left out is
+// dismissed so the next sync doesn't bring it back.
 func (e EditorialAPI) saveSession(ctx context.Context, id, title string, markers []*apiv1.EditorialMarker) error {
 	now := time.Now().UnixMilli()
 
@@ -268,24 +291,25 @@ func (e EditorialAPI) saveSession(ctx context.Context, id, title string, markers
 	if n == 0 {
 		return errEditorialNotFound
 	}
-
-	if err := qtx.DeleteMarkersForSession(ctx, id); err != nil {
-		return fmt.Errorf("editorial: clear markers: %w", err)
+	sess, err := qtx.GetSession(ctx, id)
+	if err != nil {
+		return fmt.Errorf("editorial: get session: %w", err)
+	}
+	stored, err := qtx.ListMarkersForSession(ctx, id)
+	if err != nil {
+		return fmt.Errorf("editorial: list markers: %w", err)
+	}
+	storedByID := make(map[string]editorial.Marker, len(stored))
+	for _, m := range stored {
+		storedByID[m.ID] = m
 	}
 
-	for i, m := range markers {
-		mid := m.GetId()
-		if mid == "" {
-			mid = uuid.NewString()
-		}
-		source := m.GetSource()
-		if source == "" {
-			source = editorial.SourceManual
-		}
-		if err := qtx.InsertMarker(ctx, editorial.InsertMarkerParams{
-			ID:           mid,
+	rows := make([]editorial.Marker, 0, len(markers))
+	kept := map[string]bool{}
+	for _, m := range markers {
+		row := editorial.Marker{
+			ID:           m.GetId(),
 			SessionID:    id,
-			SortOrder:    int64(i),
 			Name:         m.GetName(),
 			Contributors: m.GetContributors(),
 			Comment:      m.GetComment(),
@@ -295,18 +319,77 @@ func (e EditorialAPI) saveSession(ctx context.Context, id, title string, markers
 			EndMs:        m.GetEndMs(),
 			PublishBmm:   m.GetPublishBmm(),
 			PublishBcc:   m.GetPublishBcc(),
-			Source:       source,
-			CreatedAt:    now,
-			UpdatedAt:    now,
-		}); err != nil {
-			return fmt.Errorf("editorial: insert marker: %w", err)
+			Source:       m.GetSource(),
+			PlayoutKey:   m.GetPlayoutKey(),
+		}
+		if row.ID == "" {
+			row.ID = uuid.NewString()
+		}
+		if row.Source == "" {
+			row.Source = editorial.SourceManual
+		}
+		if prev, ok := storedByID[row.ID]; ok && prev.PlayoutKey == row.PlayoutKey {
+			row.PlayoutSynced = prev.PlayoutSynced && !playoutFieldsChanged(prev, row)
+		}
+		if row.PlayoutKey != "" {
+			kept[row.PlayoutKey] = true
+		}
+		rows = append(rows, row)
+	}
+	for _, m := range stored {
+		if m.PlayoutKey != "" && !kept[m.PlayoutKey] {
+			if err := qtx.DismissPlayoutKey(ctx, editorial.DismissPlayoutKeyParams{SessionID: id, PlayoutKey: m.PlayoutKey}); err != nil {
+				return fmt.Errorf("editorial: dismiss playout row: %w", err)
+			}
 		}
 	}
+	if sess.Kind == editorial.KindLive {
+		normalizeLiveMarkers(rows)
+	}
 
+	if err := replaceMarkers(ctx, qtx, id, rows, now); err != nil {
+		return err
+	}
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("editorial: commit: %w", err)
 	}
 	return nil
+}
+
+// replaceMarkers swaps the session's markers for rows, in slice order.
+func replaceMarkers(ctx context.Context, qtx *editorial.Queries, sessionID string, rows []editorial.Marker, now int64) error {
+	if err := qtx.DeleteMarkersForSession(ctx, sessionID); err != nil {
+		return fmt.Errorf("editorial: clear markers: %w", err)
+	}
+	for i, m := range rows {
+		if err := qtx.InsertMarker(ctx, editorial.InsertMarkerParams{
+			ID:            m.ID,
+			SessionID:     sessionID,
+			SortOrder:     int64(i),
+			Name:          m.Name,
+			Contributors:  m.Contributors,
+			Comment:       m.Comment,
+			BibleVerses:   m.BibleVerses,
+			Type:          m.Type,
+			StartMs:       m.StartMs,
+			EndMs:         m.EndMs,
+			PublishBmm:    m.PublishBmm,
+			PublishBcc:    m.PublishBcc,
+			Source:        m.Source,
+			CreatedAt:     now,
+			UpdatedAt:     now,
+			PlayoutKey:    m.PlayoutKey,
+			PlayoutSynced: m.PlayoutSynced,
+		}); err != nil {
+			return fmt.Errorf("editorial: insert marker: %w", err)
+		}
+	}
+	return nil
+}
+
+// playoutFieldsChanged reports whether an editor touched a field Playout fills.
+func playoutFieldsChanged(a, b editorial.Marker) bool {
+	return a.Name != b.Name || a.Contributors != b.Contributors || a.BibleVerses != b.BibleVerses || a.Type != b.Type
 }
 
 // updateMarker runs a single-marker update (which returns the affected row
@@ -496,13 +579,24 @@ func (e EditorialAPI) GetRecordingWindow(ctx context.Context, req *connect.Reque
 		return nil, editorialErr(err)
 	}
 
-	info, err := recordingInfoForItem(e.vidispine, sess.Vxid)
+	// A live session has no asset of its own: the attach dialog names the one
+	// it is about to attach, and the session's stored window doesn't apply.
+	vxID := sess.Vxid
+	if req.Msg.GetVXID() != "" {
+		vxID = req.Msg.GetVXID()
+	}
+	if vxID == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("missing VXID"))
+	}
+
+	info, err := recordingInfoForItem(e.vidispine, vxID)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
 	resp := &apiv1.GetRecordingWindowResponse{DurationMs: info.DurationMs}
 	stored, hasStored := storedRecordingWindow(sess)
+	hasStored = hasStored && vxID == sess.Vxid
 	switch {
 	case hasStored:
 		resp.Start = timestamppb.New(stored.Start)
@@ -568,10 +662,56 @@ func (e EditorialAPI) importFromPlayout(ctx context.Context, eventID string, win
 		return nil, err
 	}
 
-	out := make([]*apiv1.EditorialMarker, 0, len(manifest.Entries))
-	var currentSpeaker *apiv1.EditorialMarker
+	candidates := playoutCandidates(manifest.Entries, window)
+	out := make([]*apiv1.EditorialMarker, 0, len(candidates))
+	for i, c := range candidates {
+		marker := &apiv1.EditorialMarker{
+			Name:         c.Name,
+			Contributors: c.Contributors,
+			BibleVerses:  c.BibleVerses,
+			Type:         editorialTypeFromPlayout(c.PlayoutType),
+			StartMs:      c.At.Sub(window.Start).Milliseconds(),
+			Source:       editorial.SourceImport,
+		}
+		// The next content action marks the end of the previous segment.
+		// Nothing follows the final segment to bound it, but the recording
+		// itself ends, so the window's end is its end.
+		if i+1 < len(candidates) {
+			marker.EndMs = candidates[i+1].At.Sub(window.Start).Milliseconds()
+		} else {
+			marker.EndMs = window.End.Sub(window.Start).Milliseconds()
+		}
+		out = append(out, marker)
+	}
+	return out, nil
+}
+
+// playoutCandidate is one content action from a Playout manifest, mapped to
+// editorial fields but still on the wall clock.
+type playoutCandidate struct {
+	// identifies the manifest entry across re-reads of the manifest
+	Key          string
+	PlayoutType  string
+	At           time.Time
+	Name         string
+	Contributors string
+	BibleVerses  string
+}
+
+// playoutKey identifies a manifest entry: Playout gives entries no id, but a
+// content action's type and timestamp don't change between reads.
+func playoutKey(entry playout.ManifestEntry) string {
+	return entry.Type + "|" + entry.Timestamp.UTC().Format(time.RFC3339Nano)
+}
+
+// playoutCandidates maps the manifest entries inside window to candidate rows,
+// in manifest order. Scripture doesn't form rows of its own: it is collected on
+// the speaker segment it falls in.
+func playoutCandidates(entries []playout.ManifestEntry, window recordingWindow) []playoutCandidate {
+	out := make([]playoutCandidate, 0, len(entries))
+	currentSpeaker := -1
 	var currentSpeakerVerses map[string]struct{}
-	for _, entry := range manifest.Entries {
+	for _, entry := range entries {
 		// Entries from the event's other meetings are not part of this
 		// recording; mapping them would place markers past its end.
 		if !window.Contains(entry.Timestamp) {
@@ -581,58 +721,45 @@ func (e EditorialAPI) importFromPlayout(ctx context.Context, eventID string, win
 			// Scripture actions belong to the current speaker segment rather
 			// than forming standalone editorial rows. A scripture before the
 			// first speaker has no segment to attach to and is ignored.
-			if currentSpeaker != nil && entry.Label != "" {
+			if currentSpeaker >= 0 && entry.Label != "" {
 				if _, exists := currentSpeakerVerses[entry.Label]; exists {
 					continue
 				}
-				if currentSpeaker.BibleVerses != "" {
-					currentSpeaker.BibleVerses += ", "
+				speaker := &out[currentSpeaker]
+				if speaker.BibleVerses != "" {
+					speaker.BibleVerses += ", "
 				}
-				currentSpeaker.BibleVerses += entry.Label
+				speaker.BibleVerses += entry.Label
 				currentSpeakerVerses[entry.Label] = struct{}{}
 			}
 			continue
 		}
 
-		marker := &apiv1.EditorialMarker{
-			Type:    editorialTypeFromPlayout(entry.Type),
-			StartMs: entry.Timestamp.Sub(window.Start).Milliseconds(),
-			Source:  editorial.SourceImport,
-		}
-		// The next content action marks the end of the previous segment.
-		// Scripture entries are handled above and intentionally do not create
-		// a boundary of their own.
-		if len(out) > 0 {
-			out[len(out)-1].EndMs = marker.StartMs
-		}
+		c := playoutCandidate{Key: playoutKey(entry), PlayoutType: entry.Type, At: entry.Timestamp}
 		switch entry.Type {
 		case playout.ContentTypeSpeaker:
 			var data struct {
 				Name string `json:"name"`
 			}
 			if json.Unmarshal(entry.Data, &data) == nil && data.Name != "" {
-				marker.Contributors = data.Name
+				c.Contributors = data.Name
 			} else {
-				marker.Contributors = entry.Label
+				c.Contributors = entry.Label
 			}
-			currentSpeaker = marker
+			currentSpeaker = len(out)
 			currentSpeakerVerses = map[string]struct{}{}
 		default:
 			// Non-speaker content, such as a song, uses the Playout label as
 			// its editorial title. Speaker names live in Contributors instead.
-			marker.Name = entry.Label
+			c.Name = entry.Label
 			// A song or other content segment ends the active speaker segment;
 			// subsequent scripture must not be attributed to that speaker.
-			currentSpeaker = nil
+			currentSpeaker = -1
 			currentSpeakerVerses = nil
 		}
-		out = append(out, marker)
+		out = append(out, c)
 	}
-	// Nothing follows the final segment to bound it, but the recording itself ends so the window's end is its end.
-	if len(out) > 0 {
-		out[len(out)-1].EndMs = window.End.Sub(window.Start).Milliseconds()
-	}
-	return out, nil
+	return out
 }
 
 // editorialTypeFromPlayout maps Playout's content types to the values used by
@@ -651,13 +778,18 @@ func editorialTypeFromPlayout(playoutType string) string {
 
 func editorialSessionToProto(s editorial.Session, markers []editorial.Marker) *apiv1.EditorialSession {
 	out := &apiv1.EditorialSession{
-		Id:        s.ID,
-		VXID:      s.Vxid,
-		Title:     s.Title,
-		Status:    s.Status,
-		CreatedBy: s.CreatedBy,
-		CreatedAt: timestamppb.New(time.UnixMilli(s.CreatedAt)),
-		UpdatedAt: timestamppb.New(time.UnixMilli(s.UpdatedAt)),
+		Id:             s.ID,
+		VXID:           s.Vxid,
+		Title:          s.Title,
+		Status:         s.Status,
+		CreatedBy:      s.CreatedBy,
+		CreatedAt:      timestamppb.New(time.UnixMilli(s.CreatedAt)),
+		UpdatedAt:      timestamppb.New(time.UnixMilli(s.UpdatedAt)),
+		Kind:           s.Kind,
+		PlayoutEventId: s.PlayoutEventID,
+	}
+	if s.Kind == editorial.KindLive {
+		out.ClockStart = timestamppb.New(time.UnixMilli(s.ClockStartMs))
 	}
 	for _, m := range markers {
 		out.Markers = append(out.Markers, editorialMarkerToProto(m))
@@ -667,17 +799,19 @@ func editorialSessionToProto(s editorial.Session, markers []editorial.Marker) *a
 
 func editorialMarkerToProto(m editorial.Marker) *apiv1.EditorialMarker {
 	return &apiv1.EditorialMarker{
-		Id:           m.ID,
-		SortOrder:    int32(m.SortOrder),
-		Name:         m.Name,
-		Contributors: m.Contributors,
-		Comment:      m.Comment,
-		BibleVerses:  m.BibleVerses,
-		Type:         m.Type,
-		StartMs:      m.StartMs,
-		EndMs:        m.EndMs,
-		PublishBmm:   m.PublishBmm,
-		PublishBcc:   m.PublishBcc,
-		Source:       m.Source,
+		Id:            m.ID,
+		SortOrder:     int32(m.SortOrder),
+		Name:          m.Name,
+		Contributors:  m.Contributors,
+		Comment:       m.Comment,
+		BibleVerses:   m.BibleVerses,
+		Type:          m.Type,
+		StartMs:       m.StartMs,
+		EndMs:         m.EndMs,
+		PublishBmm:    m.PublishBmm,
+		PublishBcc:    m.PublishBcc,
+		Source:        m.Source,
+		PlayoutKey:    m.PlayoutKey,
+		PlayoutSynced: m.PlayoutSynced,
 	}
 }

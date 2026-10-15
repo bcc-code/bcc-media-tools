@@ -9,19 +9,47 @@ import (
 	"context"
 )
 
+const attachRecording = `-- name: AttachRecording :execrows
+UPDATE sessions SET vxid = ?, kind = ?, updated_at = ?
+WHERE id = ?
+`
+
+type AttachRecordingParams struct {
+	Vxid      string
+	Kind      string
+	UpdatedAt int64
+	ID        string
+}
+
+func (q *Queries) AttachRecording(ctx context.Context, arg AttachRecordingParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, attachRecording,
+		arg.Vxid,
+		arg.Kind,
+		arg.UpdatedAt,
+		arg.ID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
 const createSession = `-- name: CreateSession :exec
-INSERT INTO sessions (id, vxid, title, status, created_by, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?)
+INSERT INTO sessions (id, vxid, title, status, created_by, created_at, updated_at, kind, playout_event_id, clock_start_ms)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `
 
 type CreateSessionParams struct {
-	ID        string
-	Vxid      string
-	Title     string
-	Status    string
-	CreatedBy string
-	CreatedAt int64
-	UpdatedAt int64
+	ID             string
+	Vxid           string
+	Title          string
+	Status         string
+	CreatedBy      string
+	CreatedAt      int64
+	UpdatedAt      int64
+	Kind           string
+	PlayoutEventID string
+	ClockStartMs   int64
 }
 
 func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) error {
@@ -33,6 +61,9 @@ func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) er
 		arg.CreatedBy,
 		arg.CreatedAt,
 		arg.UpdatedAt,
+		arg.Kind,
+		arg.PlayoutEventID,
+		arg.ClockStartMs,
 	)
 	return err
 }
@@ -60,8 +91,23 @@ func (q *Queries) DeleteSession(ctx context.Context, id string) (int64, error) {
 	return result.RowsAffected()
 }
 
+const dismissPlayoutKey = `-- name: DismissPlayoutKey :exec
+INSERT OR IGNORE INTO playout_dismissed (session_id, playout_key)
+VALUES (?, ?)
+`
+
+type DismissPlayoutKeyParams struct {
+	SessionID  string
+	PlayoutKey string
+}
+
+func (q *Queries) DismissPlayoutKey(ctx context.Context, arg DismissPlayoutKeyParams) error {
+	_, err := q.db.ExecContext(ctx, dismissPlayoutKey, arg.SessionID, arg.PlayoutKey)
+	return err
+}
+
 const getSession = `-- name: GetSession :one
-SELECT id, vxid, title, status, created_by, created_at, updated_at, playout_event_id, recording_start_ms, recording_end_ms FROM sessions
+SELECT id, vxid, title, status, created_by, created_at, updated_at, playout_event_id, recording_start_ms, recording_end_ms, kind, clock_start_ms FROM sessions
 WHERE id = ?
 `
 
@@ -79,31 +125,35 @@ func (q *Queries) GetSession(ctx context.Context, id string) (Session, error) {
 		&i.PlayoutEventID,
 		&i.RecordingStartMs,
 		&i.RecordingEndMs,
+		&i.Kind,
+		&i.ClockStartMs,
 	)
 	return i, err
 }
 
 const insertMarker = `-- name: InsertMarker :exec
-INSERT INTO markers (id, session_id, sort_order, name, contributors, comment, bible_verses, type, start_ms, end_ms, publish_bmm, publish_bcc, source, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO markers (id, session_id, sort_order, name, contributors, comment, bible_verses, type, start_ms, end_ms, publish_bmm, publish_bcc, source, created_at, updated_at, playout_key, playout_synced)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `
 
 type InsertMarkerParams struct {
-	ID           string
-	SessionID    string
-	SortOrder    int64
-	Name         string
-	Contributors string
-	Comment      string
-	BibleVerses  string
-	Type         string
-	StartMs      int64
-	EndMs        int64
-	PublishBmm   bool
-	PublishBcc   bool
-	Source       string
-	CreatedAt    int64
-	UpdatedAt    int64
+	ID            string
+	SessionID     string
+	SortOrder     int64
+	Name          string
+	Contributors  string
+	Comment       string
+	BibleVerses   string
+	Type          string
+	StartMs       int64
+	EndMs         int64
+	PublishBmm    bool
+	PublishBcc    bool
+	Source        string
+	CreatedAt     int64
+	UpdatedAt     int64
+	PlayoutKey    string
+	PlayoutSynced bool
 }
 
 func (q *Queries) InsertMarker(ctx context.Context, arg InsertMarkerParams) error {
@@ -123,12 +173,42 @@ func (q *Queries) InsertMarker(ctx context.Context, arg InsertMarkerParams) erro
 		arg.Source,
 		arg.CreatedAt,
 		arg.UpdatedAt,
+		arg.PlayoutKey,
+		arg.PlayoutSynced,
 	)
 	return err
 }
 
+const listDismissedPlayoutKeys = `-- name: ListDismissedPlayoutKeys :many
+SELECT playout_key FROM playout_dismissed
+WHERE session_id = ?
+`
+
+func (q *Queries) ListDismissedPlayoutKeys(ctx context.Context, sessionID string) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, listDismissedPlayoutKeys, sessionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var playout_key string
+		if err := rows.Scan(&playout_key); err != nil {
+			return nil, err
+		}
+		items = append(items, playout_key)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listMarkersForSession = `-- name: ListMarkersForSession :many
-SELECT id, session_id, sort_order, name, contributors, comment, bible_verses, type, start_ms, end_ms, publish_bmm, publish_bcc, source, created_at, updated_at FROM markers
+SELECT id, session_id, sort_order, name, contributors, comment, bible_verses, type, start_ms, end_ms, publish_bmm, publish_bcc, source, created_at, updated_at, playout_key, playout_synced FROM markers
 WHERE session_id = ?
 ORDER BY sort_order ASC
 `
@@ -158,6 +238,8 @@ func (q *Queries) ListMarkersForSession(ctx context.Context, sessionID string) (
 			&i.Source,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.PlayoutKey,
+			&i.PlayoutSynced,
 		); err != nil {
 			return nil, err
 		}
@@ -173,7 +255,7 @@ func (q *Queries) ListMarkersForSession(ctx context.Context, sessionID string) (
 }
 
 const listSessions = `-- name: ListSessions :many
-SELECT id, vxid, title, status, created_by, created_at, updated_at, playout_event_id, recording_start_ms, recording_end_ms FROM sessions
+SELECT id, vxid, title, status, created_by, created_at, updated_at, playout_event_id, recording_start_ms, recording_end_ms, kind, clock_start_ms FROM sessions
 ORDER BY created_at DESC
 `
 
@@ -197,6 +279,8 @@ func (q *Queries) ListSessions(ctx context.Context) ([]Session, error) {
 			&i.PlayoutEventID,
 			&i.RecordingStartMs,
 			&i.RecordingEndMs,
+			&i.Kind,
+			&i.ClockStartMs,
 		); err != nil {
 			return nil, err
 		}
@@ -237,7 +321,7 @@ func (q *Queries) SetMarkerComment(ctx context.Context, arg SetMarkerCommentPara
 }
 
 const setMarkerName = `-- name: SetMarkerName :execrows
-UPDATE markers SET name = ?, updated_at = ?
+UPDATE markers SET name = ?, playout_synced = 0, updated_at = ?
 WHERE id = ? AND session_id = ?
 `
 
@@ -248,6 +332,7 @@ type SetMarkerNameParams struct {
 	SessionID string
 }
 
+// A hand-edited title stops Playout from refreshing the row.
 func (q *Queries) SetMarkerName(ctx context.Context, arg SetMarkerNameParams) (int64, error) {
 	result, err := q.db.ExecContext(ctx, setMarkerName,
 		arg.Name,
