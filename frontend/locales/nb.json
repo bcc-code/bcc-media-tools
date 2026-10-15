@@ -384,7 +384,10 @@
         "attachFailed": "Kunne ikke koble til opptaket",
         "noMarkersLive": "Ingen markører ennå. Trykk Marker nå (eller M) når noe starter.",
         "meetingDate": "Dato",
-        "meetingStart": "Møtet startet"
+        "meetingStart": "Møtet startet",
+        "exportExcel": "Eksporter til Excel",
+        "exportFailed": "Kunne ikke eksportere",
+        "exportedSavedOnly": "Eksporterte sist lagrede versjon. Lagre for å ta med endringene dine."
     },
     "vault": {
         "searchPlaceholder": "Søk i vault",

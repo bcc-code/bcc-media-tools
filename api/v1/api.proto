@@ -545,6 +545,18 @@ message AddEditorialMarkerRequest {
   string type = 3;
 }
 
+// The session's markers as an Excel workbook, in the saved state.
+message ExportEditorialSessionRequest {
+  string id = 1;
+  // "nb" or "en": the language of headers and labels; defaults to "en"
+  string language = 2;
+}
+
+message ExportEditorialSessionResponse {
+  bytes data = 1;
+  string filename = 2;
+}
+
 // Merge the live session's Playout manifest into its markers and save.
 message SyncEditorialSessionFromPlayoutRequest {
   string id = 1;
@@ -731,4 +743,5 @@ service APIService {
   rpc AddEditorialMarker(AddEditorialMarkerRequest) returns (EditorialMarker) {}
   rpc SyncEditorialSessionFromPlayout(SyncEditorialSessionFromPlayoutRequest) returns (EditorialSession) {}
   rpc AttachEditorialRecording(AttachEditorialRecordingRequest) returns (EditorialSession) {}
+  rpc ExportEditorialSession(ExportEditorialSessionRequest) returns (ExportEditorialSessionResponse) {}
 }

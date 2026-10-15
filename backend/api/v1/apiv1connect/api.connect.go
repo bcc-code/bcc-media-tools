@@ -151,6 +151,9 @@ const (
 	// APIServiceAttachEditorialRecordingProcedure is the fully-qualified name of the APIService's
 	// AttachEditorialRecording RPC.
 	APIServiceAttachEditorialRecordingProcedure = "/api.v1.APIService/AttachEditorialRecording"
+	// APIServiceExportEditorialSessionProcedure is the fully-qualified name of the APIService's
+	// ExportEditorialSession RPC.
+	APIServiceExportEditorialSessionProcedure = "/api.v1.APIService/ExportEditorialSession"
 )
 
 // APIServiceClient is a client for the api.v1.APIService service.
@@ -217,6 +220,7 @@ type APIServiceClient interface {
 	AddEditorialMarker(context.Context, *connect.Request[v1.AddEditorialMarkerRequest]) (*connect.Response[v1.EditorialMarker], error)
 	SyncEditorialSessionFromPlayout(context.Context, *connect.Request[v1.SyncEditorialSessionFromPlayoutRequest]) (*connect.Response[v1.EditorialSession], error)
 	AttachEditorialRecording(context.Context, *connect.Request[v1.AttachEditorialRecordingRequest]) (*connect.Response[v1.EditorialSession], error)
+	ExportEditorialSession(context.Context, *connect.Request[v1.ExportEditorialSessionRequest]) (*connect.Response[v1.ExportEditorialSessionResponse], error)
 }
 
 // NewAPIServiceClient constructs a client for the api.v1.APIService service. By default, it uses
@@ -482,6 +486,12 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(aPIServiceMethods.ByName("AttachEditorialRecording")),
 			connect.WithClientOptions(opts...),
 		),
+		exportEditorialSession: connect.NewClient[v1.ExportEditorialSessionRequest, v1.ExportEditorialSessionResponse](
+			httpClient,
+			baseURL+APIServiceExportEditorialSessionProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("ExportEditorialSession")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -529,6 +539,7 @@ type aPIServiceClient struct {
 	addEditorialMarker                *connect.Client[v1.AddEditorialMarkerRequest, v1.EditorialMarker]
 	syncEditorialSessionFromPlayout   *connect.Client[v1.SyncEditorialSessionFromPlayoutRequest, v1.EditorialSession]
 	attachEditorialRecording          *connect.Client[v1.AttachEditorialRecordingRequest, v1.EditorialSession]
+	exportEditorialSession            *connect.Client[v1.ExportEditorialSessionRequest, v1.ExportEditorialSessionResponse]
 }
 
 // GetPermissions calls api.v1.APIService.GetPermissions.
@@ -741,6 +752,11 @@ func (c *aPIServiceClient) AttachEditorialRecording(ctx context.Context, req *co
 	return c.attachEditorialRecording.CallUnary(ctx, req)
 }
 
+// ExportEditorialSession calls api.v1.APIService.ExportEditorialSession.
+func (c *aPIServiceClient) ExportEditorialSession(ctx context.Context, req *connect.Request[v1.ExportEditorialSessionRequest]) (*connect.Response[v1.ExportEditorialSessionResponse], error) {
+	return c.exportEditorialSession.CallUnary(ctx, req)
+}
+
 // APIServiceHandler is an implementation of the api.v1.APIService service.
 type APIServiceHandler interface {
 	// Permissions
@@ -805,6 +821,7 @@ type APIServiceHandler interface {
 	AddEditorialMarker(context.Context, *connect.Request[v1.AddEditorialMarkerRequest]) (*connect.Response[v1.EditorialMarker], error)
 	SyncEditorialSessionFromPlayout(context.Context, *connect.Request[v1.SyncEditorialSessionFromPlayoutRequest]) (*connect.Response[v1.EditorialSession], error)
 	AttachEditorialRecording(context.Context, *connect.Request[v1.AttachEditorialRecordingRequest]) (*connect.Response[v1.EditorialSession], error)
+	ExportEditorialSession(context.Context, *connect.Request[v1.ExportEditorialSessionRequest]) (*connect.Response[v1.ExportEditorialSessionResponse], error)
 }
 
 // NewAPIServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -1066,6 +1083,12 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(aPIServiceMethods.ByName("AttachEditorialRecording")),
 		connect.WithHandlerOptions(opts...),
 	)
+	aPIServiceExportEditorialSessionHandler := connect.NewUnaryHandler(
+		APIServiceExportEditorialSessionProcedure,
+		svc.ExportEditorialSession,
+		connect.WithSchema(aPIServiceMethods.ByName("ExportEditorialSession")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/api.v1.APIService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case APIServiceGetPermissionsProcedure:
@@ -1152,6 +1175,8 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceSyncEditorialSessionFromPlayoutHandler.ServeHTTP(w, r)
 		case APIServiceAttachEditorialRecordingProcedure:
 			aPIServiceAttachEditorialRecordingHandler.ServeHTTP(w, r)
+		case APIServiceExportEditorialSessionProcedure:
+			aPIServiceExportEditorialSessionHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -1327,4 +1352,8 @@ func (UnimplementedAPIServiceHandler) SyncEditorialSessionFromPlayout(context.Co
 
 func (UnimplementedAPIServiceHandler) AttachEditorialRecording(context.Context, *connect.Request[v1.AttachEditorialRecordingRequest]) (*connect.Response[v1.EditorialSession], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.AttachEditorialRecording is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) ExportEditorialSession(context.Context, *connect.Request[v1.ExportEditorialSessionRequest]) (*connect.Response[v1.ExportEditorialSessionResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.ExportEditorialSession is not implemented"))
 }

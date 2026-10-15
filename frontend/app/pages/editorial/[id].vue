@@ -11,7 +11,7 @@ import { timestampDate, timestampFromDate } from "@bufbuild/protobuf/wkt";
 const route = useRoute("editorial-id");
 const sessionId = computed(() => route.params.id as string);
 
-const { t, te } = useI18n();
+const { t, te, locale } = useI18n();
 const api = useAPI();
 const perms = usePermissions();
 const toaster = useToast();
@@ -873,7 +873,13 @@ async function loadRecordingWindow(vxid = "") {
 
 // Secondary/destructive actions live in the overflow menu; Save stays primary.
 const menuItems = computed(() => [
-    ...(isLive.value
+    {
+        value: "export",
+        label: t("editorial.exportExcel"),
+        icon: "tabler:file-spreadsheet",
+        disabled: exporting.value,
+    },
+    ...(isLive.value && canEdit.value
         ? [
               {
                   value: "attach",
@@ -899,18 +905,58 @@ const menuItems = computed(() => [
               },
           ]
         : []),
-    {
-        value: "delete",
-        label: t("editorial.delete"),
-        icon: "tabler:trash",
-        intent: "danger" as const,
-    },
+    ...(canEdit.value
+        ? [
+              {
+                  value: "delete",
+                  label: t("editorial.delete"),
+                  icon: "tabler:trash",
+                  intent: "danger" as const,
+              },
+          ]
+        : []),
 ]);
 function onMenuSelect(value: string) {
     if (value === "delete") deleteOpen.value = true;
     else if (value === "import") void importMarkers();
     else if (value === "import-playout") void openPlayoutPicker();
     else if (value === "attach") openAttach();
+    else if (value === "export") void exportExcel();
+}
+
+// ── Excel export ──────────────────────────────────────────
+// The server builds the workbook from the saved session, so unsaved edits
+// aren't in it; say so rather than export something that looks current.
+const exporting = ref(false);
+
+async function exportExcel() {
+    if (exporting.value) return;
+    exporting.value = true;
+    try {
+        const res = await api.exportEditorialSession({
+            id: sessionId.value,
+            language: locale.value,
+        });
+        const blob = new Blob([res.data as BlobPart], {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = res.filename;
+        a.click();
+        URL.revokeObjectURL(url);
+        if (dirty.value) {
+            toaster.create({
+                title: t("editorial.exportedSavedOnly"),
+                type: "info",
+            });
+        }
+    } catch {
+        toaster.create({ title: t("editorial.exportFailed"), type: "error" });
+    } finally {
+        exporting.value = false;
+    }
 }
 
 async function openPlayoutPicker() {
@@ -1121,7 +1167,7 @@ onBeforeRouteLeave(() => {
             </div>
 
             <div
-                v-if="canEdit || isLive || saveStatus !== 'idle'"
+                v-if="!loading && !notFound"
                 class="mb-6 flex flex-wrap items-center gap-3"
             >
                 <DesignSegmentGroup
@@ -1222,12 +1268,12 @@ onBeforeRouteLeave(() => {
                             {{ t("editorial.saveFailed") }}
                         </template>
                     </span>
+                    <DesignMenu
+                        :items="menuItems"
+                        :trigger-label="t('editorial.moreActions')"
+                        @select="onMenuSelect"
+                    />
                     <template v-if="canEdit">
-                        <DesignMenu
-                            :items="menuItems"
-                            :trigger-label="t('editorial.moreActions')"
-                            @select="onMenuSelect"
-                        />
                         <DesignButton
                             v-if="effectiveMode === 'edit'"
                             icon="tabler:device-floppy"

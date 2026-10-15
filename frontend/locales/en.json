@@ -384,7 +384,10 @@
         "attachFailed": "Could not attach the recording",
         "noMarkersLive": "No markers yet. Press Mark now (or M) when something starts.",
         "meetingDate": "Date",
-        "meetingStart": "Meeting started"
+        "meetingStart": "Meeting started",
+        "exportExcel": "Export to Excel",
+        "exportFailed": "Could not export",
+        "exportedSavedOnly": "Exported the last saved version. Save to include your changes."
     },
     "vault": {
         "searchPlaceholder": "Search the vault",
