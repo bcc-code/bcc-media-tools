@@ -564,9 +564,57 @@ message ExportEditorialSessionResponse {
   string filename = 2;
 }
 
+// Follow a session as others change it. The stream sends the session at
+// once, then again after every change anyone makes, and presence whenever
+// someone arrives, leaves or starts commenting. A keep-alive event (no
+// session) is sent regularly so proxies keep the connection open.
+message WatchEditorialSessionRequest {
+  string id = 1;
+  // identifies this browser tab, so its own presence can be told apart
+  string client_id = 2;
+}
+
+// Someone with the session open.
+message EditorialPresence {
+  string client_id = 1;
+  string email = 2;
+  // "viewing", "commenting" or "editing" (the edit view with unsaved changes)
+  string activity = 3;
+  // the marker being commented on, when commenting
+  string marker_id = 4;
+}
+
+message EditorialSessionEvent {
+  // set when the session changed (and on the first event)
+  EditorialSession session = 1;
+  repeated EditorialPresence presence = 2;
+  // the session was deleted; the stream ends
+  bool deleted = 3;
+  // the tab that runs the Playout sync for everyone (a live-role user's);
+  // empty when none is open. Sent with presence.
+  string sync_client_id = 4;
+}
+
+// Tell the others what this tab is doing.
+message SetEditorialPresenceRequest {
+  string session_id = 1;
+  string client_id = 2;
+  string activity = 3;
+  string marker_id = 4;
+}
+
 // Merge the live session's Playout manifest into its markers and save.
 message SyncEditorialSessionFromPlayoutRequest {
   string id = 1;
+  // the tab asking; while the session is watched only the tab holding the
+  // sync lock may sync
+  string client_id = 2;
+}
+
+// Move a session's Playout sync lock to this tab.
+message TakeEditorialSyncRequest {
+  string session_id = 1;
+  string client_id = 2;
 }
 
 // Attach the ingested recording to a live session ("Send to Mediabanken"):
@@ -763,4 +811,7 @@ service APIService {
   rpc SyncEditorialSessionFromPlayout(SyncEditorialSessionFromPlayoutRequest) returns (EditorialSession) {}
   rpc AttachEditorialRecording(AttachEditorialRecordingRequest) returns (EditorialSession) {}
   rpc ExportEditorialSession(ExportEditorialSessionRequest) returns (ExportEditorialSessionResponse) {}
+  rpc WatchEditorialSession(WatchEditorialSessionRequest) returns (stream EditorialSessionEvent) {}
+  rpc SetEditorialPresence(SetEditorialPresenceRequest) returns (Void) {}
+  rpc TakeEditorialSync(TakeEditorialSyncRequest) returns (Void) {}
 }

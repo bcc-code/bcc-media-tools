@@ -396,7 +396,19 @@
         "done": "Ferdig",
         "commentSummary": "{n} markører · {commented} med kommentar",
         "untitled": "Møte uten navn",
-        "refreshStatus": "Oppdatert {time} · neste om {next}"
+        "connected": "Direkte",
+        "reconnecting": "Kobler til igjen…",
+        "connectedHint": "Endringer fra andre vises mens de gjøres",
+        "reconnectingHint": "Mistet direkteforbindelsen; ser etter endringer med noen sekunders mellomrom",
+        "othersHere": "Også her: {names}",
+        "isCommenting": "{name} kommenterer…",
+        "otherIsEditing": "{name} har ulagrede endringer i redigeringsvisningen. Lagringen deres vil erstatte markørlisten, også endringer gjort i mellomtiden.",
+        "remoteChanged": "Andre har endret denne gjennomgangen mens du redigerte. Lagrer du nå, erstattes endringene deres.",
+        "discardAndReload": "Forkast mine og last inn på nytt",
+        "deletedByOther": "Denne gjennomgangen ble slettet",
+        "syncedBy": "Playout-synk kjører i fanen til {name}",
+        "takeOverSync": "Ta over synk",
+        "syncedInYourOtherTab": "Playout-synk kjører i den andre fanen din"
     },
     "vault": {
         "searchPlaceholder": "Søk i vault",

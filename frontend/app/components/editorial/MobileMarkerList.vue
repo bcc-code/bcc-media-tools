@@ -16,6 +16,8 @@ export interface MobileMarker {
     comment: string;
     publishBmm: boolean;
     publishBcc: boolean;
+    // others commenting on this marker right now ("Kari, Ola"), or ""
+    commentingBy: string;
 }
 
 export interface MarkerDetails {
@@ -36,6 +38,8 @@ const emit = defineEmits<{
     details: [key: string, details: MarkerDetails];
     // Reviewers may change only the title.
     title: [key: string, name: string];
+    // the marker whose comment field has focus; null on leaving it
+    commenting: [key: string | null];
     publish: [key: string, target: "bmm" | "bcc", value: boolean];
 }>();
 
@@ -139,6 +143,7 @@ const current = computed(() =>
         <article
             v-for="m in markers"
             :key="m.key"
+            :data-row-key="m.key"
             class="bg-surface-raise gradient-border shadow-resting flex flex-col gap-2.5 rounded-2xl p-3.5"
         >
             <div class="flex items-center gap-2.5">
@@ -178,8 +183,19 @@ const current = computed(() =>
                 @input="
                     drafts[m.key] = ($event.target as HTMLTextAreaElement).value
                 "
-                @blur="commit(m)"
+                @focus="emit('commenting', m.key)"
+                @blur="
+                    commit(m);
+                    emit('commenting', null);
+                "
             />
+            <p
+                v-if="m.commentingBy"
+                class="text-caption-1 text-text-hint -mt-1 flex items-center gap-1"
+            >
+                <Icon name="tabler:pencil" class="size-3.5" />
+                {{ t("editorial.isCommenting", { name: m.commentingBy }) }}
+            </p>
             <div class="flex flex-wrap gap-1.5">
                 <button
                     v-for="phrase in CANNED_COMMENTS"

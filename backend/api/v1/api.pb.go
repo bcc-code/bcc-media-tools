@@ -4677,17 +4677,289 @@ func (x *ExportEditorialSessionResponse) GetFilename() string {
 	return ""
 }
 
+// Follow a session as others change it. The stream sends the session at
+// once, then again after every change anyone makes, and presence whenever
+// someone arrives, leaves or starts commenting. A keep-alive event (no
+// session) is sent regularly so proxies keep the connection open.
+type WatchEditorialSessionRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// identifies this browser tab, so its own presence can be told apart
+	ClientId      string `protobuf:"bytes,2,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WatchEditorialSessionRequest) Reset() {
+	*x = WatchEditorialSessionRequest{}
+	mi := &file_api_v1_api_proto_msgTypes[75]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WatchEditorialSessionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WatchEditorialSessionRequest) ProtoMessage() {}
+
+func (x *WatchEditorialSessionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_api_proto_msgTypes[75]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WatchEditorialSessionRequest.ProtoReflect.Descriptor instead.
+func (*WatchEditorialSessionRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_api_proto_rawDescGZIP(), []int{75}
+}
+
+func (x *WatchEditorialSessionRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *WatchEditorialSessionRequest) GetClientId() string {
+	if x != nil {
+		return x.ClientId
+	}
+	return ""
+}
+
+// Someone with the session open.
+type EditorialPresence struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	ClientId string                 `protobuf:"bytes,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	Email    string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
+	// "viewing", "commenting" or "editing" (the edit view with unsaved changes)
+	Activity string `protobuf:"bytes,3,opt,name=activity,proto3" json:"activity,omitempty"`
+	// the marker being commented on, when commenting
+	MarkerId      string `protobuf:"bytes,4,opt,name=marker_id,json=markerId,proto3" json:"marker_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EditorialPresence) Reset() {
+	*x = EditorialPresence{}
+	mi := &file_api_v1_api_proto_msgTypes[76]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EditorialPresence) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EditorialPresence) ProtoMessage() {}
+
+func (x *EditorialPresence) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_api_proto_msgTypes[76]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EditorialPresence.ProtoReflect.Descriptor instead.
+func (*EditorialPresence) Descriptor() ([]byte, []int) {
+	return file_api_v1_api_proto_rawDescGZIP(), []int{76}
+}
+
+func (x *EditorialPresence) GetClientId() string {
+	if x != nil {
+		return x.ClientId
+	}
+	return ""
+}
+
+func (x *EditorialPresence) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+func (x *EditorialPresence) GetActivity() string {
+	if x != nil {
+		return x.Activity
+	}
+	return ""
+}
+
+func (x *EditorialPresence) GetMarkerId() string {
+	if x != nil {
+		return x.MarkerId
+	}
+	return ""
+}
+
+type EditorialSessionEvent struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// set when the session changed (and on the first event)
+	Session  *EditorialSession    `protobuf:"bytes,1,opt,name=session,proto3" json:"session,omitempty"`
+	Presence []*EditorialPresence `protobuf:"bytes,2,rep,name=presence,proto3" json:"presence,omitempty"`
+	// the session was deleted; the stream ends
+	Deleted bool `protobuf:"varint,3,opt,name=deleted,proto3" json:"deleted,omitempty"`
+	// the tab that runs the Playout sync for everyone (a live-role user's);
+	// empty when none is open. Sent with presence.
+	SyncClientId  string `protobuf:"bytes,4,opt,name=sync_client_id,json=syncClientId,proto3" json:"sync_client_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EditorialSessionEvent) Reset() {
+	*x = EditorialSessionEvent{}
+	mi := &file_api_v1_api_proto_msgTypes[77]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EditorialSessionEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EditorialSessionEvent) ProtoMessage() {}
+
+func (x *EditorialSessionEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_api_proto_msgTypes[77]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EditorialSessionEvent.ProtoReflect.Descriptor instead.
+func (*EditorialSessionEvent) Descriptor() ([]byte, []int) {
+	return file_api_v1_api_proto_rawDescGZIP(), []int{77}
+}
+
+func (x *EditorialSessionEvent) GetSession() *EditorialSession {
+	if x != nil {
+		return x.Session
+	}
+	return nil
+}
+
+func (x *EditorialSessionEvent) GetPresence() []*EditorialPresence {
+	if x != nil {
+		return x.Presence
+	}
+	return nil
+}
+
+func (x *EditorialSessionEvent) GetDeleted() bool {
+	if x != nil {
+		return x.Deleted
+	}
+	return false
+}
+
+func (x *EditorialSessionEvent) GetSyncClientId() string {
+	if x != nil {
+		return x.SyncClientId
+	}
+	return ""
+}
+
+// Tell the others what this tab is doing.
+type SetEditorialPresenceRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	ClientId      string                 `protobuf:"bytes,2,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	Activity      string                 `protobuf:"bytes,3,opt,name=activity,proto3" json:"activity,omitempty"`
+	MarkerId      string                 `protobuf:"bytes,4,opt,name=marker_id,json=markerId,proto3" json:"marker_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetEditorialPresenceRequest) Reset() {
+	*x = SetEditorialPresenceRequest{}
+	mi := &file_api_v1_api_proto_msgTypes[78]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetEditorialPresenceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetEditorialPresenceRequest) ProtoMessage() {}
+
+func (x *SetEditorialPresenceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_api_proto_msgTypes[78]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetEditorialPresenceRequest.ProtoReflect.Descriptor instead.
+func (*SetEditorialPresenceRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_api_proto_rawDescGZIP(), []int{78}
+}
+
+func (x *SetEditorialPresenceRequest) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *SetEditorialPresenceRequest) GetClientId() string {
+	if x != nil {
+		return x.ClientId
+	}
+	return ""
+}
+
+func (x *SetEditorialPresenceRequest) GetActivity() string {
+	if x != nil {
+		return x.Activity
+	}
+	return ""
+}
+
+func (x *SetEditorialPresenceRequest) GetMarkerId() string {
+	if x != nil {
+		return x.MarkerId
+	}
+	return ""
+}
+
 // Merge the live session's Playout manifest into its markers and save.
 type SyncEditorialSessionFromPlayoutRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// the tab asking; while the session is watched only the tab holding the
+	// sync lock may sync
+	ClientId      string `protobuf:"bytes,2,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *SyncEditorialSessionFromPlayoutRequest) Reset() {
 	*x = SyncEditorialSessionFromPlayoutRequest{}
-	mi := &file_api_v1_api_proto_msgTypes[75]
+	mi := &file_api_v1_api_proto_msgTypes[79]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4699,7 +4971,7 @@ func (x *SyncEditorialSessionFromPlayoutRequest) String() string {
 func (*SyncEditorialSessionFromPlayoutRequest) ProtoMessage() {}
 
 func (x *SyncEditorialSessionFromPlayoutRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[75]
+	mi := &file_api_v1_api_proto_msgTypes[79]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4712,12 +4984,72 @@ func (x *SyncEditorialSessionFromPlayoutRequest) ProtoReflect() protoreflect.Mes
 
 // Deprecated: Use SyncEditorialSessionFromPlayoutRequest.ProtoReflect.Descriptor instead.
 func (*SyncEditorialSessionFromPlayoutRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{75}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{79}
 }
 
 func (x *SyncEditorialSessionFromPlayoutRequest) GetId() string {
 	if x != nil {
 		return x.Id
+	}
+	return ""
+}
+
+func (x *SyncEditorialSessionFromPlayoutRequest) GetClientId() string {
+	if x != nil {
+		return x.ClientId
+	}
+	return ""
+}
+
+// Move a session's Playout sync lock to this tab.
+type TakeEditorialSyncRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	ClientId      string                 `protobuf:"bytes,2,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TakeEditorialSyncRequest) Reset() {
+	*x = TakeEditorialSyncRequest{}
+	mi := &file_api_v1_api_proto_msgTypes[80]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TakeEditorialSyncRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TakeEditorialSyncRequest) ProtoMessage() {}
+
+func (x *TakeEditorialSyncRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_api_proto_msgTypes[80]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TakeEditorialSyncRequest.ProtoReflect.Descriptor instead.
+func (*TakeEditorialSyncRequest) Descriptor() ([]byte, []int) {
+	return file_api_v1_api_proto_rawDescGZIP(), []int{80}
+}
+
+func (x *TakeEditorialSyncRequest) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *TakeEditorialSyncRequest) GetClientId() string {
+	if x != nil {
+		return x.ClientId
 	}
 	return ""
 }
@@ -4738,7 +5070,7 @@ type AttachEditorialRecordingRequest struct {
 
 func (x *AttachEditorialRecordingRequest) Reset() {
 	*x = AttachEditorialRecordingRequest{}
-	mi := &file_api_v1_api_proto_msgTypes[76]
+	mi := &file_api_v1_api_proto_msgTypes[81]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4750,7 +5082,7 @@ func (x *AttachEditorialRecordingRequest) String() string {
 func (*AttachEditorialRecordingRequest) ProtoMessage() {}
 
 func (x *AttachEditorialRecordingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[76]
+	mi := &file_api_v1_api_proto_msgTypes[81]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4763,7 +5095,7 @@ func (x *AttachEditorialRecordingRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AttachEditorialRecordingRequest.ProtoReflect.Descriptor instead.
 func (*AttachEditorialRecordingRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{76}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{81}
 }
 
 func (x *AttachEditorialRecordingRequest) GetId() string {
@@ -4803,7 +5135,7 @@ type GetEditorialSessionRequest struct {
 
 func (x *GetEditorialSessionRequest) Reset() {
 	*x = GetEditorialSessionRequest{}
-	mi := &file_api_v1_api_proto_msgTypes[77]
+	mi := &file_api_v1_api_proto_msgTypes[82]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4815,7 +5147,7 @@ func (x *GetEditorialSessionRequest) String() string {
 func (*GetEditorialSessionRequest) ProtoMessage() {}
 
 func (x *GetEditorialSessionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[77]
+	mi := &file_api_v1_api_proto_msgTypes[82]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4828,7 +5160,7 @@ func (x *GetEditorialSessionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetEditorialSessionRequest.ProtoReflect.Descriptor instead.
 func (*GetEditorialSessionRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{77}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{82}
 }
 
 func (x *GetEditorialSessionRequest) GetId() string {
@@ -4850,7 +5182,7 @@ type SaveEditorialSessionRequest struct {
 
 func (x *SaveEditorialSessionRequest) Reset() {
 	*x = SaveEditorialSessionRequest{}
-	mi := &file_api_v1_api_proto_msgTypes[78]
+	mi := &file_api_v1_api_proto_msgTypes[83]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4862,7 +5194,7 @@ func (x *SaveEditorialSessionRequest) String() string {
 func (*SaveEditorialSessionRequest) ProtoMessage() {}
 
 func (x *SaveEditorialSessionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[78]
+	mi := &file_api_v1_api_proto_msgTypes[83]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4875,7 +5207,7 @@ func (x *SaveEditorialSessionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SaveEditorialSessionRequest.ProtoReflect.Descriptor instead.
 func (*SaveEditorialSessionRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{78}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{83}
 }
 
 func (x *SaveEditorialSessionRequest) GetId() string {
@@ -4908,7 +5240,7 @@ type DeleteEditorialSessionRequest struct {
 
 func (x *DeleteEditorialSessionRequest) Reset() {
 	*x = DeleteEditorialSessionRequest{}
-	mi := &file_api_v1_api_proto_msgTypes[79]
+	mi := &file_api_v1_api_proto_msgTypes[84]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4920,7 +5252,7 @@ func (x *DeleteEditorialSessionRequest) String() string {
 func (*DeleteEditorialSessionRequest) ProtoMessage() {}
 
 func (x *DeleteEditorialSessionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[79]
+	mi := &file_api_v1_api_proto_msgTypes[84]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4933,7 +5265,7 @@ func (x *DeleteEditorialSessionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteEditorialSessionRequest.ProtoReflect.Descriptor instead.
 func (*DeleteEditorialSessionRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{79}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{84}
 }
 
 func (x *DeleteEditorialSessionRequest) GetId() string {
@@ -4954,7 +5286,7 @@ type ImportEditorialMarkersRequest struct {
 
 func (x *ImportEditorialMarkersRequest) Reset() {
 	*x = ImportEditorialMarkersRequest{}
-	mi := &file_api_v1_api_proto_msgTypes[80]
+	mi := &file_api_v1_api_proto_msgTypes[85]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4966,7 +5298,7 @@ func (x *ImportEditorialMarkersRequest) String() string {
 func (*ImportEditorialMarkersRequest) ProtoMessage() {}
 
 func (x *ImportEditorialMarkersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[80]
+	mi := &file_api_v1_api_proto_msgTypes[85]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4979,7 +5311,7 @@ func (x *ImportEditorialMarkersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ImportEditorialMarkersRequest.ProtoReflect.Descriptor instead.
 func (*ImportEditorialMarkersRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{80}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{85}
 }
 
 func (x *ImportEditorialMarkersRequest) GetId() string {
@@ -4998,7 +5330,7 @@ type ImportEditorialMarkersResponse struct {
 
 func (x *ImportEditorialMarkersResponse) Reset() {
 	*x = ImportEditorialMarkersResponse{}
-	mi := &file_api_v1_api_proto_msgTypes[81]
+	mi := &file_api_v1_api_proto_msgTypes[86]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5010,7 +5342,7 @@ func (x *ImportEditorialMarkersResponse) String() string {
 func (*ImportEditorialMarkersResponse) ProtoMessage() {}
 
 func (x *ImportEditorialMarkersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[81]
+	mi := &file_api_v1_api_proto_msgTypes[86]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5023,7 +5355,7 @@ func (x *ImportEditorialMarkersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ImportEditorialMarkersResponse.ProtoReflect.Descriptor instead.
 func (*ImportEditorialMarkersResponse) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{81}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{86}
 }
 
 func (x *ImportEditorialMarkersResponse) GetMarkers() []*EditorialMarker {
@@ -5048,7 +5380,7 @@ type ImportEditorialMarkersFromPlayoutRequest struct {
 
 func (x *ImportEditorialMarkersFromPlayoutRequest) Reset() {
 	*x = ImportEditorialMarkersFromPlayoutRequest{}
-	mi := &file_api_v1_api_proto_msgTypes[82]
+	mi := &file_api_v1_api_proto_msgTypes[87]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5060,7 +5392,7 @@ func (x *ImportEditorialMarkersFromPlayoutRequest) String() string {
 func (*ImportEditorialMarkersFromPlayoutRequest) ProtoMessage() {}
 
 func (x *ImportEditorialMarkersFromPlayoutRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[82]
+	mi := &file_api_v1_api_proto_msgTypes[87]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5073,7 +5405,7 @@ func (x *ImportEditorialMarkersFromPlayoutRequest) ProtoReflect() protoreflect.M
 
 // Deprecated: Use ImportEditorialMarkersFromPlayoutRequest.ProtoReflect.Descriptor instead.
 func (*ImportEditorialMarkersFromPlayoutRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{82}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{87}
 }
 
 func (x *ImportEditorialMarkersFromPlayoutRequest) GetId() string {
@@ -5117,7 +5449,7 @@ type GetRecordingWindowRequest struct {
 
 func (x *GetRecordingWindowRequest) Reset() {
 	*x = GetRecordingWindowRequest{}
-	mi := &file_api_v1_api_proto_msgTypes[83]
+	mi := &file_api_v1_api_proto_msgTypes[88]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5129,7 +5461,7 @@ func (x *GetRecordingWindowRequest) String() string {
 func (*GetRecordingWindowRequest) ProtoMessage() {}
 
 func (x *GetRecordingWindowRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[83]
+	mi := &file_api_v1_api_proto_msgTypes[88]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5142,7 +5474,7 @@ func (x *GetRecordingWindowRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRecordingWindowRequest.ProtoReflect.Descriptor instead.
 func (*GetRecordingWindowRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{83}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{88}
 }
 
 func (x *GetRecordingWindowRequest) GetSessionId() string {
@@ -5176,7 +5508,7 @@ type GetRecordingWindowResponse struct {
 
 func (x *GetRecordingWindowResponse) Reset() {
 	*x = GetRecordingWindowResponse{}
-	mi := &file_api_v1_api_proto_msgTypes[84]
+	mi := &file_api_v1_api_proto_msgTypes[89]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5188,7 +5520,7 @@ func (x *GetRecordingWindowResponse) String() string {
 func (*GetRecordingWindowResponse) ProtoMessage() {}
 
 func (x *GetRecordingWindowResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[84]
+	mi := &file_api_v1_api_proto_msgTypes[89]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5201,7 +5533,7 @@ func (x *GetRecordingWindowResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRecordingWindowResponse.ProtoReflect.Descriptor instead.
 func (*GetRecordingWindowResponse) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{84}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{89}
 }
 
 func (x *GetRecordingWindowResponse) GetStart() *timestamppb.Timestamp {
@@ -5254,7 +5586,7 @@ type PlayoutEvent struct {
 
 func (x *PlayoutEvent) Reset() {
 	*x = PlayoutEvent{}
-	mi := &file_api_v1_api_proto_msgTypes[85]
+	mi := &file_api_v1_api_proto_msgTypes[90]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5266,7 +5598,7 @@ func (x *PlayoutEvent) String() string {
 func (*PlayoutEvent) ProtoMessage() {}
 
 func (x *PlayoutEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[85]
+	mi := &file_api_v1_api_proto_msgTypes[90]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5279,7 +5611,7 @@ func (x *PlayoutEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlayoutEvent.ProtoReflect.Descriptor instead.
 func (*PlayoutEvent) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{85}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{90}
 }
 
 func (x *PlayoutEvent) GetId() string {
@@ -5325,7 +5657,7 @@ type ListPlayoutEventsRequest struct {
 
 func (x *ListPlayoutEventsRequest) Reset() {
 	*x = ListPlayoutEventsRequest{}
-	mi := &file_api_v1_api_proto_msgTypes[86]
+	mi := &file_api_v1_api_proto_msgTypes[91]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5337,7 +5669,7 @@ func (x *ListPlayoutEventsRequest) String() string {
 func (*ListPlayoutEventsRequest) ProtoMessage() {}
 
 func (x *ListPlayoutEventsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[86]
+	mi := &file_api_v1_api_proto_msgTypes[91]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5350,7 +5682,7 @@ func (x *ListPlayoutEventsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPlayoutEventsRequest.ProtoReflect.Descriptor instead.
 func (*ListPlayoutEventsRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{86}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{91}
 }
 
 type ListPlayoutEventsResponse struct {
@@ -5362,7 +5694,7 @@ type ListPlayoutEventsResponse struct {
 
 func (x *ListPlayoutEventsResponse) Reset() {
 	*x = ListPlayoutEventsResponse{}
-	mi := &file_api_v1_api_proto_msgTypes[87]
+	mi := &file_api_v1_api_proto_msgTypes[92]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5374,7 +5706,7 @@ func (x *ListPlayoutEventsResponse) String() string {
 func (*ListPlayoutEventsResponse) ProtoMessage() {}
 
 func (x *ListPlayoutEventsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[87]
+	mi := &file_api_v1_api_proto_msgTypes[92]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5387,7 +5719,7 @@ func (x *ListPlayoutEventsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPlayoutEventsResponse.ProtoReflect.Descriptor instead.
 func (*ListPlayoutEventsResponse) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{87}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{92}
 }
 
 func (x *ListPlayoutEventsResponse) GetEvents() []*PlayoutEvent {
@@ -5411,7 +5743,7 @@ type SetEditorialPublishRequest struct {
 
 func (x *SetEditorialPublishRequest) Reset() {
 	*x = SetEditorialPublishRequest{}
-	mi := &file_api_v1_api_proto_msgTypes[88]
+	mi := &file_api_v1_api_proto_msgTypes[93]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5423,7 +5755,7 @@ func (x *SetEditorialPublishRequest) String() string {
 func (*SetEditorialPublishRequest) ProtoMessage() {}
 
 func (x *SetEditorialPublishRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[88]
+	mi := &file_api_v1_api_proto_msgTypes[93]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5436,7 +5768,7 @@ func (x *SetEditorialPublishRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetEditorialPublishRequest.ProtoReflect.Descriptor instead.
 func (*SetEditorialPublishRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{88}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{93}
 }
 
 func (x *SetEditorialPublishRequest) GetSessionId() string {
@@ -5480,7 +5812,7 @@ type SetEditorialCommentRequest struct {
 
 func (x *SetEditorialCommentRequest) Reset() {
 	*x = SetEditorialCommentRequest{}
-	mi := &file_api_v1_api_proto_msgTypes[89]
+	mi := &file_api_v1_api_proto_msgTypes[94]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5492,7 +5824,7 @@ func (x *SetEditorialCommentRequest) String() string {
 func (*SetEditorialCommentRequest) ProtoMessage() {}
 
 func (x *SetEditorialCommentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[89]
+	mi := &file_api_v1_api_proto_msgTypes[94]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5505,7 +5837,7 @@ func (x *SetEditorialCommentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetEditorialCommentRequest.ProtoReflect.Descriptor instead.
 func (*SetEditorialCommentRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{89}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{94}
 }
 
 func (x *SetEditorialCommentRequest) GetSessionId() string {
@@ -5543,7 +5875,7 @@ type SetEditorialNameRequest struct {
 
 func (x *SetEditorialNameRequest) Reset() {
 	*x = SetEditorialNameRequest{}
-	mi := &file_api_v1_api_proto_msgTypes[90]
+	mi := &file_api_v1_api_proto_msgTypes[95]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5555,7 +5887,7 @@ func (x *SetEditorialNameRequest) String() string {
 func (*SetEditorialNameRequest) ProtoMessage() {}
 
 func (x *SetEditorialNameRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[90]
+	mi := &file_api_v1_api_proto_msgTypes[95]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5568,7 +5900,7 @@ func (x *SetEditorialNameRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetEditorialNameRequest.ProtoReflect.Descriptor instead.
 func (*SetEditorialNameRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{90}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{95}
 }
 
 func (x *SetEditorialNameRequest) GetSessionId() string {
@@ -5608,7 +5940,7 @@ type SetEditorialDetailsRequest struct {
 
 func (x *SetEditorialDetailsRequest) Reset() {
 	*x = SetEditorialDetailsRequest{}
-	mi := &file_api_v1_api_proto_msgTypes[91]
+	mi := &file_api_v1_api_proto_msgTypes[96]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5620,7 +5952,7 @@ func (x *SetEditorialDetailsRequest) String() string {
 func (*SetEditorialDetailsRequest) ProtoMessage() {}
 
 func (x *SetEditorialDetailsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_v1_api_proto_msgTypes[91]
+	mi := &file_api_v1_api_proto_msgTypes[96]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5633,7 +5965,7 @@ func (x *SetEditorialDetailsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetEditorialDetailsRequest.ProtoReflect.Descriptor instead.
 func (*SetEditorialDetailsRequest) Descriptor() ([]byte, []int) {
-	return file_api_v1_api_proto_rawDescGZIP(), []int{91}
+	return file_api_v1_api_proto_rawDescGZIP(), []int{96}
 }
 
 func (x *SetEditorialDetailsRequest) GetSessionId() string {
@@ -6027,9 +6359,33 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\blanguage\x18\x02 \x01(\tR\blanguage\"P\n" +
 	"\x1eExportEditorialSessionResponse\x12\x12\n" +
 	"\x04data\x18\x01 \x01(\fR\x04data\x12\x1a\n" +
-	"\bfilename\x18\x02 \x01(\tR\bfilename\"8\n" +
+	"\bfilename\x18\x02 \x01(\tR\bfilename\"K\n" +
+	"\x1cWatchEditorialSessionRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
+	"\tclient_id\x18\x02 \x01(\tR\bclientId\"\x7f\n" +
+	"\x11EditorialPresence\x12\x1b\n" +
+	"\tclient_id\x18\x01 \x01(\tR\bclientId\x12\x14\n" +
+	"\x05email\x18\x02 \x01(\tR\x05email\x12\x1a\n" +
+	"\bactivity\x18\x03 \x01(\tR\bactivity\x12\x1b\n" +
+	"\tmarker_id\x18\x04 \x01(\tR\bmarkerId\"\xc2\x01\n" +
+	"\x15EditorialSessionEvent\x122\n" +
+	"\asession\x18\x01 \x01(\v2\x18.api.v1.EditorialSessionR\asession\x125\n" +
+	"\bpresence\x18\x02 \x03(\v2\x19.api.v1.EditorialPresenceR\bpresence\x12\x18\n" +
+	"\adeleted\x18\x03 \x01(\bR\adeleted\x12$\n" +
+	"\x0esync_client_id\x18\x04 \x01(\tR\fsyncClientId\"\x92\x01\n" +
+	"\x1bSetEditorialPresenceRequest\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x1b\n" +
+	"\tclient_id\x18\x02 \x01(\tR\bclientId\x12\x1a\n" +
+	"\bactivity\x18\x03 \x01(\tR\bactivity\x12\x1b\n" +
+	"\tmarker_id\x18\x04 \x01(\tR\bmarkerId\"U\n" +
 	"&SyncEditorialSessionFromPlayoutRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\xcb\x01\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
+	"\tclient_id\x18\x02 \x01(\tR\bclientId\"V\n" +
+	"\x18TakeEditorialSyncRequest\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x1b\n" +
+	"\tclient_id\x18\x02 \x01(\tR\bclientId\"\xcb\x01\n" +
 	"\x1fAttachEditorialRecordingRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04VXID\x18\x02 \x01(\tR\x04VXID\x12C\n" +
@@ -6107,7 +6463,7 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\x16CANTEMO_ACTION_PREVIEW\x10\x01\x12\x1d\n" +
 	"\x19CANTEMO_ACTION_TRANSCRIBE\x10\x02\x12)\n" +
 	"%CANTEMO_ACTION_SUBTITLE_FROM_SUBTRANS\x10\x03\x12#\n" +
-	"\x1fCANTEMO_ACTION_UPDATE_RELATIONS\x10\x042\xe9\x1b\n" +
+	"\x1fCANTEMO_ACTION_UPDATE_RELATIONS\x10\x042\xdf\x1d\n" +
 	"\n" +
 	"APIService\x125\n" +
 	"\x0eGetPermissions\x12\f.api.v1.Void\x1a\x13.api.v1.Permissions\"\x00\x12B\n" +
@@ -6153,7 +6509,10 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\x12AddEditorialMarker\x12!.api.v1.AddEditorialMarkerRequest\x1a\x17.api.v1.EditorialMarker\"\x00\x12m\n" +
 	"\x1fSyncEditorialSessionFromPlayout\x12..api.v1.SyncEditorialSessionFromPlayoutRequest\x1a\x18.api.v1.EditorialSession\"\x00\x12_\n" +
 	"\x18AttachEditorialRecording\x12'.api.v1.AttachEditorialRecordingRequest\x1a\x18.api.v1.EditorialSession\"\x00\x12i\n" +
-	"\x16ExportEditorialSession\x12%.api.v1.ExportEditorialSessionRequest\x1a&.api.v1.ExportEditorialSessionResponse\"\x00B\x1eZ\x1cbcc-media-tools/api/v1;apiv1b\x06proto3"
+	"\x16ExportEditorialSession\x12%.api.v1.ExportEditorialSessionRequest\x1a&.api.v1.ExportEditorialSessionResponse\"\x00\x12`\n" +
+	"\x15WatchEditorialSession\x12$.api.v1.WatchEditorialSessionRequest\x1a\x1d.api.v1.EditorialSessionEvent\"\x000\x01\x12K\n" +
+	"\x14SetEditorialPresence\x12#.api.v1.SetEditorialPresenceRequest\x1a\f.api.v1.Void\"\x00\x12E\n" +
+	"\x11TakeEditorialSync\x12 .api.v1.TakeEditorialSyncRequest\x1a\f.api.v1.Void\"\x00B\x1eZ\x1cbcc-media-tools/api/v1;apiv1b\x06proto3"
 
 var (
 	file_api_v1_api_proto_rawDescOnce sync.Once
@@ -6168,7 +6527,7 @@ func file_api_v1_api_proto_rawDescGZIP() []byte {
 }
 
 var file_api_v1_api_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_api_v1_api_proto_msgTypes = make([]protoimpl.MessageInfo, 94)
+var file_api_v1_api_proto_msgTypes = make([]protoimpl.MessageInfo, 99)
 var file_api_v1_api_proto_goTypes = []any{
 	(BmmEnvironment)(0),                              // 0: api.v1.BmmEnvironment
 	(CantemoAction)(0),                               // 1: api.v1.CantemoAction
@@ -6247,27 +6606,32 @@ var file_api_v1_api_proto_goTypes = []any{
 	(*AddEditorialMarkerRequest)(nil),                // 74: api.v1.AddEditorialMarkerRequest
 	(*ExportEditorialSessionRequest)(nil),            // 75: api.v1.ExportEditorialSessionRequest
 	(*ExportEditorialSessionResponse)(nil),           // 76: api.v1.ExportEditorialSessionResponse
-	(*SyncEditorialSessionFromPlayoutRequest)(nil),   // 77: api.v1.SyncEditorialSessionFromPlayoutRequest
-	(*AttachEditorialRecordingRequest)(nil),          // 78: api.v1.AttachEditorialRecordingRequest
-	(*GetEditorialSessionRequest)(nil),               // 79: api.v1.GetEditorialSessionRequest
-	(*SaveEditorialSessionRequest)(nil),              // 80: api.v1.SaveEditorialSessionRequest
-	(*DeleteEditorialSessionRequest)(nil),            // 81: api.v1.DeleteEditorialSessionRequest
-	(*ImportEditorialMarkersRequest)(nil),            // 82: api.v1.ImportEditorialMarkersRequest
-	(*ImportEditorialMarkersResponse)(nil),           // 83: api.v1.ImportEditorialMarkersResponse
-	(*ImportEditorialMarkersFromPlayoutRequest)(nil), // 84: api.v1.ImportEditorialMarkersFromPlayoutRequest
-	(*GetRecordingWindowRequest)(nil),                // 85: api.v1.GetRecordingWindowRequest
-	(*GetRecordingWindowResponse)(nil),               // 86: api.v1.GetRecordingWindowResponse
-	(*PlayoutEvent)(nil),                             // 87: api.v1.PlayoutEvent
-	(*ListPlayoutEventsRequest)(nil),                 // 88: api.v1.ListPlayoutEventsRequest
-	(*ListPlayoutEventsResponse)(nil),                // 89: api.v1.ListPlayoutEventsResponse
-	(*SetEditorialPublishRequest)(nil),               // 90: api.v1.SetEditorialPublishRequest
-	(*SetEditorialCommentRequest)(nil),               // 91: api.v1.SetEditorialCommentRequest
-	(*SetEditorialNameRequest)(nil),                  // 92: api.v1.SetEditorialNameRequest
-	(*SetEditorialDetailsRequest)(nil),               // 93: api.v1.SetEditorialDetailsRequest
-	nil,                                              // 94: api.v1.PermissionsList.PermissionsEntry
-	nil,                                              // 95: api.v1.GetYearsResponse.DataEntry
-	(*timestamppb.Timestamp)(nil),                    // 96: google.protobuf.Timestamp
-	(*Void)(nil),                                     // 97: api.v1.Void
+	(*WatchEditorialSessionRequest)(nil),             // 77: api.v1.WatchEditorialSessionRequest
+	(*EditorialPresence)(nil),                        // 78: api.v1.EditorialPresence
+	(*EditorialSessionEvent)(nil),                    // 79: api.v1.EditorialSessionEvent
+	(*SetEditorialPresenceRequest)(nil),              // 80: api.v1.SetEditorialPresenceRequest
+	(*SyncEditorialSessionFromPlayoutRequest)(nil),   // 81: api.v1.SyncEditorialSessionFromPlayoutRequest
+	(*TakeEditorialSyncRequest)(nil),                 // 82: api.v1.TakeEditorialSyncRequest
+	(*AttachEditorialRecordingRequest)(nil),          // 83: api.v1.AttachEditorialRecordingRequest
+	(*GetEditorialSessionRequest)(nil),               // 84: api.v1.GetEditorialSessionRequest
+	(*SaveEditorialSessionRequest)(nil),              // 85: api.v1.SaveEditorialSessionRequest
+	(*DeleteEditorialSessionRequest)(nil),            // 86: api.v1.DeleteEditorialSessionRequest
+	(*ImportEditorialMarkersRequest)(nil),            // 87: api.v1.ImportEditorialMarkersRequest
+	(*ImportEditorialMarkersResponse)(nil),           // 88: api.v1.ImportEditorialMarkersResponse
+	(*ImportEditorialMarkersFromPlayoutRequest)(nil), // 89: api.v1.ImportEditorialMarkersFromPlayoutRequest
+	(*GetRecordingWindowRequest)(nil),                // 90: api.v1.GetRecordingWindowRequest
+	(*GetRecordingWindowResponse)(nil),               // 91: api.v1.GetRecordingWindowResponse
+	(*PlayoutEvent)(nil),                             // 92: api.v1.PlayoutEvent
+	(*ListPlayoutEventsRequest)(nil),                 // 93: api.v1.ListPlayoutEventsRequest
+	(*ListPlayoutEventsResponse)(nil),                // 94: api.v1.ListPlayoutEventsResponse
+	(*SetEditorialPublishRequest)(nil),               // 95: api.v1.SetEditorialPublishRequest
+	(*SetEditorialCommentRequest)(nil),               // 96: api.v1.SetEditorialCommentRequest
+	(*SetEditorialNameRequest)(nil),                  // 97: api.v1.SetEditorialNameRequest
+	(*SetEditorialDetailsRequest)(nil),               // 98: api.v1.SetEditorialDetailsRequest
+	nil,                                              // 99: api.v1.PermissionsList.PermissionsEntry
+	nil,                                              // 100: api.v1.GetYearsResponse.DataEntry
+	(*timestamppb.Timestamp)(nil),                    // 101: google.protobuf.Timestamp
+	(*Void)(nil),                                     // 102: api.v1.Void
 }
 var file_api_v1_api_proto_depIdxs = []int32{
 	2,   // 0: api.v1.Permissions.bmm:type_name -> api.v1.BMMPermission
@@ -6280,15 +6644,15 @@ var file_api_v1_api_proto_depIdxs = []int32{
 	10,  // 7: api.v1.Permissions.editorial:type_name -> api.v1.EditorialPermission
 	9,   // 8: api.v1.Permissions.live_ingest:type_name -> api.v1.LiveIngestPermission
 	11,  // 9: api.v1.SetPermissionsRequest.permissions:type_name -> api.v1.Permissions
-	94,  // 10: api.v1.PermissionsList.permissions:type_name -> api.v1.PermissionsList.PermissionsEntry
-	95,  // 11: api.v1.GetYearsResponse.data:type_name -> api.v1.GetYearsResponse.DataEntry
+	99,  // 10: api.v1.PermissionsList.permissions:type_name -> api.v1.PermissionsList.PermissionsEntry
+	100, // 11: api.v1.GetYearsResponse.data:type_name -> api.v1.GetYearsResponse.DataEntry
 	0,   // 12: api.v1.GetYearsRequest.environment:type_name -> api.v1.BmmEnvironment
 	0,   // 13: api.v1.GetAlbumsRequest.environment:type_name -> api.v1.BmmEnvironment
 	20,  // 14: api.v1.AlbumsList.albums:type_name -> api.v1.Album
 	0,   // 15: api.v1.GetAlbumTracksRequest.environment:type_name -> api.v1.BmmEnvironment
 	0,   // 16: api.v1.GetPodcastTracksRequest.environment:type_name -> api.v1.BmmEnvironment
 	0,   // 17: api.v1.GetAvailableLanguagesRequest.environment:type_name -> api.v1.BmmEnvironment
-	96,  // 18: api.v1.BMMTrack.publishedAt:type_name -> google.protobuf.Timestamp
+	101, // 18: api.v1.BMMTrack.publishedAt:type_name -> google.protobuf.Timestamp
 	27,  // 19: api.v1.BMMTrack.languages:type_name -> api.v1.LanguageList
 	27,  // 20: api.v1.BMMTrack.transcriptions:type_name -> api.v1.LanguageList
 	25,  // 21: api.v1.TracksList.tracks:type_name -> api.v1.BMMTrack
@@ -6310,117 +6674,125 @@ var file_api_v1_api_proto_depIdxs = []int32{
 	65,  // 37: api.v1.VaultSearchResponse.items:type_name -> api.v1.VaultItem
 	66,  // 38: api.v1.VaultSearchResponse.facets:type_name -> api.v1.VaultFacet
 	65,  // 39: api.v1.GetVaultItemResponse.item:type_name -> api.v1.VaultItem
-	96,  // 40: api.v1.EditorialSession.created_at:type_name -> google.protobuf.Timestamp
-	96,  // 41: api.v1.EditorialSession.updated_at:type_name -> google.protobuf.Timestamp
+	101, // 40: api.v1.EditorialSession.created_at:type_name -> google.protobuf.Timestamp
+	101, // 41: api.v1.EditorialSession.updated_at:type_name -> google.protobuf.Timestamp
 	70,  // 42: api.v1.EditorialSession.markers:type_name -> api.v1.EditorialMarker
-	96,  // 43: api.v1.EditorialSession.clock_start:type_name -> google.protobuf.Timestamp
+	101, // 43: api.v1.EditorialSession.clock_start:type_name -> google.protobuf.Timestamp
 	71,  // 44: api.v1.ListEditorialSessionsResponse.sessions:type_name -> api.v1.EditorialSession
-	96,  // 45: api.v1.CreateEditorialSessionRequest.clock_start:type_name -> google.protobuf.Timestamp
-	96,  // 46: api.v1.AddEditorialMarkerRequest.at:type_name -> google.protobuf.Timestamp
-	96,  // 47: api.v1.AttachEditorialRecordingRequest.recording_start:type_name -> google.protobuf.Timestamp
-	96,  // 48: api.v1.AttachEditorialRecordingRequest.recording_end:type_name -> google.protobuf.Timestamp
-	70,  // 49: api.v1.SaveEditorialSessionRequest.markers:type_name -> api.v1.EditorialMarker
-	70,  // 50: api.v1.ImportEditorialMarkersResponse.markers:type_name -> api.v1.EditorialMarker
-	96,  // 51: api.v1.ImportEditorialMarkersFromPlayoutRequest.recording_start:type_name -> google.protobuf.Timestamp
-	96,  // 52: api.v1.ImportEditorialMarkersFromPlayoutRequest.recording_end:type_name -> google.protobuf.Timestamp
-	96,  // 53: api.v1.GetRecordingWindowResponse.start:type_name -> google.protobuf.Timestamp
-	96,  // 54: api.v1.GetRecordingWindowResponse.end:type_name -> google.protobuf.Timestamp
-	87,  // 55: api.v1.ListPlayoutEventsResponse.events:type_name -> api.v1.PlayoutEvent
-	11,  // 56: api.v1.PermissionsList.PermissionsEntry.value:type_name -> api.v1.Permissions
-	16,  // 57: api.v1.GetYearsResponse.DataEntry.value:type_name -> api.v1.BMMYear
-	97,  // 58: api.v1.APIService.GetPermissions:input_type -> api.v1.Void
-	13,  // 59: api.v1.APIService.UpdatePermissions:input_type -> api.v1.SetPermissionsRequest
-	14,  // 60: api.v1.APIService.DeletePermissions:input_type -> api.v1.DeletePermissionsRequest
-	97,  // 61: api.v1.APIService.ListPermissions:input_type -> api.v1.Void
-	29,  // 62: api.v1.APIService.GetTranscription:input_type -> api.v1.GetTranscriptionReqest
-	33,  // 63: api.v1.APIService.GetShortsPreview:input_type -> api.v1.GetPreviewRequest
-	36,  // 64: api.v1.APIService.SubmitTranscription:input_type -> api.v1.SubmitTranscriptionRequest
-	18,  // 65: api.v1.APIService.GetYears:input_type -> api.v1.GetYearsRequest
-	19,  // 66: api.v1.APIService.GetAlbums:input_type -> api.v1.GetAlbumsRequest
-	22,  // 67: api.v1.APIService.GetAlbumTracks:input_type -> api.v1.GetAlbumTracksRequest
-	23,  // 68: api.v1.APIService.GetPodcastTracks:input_type -> api.v1.GetPodcastTracksRequest
-	24,  // 69: api.v1.APIService.GetLanguages:input_type -> api.v1.GetAvailableLanguagesRequest
-	35,  // 70: api.v1.APIService.GetBMMTranscription:input_type -> api.v1.GetBMMTranscriptionRequest
-	37,  // 71: api.v1.APIService.SubmitShort:input_type -> api.v1.SubmitShortRequest
-	39,  // 72: api.v1.APIService.SubmitShorts:input_type -> api.v1.SubmitShortsRequest
-	29,  // 73: api.v1.APIService.GetShortsTranscript:input_type -> api.v1.GetTranscriptionReqest
-	45,  // 74: api.v1.APIService.GetExportConfig:input_type -> api.v1.GetExportConfigRequest
-	48,  // 75: api.v1.APIService.StartExport:input_type -> api.v1.StartExportRequest
-	50,  // 76: api.v1.APIService.ExportTimedMetadata:input_type -> api.v1.ExportTimedMetadataRequest
-	57,  // 77: api.v1.APIService.ResolveAssets:input_type -> api.v1.ResolveAssetsRequest
-	51,  // 78: api.v1.APIService.GetVBExportConfig:input_type -> api.v1.GetVBExportConfigRequest
-	54,  // 79: api.v1.APIService.StartVBExport:input_type -> api.v1.StartVBExportRequest
-	97,  // 80: api.v1.APIService.GetExportDestinations:input_type -> api.v1.Void
-	60,  // 81: api.v1.APIService.TriggerCantemoAction:input_type -> api.v1.TriggerCantemoActionRequest
-	61,  // 82: api.v1.APIService.FinishLiveIngest:input_type -> api.v1.FinishLiveIngestRequest
-	64,  // 83: api.v1.APIService.VaultSearch:input_type -> api.v1.VaultSearchRequest
-	68,  // 84: api.v1.APIService.GetVaultItem:input_type -> api.v1.GetVaultItemRequest
-	97,  // 85: api.v1.APIService.ListEditorialSessions:input_type -> api.v1.Void
-	73,  // 86: api.v1.APIService.CreateEditorialSession:input_type -> api.v1.CreateEditorialSessionRequest
-	79,  // 87: api.v1.APIService.GetEditorialSession:input_type -> api.v1.GetEditorialSessionRequest
-	80,  // 88: api.v1.APIService.SaveEditorialSession:input_type -> api.v1.SaveEditorialSessionRequest
-	90,  // 89: api.v1.APIService.SetEditorialPublish:input_type -> api.v1.SetEditorialPublishRequest
-	91,  // 90: api.v1.APIService.SetEditorialComment:input_type -> api.v1.SetEditorialCommentRequest
-	92,  // 91: api.v1.APIService.SetEditorialName:input_type -> api.v1.SetEditorialNameRequest
-	93,  // 92: api.v1.APIService.SetEditorialDetails:input_type -> api.v1.SetEditorialDetailsRequest
-	81,  // 93: api.v1.APIService.DeleteEditorialSession:input_type -> api.v1.DeleteEditorialSessionRequest
-	82,  // 94: api.v1.APIService.ImportEditorialMarkers:input_type -> api.v1.ImportEditorialMarkersRequest
-	84,  // 95: api.v1.APIService.ImportEditorialMarkersFromPlayout:input_type -> api.v1.ImportEditorialMarkersFromPlayoutRequest
-	88,  // 96: api.v1.APIService.ListPlayoutEvents:input_type -> api.v1.ListPlayoutEventsRequest
-	85,  // 97: api.v1.APIService.GetRecordingWindow:input_type -> api.v1.GetRecordingWindowRequest
-	74,  // 98: api.v1.APIService.AddEditorialMarker:input_type -> api.v1.AddEditorialMarkerRequest
-	77,  // 99: api.v1.APIService.SyncEditorialSessionFromPlayout:input_type -> api.v1.SyncEditorialSessionFromPlayoutRequest
-	78,  // 100: api.v1.APIService.AttachEditorialRecording:input_type -> api.v1.AttachEditorialRecordingRequest
-	75,  // 101: api.v1.APIService.ExportEditorialSession:input_type -> api.v1.ExportEditorialSessionRequest
-	11,  // 102: api.v1.APIService.GetPermissions:output_type -> api.v1.Permissions
-	97,  // 103: api.v1.APIService.UpdatePermissions:output_type -> api.v1.Void
-	97,  // 104: api.v1.APIService.DeletePermissions:output_type -> api.v1.Void
-	15,  // 105: api.v1.APIService.ListPermissions:output_type -> api.v1.PermissionsList
-	30,  // 106: api.v1.APIService.GetTranscription:output_type -> api.v1.Transcription
-	34,  // 107: api.v1.APIService.GetShortsPreview:output_type -> api.v1.Preview
-	97,  // 108: api.v1.APIService.SubmitTranscription:output_type -> api.v1.Void
-	17,  // 109: api.v1.APIService.GetYears:output_type -> api.v1.GetYearsResponse
-	21,  // 110: api.v1.APIService.GetAlbums:output_type -> api.v1.AlbumsList
-	26,  // 111: api.v1.APIService.GetAlbumTracks:output_type -> api.v1.TracksList
-	26,  // 112: api.v1.APIService.GetPodcastTracks:output_type -> api.v1.TracksList
-	27,  // 113: api.v1.APIService.GetLanguages:output_type -> api.v1.LanguageList
-	30,  // 114: api.v1.APIService.GetBMMTranscription:output_type -> api.v1.Transcription
-	97,  // 115: api.v1.APIService.SubmitShort:output_type -> api.v1.Void
-	41,  // 116: api.v1.APIService.SubmitShorts:output_type -> api.v1.SubmitShortsResponse
-	30,  // 117: api.v1.APIService.GetShortsTranscript:output_type -> api.v1.Transcription
-	46,  // 118: api.v1.APIService.GetExportConfig:output_type -> api.v1.GetExportConfigResponse
-	49,  // 119: api.v1.APIService.StartExport:output_type -> api.v1.StartExportResponse
-	97,  // 120: api.v1.APIService.ExportTimedMetadata:output_type -> api.v1.Void
-	59,  // 121: api.v1.APIService.ResolveAssets:output_type -> api.v1.ResolveAssetsResponse
-	53,  // 122: api.v1.APIService.GetVBExportConfig:output_type -> api.v1.GetVBExportConfigResponse
-	55,  // 123: api.v1.APIService.StartVBExport:output_type -> api.v1.StartVBExportResponse
-	56,  // 124: api.v1.APIService.GetExportDestinations:output_type -> api.v1.ExportDestinationsResponse
-	97,  // 125: api.v1.APIService.TriggerCantemoAction:output_type -> api.v1.Void
-	63,  // 126: api.v1.APIService.FinishLiveIngest:output_type -> api.v1.FinishLiveIngestResponse
-	67,  // 127: api.v1.APIService.VaultSearch:output_type -> api.v1.VaultSearchResponse
-	69,  // 128: api.v1.APIService.GetVaultItem:output_type -> api.v1.GetVaultItemResponse
-	72,  // 129: api.v1.APIService.ListEditorialSessions:output_type -> api.v1.ListEditorialSessionsResponse
-	71,  // 130: api.v1.APIService.CreateEditorialSession:output_type -> api.v1.EditorialSession
-	71,  // 131: api.v1.APIService.GetEditorialSession:output_type -> api.v1.EditorialSession
-	71,  // 132: api.v1.APIService.SaveEditorialSession:output_type -> api.v1.EditorialSession
-	97,  // 133: api.v1.APIService.SetEditorialPublish:output_type -> api.v1.Void
-	97,  // 134: api.v1.APIService.SetEditorialComment:output_type -> api.v1.Void
-	97,  // 135: api.v1.APIService.SetEditorialName:output_type -> api.v1.Void
-	97,  // 136: api.v1.APIService.SetEditorialDetails:output_type -> api.v1.Void
-	97,  // 137: api.v1.APIService.DeleteEditorialSession:output_type -> api.v1.Void
-	83,  // 138: api.v1.APIService.ImportEditorialMarkers:output_type -> api.v1.ImportEditorialMarkersResponse
-	83,  // 139: api.v1.APIService.ImportEditorialMarkersFromPlayout:output_type -> api.v1.ImportEditorialMarkersResponse
-	89,  // 140: api.v1.APIService.ListPlayoutEvents:output_type -> api.v1.ListPlayoutEventsResponse
-	86,  // 141: api.v1.APIService.GetRecordingWindow:output_type -> api.v1.GetRecordingWindowResponse
-	70,  // 142: api.v1.APIService.AddEditorialMarker:output_type -> api.v1.EditorialMarker
-	71,  // 143: api.v1.APIService.SyncEditorialSessionFromPlayout:output_type -> api.v1.EditorialSession
-	71,  // 144: api.v1.APIService.AttachEditorialRecording:output_type -> api.v1.EditorialSession
-	76,  // 145: api.v1.APIService.ExportEditorialSession:output_type -> api.v1.ExportEditorialSessionResponse
-	102, // [102:146] is the sub-list for method output_type
-	58,  // [58:102] is the sub-list for method input_type
-	58,  // [58:58] is the sub-list for extension type_name
-	58,  // [58:58] is the sub-list for extension extendee
-	0,   // [0:58] is the sub-list for field type_name
+	101, // 45: api.v1.CreateEditorialSessionRequest.clock_start:type_name -> google.protobuf.Timestamp
+	101, // 46: api.v1.AddEditorialMarkerRequest.at:type_name -> google.protobuf.Timestamp
+	71,  // 47: api.v1.EditorialSessionEvent.session:type_name -> api.v1.EditorialSession
+	78,  // 48: api.v1.EditorialSessionEvent.presence:type_name -> api.v1.EditorialPresence
+	101, // 49: api.v1.AttachEditorialRecordingRequest.recording_start:type_name -> google.protobuf.Timestamp
+	101, // 50: api.v1.AttachEditorialRecordingRequest.recording_end:type_name -> google.protobuf.Timestamp
+	70,  // 51: api.v1.SaveEditorialSessionRequest.markers:type_name -> api.v1.EditorialMarker
+	70,  // 52: api.v1.ImportEditorialMarkersResponse.markers:type_name -> api.v1.EditorialMarker
+	101, // 53: api.v1.ImportEditorialMarkersFromPlayoutRequest.recording_start:type_name -> google.protobuf.Timestamp
+	101, // 54: api.v1.ImportEditorialMarkersFromPlayoutRequest.recording_end:type_name -> google.protobuf.Timestamp
+	101, // 55: api.v1.GetRecordingWindowResponse.start:type_name -> google.protobuf.Timestamp
+	101, // 56: api.v1.GetRecordingWindowResponse.end:type_name -> google.protobuf.Timestamp
+	92,  // 57: api.v1.ListPlayoutEventsResponse.events:type_name -> api.v1.PlayoutEvent
+	11,  // 58: api.v1.PermissionsList.PermissionsEntry.value:type_name -> api.v1.Permissions
+	16,  // 59: api.v1.GetYearsResponse.DataEntry.value:type_name -> api.v1.BMMYear
+	102, // 60: api.v1.APIService.GetPermissions:input_type -> api.v1.Void
+	13,  // 61: api.v1.APIService.UpdatePermissions:input_type -> api.v1.SetPermissionsRequest
+	14,  // 62: api.v1.APIService.DeletePermissions:input_type -> api.v1.DeletePermissionsRequest
+	102, // 63: api.v1.APIService.ListPermissions:input_type -> api.v1.Void
+	29,  // 64: api.v1.APIService.GetTranscription:input_type -> api.v1.GetTranscriptionReqest
+	33,  // 65: api.v1.APIService.GetShortsPreview:input_type -> api.v1.GetPreviewRequest
+	36,  // 66: api.v1.APIService.SubmitTranscription:input_type -> api.v1.SubmitTranscriptionRequest
+	18,  // 67: api.v1.APIService.GetYears:input_type -> api.v1.GetYearsRequest
+	19,  // 68: api.v1.APIService.GetAlbums:input_type -> api.v1.GetAlbumsRequest
+	22,  // 69: api.v1.APIService.GetAlbumTracks:input_type -> api.v1.GetAlbumTracksRequest
+	23,  // 70: api.v1.APIService.GetPodcastTracks:input_type -> api.v1.GetPodcastTracksRequest
+	24,  // 71: api.v1.APIService.GetLanguages:input_type -> api.v1.GetAvailableLanguagesRequest
+	35,  // 72: api.v1.APIService.GetBMMTranscription:input_type -> api.v1.GetBMMTranscriptionRequest
+	37,  // 73: api.v1.APIService.SubmitShort:input_type -> api.v1.SubmitShortRequest
+	39,  // 74: api.v1.APIService.SubmitShorts:input_type -> api.v1.SubmitShortsRequest
+	29,  // 75: api.v1.APIService.GetShortsTranscript:input_type -> api.v1.GetTranscriptionReqest
+	45,  // 76: api.v1.APIService.GetExportConfig:input_type -> api.v1.GetExportConfigRequest
+	48,  // 77: api.v1.APIService.StartExport:input_type -> api.v1.StartExportRequest
+	50,  // 78: api.v1.APIService.ExportTimedMetadata:input_type -> api.v1.ExportTimedMetadataRequest
+	57,  // 79: api.v1.APIService.ResolveAssets:input_type -> api.v1.ResolveAssetsRequest
+	51,  // 80: api.v1.APIService.GetVBExportConfig:input_type -> api.v1.GetVBExportConfigRequest
+	54,  // 81: api.v1.APIService.StartVBExport:input_type -> api.v1.StartVBExportRequest
+	102, // 82: api.v1.APIService.GetExportDestinations:input_type -> api.v1.Void
+	60,  // 83: api.v1.APIService.TriggerCantemoAction:input_type -> api.v1.TriggerCantemoActionRequest
+	61,  // 84: api.v1.APIService.FinishLiveIngest:input_type -> api.v1.FinishLiveIngestRequest
+	64,  // 85: api.v1.APIService.VaultSearch:input_type -> api.v1.VaultSearchRequest
+	68,  // 86: api.v1.APIService.GetVaultItem:input_type -> api.v1.GetVaultItemRequest
+	102, // 87: api.v1.APIService.ListEditorialSessions:input_type -> api.v1.Void
+	73,  // 88: api.v1.APIService.CreateEditorialSession:input_type -> api.v1.CreateEditorialSessionRequest
+	84,  // 89: api.v1.APIService.GetEditorialSession:input_type -> api.v1.GetEditorialSessionRequest
+	85,  // 90: api.v1.APIService.SaveEditorialSession:input_type -> api.v1.SaveEditorialSessionRequest
+	95,  // 91: api.v1.APIService.SetEditorialPublish:input_type -> api.v1.SetEditorialPublishRequest
+	96,  // 92: api.v1.APIService.SetEditorialComment:input_type -> api.v1.SetEditorialCommentRequest
+	97,  // 93: api.v1.APIService.SetEditorialName:input_type -> api.v1.SetEditorialNameRequest
+	98,  // 94: api.v1.APIService.SetEditorialDetails:input_type -> api.v1.SetEditorialDetailsRequest
+	86,  // 95: api.v1.APIService.DeleteEditorialSession:input_type -> api.v1.DeleteEditorialSessionRequest
+	87,  // 96: api.v1.APIService.ImportEditorialMarkers:input_type -> api.v1.ImportEditorialMarkersRequest
+	89,  // 97: api.v1.APIService.ImportEditorialMarkersFromPlayout:input_type -> api.v1.ImportEditorialMarkersFromPlayoutRequest
+	93,  // 98: api.v1.APIService.ListPlayoutEvents:input_type -> api.v1.ListPlayoutEventsRequest
+	90,  // 99: api.v1.APIService.GetRecordingWindow:input_type -> api.v1.GetRecordingWindowRequest
+	74,  // 100: api.v1.APIService.AddEditorialMarker:input_type -> api.v1.AddEditorialMarkerRequest
+	81,  // 101: api.v1.APIService.SyncEditorialSessionFromPlayout:input_type -> api.v1.SyncEditorialSessionFromPlayoutRequest
+	83,  // 102: api.v1.APIService.AttachEditorialRecording:input_type -> api.v1.AttachEditorialRecordingRequest
+	75,  // 103: api.v1.APIService.ExportEditorialSession:input_type -> api.v1.ExportEditorialSessionRequest
+	77,  // 104: api.v1.APIService.WatchEditorialSession:input_type -> api.v1.WatchEditorialSessionRequest
+	80,  // 105: api.v1.APIService.SetEditorialPresence:input_type -> api.v1.SetEditorialPresenceRequest
+	82,  // 106: api.v1.APIService.TakeEditorialSync:input_type -> api.v1.TakeEditorialSyncRequest
+	11,  // 107: api.v1.APIService.GetPermissions:output_type -> api.v1.Permissions
+	102, // 108: api.v1.APIService.UpdatePermissions:output_type -> api.v1.Void
+	102, // 109: api.v1.APIService.DeletePermissions:output_type -> api.v1.Void
+	15,  // 110: api.v1.APIService.ListPermissions:output_type -> api.v1.PermissionsList
+	30,  // 111: api.v1.APIService.GetTranscription:output_type -> api.v1.Transcription
+	34,  // 112: api.v1.APIService.GetShortsPreview:output_type -> api.v1.Preview
+	102, // 113: api.v1.APIService.SubmitTranscription:output_type -> api.v1.Void
+	17,  // 114: api.v1.APIService.GetYears:output_type -> api.v1.GetYearsResponse
+	21,  // 115: api.v1.APIService.GetAlbums:output_type -> api.v1.AlbumsList
+	26,  // 116: api.v1.APIService.GetAlbumTracks:output_type -> api.v1.TracksList
+	26,  // 117: api.v1.APIService.GetPodcastTracks:output_type -> api.v1.TracksList
+	27,  // 118: api.v1.APIService.GetLanguages:output_type -> api.v1.LanguageList
+	30,  // 119: api.v1.APIService.GetBMMTranscription:output_type -> api.v1.Transcription
+	102, // 120: api.v1.APIService.SubmitShort:output_type -> api.v1.Void
+	41,  // 121: api.v1.APIService.SubmitShorts:output_type -> api.v1.SubmitShortsResponse
+	30,  // 122: api.v1.APIService.GetShortsTranscript:output_type -> api.v1.Transcription
+	46,  // 123: api.v1.APIService.GetExportConfig:output_type -> api.v1.GetExportConfigResponse
+	49,  // 124: api.v1.APIService.StartExport:output_type -> api.v1.StartExportResponse
+	102, // 125: api.v1.APIService.ExportTimedMetadata:output_type -> api.v1.Void
+	59,  // 126: api.v1.APIService.ResolveAssets:output_type -> api.v1.ResolveAssetsResponse
+	53,  // 127: api.v1.APIService.GetVBExportConfig:output_type -> api.v1.GetVBExportConfigResponse
+	55,  // 128: api.v1.APIService.StartVBExport:output_type -> api.v1.StartVBExportResponse
+	56,  // 129: api.v1.APIService.GetExportDestinations:output_type -> api.v1.ExportDestinationsResponse
+	102, // 130: api.v1.APIService.TriggerCantemoAction:output_type -> api.v1.Void
+	63,  // 131: api.v1.APIService.FinishLiveIngest:output_type -> api.v1.FinishLiveIngestResponse
+	67,  // 132: api.v1.APIService.VaultSearch:output_type -> api.v1.VaultSearchResponse
+	69,  // 133: api.v1.APIService.GetVaultItem:output_type -> api.v1.GetVaultItemResponse
+	72,  // 134: api.v1.APIService.ListEditorialSessions:output_type -> api.v1.ListEditorialSessionsResponse
+	71,  // 135: api.v1.APIService.CreateEditorialSession:output_type -> api.v1.EditorialSession
+	71,  // 136: api.v1.APIService.GetEditorialSession:output_type -> api.v1.EditorialSession
+	71,  // 137: api.v1.APIService.SaveEditorialSession:output_type -> api.v1.EditorialSession
+	102, // 138: api.v1.APIService.SetEditorialPublish:output_type -> api.v1.Void
+	102, // 139: api.v1.APIService.SetEditorialComment:output_type -> api.v1.Void
+	102, // 140: api.v1.APIService.SetEditorialName:output_type -> api.v1.Void
+	102, // 141: api.v1.APIService.SetEditorialDetails:output_type -> api.v1.Void
+	102, // 142: api.v1.APIService.DeleteEditorialSession:output_type -> api.v1.Void
+	88,  // 143: api.v1.APIService.ImportEditorialMarkers:output_type -> api.v1.ImportEditorialMarkersResponse
+	88,  // 144: api.v1.APIService.ImportEditorialMarkersFromPlayout:output_type -> api.v1.ImportEditorialMarkersResponse
+	94,  // 145: api.v1.APIService.ListPlayoutEvents:output_type -> api.v1.ListPlayoutEventsResponse
+	91,  // 146: api.v1.APIService.GetRecordingWindow:output_type -> api.v1.GetRecordingWindowResponse
+	70,  // 147: api.v1.APIService.AddEditorialMarker:output_type -> api.v1.EditorialMarker
+	71,  // 148: api.v1.APIService.SyncEditorialSessionFromPlayout:output_type -> api.v1.EditorialSession
+	71,  // 149: api.v1.APIService.AttachEditorialRecording:output_type -> api.v1.EditorialSession
+	76,  // 150: api.v1.APIService.ExportEditorialSession:output_type -> api.v1.ExportEditorialSessionResponse
+	79,  // 151: api.v1.APIService.WatchEditorialSession:output_type -> api.v1.EditorialSessionEvent
+	102, // 152: api.v1.APIService.SetEditorialPresence:output_type -> api.v1.Void
+	102, // 153: api.v1.APIService.TakeEditorialSync:output_type -> api.v1.Void
+	107, // [107:154] is the sub-list for method output_type
+	60,  // [60:107] is the sub-list for method input_type
+	60,  // [60:60] is the sub-list for extension type_name
+	60,  // [60:60] is the sub-list for extension extendee
+	0,   // [0:60] is the sub-list for field type_name
 }
 
 func init() { file_api_v1_api_proto_init() }
@@ -6435,7 +6807,7 @@ func file_api_v1_api_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_v1_api_proto_rawDesc), len(file_api_v1_api_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   94,
+			NumMessages:   99,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

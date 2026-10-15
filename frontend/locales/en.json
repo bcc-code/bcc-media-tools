@@ -396,7 +396,19 @@
         "done": "Done",
         "commentSummary": "{n} markers · {commented} with comment",
         "untitled": "Untitled meeting",
-        "refreshStatus": "Updated {time} · next in {next}"
+        "connected": "Live",
+        "reconnecting": "Reconnecting…",
+        "connectedHint": "Changes from others appear as they're made",
+        "reconnectingHint": "Lost the live connection; checking for changes every few seconds",
+        "othersHere": "Also here: {names}",
+        "isCommenting": "{name} is commenting…",
+        "otherIsEditing": "{name} has unsaved changes in the edit view. Their save will replace the marker list, including changes made since.",
+        "remoteChanged": "Others changed this session while you were editing. Saving now will replace their changes.",
+        "discardAndReload": "Discard mine and reload",
+        "deletedByOther": "This review was deleted",
+        "syncedBy": "Playout sync runs in {name}'s tab",
+        "takeOverSync": "Take over sync",
+        "syncedInYourOtherTab": "Playout sync runs in your other tab"
     },
     "vault": {
         "searchPlaceholder": "Search the vault",

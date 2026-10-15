@@ -157,6 +157,15 @@ const (
 	// APIServiceExportEditorialSessionProcedure is the fully-qualified name of the APIService's
 	// ExportEditorialSession RPC.
 	APIServiceExportEditorialSessionProcedure = "/api.v1.APIService/ExportEditorialSession"
+	// APIServiceWatchEditorialSessionProcedure is the fully-qualified name of the APIService's
+	// WatchEditorialSession RPC.
+	APIServiceWatchEditorialSessionProcedure = "/api.v1.APIService/WatchEditorialSession"
+	// APIServiceSetEditorialPresenceProcedure is the fully-qualified name of the APIService's
+	// SetEditorialPresence RPC.
+	APIServiceSetEditorialPresenceProcedure = "/api.v1.APIService/SetEditorialPresence"
+	// APIServiceTakeEditorialSyncProcedure is the fully-qualified name of the APIService's
+	// TakeEditorialSync RPC.
+	APIServiceTakeEditorialSyncProcedure = "/api.v1.APIService/TakeEditorialSync"
 )
 
 // APIServiceClient is a client for the api.v1.APIService service.
@@ -225,6 +234,9 @@ type APIServiceClient interface {
 	SyncEditorialSessionFromPlayout(context.Context, *connect.Request[v1.SyncEditorialSessionFromPlayoutRequest]) (*connect.Response[v1.EditorialSession], error)
 	AttachEditorialRecording(context.Context, *connect.Request[v1.AttachEditorialRecordingRequest]) (*connect.Response[v1.EditorialSession], error)
 	ExportEditorialSession(context.Context, *connect.Request[v1.ExportEditorialSessionRequest]) (*connect.Response[v1.ExportEditorialSessionResponse], error)
+	WatchEditorialSession(context.Context, *connect.Request[v1.WatchEditorialSessionRequest]) (*connect.ServerStreamForClient[v1.EditorialSessionEvent], error)
+	SetEditorialPresence(context.Context, *connect.Request[v1.SetEditorialPresenceRequest]) (*connect.Response[v1.Void], error)
+	TakeEditorialSync(context.Context, *connect.Request[v1.TakeEditorialSyncRequest]) (*connect.Response[v1.Void], error)
 }
 
 // NewAPIServiceClient constructs a client for the api.v1.APIService service. By default, it uses
@@ -502,6 +514,24 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(aPIServiceMethods.ByName("ExportEditorialSession")),
 			connect.WithClientOptions(opts...),
 		),
+		watchEditorialSession: connect.NewClient[v1.WatchEditorialSessionRequest, v1.EditorialSessionEvent](
+			httpClient,
+			baseURL+APIServiceWatchEditorialSessionProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("WatchEditorialSession")),
+			connect.WithClientOptions(opts...),
+		),
+		setEditorialPresence: connect.NewClient[v1.SetEditorialPresenceRequest, v1.Void](
+			httpClient,
+			baseURL+APIServiceSetEditorialPresenceProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("SetEditorialPresence")),
+			connect.WithClientOptions(opts...),
+		),
+		takeEditorialSync: connect.NewClient[v1.TakeEditorialSyncRequest, v1.Void](
+			httpClient,
+			baseURL+APIServiceTakeEditorialSyncProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("TakeEditorialSync")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -551,6 +581,9 @@ type aPIServiceClient struct {
 	syncEditorialSessionFromPlayout   *connect.Client[v1.SyncEditorialSessionFromPlayoutRequest, v1.EditorialSession]
 	attachEditorialRecording          *connect.Client[v1.AttachEditorialRecordingRequest, v1.EditorialSession]
 	exportEditorialSession            *connect.Client[v1.ExportEditorialSessionRequest, v1.ExportEditorialSessionResponse]
+	watchEditorialSession             *connect.Client[v1.WatchEditorialSessionRequest, v1.EditorialSessionEvent]
+	setEditorialPresence              *connect.Client[v1.SetEditorialPresenceRequest, v1.Void]
+	takeEditorialSync                 *connect.Client[v1.TakeEditorialSyncRequest, v1.Void]
 }
 
 // GetPermissions calls api.v1.APIService.GetPermissions.
@@ -773,6 +806,21 @@ func (c *aPIServiceClient) ExportEditorialSession(ctx context.Context, req *conn
 	return c.exportEditorialSession.CallUnary(ctx, req)
 }
 
+// WatchEditorialSession calls api.v1.APIService.WatchEditorialSession.
+func (c *aPIServiceClient) WatchEditorialSession(ctx context.Context, req *connect.Request[v1.WatchEditorialSessionRequest]) (*connect.ServerStreamForClient[v1.EditorialSessionEvent], error) {
+	return c.watchEditorialSession.CallServerStream(ctx, req)
+}
+
+// SetEditorialPresence calls api.v1.APIService.SetEditorialPresence.
+func (c *aPIServiceClient) SetEditorialPresence(ctx context.Context, req *connect.Request[v1.SetEditorialPresenceRequest]) (*connect.Response[v1.Void], error) {
+	return c.setEditorialPresence.CallUnary(ctx, req)
+}
+
+// TakeEditorialSync calls api.v1.APIService.TakeEditorialSync.
+func (c *aPIServiceClient) TakeEditorialSync(ctx context.Context, req *connect.Request[v1.TakeEditorialSyncRequest]) (*connect.Response[v1.Void], error) {
+	return c.takeEditorialSync.CallUnary(ctx, req)
+}
+
 // APIServiceHandler is an implementation of the api.v1.APIService service.
 type APIServiceHandler interface {
 	// Permissions
@@ -839,6 +887,9 @@ type APIServiceHandler interface {
 	SyncEditorialSessionFromPlayout(context.Context, *connect.Request[v1.SyncEditorialSessionFromPlayoutRequest]) (*connect.Response[v1.EditorialSession], error)
 	AttachEditorialRecording(context.Context, *connect.Request[v1.AttachEditorialRecordingRequest]) (*connect.Response[v1.EditorialSession], error)
 	ExportEditorialSession(context.Context, *connect.Request[v1.ExportEditorialSessionRequest]) (*connect.Response[v1.ExportEditorialSessionResponse], error)
+	WatchEditorialSession(context.Context, *connect.Request[v1.WatchEditorialSessionRequest], *connect.ServerStream[v1.EditorialSessionEvent]) error
+	SetEditorialPresence(context.Context, *connect.Request[v1.SetEditorialPresenceRequest]) (*connect.Response[v1.Void], error)
+	TakeEditorialSync(context.Context, *connect.Request[v1.TakeEditorialSyncRequest]) (*connect.Response[v1.Void], error)
 }
 
 // NewAPIServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -1112,6 +1163,24 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(aPIServiceMethods.ByName("ExportEditorialSession")),
 		connect.WithHandlerOptions(opts...),
 	)
+	aPIServiceWatchEditorialSessionHandler := connect.NewServerStreamHandler(
+		APIServiceWatchEditorialSessionProcedure,
+		svc.WatchEditorialSession,
+		connect.WithSchema(aPIServiceMethods.ByName("WatchEditorialSession")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aPIServiceSetEditorialPresenceHandler := connect.NewUnaryHandler(
+		APIServiceSetEditorialPresenceProcedure,
+		svc.SetEditorialPresence,
+		connect.WithSchema(aPIServiceMethods.ByName("SetEditorialPresence")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aPIServiceTakeEditorialSyncHandler := connect.NewUnaryHandler(
+		APIServiceTakeEditorialSyncProcedure,
+		svc.TakeEditorialSync,
+		connect.WithSchema(aPIServiceMethods.ByName("TakeEditorialSync")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/api.v1.APIService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case APIServiceGetPermissionsProcedure:
@@ -1202,6 +1271,12 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceAttachEditorialRecordingHandler.ServeHTTP(w, r)
 		case APIServiceExportEditorialSessionProcedure:
 			aPIServiceExportEditorialSessionHandler.ServeHTTP(w, r)
+		case APIServiceWatchEditorialSessionProcedure:
+			aPIServiceWatchEditorialSessionHandler.ServeHTTP(w, r)
+		case APIServiceSetEditorialPresenceProcedure:
+			aPIServiceSetEditorialPresenceHandler.ServeHTTP(w, r)
+		case APIServiceTakeEditorialSyncProcedure:
+			aPIServiceTakeEditorialSyncHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -1385,4 +1460,16 @@ func (UnimplementedAPIServiceHandler) AttachEditorialRecording(context.Context, 
 
 func (UnimplementedAPIServiceHandler) ExportEditorialSession(context.Context, *connect.Request[v1.ExportEditorialSessionRequest]) (*connect.Response[v1.ExportEditorialSessionResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.ExportEditorialSession is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) WatchEditorialSession(context.Context, *connect.Request[v1.WatchEditorialSessionRequest], *connect.ServerStream[v1.EditorialSessionEvent]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.WatchEditorialSession is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) SetEditorialPresence(context.Context, *connect.Request[v1.SetEditorialPresenceRequest]) (*connect.Response[v1.Void], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.SetEditorialPresence is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) TakeEditorialSync(context.Context, *connect.Request[v1.TakeEditorialSyncRequest]) (*connect.Response[v1.Void], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.TakeEditorialSync is not implemented"))
 }

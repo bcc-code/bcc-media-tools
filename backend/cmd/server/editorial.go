@@ -32,6 +32,8 @@ type EditorialAPI struct {
 	vidispine vidispine.Client
 	cantemo   *cantemo.Client
 	playout   playoutClient
+	// Tells open pages when a session changes.
+	hub *editorialHub
 }
 
 type playoutClient interface {
@@ -40,7 +42,7 @@ type playoutClient interface {
 }
 
 func NewEditorialAPI(db *sql.DB, vs vidispine.Client, cantemoClient *cantemo.Client, playoutClient playoutClient) *EditorialAPI {
-	return &EditorialAPI{db: db, queries: editorial.New(db), vidispine: vs, cantemo: cantemoClient, playout: playoutClient}
+	return &EditorialAPI{db: db, queries: editorial.New(db), vidispine: vs, cantemo: cantemoClient, playout: playoutClient, hub: newEditorialHub()}
 }
 
 // requireEditorial authenticates the caller and checks they have at least the
@@ -161,6 +163,7 @@ func (e EditorialAPI) SaveEditorialSession(ctx context.Context, req *connect.Req
 	if err := e.saveSession(ctx, req.Msg.GetId(), req.Msg.GetTitle(), req.Msg.GetMarkers()); err != nil {
 		return nil, editorialErr(err)
 	}
+	e.hub.changed(req.Msg.GetId())
 	out, err := e.loadSession(ctx, req.Msg.GetId())
 	if err != nil {
 		return nil, editorialErr(err)
@@ -188,6 +191,7 @@ func (e EditorialAPI) SetEditorialPublish(ctx context.Context, req *connect.Requ
 	if err != nil {
 		return nil, editorialErr(fmt.Errorf("editorial: set publish: %w", err))
 	}
+	e.hub.changed(sessionID)
 	return connect.NewResponse(&apiv1.Void{}), nil
 }
 
@@ -210,6 +214,7 @@ func (e EditorialAPI) SetEditorialComment(ctx context.Context, req *connect.Requ
 	if err != nil {
 		return nil, editorialErr(fmt.Errorf("editorial: set comment: %w", err))
 	}
+	e.hub.changed(sessionID)
 	return connect.NewResponse(&apiv1.Void{}), nil
 }
 
@@ -232,6 +237,7 @@ func (e EditorialAPI) SetEditorialName(ctx context.Context, req *connect.Request
 	if err != nil {
 		return nil, editorialErr(fmt.Errorf("editorial: set name: %w", err))
 	}
+	e.hub.changed(sessionID)
 	return connect.NewResponse(&apiv1.Void{}), nil
 }
 
@@ -257,6 +263,7 @@ func (e EditorialAPI) SetEditorialDetails(ctx context.Context, req *connect.Requ
 	if err != nil {
 		return nil, editorialErr(fmt.Errorf("editorial: set details: %w", err))
 	}
+	e.hub.changed(sessionID)
 	return connect.NewResponse(&apiv1.Void{}), nil
 }
 
@@ -272,6 +279,7 @@ func (e EditorialAPI) DeleteEditorialSession(ctx context.Context, req *connect.R
 	if n == 0 {
 		return nil, editorialErr(errEditorialNotFound)
 	}
+	e.hub.changed(req.Msg.GetId())
 	return connect.NewResponse(&apiv1.Void{}), nil
 }
 

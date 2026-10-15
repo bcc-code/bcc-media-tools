@@ -2,10 +2,12 @@
 import type {
     EditorialSession,
     EditorialMarker,
+    EditorialPresence,
     PlayoutEvent,
     GetRecordingWindowResponse,
 } from "~~/src/gen/api/v1/api_pb";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
+import { Code, ConnectError } from "@connectrpc/connect";
 import type {
     MobileMarker,
     MarkerDetails,
@@ -412,6 +414,7 @@ const mobileMarkers = computed<MobileMarker[]>(() => {
         comment: r.comment,
         publishBmm: r.publishBmm,
         publishBcc: r.publishBcc,
+        commentingBy: r.id ? commentingOn(r.id) : "",
     }));
     // Live: the marker just logged is the one to comment on.
     return isLive.value ? items.reverse() : items;
@@ -507,6 +510,32 @@ function onMobileDetails(key: string, details: MarkerDetails) {
     const before = snapshot(row);
     Object.assign(row, details);
     void persistDetails(row, before);
+}
+
+async function takeSync() {
+    try {
+        await api.takeEditorialSync({ sessionId: sessionId.value, clientId });
+        syncClientId.value = clientId;
+        void syncNow();
+    } catch {
+        toaster.create({ title: t("editorial.syncFailed"), type: "error" });
+    }
+}
+
+// key: the marker whose comment field has focus; null when none.
+function onMobileCommenting(key: string | null) {
+    if (key) onCommentFocus(rowByKey(key));
+    else onCommentBlur();
+}
+
+// Throw away this tab's unsaved edit-view changes and take the session as
+// it is now.
+async function discardAndReload() {
+    remoteChanged.value = false;
+    dirty.value = false;
+    await applyServerSession(
+        await api.getEditorialSession({ id: sessionId.value }),
+    );
 }
 
 function onMobilePublish(key: string, target: "bmm" | "bcc", value: boolean) {
@@ -672,6 +701,201 @@ async function applyServerSession(s: EditorialSession) {
     hydrated = true;
 }
 
+// ── Multiplayer ───────────────────────────────────────────
+// Every open page follows the session over a server stream, so someone
+// marking and someone commenting see each other's changes as they happen.
+// Changes arrive as the whole session and are merged row by row, leaving the
+// field you are typing in alone.
+const clientId =
+    globalThis.crypto?.randomUUID?.() ??
+    `tab-${Math.random().toString(36).slice(2)}`;
+const presence = ref<EditorialPresence[]>([]);
+// The tab that runs the Playout sync for everyone ("" when no live tab is
+// connected). Only it syncs; other live users can take over.
+const syncClientId = ref("");
+const liveConnected = ref(false);
+// Others changed the session while this tab has unsaved edit-view changes.
+const remoteChanged = ref(false);
+let unmounted = false;
+let watchAbort: AbortController | undefined;
+let fallbackTimer: ReturnType<typeof setInterval> | undefined;
+
+// Merge a session from the server into the page without counting it as an
+// edit. Rows keep their keys (and so their DOM and focus); the row being
+// typed in keeps its text fields until the field is left.
+async function mergeServerSession(s: EditorialSession) {
+    if (effectiveMode.value === "edit" && dirty.value) {
+        remoteChanged.value = true;
+        return;
+    }
+    const focusedKey = (document.activeElement as HTMLElement | null)
+        ?.closest("[data-row-key]")
+        ?.getAttribute("data-row-key");
+    const byId = new Map(rows.value.filter((r) => r.id).map((r) => [r.id, r]));
+
+    hydrated = false;
+    session.value = s;
+    if (!document.activeElement?.closest("[data-session-title]"))
+        title.value = s.title;
+    if (s.previewUrl) previewUrl.value = s.previewUrl;
+    rows.value = s.markers.map((m) => {
+        const fresh = toRow(m);
+        const row = byId.get(m.id);
+        if (!row) return fresh;
+        if (row.key === focusedKey) {
+            const { name, contributors, bibleVerses, comment, type } = row;
+            Object.assign(row, fresh, {
+                key: row.key,
+                name,
+                contributors,
+                bibleVerses,
+                comment,
+                type,
+            });
+        } else {
+            Object.assign(row, fresh, { key: row.key });
+        }
+        return row;
+    });
+    await nextTick();
+    hydrated = true;
+}
+
+async function watchSession() {
+    let backoff = 1000;
+    while (!unmounted) {
+        watchAbort = new AbortController();
+        try {
+            for await (const ev of api.watchEditorialSession(
+                { id: sessionId.value, clientId },
+                { signal: watchAbort.signal },
+            )) {
+                liveConnected.value = true;
+                backoff = 1000;
+                if (ev.deleted) {
+                    toaster.create({
+                        title: t("editorial.deletedByOther"),
+                        type: "info",
+                    });
+                    dirty.value = false;
+                    await navigateTo("/editorial/");
+                    return;
+                }
+                // Keep-alives carry neither; presence always includes us.
+                if (ev.session || ev.presence.length) {
+                    presence.value = ev.presence;
+                    syncClientId.value = ev.syncClientId;
+                }
+                if (ev.session) await mergeServerSession(ev.session);
+            }
+        } catch {
+            if (unmounted) return;
+        }
+        liveConnected.value = false;
+        await new Promise((r) => setTimeout(r, backoff));
+        backoff = Math.min(backoff * 2, 30_000);
+    }
+}
+
+// Without the stream (a proxy that doesn't allow it, a dropped connection),
+// fall back to reading the session every few seconds.
+async function pollFallback() {
+    if (liveConnected.value || loading.value || notFound.value) return;
+    try {
+        await mergeServerSession(
+            await api.getEditorialSession({ id: sessionId.value }),
+        );
+    } catch {
+        // The next round tries again.
+    }
+}
+
+onMounted(() => {
+    void watchSession();
+    fallbackTimer = setInterval(pollFallback, 5000);
+});
+onBeforeUnmount(() => {
+    unmounted = true;
+    watchAbort?.abort();
+    clearInterval(fallbackTimer);
+});
+
+// What this tab is doing, for the others. Only sent when it changes.
+let sentPresence = "viewing|";
+function reportPresence(
+    activity: "viewing" | "commenting" | "editing",
+    markerId = "",
+) {
+    const key = `${activity}|${markerId}`;
+    if (key === sentPresence) return;
+    sentPresence = key;
+    api.setEditorialPresence({
+        sessionId: sessionId.value,
+        clientId,
+        activity,
+        markerId,
+    }).catch(() => {
+        sentPresence = "";
+    });
+}
+
+function onCommentFocus(row: Row | undefined) {
+    if (row?.id) reportPresence("commenting", row.id);
+}
+function onCommentBlur() {
+    reportPresence(
+        effectiveMode.value === "edit" && dirty.value ? "editing" : "viewing",
+    );
+}
+watch(
+    () => effectiveMode.value === "edit" && dirty.value,
+    (editing) => reportPresence(editing ? "editing" : "viewing"),
+);
+
+// "kari.nordmann@bcc.media" → "Kari Nordmann"
+function displayName(email: string): string {
+    return email
+        .split("@")[0]!
+        .split(/[._-]+/)
+        .filter(Boolean)
+        .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+        .join(" ");
+}
+function initials(email: string): string {
+    return displayName(email)
+        .split(" ")
+        .map((p) => p.charAt(0))
+        .slice(0, 2)
+        .join("");
+}
+
+// The others in the session, one entry per person.
+const others = computed(() => {
+    const seen = new Map<string, EditorialPresence>();
+    for (const p of presence.value) {
+        if (p.clientId === clientId) continue;
+        const prev = seen.get(p.email);
+        if (!prev || prev.activity === "viewing") seen.set(p.email, p);
+    }
+    return [...seen.values()];
+});
+const othersEditing = computed(() =>
+    others.value.filter((p) => p.activity === "editing"),
+);
+
+// Who is commenting on a marker, by marker id ("Kari", "Kari and Ola").
+function commentingOn(markerId: string): string {
+    const names = presence.value
+        .filter(
+            (p) =>
+                p.clientId !== clientId &&
+                p.activity === "commenting" &&
+                p.markerId === markerId,
+        )
+        .map((p) => displayName(p.email).split(" ")[0]!);
+    return [...new Set(names)].join(", ");
+}
+
 // ── Live logging ──────────────────────────────────────────
 const marking = ref(false);
 
@@ -689,7 +913,8 @@ async function markNow() {
         );
         // Adding a saved row is not an unsaved edit: keep sync running.
         const wasDirty = dirty.value;
-        rows.value.push(toRow(m));
+        // The stream may have delivered it already.
+        if (!rows.value.some((r) => r.id === m.id)) rows.value.push(toRow(m));
         await nextTick();
         dirty.value = wasDirty;
     } catch {
@@ -736,20 +961,41 @@ function editingARow(): boolean {
     return !!el && ["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName);
 }
 
+// Without a connection nobody is known to hold the lock, so try: the server
+// refuses if another tab holds it.
+const holdsSync = computed(
+    () =>
+        canLive.value &&
+        (syncClientId.value === clientId || syncClientId.value === ""),
+);
+// Where the sync runs, for the other live users.
+const syncHolderLabel = computed(() => {
+    const holder = presence.value.find(
+        (p) => p.clientId === syncClientId.value,
+    );
+    if (!holder) return "";
+    const me = presence.value.find((p) => p.clientId === clientId);
+    return me && holder.email === me.email
+        ? t("editorial.syncedInYourOtherTab")
+        : t("editorial.syncedBy", { name: displayName(holder.email) });
+});
+
 async function syncNow() {
-    if (!isLive.value || mutationInProgress.value) return;
+    if (!isLive.value || !holdsSync.value || mutationInProgress.value) return;
     if (dirty.value) return;
     syncing.value = true;
     try {
-        // Viewers can't write: they just pick up what editors synced.
-        const s = canLive.value
-            ? await api.syncEditorialSessionFromPlayout({ id: sessionId.value })
-            : await api.getEditorialSession({ id: sessionId.value });
-        // Edits made while the request was out win; try again next round.
-        if (!dirty.value) await applyServerSession(s);
+        // Everyone else gets the result through the stream.
+        const s = await api.syncEditorialSessionFromPlayout({
+            id: sessionId.value,
+            clientId,
+        });
+        await mergeServerSession(s);
         syncFailed.value = false;
-    } catch {
-        syncFailed.value = true;
+    } catch (e) {
+        // Another tab holds the lock: not a failure, it syncs for us.
+        syncFailed.value =
+            ConnectError.from(e).code !== Code.FailedPrecondition;
     } finally {
         lastSyncedAt.value = Date.now();
         syncing.value = false;
@@ -1264,6 +1510,7 @@ onBeforeRouteLeave(() => {
                 <DesignInput
                     v-if="effectiveMode === 'edit'"
                     v-model="title"
+                    data-session-title
                     :placeholder="session?.VXID"
                 />
                 <div v-else class="flex min-w-0 items-center gap-3">
@@ -1334,7 +1581,67 @@ onBeforeRouteLeave(() => {
                 <div
                     class="flex flex-wrap items-center gap-3 max-md:w-full md:ml-auto"
                 >
-                    <template v-if="isLive">
+                    <div
+                        v-if="others.length"
+                        class="flex -space-x-1.5"
+                        :aria-label="
+                            t('editorial.othersHere', {
+                                names: others
+                                    .map((p) => displayName(p.email))
+                                    .join(', '),
+                            })
+                        "
+                    >
+                        <span
+                            v-for="p in others"
+                            :key="p.clientId"
+                            :title="displayName(p.email)"
+                            class="bg-primary-default text-on-primary text-caption-2 ring-surface-default flex size-7 items-center justify-center rounded-full ring-2"
+                        >
+                            {{ initials(p.email) }}
+                        </span>
+                    </div>
+                    <span
+                        class="text-caption-1 flex items-center gap-1.5"
+                        :class="
+                            liveConnected
+                                ? 'text-text-hint'
+                                : 'text-semantic-warning'
+                        "
+                        :title="
+                            liveConnected
+                                ? t('editorial.connectedHint')
+                                : t('editorial.reconnectingHint')
+                        "
+                    >
+                        <span
+                            class="size-2 rounded-full"
+                            :class="
+                                liveConnected
+                                    ? 'bg-semantic-success'
+                                    : 'bg-semantic-warning'
+                            "
+                        />
+                        {{
+                            liveConnected
+                                ? t("editorial.connected")
+                                : t("editorial.reconnecting")
+                        }}
+                    </span>
+                    <template v-if="isLive && canLive && !holdsSync">
+                        <span class="text-caption-1 text-text-hint">
+                            {{ syncHolderLabel }}
+                        </span>
+                        <DesignButton
+                            variant="tertiary"
+                            size="small"
+                            class="border-border-1 border"
+                            @click="takeSync"
+                        >
+                            {{ t("editorial.takeOverSync") }}
+                        </DesignButton>
+                    </template>
+                    <template v-if="isLive && holdsSync">
                         <span
                             class="text-caption-1 flex items-center gap-1.5"
                             :class="
@@ -1364,22 +1671,16 @@ onBeforeRouteLeave(() => {
                             </template>
                             <template v-else-if="lastSyncedAt">
                                 {{
-                                    t(
-                                        canLive
-                                            ? "editorial.syncStatus"
-                                            : "editorial.refreshStatus",
-                                        {
-                                            time: osloTime.format(
-                                                new Date(lastSyncedAt),
-                                            ),
-                                            next: formatCountdown(nextSyncIn),
-                                        },
-                                    )
+                                    t("editorial.syncStatus", {
+                                        time: osloTime.format(
+                                            new Date(lastSyncedAt),
+                                        ),
+                                        next: formatCountdown(nextSyncIn),
+                                    })
                                 }}
                             </template>
                         </span>
                         <DesignButton
-                            v-if="canLive"
                             variant="tertiary"
                             icon="tabler:refresh"
                             class="border-border-1 border"
@@ -1429,6 +1730,43 @@ onBeforeRouteLeave(() => {
                         </DesignButton>
                     </template>
                 </div>
+            </div>
+
+            <div
+                v-if="othersEditing.length || remoteChanged"
+                class="mb-4 flex flex-col gap-2"
+            >
+                <DesignBanner
+                    v-if="othersEditing.length"
+                    variant="warning"
+                    icon="tabler:users"
+                >
+                    {{
+                        t("editorial.otherIsEditing", {
+                            name: othersEditing
+                                .map((p) => displayName(p.email))
+                                .join(", "),
+                        })
+                    }}
+                </DesignBanner>
+                <DesignBanner
+                    v-if="remoteChanged"
+                    variant="warning"
+                    icon="tabler:alert-triangle"
+                >
+                    <div class="flex flex-wrap items-center gap-3">
+                        <span class="grow">
+                            {{ t("editorial.remoteChanged") }}
+                        </span>
+                        <DesignButton
+                            variant="secondary"
+                            size="small"
+                            @click="discardAndReload"
+                        >
+                            {{ t("editorial.discardAndReload") }}
+                        </DesignButton>
+                    </div>
+                </DesignBanner>
             </div>
 
             <div
@@ -1510,6 +1848,7 @@ onBeforeRouteLeave(() => {
                             :type-items="typeItems"
                             @comment="onMobileComment"
                             @details="onMobileDetails"
+                            @commenting="onMobileCommenting"
                             @title="onMobileTitle"
                             @publish="onMobilePublish"
                         />
@@ -1606,6 +1945,7 @@ onBeforeRouteLeave(() => {
                                 <tr
                                     v-for="(row, i) in rows"
                                     :key="row.key"
+                                    :data-row-key="row.key"
                                     class="[&>td]:border-border-1/50 transition-colors [&>td]:border-b"
                                     :class="[
                                         i === activeIndex
@@ -1755,11 +2095,29 @@ onBeforeRouteLeave(() => {
                                     <td
                                         class="px-2 py-2"
                                         @focusin="
-                                            commentBeforeEdit = row.comment
+                                            commentBeforeEdit = row.comment;
+                                            onCommentFocus(row);
                                         "
+                                        @focusout="onCommentBlur"
                                         @change="persistComment(row)"
                                     >
                                         <DesignInput v-model="row.comment" />
+                                        <p
+                                            v-if="
+                                                row.id && commentingOn(row.id)
+                                            "
+                                            class="text-caption-2 text-text-hint mt-1 flex items-center gap-1"
+                                        >
+                                            <Icon
+                                                name="tabler:pencil"
+                                                class="size-3"
+                                            />
+                                            {{
+                                                t("editorial.isCommenting", {
+                                                    name: commentingOn(row.id),
+                                                })
+                                            }}
+                                        </p>
                                     </td>
                                     <td class="px-2 py-2">
                                         <div class="flex justify-center">

@@ -89,6 +89,7 @@ func (e EditorialAPI) AddEditorialMarker(ctx context.Context, req *connect.Reque
 	if err := tx.Commit(); err != nil {
 		return nil, editorialErr(fmt.Errorf("editorial: commit: %w", err))
 	}
+	e.hub.changed(sess.ID)
 	for _, m := range rows {
 		if m.ID == marker.ID {
 			return connect.NewResponse(editorialMarkerToProto(m)), nil
@@ -110,6 +111,10 @@ func (e EditorialAPI) SyncEditorialSessionFromPlayout(ctx context.Context, req *
 	sess, err := e.liveSession(ctx, e.queries, req.Msg.GetId())
 	if err != nil {
 		return nil, liveErr(err)
+	}
+	// One tab syncs for everyone; the others get its result as a change.
+	if !e.hub.maySync(sess.ID, req.Msg.GetClientId()) {
+		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("another tab runs the Playout sync for this session"))
 	}
 	// Fetched outside the transaction: it is the slow part.
 	manifest, err := e.playout.GetManifest(ctx, sess.PlayoutEventID)
@@ -151,6 +156,7 @@ func (e EditorialAPI) SyncEditorialSessionFromPlayout(ctx context.Context, req *
 		if err := tx.Commit(); err != nil {
 			return nil, editorialErr(fmt.Errorf("editorial: commit: %w", err))
 		}
+		e.hub.changed(sess.ID)
 	}
 
 	out, err := e.loadSession(ctx, sess.ID)
@@ -233,6 +239,7 @@ func (e EditorialAPI) AttachEditorialRecording(ctx context.Context, req *connect
 		return nil, editorialErr(fmt.Errorf("editorial: commit: %w", err))
 	}
 
+	e.hub.changed(sess.ID)
 	out, err := e.loadSession(ctx, sess.ID)
 	if err != nil {
 		return nil, editorialErr(err)
