@@ -46,7 +46,7 @@ var exportLabelsByLanguage = map[string]exportLabels{
 }
 
 func (e EditorialAPI) ExportEditorialSession(ctx context.Context, req *connect.Request[apiv1.ExportEditorialSessionRequest]) (*connect.Response[apiv1.ExportEditorialSessionResponse], error) {
-	if _, err := requireEditorial(req, false); err != nil {
+	if _, err := requireEditorial(req, apiv1.EditorialReviewer); err != nil {
 		return nil, err
 	}
 	sess, err := e.queries.GetSession(ctx, req.Msg.GetId())

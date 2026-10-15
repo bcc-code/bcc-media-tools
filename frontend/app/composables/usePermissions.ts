@@ -49,10 +49,25 @@ export function usePermissions() {
 
     const canUseVault = cap((m) => !!m.vault?.enabled);
 
-    const canUseEditorial = cap(
-        (m) => !!m.editorial && (m.editorial.enabled || m.editorial.admin),
-    );
-    const canEditEditorial = cap((m) => !!m.editorial?.admin);
+    // Editorial roles, each including the ones before it:
+    // reviewer (enabled) < editor < live < admin.
+    const editorialRole = (m: Permissions) => {
+        const e = m.editorial;
+        if (!e) return 0;
+        if (e.admin) return 4;
+        if (e.live) return 3;
+        if (e.editor) return 2;
+        return e.enabled ? 1 : 0;
+    };
+    // see, export, comment, set publish flags, change titles
+    const canUseEditorial = cap((m) => editorialRole(m) >= 1);
+    // also contributors, type and Bible verses of existing markers
+    const canEditEditorialDetails = cap((m) => editorialRole(m) >= 2);
+    // also create meetings, mark, refresh from Playout, send to Mediabanken,
+    // the edit view and imports
+    const canRunLiveEditorial = cap((m) => editorialRole(m) >= 3);
+    // everything, including deleting sessions
+    const isEditorialAdmin = cap((m) => editorialRole(m) >= 4);
 
     const canUseLiveIngest = cap((m) => !!m.liveIngest?.enabled);
 
@@ -77,7 +92,9 @@ export function usePermissions() {
         canUseShorts,
         canUseVault,
         canUseEditorial,
-        canEditEditorial,
+        canEditEditorialDetails,
+        canRunLiveEditorial,
+        isEditorialAdmin,
         canUseLiveIngest,
         canCantemoPreview,
         canCantemoTranscribe,

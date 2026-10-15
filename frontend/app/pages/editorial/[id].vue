@@ -20,7 +20,10 @@ const api = useAPI();
 const perms = usePermissions();
 const toaster = useToast();
 
-const canEdit = perms.canEditEditorial;
+// Live and up: the edit view, live logging, Playout, attaching the recording.
+const canLive = perms.canRunLiveEditorial;
+// Editor and up: contributors, type and Bible verses on existing markers.
+const canEditDetails = perms.canEditEditorialDetails;
 
 useHead({ title: t("tools.editorial.title") });
 
@@ -98,7 +101,7 @@ const mode = ref<"simple" | "edit">("simple");
 // Phones get the card layout, which is simple mode: the edit table doesn't fit.
 const isPhone = useMediaQuery("(max-width: 767px)");
 const effectiveMode = computed(() =>
-    canEdit.value && !isPhone.value ? mode.value : "simple",
+    canLive.value && !isPhone.value ? mode.value : "simple",
 );
 
 // Fixed-width mode control, so switching modes doesn't shift the layout.
@@ -437,28 +440,73 @@ async function onMobileComment(key: string, comment: string) {
     }
 }
 
-async function onMobileDetails(key: string, details: MarkerDetails) {
-    const row = rowByKey(key);
-    if (!row?.id) return;
-    const before = {
-        name: row.name,
-        contributors: row.contributors,
-        type: row.type,
-        playoutSynced: row.playoutSynced,
-    };
-    Object.assign(row, details, { playoutSynced: false });
+// ── Details (contributors, type, Bible verses; editor and up) ──
+// Simple and phone views save each change on its own; edit mode saves on Save.
+type Details = Pick<
+    Row,
+    "name" | "contributors" | "type" | "bibleVerses" | "playoutSynced"
+>;
+const detailsBefore = new Map<string, Details>();
+
+function snapshot(row: Row): Details {
+    const { name, contributors, type, bibleVerses, playoutSynced } = row;
+    return { name, contributors, type, bibleVerses, playoutSynced };
+}
+
+function noteDetails(row: Row) {
+    if (!detailsBefore.has(row.key)) detailsBefore.set(row.key, snapshot(row));
+}
+
+async function persistDetails(row: Row, before = detailsBefore.get(row.key)) {
+    detailsBefore.delete(row.key);
+    if (effectiveMode.value === "edit" || !row.id || !before) return;
+    const changed =
+        row.name !== before.name ||
+        row.contributors !== before.contributors ||
+        row.type !== before.type ||
+        row.bibleVerses !== before.bibleVerses;
+    if (!changed) return;
+    // A hand edit stops Playout from refreshing the row.
+    row.playoutSynced = false;
     try {
         await tracked(() =>
             api.setEditorialDetails({
                 sessionId: sessionId.value,
                 markerId: row.id,
-                ...details,
+                name: row.name,
+                contributors: row.contributors,
+                type: row.type,
+                bibleVerses: row.bibleVerses,
             }),
         );
     } catch {
         Object.assign(row, before);
         toaster.create({ title: t("editorial.saveFailed"), type: "error" });
     }
+}
+
+// DesignSelect's value can be a list (multi-select); this one is single.
+function setType(row: Row, value: string | string[]) {
+    const type = Array.isArray(value) ? (value[0] ?? "") : value;
+    const before = snapshot(row);
+    row.type = type;
+    void persistDetails(row, before);
+}
+
+function onMobileTitle(key: string, name: string) {
+    const row = rowByKey(key);
+    if (!row) return;
+    nameBeforeEdit.value = row.name;
+    row.name = name;
+    void persistName(row);
+}
+
+function onMobileDetails(key: string, details: MarkerDetails) {
+    const row = rowByKey(key);
+    if (!row) return;
+    const before = snapshot(row);
+    Object.assign(row, details);
+    void persistDetails(row, before);
 }
 
 function onMobilePublish(key: string, target: "bmm" | "bcc", value: boolean) {
@@ -629,7 +677,7 @@ const marking = ref(false);
 
 // Saved at once with this computer's clock: the moment the editor saw.
 async function markNow() {
-    if (!isLive.value || !canEdit.value || marking.value) return;
+    if (!isLive.value || !canLive.value || marking.value) return;
     const at = new Date();
     marking.value = true;
     try {
@@ -694,7 +742,7 @@ async function syncNow() {
     syncing.value = true;
     try {
         // Viewers can't write: they just pick up what editors synced.
-        const s = canEdit.value
+        const s = canLive.value
             ? await api.syncEditorialSessionFromPlayout({ id: sessionId.value })
             : await api.getEditorialSession({ id: sessionId.value });
         // Edits made while the request was out win; try again next round.
@@ -960,7 +1008,7 @@ const menuItems = computed(() => [
         icon: "tabler:file-spreadsheet",
         disabled: exporting.value,
     },
-    ...(isLive.value && canEdit.value
+    ...(isLive.value && canLive.value
         ? [
               {
                   value: "attach",
@@ -986,7 +1034,7 @@ const menuItems = computed(() => [
               },
           ]
         : []),
-    ...(canEdit.value
+    ...(perms.isEditorialAdmin.value
         ? [
               {
                   value: "delete",
@@ -1180,7 +1228,7 @@ async function remove() {
 }
 
 onBeforeRouteLeave(() => {
-    if (canEdit.value && dirty.value) {
+    if (canLive.value && dirty.value) {
         return window.confirm(t("editorial.unsavedWarning"));
     }
 });
@@ -1252,13 +1300,13 @@ onBeforeRouteLeave(() => {
                 class="mb-6 flex flex-wrap items-center gap-3"
             >
                 <DesignSegmentGroup
-                    v-if="canEdit && !isPhone"
+                    v-if="canLive && !isPhone"
                     v-model="modeModel"
                     :items="modeItems"
                     class="border-border-1 border"
                 />
                 <DesignButton
-                    v-if="isLive && canEdit"
+                    v-if="isLive && canLive"
                     size="large"
                     icon="tabler:plus"
                     class="grow md:grow-0"
@@ -1316,16 +1364,22 @@ onBeforeRouteLeave(() => {
                             </template>
                             <template v-else-if="lastSyncedAt">
                                 {{
-                                    t("editorial.syncStatus", {
-                                        time: osloTime.format(
-                                            new Date(lastSyncedAt),
-                                        ),
-                                        next: formatCountdown(nextSyncIn),
-                                    })
+                                    t(
+                                        canLive
+                                            ? "editorial.syncStatus"
+                                            : "editorial.refreshStatus",
+                                        {
+                                            time: osloTime.format(
+                                                new Date(lastSyncedAt),
+                                            ),
+                                            next: formatCountdown(nextSyncIn),
+                                        },
+                                    )
                                 }}
                             </template>
                         </span>
                         <DesignButton
+                            v-if="canLive"
                             variant="tertiary"
                             icon="tabler:refresh"
                             class="border-border-1 border"
@@ -1363,7 +1417,7 @@ onBeforeRouteLeave(() => {
                             {{ t("editorial.saveFailed") }}
                         </template>
                     </span>
-                    <template v-if="canEdit">
+                    <template v-if="canLive">
                         <DesignButton
                             v-if="effectiveMode === 'edit'"
                             icon="tabler:device-floppy"
@@ -1452,10 +1506,11 @@ onBeforeRouteLeave(() => {
                         </p>
                         <EditorialMobileMarkerList
                             :markers="mobileMarkers"
-                            :can-edit="canEdit"
+                            :can-edit="canEditDetails"
                             :type-items="typeItems"
                             @comment="onMobileComment"
                             @details="onMobileDetails"
+                            @title="onMobileTitle"
                             @publish="onMobilePublish"
                         />
                     </template>
@@ -1611,21 +1666,21 @@ onBeforeRouteLeave(() => {
                                     </td>
                                     <td class="py-2 pr-2 pl-3">
                                         <DesignInput
-                                            v-if="canEdit"
                                             v-model="row.name"
                                             @focusin="nameBeforeEdit = row.name"
                                             @change="persistName(row)"
                                         />
-                                        <span
-                                            v-else
-                                            class="text-body-3 text-text-default"
-                                        >
-                                            {{ row.name || "—" }}
-                                        </span>
                                     </td>
-                                    <td class="px-2 py-2">
+                                    <td
+                                        class="px-2 py-2"
+                                        @focusin="noteDetails(row)"
+                                        @change="persistDetails(row)"
+                                    >
                                         <DesignInput
-                                            v-if="effectiveMode === 'edit'"
+                                            v-if="
+                                                effectiveMode === 'edit' ||
+                                                canEditDetails
+                                            "
                                             v-model="row.contributors"
                                         />
                                         <span
@@ -1635,9 +1690,16 @@ onBeforeRouteLeave(() => {
                                             {{ row.contributors || "—" }}
                                         </span>
                                     </td>
-                                    <td class="px-2 py-2">
+                                    <td
+                                        class="px-2 py-2"
+                                        @focusin="noteDetails(row)"
+                                        @change="persistDetails(row)"
+                                    >
                                         <DesignInput
-                                            v-if="effectiveMode === 'edit'"
+                                            v-if="
+                                                effectiveMode === 'edit' ||
+                                                canEditDetails
+                                            "
                                             v-model="row.bibleVerses"
                                         />
                                         <span
@@ -1657,6 +1719,14 @@ onBeforeRouteLeave(() => {
                                             v-if="effectiveMode === 'edit'"
                                             v-model="row.type"
                                             :items="typeItems"
+                                        />
+                                        <DesignSelect
+                                            v-else-if="canEditDetails"
+                                            :model-value="row.type"
+                                            :items="typeItems"
+                                            @update:model-value="
+                                                setType(row, $event)
+                                            "
                                         />
                                         <DesignBadge v-else-if="row.type">
                                             {{ typeLabel(row.type) }}

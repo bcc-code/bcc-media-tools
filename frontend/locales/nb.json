@@ -395,7 +395,8 @@
         "publishTo": "Publiser til {target}",
         "done": "Ferdig",
         "commentSummary": "{n} markører · {commented} med kommentar",
-        "untitled": "Møte uten navn"
+        "untitled": "Møte uten navn",
+        "refreshStatus": "Oppdatert {time} · neste om {next}"
     },
     "vault": {
         "searchPlaceholder": "Søk i vault",

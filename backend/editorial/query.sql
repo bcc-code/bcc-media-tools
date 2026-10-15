@@ -50,7 +50,7 @@ WHERE id = ? AND session_id = ?;
 
 -- name: SetMarkerDetails :execrows
 -- Hand-edited details stop Playout from refreshing the row.
-UPDATE markers SET name = ?, contributors = ?, type = ?, playout_synced = 0, updated_at = ?
+UPDATE markers SET name = ?, contributors = ?, type = ?, bible_verses = ?, playout_synced = 0, updated_at = ?
 WHERE id = ? AND session_id = ?;
 
 -- name: SetPlayoutWindow :execrows

@@ -321,7 +321,7 @@ func (q *Queries) SetMarkerComment(ctx context.Context, arg SetMarkerCommentPara
 }
 
 const setMarkerDetails = `-- name: SetMarkerDetails :execrows
-UPDATE markers SET name = ?, contributors = ?, type = ?, playout_synced = 0, updated_at = ?
+UPDATE markers SET name = ?, contributors = ?, type = ?, bible_verses = ?, playout_synced = 0, updated_at = ?
 WHERE id = ? AND session_id = ?
 `
 
@@ -329,6 +329,7 @@ type SetMarkerDetailsParams struct {
 	Name         string
 	Contributors string
 	Type         string
+	BibleVerses  string
 	UpdatedAt    int64
 	ID           string
 	SessionID    string
@@ -340,6 +341,7 @@ func (q *Queries) SetMarkerDetails(ctx context.Context, arg SetMarkerDetailsPara
 		arg.Name,
 		arg.Contributors,
 		arg.Type,
+		arg.BibleVerses,
 		arg.UpdatedAt,
 		arg.ID,
 		arg.SessionID,

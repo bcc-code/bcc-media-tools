@@ -126,7 +126,7 @@ async function create() {
                 {{ t("tools.editorial.title") }}
             </h1>
             <DesignButton
-                v-if="perms.canEditEditorial.value"
+                v-if="perms.canRunLiveEditorial.value"
                 icon="tabler:plus"
                 @click="createOpen = true"
             >

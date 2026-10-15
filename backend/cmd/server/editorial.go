@@ -43,23 +43,24 @@ func NewEditorialAPI(db *sql.DB, vs vidispine.Client, cantemoClient *cantemo.Cli
 	return &EditorialAPI{db: db, queries: editorial.New(db), vidispine: vs, cantemo: cantemoClient, playout: playoutClient}
 }
 
-// requireEditorial authenticates the caller and checks editorial access. When
-// needEdit is true the caller must have edit rights (add/remove/edit markers);
-// otherwise plain tool access (see/accept/reject) is enough. Returns the email.
-func requireEditorial[T any](req *connect.Request[T], needEdit bool) (string, error) {
+// requireEditorial authenticates the caller and checks they have at least the
+// given editorial role (see apiv1.EditorialRole). Returns the email.
+func requireEditorial[T any](req *connect.Request[T], role apiv1.EditorialRole) (string, error) {
 	email := getEmail(req)
 	if email == "" {
 		return "", connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("missing email header"))
 	}
-	perms := PermissionsForEmail(email)
-	if needEdit {
-		if !perms.CanEditorialEdit() {
-			return "", connect.NewError(connect.CodePermissionDenied, fmt.Errorf("not authorized to edit editorial sessions"))
-		}
-	} else if !perms.CanEditorial() {
-		return "", connect.NewError(connect.CodePermissionDenied, fmt.Errorf("not authorized to use the editorial tool"))
+	if PermissionsForEmail(email).EditorialRole() < role {
+		return "", connect.NewError(connect.CodePermissionDenied, fmt.Errorf("not authorized: needs the %s editorial role", editorialRoleNames[role]))
 	}
 	return email, nil
+}
+
+var editorialRoleNames = map[apiv1.EditorialRole]string{
+	apiv1.EditorialReviewer: "reviewer",
+	apiv1.EditorialEditor:   "editor",
+	apiv1.EditorialLive:     "live",
+	apiv1.EditorialAdmin:    "admin",
 }
 
 // editorialErr maps DB errors to appropriate connect codes.
@@ -71,7 +72,7 @@ func editorialErr(err error) error {
 }
 
 func (e EditorialAPI) ListEditorialSessions(ctx context.Context, req *connect.Request[apiv1.Void]) (*connect.Response[apiv1.ListEditorialSessionsResponse], error) {
-	if _, err := requireEditorial(req, false); err != nil {
+	if _, err := requireEditorial(req, apiv1.EditorialReviewer); err != nil {
 		return nil, err
 	}
 	sessions, err := e.queries.ListSessions(ctx)
@@ -86,7 +87,7 @@ func (e EditorialAPI) ListEditorialSessions(ctx context.Context, req *connect.Re
 }
 
 func (e EditorialAPI) CreateEditorialSession(ctx context.Context, req *connect.Request[apiv1.CreateEditorialSessionRequest]) (*connect.Response[apiv1.EditorialSession], error) {
-	email, err := requireEditorial(req, true)
+	email, err := requireEditorial(req, apiv1.EditorialLive)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +135,7 @@ func (e EditorialAPI) CreateEditorialSession(ctx context.Context, req *connect.R
 }
 
 func (e EditorialAPI) GetEditorialSession(ctx context.Context, req *connect.Request[apiv1.GetEditorialSessionRequest]) (*connect.Response[apiv1.EditorialSession], error) {
-	if _, err := requireEditorial(req, false); err != nil {
+	if _, err := requireEditorial(req, apiv1.EditorialReviewer); err != nil {
 		return nil, err
 	}
 	out, err := e.loadSession(ctx, req.Msg.GetId())
@@ -154,7 +155,7 @@ func (e EditorialAPI) GetEditorialSession(ctx context.Context, req *connect.Requ
 }
 
 func (e EditorialAPI) SaveEditorialSession(ctx context.Context, req *connect.Request[apiv1.SaveEditorialSessionRequest]) (*connect.Response[apiv1.EditorialSession], error) {
-	if _, err := requireEditorial(req, true); err != nil {
+	if _, err := requireEditorial(req, apiv1.EditorialLive); err != nil {
 		return nil, err
 	}
 	if err := e.saveSession(ctx, req.Msg.GetId(), req.Msg.GetTitle(), req.Msg.GetMarkers()); err != nil {
@@ -168,7 +169,7 @@ func (e EditorialAPI) SaveEditorialSession(ctx context.Context, req *connect.Req
 }
 
 func (e EditorialAPI) SetEditorialPublish(ctx context.Context, req *connect.Request[apiv1.SetEditorialPublishRequest]) (*connect.Response[apiv1.Void], error) {
-	if _, err := requireEditorial(req, false); err != nil {
+	if _, err := requireEditorial(req, apiv1.EditorialReviewer); err != nil {
 		return nil, err
 	}
 	if req.Msg.GetSessionId() == "" || req.Msg.GetMarkerId() == "" {
@@ -191,7 +192,7 @@ func (e EditorialAPI) SetEditorialPublish(ctx context.Context, req *connect.Requ
 }
 
 func (e EditorialAPI) SetEditorialComment(ctx context.Context, req *connect.Request[apiv1.SetEditorialCommentRequest]) (*connect.Response[apiv1.Void], error) {
-	if _, err := requireEditorial(req, false); err != nil {
+	if _, err := requireEditorial(req, apiv1.EditorialReviewer); err != nil {
 		return nil, err
 	}
 	if req.Msg.GetSessionId() == "" || req.Msg.GetMarkerId() == "" {
@@ -213,7 +214,7 @@ func (e EditorialAPI) SetEditorialComment(ctx context.Context, req *connect.Requ
 }
 
 func (e EditorialAPI) SetEditorialName(ctx context.Context, req *connect.Request[apiv1.SetEditorialNameRequest]) (*connect.Response[apiv1.Void], error) {
-	if _, err := requireEditorial(req, true); err != nil {
+	if _, err := requireEditorial(req, apiv1.EditorialReviewer); err != nil {
 		return nil, err
 	}
 	if req.Msg.GetSessionId() == "" || req.Msg.GetMarkerId() == "" {
@@ -235,7 +236,7 @@ func (e EditorialAPI) SetEditorialName(ctx context.Context, req *connect.Request
 }
 
 func (e EditorialAPI) SetEditorialDetails(ctx context.Context, req *connect.Request[apiv1.SetEditorialDetailsRequest]) (*connect.Response[apiv1.Void], error) {
-	if _, err := requireEditorial(req, true); err != nil {
+	if _, err := requireEditorial(req, apiv1.EditorialEditor); err != nil {
 		return nil, err
 	}
 	if req.Msg.GetSessionId() == "" || req.Msg.GetMarkerId() == "" {
@@ -247,6 +248,7 @@ func (e EditorialAPI) SetEditorialDetails(ctx context.Context, req *connect.Requ
 			Name:         req.Msg.GetName(),
 			Contributors: req.Msg.GetContributors(),
 			Type:         req.Msg.GetType(),
+			BibleVerses:  req.Msg.GetBibleVerses(),
 			UpdatedAt:    now,
 			ID:           markerID,
 			SessionID:    sessionID,
@@ -259,7 +261,7 @@ func (e EditorialAPI) SetEditorialDetails(ctx context.Context, req *connect.Requ
 }
 
 func (e EditorialAPI) DeleteEditorialSession(ctx context.Context, req *connect.Request[apiv1.DeleteEditorialSessionRequest]) (*connect.Response[apiv1.Void], error) {
-	if _, err := requireEditorial(req, true); err != nil {
+	if _, err := requireEditorial(req, apiv1.EditorialAdmin); err != nil {
 		return nil, err
 	}
 	// Markers go with it via ON DELETE CASCADE.
@@ -446,7 +448,7 @@ func (e EditorialAPI) updateMarker(ctx context.Context, sessionID string, update
 }
 
 func (e EditorialAPI) ImportEditorialMarkers(ctx context.Context, req *connect.Request[apiv1.ImportEditorialMarkersRequest]) (*connect.Response[apiv1.ImportEditorialMarkersResponse], error) {
-	if _, err := requireEditorial(req, true); err != nil {
+	if _, err := requireEditorial(req, apiv1.EditorialLive); err != nil {
 		return nil, err
 	}
 	sess, err := e.queries.GetSession(ctx, req.Msg.GetId())
@@ -465,7 +467,7 @@ func (e EditorialAPI) ImportEditorialMarkers(ctx context.Context, req *connect.R
 // supplied Playout event. Like the Vidispine import, it only returns candidate
 // rows; the client decides whether to save them.
 func (e EditorialAPI) ImportEditorialMarkersFromPlayout(ctx context.Context, req *connect.Request[apiv1.ImportEditorialMarkersFromPlayoutRequest]) (*connect.Response[apiv1.ImportEditorialMarkersResponse], error) {
-	if _, err := requireEditorial(req, true); err != nil {
+	if _, err := requireEditorial(req, apiv1.EditorialLive); err != nil {
 		return nil, err
 	}
 	if req.Msg.GetId() == "" || req.Msg.GetEventId() == "" {
@@ -519,7 +521,7 @@ func (e EditorialAPI) ImportEditorialMarkersFromPlayout(ctx context.Context, req
 // ListPlayoutEvents lists every event known to the tenant so the client can
 // offer a picker instead of requiring a Playout event id to be typed in.
 func (e EditorialAPI) ListPlayoutEvents(ctx context.Context, req *connect.Request[apiv1.ListPlayoutEventsRequest]) (*connect.Response[apiv1.ListPlayoutEventsResponse], error) {
-	if _, err := requireEditorial(req, true); err != nil {
+	if _, err := requireEditorial(req, apiv1.EditorialLive); err != nil {
 		return nil, err
 	}
 	if e.playout == nil {
@@ -595,7 +597,7 @@ func (e EditorialAPI) windowFromManualStart(vxID string, start time.Time, end *t
 // show and correct it first. An underivable window is reported in the response,
 // not as an error: the dialog turns it into a prompt.
 func (e EditorialAPI) GetRecordingWindow(ctx context.Context, req *connect.Request[apiv1.GetRecordingWindowRequest]) (*connect.Response[apiv1.GetRecordingWindowResponse], error) {
-	if _, err := requireEditorial(req, true); err != nil {
+	if _, err := requireEditorial(req, apiv1.EditorialLive); err != nil {
 		return nil, err
 	}
 	sess, err := e.queries.GetSession(ctx, req.Msg.GetSessionId())

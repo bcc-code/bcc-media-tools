@@ -599,14 +599,21 @@ func (x *LiveIngestPermission) GetEnabled() bool {
 }
 
 // Permission for the Editorial approval tool (review markers for publishing).
+// Four roles, each including the ones before it:
+// reviewer (enabled) < editor < live < admin.
 type EditorialPermission struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// can open the tool, see all sessions, and accept/reject markers for
-	// publishing (the "Enkel" / simple view)
+	// Reviewer: see all sessions, export them, comment, set publish flags and
+	// change marker titles
 	Enabled bool `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
-	// can additionally add, remove and edit markers and sessions (the "Rediger"
-	// / edit view); implies enabled
-	Admin         bool `protobuf:"varint,2,opt,name=admin,proto3" json:"admin,omitempty"`
+	// Admin: everything, including deleting sessions
+	Admin bool `protobuf:"varint,2,opt,name=admin,proto3" json:"admin,omitempty"`
+	// Live: create meetings, mark, refresh from Playout, send to Mediabanken,
+	// the edit view and imports
+	Live bool `protobuf:"varint,3,opt,name=live,proto3" json:"live,omitempty"`
+	// Editor: also change contributors, type and Bible verses of existing
+	// markers
+	Editor        bool `protobuf:"varint,4,opt,name=editor,proto3" json:"editor,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -651,6 +658,20 @@ func (x *EditorialPermission) GetEnabled() bool {
 func (x *EditorialPermission) GetAdmin() bool {
 	if x != nil {
 		return x.Admin
+	}
+	return false
+}
+
+func (x *EditorialPermission) GetLive() bool {
+	if x != nil {
+		return x.Live
+	}
+	return false
+}
+
+func (x *EditorialPermission) GetEditor() bool {
+	if x != nil {
+		return x.Editor
 	}
 	return false
 }
@@ -5571,8 +5592,8 @@ func (x *SetEditorialNameRequest) GetName() string {
 	return ""
 }
 
-// Update a single marker's title, contributors and type without touching
-// anything else: the edit drawer of the phone view. Requires edit rights.
+// Update a single marker's title, contributors, type and Bible verses without
+// touching anything else. Requires the editor role.
 type SetEditorialDetailsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
@@ -5580,6 +5601,7 @@ type SetEditorialDetailsRequest struct {
 	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
 	Contributors  string                 `protobuf:"bytes,4,opt,name=contributors,proto3" json:"contributors,omitempty"`
 	Type          string                 `protobuf:"bytes,5,opt,name=type,proto3" json:"type,omitempty"`
+	BibleVerses   string                 `protobuf:"bytes,6,opt,name=bible_verses,json=bibleVerses,proto3" json:"bible_verses,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -5649,6 +5671,13 @@ func (x *SetEditorialDetailsRequest) GetType() string {
 	return ""
 }
 
+func (x *SetEditorialDetailsRequest) GetBibleVerses() string {
+	if x != nil {
+		return x.BibleVerses
+	}
+	return ""
+}
+
 var File_api_v1_api_proto protoreflect.FileDescriptor
 
 const file_api_v1_api_proto_rawDesc = "" +
@@ -5686,10 +5715,12 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\x10ShortsPermission\x12\x18\n" +
 	"\aenabled\x18\x01 \x01(\bR\aenabled\"0\n" +
 	"\x14LiveIngestPermission\x12\x18\n" +
-	"\aenabled\x18\x01 \x01(\bR\aenabled\"E\n" +
+	"\aenabled\x18\x01 \x01(\bR\aenabled\"q\n" +
 	"\x13EditorialPermission\x12\x18\n" +
 	"\aenabled\x18\x01 \x01(\bR\aenabled\x12\x14\n" +
-	"\x05admin\x18\x02 \x01(\bR\x05admin\"\xa4\x04\n" +
+	"\x05admin\x18\x02 \x01(\bR\x05admin\x12\x12\n" +
+	"\x04live\x18\x03 \x01(\bR\x04live\x12\x16\n" +
+	"\x06editor\x18\x04 \x01(\bR\x06editor\"\xa4\x04\n" +
 	"\vPermissions\x12\x14\n" +
 	"\x05admin\x18\x01 \x01(\bR\x05admin\x12'\n" +
 	"\x03bmm\x18\x02 \x01(\v2\x15.api.v1.BMMPermissionR\x03bmm\x12\x14\n" +
@@ -6058,14 +6089,15 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x1b\n" +
 	"\tmarker_id\x18\x02 \x01(\tR\bmarkerId\x12\x12\n" +
-	"\x04name\x18\x03 \x01(\tR\x04name\"\xa4\x01\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\"\xc7\x01\n" +
 	"\x1aSetEditorialDetailsRequest\x12\x1d\n" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x1b\n" +
 	"\tmarker_id\x18\x02 \x01(\tR\bmarkerId\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12\"\n" +
 	"\fcontributors\x18\x04 \x01(\tR\fcontributors\x12\x12\n" +
-	"\x04type\x18\x05 \x01(\tR\x04type*1\n" +
+	"\x04type\x18\x05 \x01(\tR\x04type\x12!\n" +
+	"\fbible_verses\x18\x06 \x01(\tR\vbibleVerses*1\n" +
 	"\x0eBmmEnvironment\x12\x0e\n" +
 	"\n" +
 	"Production\x10\x00\x12\x0f\n" +

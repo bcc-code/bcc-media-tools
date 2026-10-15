@@ -395,7 +395,8 @@
         "publishTo": "Publish to {target}",
         "done": "Done",
         "commentSummary": "{n} markers · {commented} with comment",
-        "untitled": "Untitled meeting"
+        "untitled": "Untitled meeting",
+        "refreshStatus": "Updated {time} · next in {next}"
     },
     "vault": {
         "searchPlaceholder": "Search the vault",

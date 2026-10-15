@@ -89,20 +89,43 @@ func (p *Permissions) CanShorts() bool {
 	return p.Admin || (p.Shorts != nil && p.Shorts.Enabled)
 }
 
-// CanEditorial reports whether the user may use the editorial approval tool:
-// see all sessions and accept/reject markers for publishing.
-func (p *Permissions) CanEditorial() bool {
-	return p.Admin || (p.Editorial != nil && (p.Editorial.Enabled || p.Editorial.Admin))
+// Editorial roles, each including the ones before it.
+type EditorialRole int
+
+const (
+	EditorialNone EditorialRole = iota
+	// see, export, comment, set publish flags, change titles
+	EditorialReviewer
+	// also contributors, type and Bible verses of existing markers
+	EditorialEditor
+	// also create meetings, mark, refresh from Playout, send to Mediabanken,
+	// the edit view and imports
+	EditorialLive
+	// everything, including deleting sessions
+	EditorialAdmin
+)
+
+// EditorialRole is the highest editorial role the user has. Global admins
+// are editorial admins.
+func (p *Permissions) EditorialRole() EditorialRole {
+	e := p.Editorial
+	switch {
+	case p.Admin || (e != nil && e.Admin):
+		return EditorialAdmin
+	case e == nil:
+		return EditorialNone
+	case e.Live:
+		return EditorialLive
+	case e.Editor:
+		return EditorialEditor
+	case e.Enabled:
+		return EditorialReviewer
+	}
+	return EditorialNone
 }
 
 // CanLiveIngest reports whether the user may open the Live ingest tool and send
 // the finish signal to a running live ingest.
 func (p *Permissions) CanLiveIngest() bool {
 	return p.Admin || (p.LiveIngest != nil && p.LiveIngest.Enabled)
-}
-
-// CanEditorialEdit reports whether the user may add, remove and edit markers
-// and sessions (the edit view). Users without this may only accept/reject.
-func (p *Permissions) CanEditorialEdit() bool {
-	return p.Admin || (p.Editorial != nil && p.Editorial.Admin)
 }

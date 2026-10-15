@@ -22,6 +22,7 @@ export interface MarkerDetails {
     name: string;
     contributors: string;
     type: string;
+    bibleVerses: string;
 }
 
 const props = defineProps<{
@@ -33,6 +34,8 @@ const props = defineProps<{
 const emit = defineEmits<{
     comment: [key: string, comment: string];
     details: [key: string, details: MarkerDetails];
+    // Reviewers may change only the title.
+    title: [key: string, name: string];
     publish: [key: string, target: "bmm" | "bcc", value: boolean];
 }>();
 
@@ -83,6 +86,7 @@ const editing = ref<MobileMarker>();
 const editName = ref("");
 const editContributors = ref("");
 const editType = ref("");
+const editVerses = ref("");
 
 const drawerOpen = computed({
     get: () => !!editing.value,
@@ -96,22 +100,29 @@ function openDrawer(m: MobileMarker) {
     editName.value = m.name;
     editContributors.value = m.contributors;
     editType.value = m.type;
+    editVerses.value = m.bibleVerses;
 }
 
-// Details save together when the drawer closes, however it was closed.
+// Changes save together when the drawer closes, however it was closed.
 function closeDrawer() {
     const m = editing.value;
     editing.value = undefined;
-    if (!m || !props.canEdit) return;
+    if (!m) return;
+    if (!props.canEdit) {
+        if (editName.value !== m.name) emit("title", m.key, editName.value);
+        return;
+    }
     if (
         editName.value !== m.name ||
         editContributors.value !== m.contributors ||
-        editType.value !== m.type
+        editType.value !== m.type ||
+        editVerses.value !== m.bibleVerses
     ) {
         emit("details", m.key, {
             name: editName.value,
             contributors: editContributors.value,
             type: editType.value,
+            bibleVerses: editVerses.value,
         });
     }
 }
@@ -192,23 +203,33 @@ const current = computed(() =>
             "
         >
             <div v-if="current" class="flex flex-col gap-4">
+                <label class="flex flex-col gap-1.5">
+                    <span class="text-caption-1 text-text-muted">
+                        {{ t("editorial.col.title") }}
+                    </span>
+                    <input
+                        v-model="editName"
+                        type="text"
+                        class="border-border-1 bg-surface-indent text-body-2 text-text-default ds-focus-ring rounded-xl border px-3 py-2.5"
+                    />
+                </label>
                 <template v-if="canEdit">
-                    <label class="flex flex-col gap-1.5">
-                        <span class="text-caption-1 text-text-muted">
-                            {{ t("editorial.col.title") }}
-                        </span>
-                        <input
-                            v-model="editName"
-                            type="text"
-                            class="border-border-1 bg-surface-indent text-body-2 text-text-default ds-focus-ring rounded-xl border px-3 py-2.5"
-                        />
-                    </label>
                     <label class="flex flex-col gap-1.5">
                         <span class="text-caption-1 text-text-muted">
                             {{ t("editorial.col.contributors") }}
                         </span>
                         <input
                             v-model="editContributors"
+                            type="text"
+                            class="border-border-1 bg-surface-indent text-body-2 text-text-default ds-focus-ring rounded-xl border px-3 py-2.5"
+                        />
+                    </label>
+                    <label class="flex flex-col gap-1.5">
+                        <span class="text-caption-1 text-text-muted">
+                            {{ t("editorial.col.bibleVerses") }}
+                        </span>
+                        <input
+                            v-model="editVerses"
                             type="text"
                             class="border-border-1 bg-surface-indent text-body-2 text-text-default ds-focus-ring rounded-xl border px-3 py-2.5"
                         />

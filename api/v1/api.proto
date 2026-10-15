@@ -72,13 +72,20 @@ message LiveIngestPermission {
 }
 
 // Permission for the Editorial approval tool (review markers for publishing).
+// Four roles, each including the ones before it:
+// reviewer (enabled) < editor < live < admin.
 message EditorialPermission {
-  // can open the tool, see all sessions, and accept/reject markers for
-  // publishing (the "Enkel" / simple view)
+  // Reviewer: see all sessions, export them, comment, set publish flags and
+  // change marker titles
   bool enabled = 1;
-  // can additionally add, remove and edit markers and sessions (the "Rediger"
-  // / edit view); implies enabled
+  // Admin: everything, including deleting sessions
   bool admin = 2;
+  // Live: create meetings, mark, refresh from Playout, send to Mediabanken,
+  // the edit view and imports
+  bool live = 3;
+  // Editor: also change contributors, type and Bible verses of existing
+  // markers
+  bool editor = 4;
 }
 
 message Permissions {
@@ -670,14 +677,15 @@ message SetEditorialNameRequest {
   string name = 3;
 }
 
-// Update a single marker's title, contributors and type without touching
-// anything else: the edit drawer of the phone view. Requires edit rights.
+// Update a single marker's title, contributors, type and Bible verses without
+// touching anything else. Requires the editor role.
 message SetEditorialDetailsRequest {
   string session_id = 1;
   string marker_id = 2;
   string name = 3;
   string contributors = 4;
   string type = 5;
+  string bible_verses = 6;
 }
 
 service APIService {

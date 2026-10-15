@@ -286,15 +286,26 @@ const isOpen = ref(false);
                         v-if="perms.editorial"
                         title="Editorial"
                     >
+                        <!-- Each role includes the ones above it. -->
                         <DesignSwitch
                             v-model="perms.editorial.enabled"
-                            label="Editorial approval"
-                            description="Can see all sessions and accept/reject markers for publishing"
+                            label="Reviewer"
+                            description="Can see all sessions, export them, comment, set publish flags and change marker titles"
+                        />
+                        <DesignSwitch
+                            v-model="perms.editorial.editor"
+                            label="Editor"
+                            description="Reviewer, plus can change contributors, type and Bible verses of existing markers"
+                        />
+                        <DesignSwitch
+                            v-model="perms.editorial.live"
+                            label="Live"
+                            description="Editor, plus can create meetings, mark live, refresh from Playout, send to Mediabanken, and use the edit view and imports"
                         />
                         <DesignSwitch
                             v-model="perms.editorial.admin"
-                            label="Editorial editing"
-                            description="Can add, remove and edit markers and sessions"
+                            label="Admin"
+                            description="Everything, including deleting sessions"
                         />
                     </AdminPermissionViewSection>
                 </motion.div>
