@@ -264,3 +264,32 @@ func TestEditorialDeleteSessionNotFound(t *testing.T) {
 	_, err := api.DeleteEditorialSession(context.Background(), connect.NewRequest(&apiv1.DeleteEditorialSessionRequest{Id: "nope"}))
 	requireNotFound(t, err)
 }
+
+func TestEditorialSetDetails(t *testing.T) {
+	api := newTestEditorialAPI(t)
+	ctx := context.Background()
+	sess := createTestSession(t, api, "VX-9", "stream")
+	saved := saveTestSession(t, api, sess.Id, "t", []*apiv1.EditorialMarker{
+		{Name: "old", Contributors: "A", Type: "tale", Comment: "c", PublishBmm: true, StartMs: 0, EndMs: 1},
+		{Name: "other", StartMs: 2, EndMs: 3},
+	})
+
+	_, err := api.SetEditorialDetails(ctx, connect.NewRequest(&apiv1.SetEditorialDetailsRequest{
+		SessionId: sess.Id, MarkerId: saved.Markers[0].Id, Name: "new", Contributors: "B", Type: "sang",
+	}))
+	require.NoError(t, err)
+
+	got, err := api.loadSession(ctx, sess.Id)
+	require.NoError(t, err)
+	assert.Equal(t, "new", got.Markers[0].Name)
+	assert.Equal(t, "B", got.Markers[0].Contributors)
+	assert.Equal(t, "sang", got.Markers[0].Type)
+	assert.Equal(t, "c", got.Markers[0].Comment, "other fields are untouched")
+	assert.True(t, got.Markers[0].PublishBmm)
+	assert.Equal(t, "other", got.Markers[1].Name)
+
+	_, err = api.SetEditorialDetails(ctx, connect.NewRequest(&apiv1.SetEditorialDetailsRequest{
+		SessionId: sess.Id, MarkerId: "missing",
+	}))
+	requireNotFound(t, err)
+}

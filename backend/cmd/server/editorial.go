@@ -234,6 +234,30 @@ func (e EditorialAPI) SetEditorialName(ctx context.Context, req *connect.Request
 	return connect.NewResponse(&apiv1.Void{}), nil
 }
 
+func (e EditorialAPI) SetEditorialDetails(ctx context.Context, req *connect.Request[apiv1.SetEditorialDetailsRequest]) (*connect.Response[apiv1.Void], error) {
+	if _, err := requireEditorial(req, true); err != nil {
+		return nil, err
+	}
+	if req.Msg.GetSessionId() == "" || req.Msg.GetMarkerId() == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("missing session_id or marker_id"))
+	}
+	sessionID, markerID := req.Msg.GetSessionId(), req.Msg.GetMarkerId()
+	err := e.updateMarker(ctx, sessionID, func(qtx *editorial.Queries, now int64) (int64, error) {
+		return qtx.SetMarkerDetails(ctx, editorial.SetMarkerDetailsParams{
+			Name:         req.Msg.GetName(),
+			Contributors: req.Msg.GetContributors(),
+			Type:         req.Msg.GetType(),
+			UpdatedAt:    now,
+			ID:           markerID,
+			SessionID:    sessionID,
+		})
+	})
+	if err != nil {
+		return nil, editorialErr(fmt.Errorf("editorial: set details: %w", err))
+	}
+	return connect.NewResponse(&apiv1.Void{}), nil
+}
+
 func (e EditorialAPI) DeleteEditorialSession(ctx context.Context, req *connect.Request[apiv1.DeleteEditorialSessionRequest]) (*connect.Response[apiv1.Void], error) {
 	if _, err := requireEditorial(req, true); err != nil {
 		return nil, err

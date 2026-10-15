@@ -154,7 +154,9 @@ async function create() {
                     <div class="min-w-0">
                         <div class="flex min-w-0 items-center gap-2">
                             <p class="text-title-2 text-text-default truncate">
-                                {{ s.title || s.VXID }}
+                                {{
+                                    s.title || s.VXID || t("editorial.untitled")
+                                }}
                             </p>
                             <DesignBadge
                                 v-if="s.kind === 'live'"

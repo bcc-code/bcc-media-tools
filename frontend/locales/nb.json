@@ -387,7 +387,15 @@
         "meetingStart": "Møtet startet",
         "exportExcel": "Eksporter til Excel",
         "exportFailed": "Kunne ikke eksportere",
-        "exportedSavedOnly": "Eksporterte sist lagrede versjon. Lagre for å ta med endringene dine."
+        "exportedSavedOnly": "Eksporterte sist lagrede versjon. Lagre for å ta med endringene dine.",
+        "waitingForPlayout": "Venter på Playout",
+        "moreOptionsFor": "Flere valg for {name}",
+        "addComment": "Legg til en kommentar…",
+        "commentOn": "Kommentar til {name}",
+        "publishTo": "Publiser til {target}",
+        "done": "Ferdig",
+        "commentSummary": "{n} markører · {commented} med kommentar",
+        "untitled": "Møte uten navn"
     },
     "vault": {
         "searchPlaceholder": "Søk i vault",
@@ -448,5 +456,6 @@
             "label": "Oppdater relasjoner",
             "description": "Går gjennom lydfilene som allerede er koblet til denne filen, leser språkkoden sist i hvert filnavn, og registrerer hver fil som lyd for det språket. Oppretter ikke nye koblinger. Kjører i bakgrunnen."
         }
-    }
+    },
+    "toolsMenu": "Verktøy"
 }

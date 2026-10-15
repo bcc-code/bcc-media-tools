@@ -387,7 +387,15 @@
         "meetingStart": "Meeting started",
         "exportExcel": "Export to Excel",
         "exportFailed": "Could not export",
-        "exportedSavedOnly": "Exported the last saved version. Save to include your changes."
+        "exportedSavedOnly": "Exported the last saved version. Save to include your changes.",
+        "waitingForPlayout": "Waiting for Playout",
+        "moreOptionsFor": "More options for {name}",
+        "addComment": "Add a comment…",
+        "commentOn": "Comment on {name}",
+        "publishTo": "Publish to {target}",
+        "done": "Done",
+        "commentSummary": "{n} markers · {commented} with comment",
+        "untitled": "Untitled meeting"
     },
     "vault": {
         "searchPlaceholder": "Search the vault",
@@ -448,5 +456,6 @@
             "label": "Update relations",
             "description": "Goes through the audio files already related to this asset, reads the language code at the end of each filename, and records each one as that language's audio. Does not create new relations. Runs in the background."
         }
-    }
+    },
+    "toolsMenu": "Tools"
 }

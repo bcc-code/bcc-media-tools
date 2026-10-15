@@ -14,7 +14,17 @@ watch(
 
 const { enabledTools } = useTools();
 
+const { t } = useI18n();
 const route = useRoute();
+
+// On phones the tool links don't fit in one row: they move into a menu.
+const toolMenuItems = computed(() =>
+    enabledTools.value.map((tool) => ({
+        value: tool.to,
+        label: tool.label,
+        icon: tool.icon,
+    })),
+);
 function isActive(to: string) {
     const p = to.replace(/\/$/, "");
     return route.path === p || route.path.startsWith(p + "/");
@@ -30,7 +40,16 @@ function isActive(to: string) {
             <NuxtLink to="/" class="flex items-center">
                 <AppLogo class="h-5 w-max" />
             </NuxtLink>
-            <nav class="flex items-center gap-1">
+            <div class="flex md:hidden">
+                <DesignMenu
+                    :items="toolMenuItems"
+                    placement="bottom-start"
+                    trigger-icon="tabler:menu-2"
+                    :trigger-label="t('toolsMenu')"
+                    @select="navigateTo($event)"
+                />
+            </div>
+            <nav class="hidden items-center gap-1 md:flex">
                 <NuxtLink
                     v-for="tool in enabledTools"
                     :key="tool.to"

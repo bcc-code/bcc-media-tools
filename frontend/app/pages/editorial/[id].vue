@@ -6,6 +6,10 @@ import type {
     GetRecordingWindowResponse,
 } from "~~/src/gen/api/v1/api_pb";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
+import type {
+    MobileMarker,
+    MarkerDetails,
+} from "~/components/editorial/MobileMarkerList.vue";
 import { timestampDate, timestampFromDate } from "@bufbuild/protobuf/wkt";
 
 const route = useRoute("editorial-id");
@@ -91,7 +95,11 @@ const clockStartMs = computed(() =>
 );
 
 const mode = ref<"simple" | "edit">("simple");
-const effectiveMode = computed(() => (canEdit.value ? mode.value : "simple"));
+// Phones get the card layout, which is simple mode: the edit table doesn't fit.
+const isPhone = useMediaQuery("(max-width: 767px)");
+const effectiveMode = computed(() =>
+    canEdit.value && !isPhone.value ? mode.value : "simple",
+);
 
 // Fixed-width mode control, so switching modes doesn't shift the layout.
 const modeItems = computed(() => [
@@ -284,7 +292,9 @@ onMounted(load);
 watch(
     [title, rows],
     () => {
-        if (hydrated) dirty.value = true;
+        // Simple-mode changes are saved as they're made, so only edit mode
+        // has unsaved changes.
+        if (hydrated && effectiveMode.value === "edit") dirty.value = true;
     },
     { deep: true },
 );
@@ -385,6 +395,77 @@ async function persistName(row: Row) {
 const commentBeforeEdit = ref("");
 
 // Edit mode persists on the batch Save; simple mode writes immediately.
+// ── Phone layout ──────────────────────────────────────────
+const mobileMarkers = computed<MobileMarker[]>(() => {
+    const items = rows.value.map((r, i) => ({
+        key: r.key,
+        time: r.start,
+        duration: durationOf(r, i),
+        type: r.type,
+        typeLabel: r.type ? typeLabel(r.type) : "",
+        name: r.name,
+        contributors: r.contributors,
+        bibleVerses: r.bibleVerses,
+        comment: r.comment,
+        publishBmm: r.publishBmm,
+        publishBcc: r.publishBcc,
+    }));
+    // Live: the marker just logged is the one to comment on.
+    return isLive.value ? items.reverse() : items;
+});
+
+function rowByKey(key: string): Row | undefined {
+    return rows.value.find((r) => r.key === key);
+}
+
+async function onMobileComment(key: string, comment: string) {
+    const row = rowByKey(key);
+    if (!row?.id) return;
+    const before = row.comment;
+    row.comment = comment;
+    try {
+        await tracked(() =>
+            api.setEditorialComment({
+                sessionId: sessionId.value,
+                markerId: row.id,
+                comment,
+            }),
+        );
+    } catch {
+        row.comment = before;
+        toaster.create({ title: t("editorial.saveFailed"), type: "error" });
+    }
+}
+
+async function onMobileDetails(key: string, details: MarkerDetails) {
+    const row = rowByKey(key);
+    if (!row?.id) return;
+    const before = {
+        name: row.name,
+        contributors: row.contributors,
+        type: row.type,
+        playoutSynced: row.playoutSynced,
+    };
+    Object.assign(row, details, { playoutSynced: false });
+    try {
+        await tracked(() =>
+            api.setEditorialDetails({
+                sessionId: sessionId.value,
+                markerId: row.id,
+                ...details,
+            }),
+        );
+    } catch {
+        Object.assign(row, before);
+        toaster.create({ title: t("editorial.saveFailed"), type: "error" });
+    }
+}
+
+function onMobilePublish(key: string, target: "bmm" | "bcc", value: boolean) {
+    const row = rowByKey(key);
+    if (row) void onPublishToggle(row, target, value);
+}
+
 async function persistComment(row: Row) {
     if (effectiveMode.value === "edit") return;
     if (!row.id || row.comment === commentBeforeEdit.value) return;
@@ -1139,7 +1220,7 @@ onBeforeRouteLeave(() => {
                 />
                 <div v-else class="flex min-w-0 items-center gap-3">
                     <h1 class="text-heading-2 text-text-default truncate">
-                        {{ title || session?.VXID }}
+                        {{ title || session?.VXID || t("editorial.untitled") }}
                     </h1>
                     <DesignBadge v-if="isLive" variant="warning">
                         {{ t("editorial.live") }}
@@ -1171,7 +1252,7 @@ onBeforeRouteLeave(() => {
                 class="mb-6 flex flex-wrap items-center gap-3"
             >
                 <DesignSegmentGroup
-                    v-if="canEdit"
+                    v-if="canEdit && !isPhone"
                     v-model="modeModel"
                     :items="modeItems"
                     class="border-border-1 border"
@@ -1180,6 +1261,7 @@ onBeforeRouteLeave(() => {
                     v-if="isLive && canEdit"
                     size="large"
                     icon="tabler:plus"
+                    class="grow md:grow-0"
                     :loading="marking"
                     :title="t('editorial.markNowHint')"
                     @click="markNow"
@@ -1190,7 +1272,20 @@ onBeforeRouteLeave(() => {
                         >M</span
                     >
                 </DesignButton>
-                <div class="ml-auto flex flex-wrap items-center gap-3">
+                <!--
+                    Next to Mark now on a phone, where the status row below
+                    wraps; last in the toolbar on wider screens.
+                -->
+                <div class="flex max-md:ml-auto md:order-last">
+                    <DesignMenu
+                        :items="menuItems"
+                        :trigger-label="t('editorial.moreActions')"
+                        @select="onMenuSelect"
+                    />
+                </div>
+                <div
+                    class="flex flex-wrap items-center gap-3 max-md:w-full md:ml-auto"
+                >
                     <template v-if="isLive">
                         <span
                             class="text-caption-1 flex items-center gap-1.5"
@@ -1268,11 +1363,6 @@ onBeforeRouteLeave(() => {
                             {{ t("editorial.saveFailed") }}
                         </template>
                     </span>
-                    <DesignMenu
-                        :items="menuItems"
-                        :trigger-label="t('editorial.moreActions')"
-                        @select="onMenuSelect"
-                    />
                     <template v-if="canEdit">
                         <DesignButton
                             v-if="effectiveMode === 'edit'"
@@ -1291,7 +1381,7 @@ onBeforeRouteLeave(() => {
                 class="grid gap-6"
                 :class="isLive ? '' : 'lg:grid-cols-[1fr_500px]'"
             >
-                <div>
+                <div class="min-w-0">
                     <p
                         v-if="rows.length === 0"
                         class="text-body-3 text-text-hint bg-surface-indent rounded-2xl px-4 py-10 text-center"
@@ -1350,7 +1440,26 @@ onBeforeRouteLeave(() => {
                         </div>
                     </Transition>
 
-                    <div v-if="rows.length" class="overflow-x-auto">
+                    <template v-if="rows.length && isPhone">
+                        <p class="text-caption-1 text-text-hint mb-2">
+                            {{
+                                t("editorial.commentSummary", {
+                                    n: rows.length,
+                                    commented: rows.filter((r) => r.comment)
+                                        .length,
+                                })
+                            }}
+                        </p>
+                        <EditorialMobileMarkerList
+                            :markers="mobileMarkers"
+                            :can-edit="canEdit"
+                            :type-items="typeItems"
+                            @comment="onMobileComment"
+                            @details="onMobileDetails"
+                            @publish="onMobilePublish"
+                        />
+                    </template>
+                    <div v-else-if="rows.length" class="overflow-x-auto">
                         <table class="w-full border-separate border-spacing-0">
                             <thead
                                 class="text-caption-1 text-text-hint text-left"
@@ -1664,7 +1773,7 @@ onBeforeRouteLeave(() => {
                     </DesignButton>
                 </div>
 
-                <div v-if="!isLive">
+                <div v-if="!isLive && !isPhone">
                     <div
                         class="gradient-border shadow-resting sticky top-[calc(var(--header-height)+1rem)] overflow-hidden rounded-2xl"
                     >

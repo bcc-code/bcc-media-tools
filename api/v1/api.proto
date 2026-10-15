@@ -670,6 +670,16 @@ message SetEditorialNameRequest {
   string name = 3;
 }
 
+// Update a single marker's title, contributors and type without touching
+// anything else: the edit drawer of the phone view. Requires edit rights.
+message SetEditorialDetailsRequest {
+  string session_id = 1;
+  string marker_id = 2;
+  string name = 3;
+  string contributors = 4;
+  string type = 5;
+}
+
 service APIService {
 	// Permissions
 	rpc GetPermissions (Void) returns (Permissions) {}
@@ -735,6 +745,7 @@ service APIService {
   rpc SetEditorialPublish(SetEditorialPublishRequest) returns (Void) {}
   rpc SetEditorialComment(SetEditorialCommentRequest) returns (Void) {}
   rpc SetEditorialName(SetEditorialNameRequest) returns (Void) {}
+  rpc SetEditorialDetails(SetEditorialDetailsRequest) returns (Void) {}
   rpc DeleteEditorialSession(DeleteEditorialSessionRequest) returns (Void) {}
   rpc ImportEditorialMarkers(ImportEditorialMarkersRequest) returns (ImportEditorialMarkersResponse) {}
   rpc ImportEditorialMarkersFromPlayout(ImportEditorialMarkersFromPlayoutRequest) returns (ImportEditorialMarkersResponse) {}

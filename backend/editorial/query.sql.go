@@ -320,6 +320,36 @@ func (q *Queries) SetMarkerComment(ctx context.Context, arg SetMarkerCommentPara
 	return result.RowsAffected()
 }
 
+const setMarkerDetails = `-- name: SetMarkerDetails :execrows
+UPDATE markers SET name = ?, contributors = ?, type = ?, playout_synced = 0, updated_at = ?
+WHERE id = ? AND session_id = ?
+`
+
+type SetMarkerDetailsParams struct {
+	Name         string
+	Contributors string
+	Type         string
+	UpdatedAt    int64
+	ID           string
+	SessionID    string
+}
+
+// Hand-edited details stop Playout from refreshing the row.
+func (q *Queries) SetMarkerDetails(ctx context.Context, arg SetMarkerDetailsParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, setMarkerDetails,
+		arg.Name,
+		arg.Contributors,
+		arg.Type,
+		arg.UpdatedAt,
+		arg.ID,
+		arg.SessionID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
 const setMarkerName = `-- name: SetMarkerName :execrows
 UPDATE markers SET name = ?, playout_synced = 0, updated_at = ?
 WHERE id = ? AND session_id = ?

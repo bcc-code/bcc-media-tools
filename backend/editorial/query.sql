@@ -48,6 +48,11 @@ WHERE id = ? AND session_id = ?;
 UPDATE markers SET name = ?, playout_synced = 0, updated_at = ?
 WHERE id = ? AND session_id = ?;
 
+-- name: SetMarkerDetails :execrows
+-- Hand-edited details stop Playout from refreshing the row.
+UPDATE markers SET name = ?, contributors = ?, type = ?, playout_synced = 0, updated_at = ?
+WHERE id = ? AND session_id = ?;
+
 -- name: SetPlayoutWindow :execrows
 UPDATE sessions SET playout_event_id = ?, recording_start_ms = ?, recording_end_ms = ?, updated_at = ?
 WHERE id = ?;
