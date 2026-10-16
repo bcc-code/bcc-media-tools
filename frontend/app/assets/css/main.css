@@ -243,6 +243,139 @@
     outline-offset: 2px;
 }
 
+/*
+ * Overlay enter/exit motion.
+ *
+ * These MUST be keyframe animations, not transitions. Ark drives mounting
+ * through @zag-js/presence, which on close reads `getComputedStyle(node)
+ * .animationName`; if that is "none" (or the duration is 0s) it unmounts the
+ * node on the spot, so a CSS transition never gets a frame to run. It then
+ * waits for `animationend` — never `transitionend` — before firing the
+ * `exitcomplete` that tells the drawer machine the sheet is gone.
+ *
+ * The sheet animates the independent `translate` property rather than
+ * `transform`, because the drawer machine owns `transform` while you drag
+ * (`--drawer-translate-*`). The two compose, so a swipe-dismiss carries on from
+ * wherever your finger left the sheet instead of snapping back first.
+ */
+@keyframes sheet-in {
+    from {
+        translate: 0 100%;
+    }
+    to {
+        translate: 0 0;
+    }
+}
+
+@keyframes sheet-out {
+    from {
+        translate: 0 0;
+    }
+    to {
+        translate: 0 100%;
+    }
+}
+
+@keyframes dialog-in {
+    from {
+        opacity: 0;
+        scale: 0.96;
+        translate: 0 0.5rem;
+    }
+    to {
+        opacity: 1;
+        scale: 1;
+        translate: 0 0;
+    }
+}
+
+@keyframes dialog-out {
+    from {
+        opacity: 1;
+        scale: 1;
+        translate: 0 0;
+    }
+    to {
+        opacity: 0;
+        scale: 0.96;
+        translate: 0 0.25rem;
+    }
+}
+
+/*
+ * The scrim's resting opacity, registered with @property so it is interpolable
+ * in the keyframes below. The drawer machine publishes `--drawer-swipe-progress`
+ * (0→1) on the backdrop as the sheet is dragged away; the backdrop multiplies
+ * the two, so the scrim lightens under your finger and still fades on exit.
+ */
+@property --sheet-scrim-opacity {
+    syntax: "<number>";
+    inherits: false;
+    initial-value: 0;
+}
+
+@keyframes scrim-in {
+    from {
+        --sheet-scrim-opacity: 0;
+    }
+}
+
+@keyframes scrim-out {
+    to {
+        --sheet-scrim-opacity: 0;
+    }
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+}
+
+@keyframes fade-out {
+    to {
+        opacity: 0;
+    }
+}
+
+/* iOS sheet curve: decisive start, long settle. */
+@utility sheet-enter {
+    animation: sheet-in 320ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+@utility sheet-exit {
+    animation: sheet-out 260ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+@utility scrim-enter {
+    animation: scrim-in 320ms linear;
+}
+@utility scrim-exit {
+    animation: scrim-out 260ms linear;
+}
+@utility dialog-enter {
+    animation: dialog-in 200ms var(--ease-out-expo);
+}
+@utility dialog-exit {
+    animation: dialog-out 150ms ease-in;
+}
+@utility fade-enter {
+    animation: fade-in 200ms ease-out;
+}
+@utility fade-exit {
+    animation: fade-out 150ms ease-in;
+}
+
+/*
+ * Reduced motion still needs a non-zero duration: a 0s animation makes presence
+ * unmount before `animationend`, which would strand the drawer machine waiting
+ * for an exit that never completes.
+ */
+@media (prefers-reduced-motion: reduce) {
+    [data-scope="dialog"][data-state],
+    [data-scope="drawer"][data-state] {
+        animation-duration: 1ms;
+    }
+}
+
 /* Hide scrollbar for horizontal scroll sections */
 @utility scrollbar-hide {
     -ms-overflow-style: none;
