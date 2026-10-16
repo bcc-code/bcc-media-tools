@@ -106,6 +106,11 @@ const effectiveMode = computed(() =>
     canLive.value && !isPhone.value ? mode.value : "simple",
 );
 
+// Where the preview sits above the list, the page becomes a fixed shell and the
+// list scrolls inside it instead of the whole page moving. Live sessions have
+// no preview, and phones get the card layout, so both scroll normally.
+const hasPreview = computed(() => !isLive.value && !isPhone.value);
+
 // Fixed-width mode control, so switching modes doesn't shift the layout.
 const modeItems = computed(() => [
     { label: t("editorial.viewSimple"), value: "simple" },
@@ -1484,8 +1489,14 @@ onBeforeRouteLeave(() => {
 
     <div
         v-else
-        class="mx-auto w-full max-w-[1700px] px-4 py-6"
-        :class="effectiveMode === 'simple' ? 'large-type' : ''"
+        class="mx-auto flex w-full max-w-[1700px] flex-col px-4 py-6"
+        :class="[
+            effectiveMode === 'simple' ? 'large-type' : '',
+            // Caps the page at the viewport so the list, not the window, is
+            // what scrolls. Flex sorts out the rest: whatever the title block
+            // and toolbar take, the list gets what is left over.
+            hasPreview ? 'lg:h-[calc(100dvh-var(--header-height))]' : '',
+        ]"
     >
         <NuxtLink
             to="/editorial/"
@@ -1772,9 +1783,17 @@ onBeforeRouteLeave(() => {
 
             <div
                 class="grid gap-6"
-                :class="isLive ? '' : 'lg:grid-cols-[1fr_500px]'"
+                :class="[
+                    isLive ? '' : 'lg:grid-cols-[1fr_500px]',
+                    // Only where the two columns actually sit side by side:
+                    // stacked, the preview belongs in the page's own scroll.
+                    hasPreview ? 'lg:min-h-0 lg:flex-1' : '',
+                ]"
             >
-                <div class="min-w-0">
+                <div
+                    class="min-w-0"
+                    :class="hasPreview ? 'lg:flex lg:min-h-0 lg:flex-col' : ''"
+                >
                     <p
                         v-if="rows.length === 0"
                         class="text-body-3 text-text-hint bg-surface-indent rounded-2xl px-4 py-10 text-center"
@@ -1854,10 +1873,29 @@ onBeforeRouteLeave(() => {
                             @publish="onMobilePublish"
                         />
                     </template>
-                    <div v-else-if="rows.length" class="overflow-x-auto">
+                    <!--
+                        The scroll container, both ways: overflow-x for the wide
+                        edit table, overflow-y for the rows. Its headers stick to
+                        its top edge — a list you scroll past the first screen
+                        needs them more than a page you scroll as a whole.
+                    -->
+                    <div
+                        v-else-if="rows.length"
+                        class="overflow-x-auto"
+                        :class="
+                            hasPreview
+                                ? 'lg:min-h-0 lg:flex-1 lg:overflow-y-auto'
+                                : ''
+                        "
+                    >
                         <table class="w-full border-separate border-spacing-0">
                             <thead
                                 class="text-caption-1 text-text-hint text-left"
+                                :class="
+                                    hasPreview
+                                        ? 'lg:[&>tr>th]:bg-surface-default lg:[&>tr>th]:sticky lg:[&>tr>th]:top-0 lg:[&>tr>th]:z-10'
+                                        : ''
+                                "
                             >
                                 <tr>
                                     <th
@@ -2249,8 +2287,7 @@ onBeforeRouteLeave(() => {
                         {{ t("editorial.addRow") }}
                     </DesignButton>
                 </div>
-
-                <div v-if="!isLive && !isPhone">
+                <div v-if="hasPreview">
                     <div
                         class="gradient-border shadow-resting sticky top-[calc(var(--header-height)+1rem)] overflow-hidden rounded-2xl"
                     >
