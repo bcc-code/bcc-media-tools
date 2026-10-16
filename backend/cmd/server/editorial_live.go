@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 	"time"
 
 	"connectrpc.com/connect"
@@ -322,6 +323,27 @@ func applyCandidate(m *editorial.Marker, c playoutCandidate, keepType bool) {
 	}
 }
 
+// mergeVerses adds the verses in incoming that current doesn't list yet,
+// after the ones it has: verses typed in by hand stay, in their order.
+// Both are ", "-separated lists.
+func mergeVerses(current, incoming string) string {
+	seen := map[string]bool{}
+	var out []string
+	for _, v := range strings.Split(current, ",") {
+		if v = strings.TrimSpace(v); v != "" && !seen[strings.ToLower(v)] {
+			seen[strings.ToLower(v)] = true
+			out = append(out, v)
+		}
+	}
+	for _, v := range strings.Split(incoming, ",") {
+		if v = strings.TrimSpace(v); v != "" && !seen[strings.ToLower(v)] {
+			seen[strings.ToLower(v)] = true
+			out = append(out, v)
+		}
+	}
+	return strings.Join(out, ", ")
+}
+
 // mergeLive folds Playout candidates (in time order) into a live session's
 // markers:
 //
@@ -330,7 +352,8 @@ func applyCandidate(m *editorial.Marker, c playoutCandidate, keepType bool) {
 //     the editor's timestamp
 //   - every other candidate becomes its own row at Playout's timestamp
 //   - rows already merged are refreshed while still synced, i.e. until an
-//     editor changes a field Playout fills
+//     editor changes a field Playout fills; after that they still collect
+//     new Bible verses
 //   - dismissed candidates (rows an editor removed) are skipped
 //
 // It returns the rows in time order and whether anything changed.
@@ -350,8 +373,14 @@ func mergeLive(rows []editorial.Marker, candidates []playoutCandidate, dismissed
 	for _, c := range candidates {
 		if i, ok := byKey[c.Key]; ok {
 			// i < 0: added earlier in this pass (a duplicate manifest entry).
-			if i >= 0 && rows[i].PlayoutSynced {
-				applyCandidate(&rows[i], c, rows[i].Source == editorial.SourceManual)
+			if i >= 0 {
+				if rows[i].PlayoutSynced {
+					applyCandidate(&rows[i], c, rows[i].Source == editorial.SourceManual)
+				} else {
+					// An edited row keeps its edits, but a speech still
+					// collects the verses shown after the edit.
+					rows[i].BibleVerses = mergeVerses(rows[i].BibleVerses, c.BibleVerses)
+				}
 			}
 			continue
 		}

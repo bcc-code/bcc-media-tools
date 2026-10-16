@@ -245,3 +245,43 @@ func TestEditorialLiveSessionGivenStart(t *testing.T) {
 	require.Len(t, synced.Msg.Markers, 1)
 	assert.Equal(t, int64(5*60_000), synced.Msg.Markers[0].StartMs)
 }
+
+// Editing a speaker's row stops Playout from changing its fields, but verses
+// shown later in the speech still arrive; hand-typed verses stay.
+func TestMergeLiveEditedRowStillCollectsVerses(t *testing.T) {
+	clockStart := ts(t, "2026-07-26T11:00:00Z")
+	window := recordingWindow{Start: clockStart, End: ts(t, "2026-07-26T12:00:00Z")}
+	first := playoutCandidates([]playout.ManifestEntry{
+		speakerEntry(t, "Kare Smith", "2026-07-26T11:00:10Z"),
+		scriptureEntry(t, "John 3:16", "2026-07-26T11:01:00Z"),
+	}, window)
+	rows, _ := mergeLive([]editorial.Marker{manualMarker("m1", 0, "", "")}, first, nil, clockStart, seqIDs())
+	require.Len(t, rows, 1)
+
+	// The editor fixes the name and adds a verse of their own.
+	rows[0].Contributors = "Kåre J. Smith"
+	rows[0].BibleVerses = "John 3:16, Ps 23"
+	rows[0].PlayoutSynced = false
+
+	later := playoutCandidates([]playout.ManifestEntry{
+		speakerEntry(t, "Kare Smith", "2026-07-26T11:00:10Z"),
+		scriptureEntry(t, "John 3:16", "2026-07-26T11:01:00Z"),
+		scriptureEntry(t, "Rom 8:28", "2026-07-26T11:05:00Z"),
+	}, window)
+	got, changed := mergeLive(rows, later, nil, clockStart, seqIDs())
+	assert.True(t, changed)
+	assert.Equal(t, "Kåre J. Smith", got[0].Contributors, "the edit stays")
+	assert.Equal(t, "John 3:16, Ps 23, Rom 8:28", got[0].BibleVerses)
+	assert.False(t, got[0].PlayoutSynced)
+
+	again, changed := mergeLive(got, later, nil, clockStart, seqIDs())
+	assert.False(t, changed, "nothing new on the next sync")
+	assert.Equal(t, got, again)
+}
+
+func TestMergeVerses(t *testing.T) {
+	assert.Equal(t, "John 3:16", mergeVerses("", "John 3:16"))
+	assert.Equal(t, "A, B, C", mergeVerses("A, B", "B, C"))
+	assert.Equal(t, "Rom 8:28", mergeVerses(" , Rom 8:28 ,", ""))
+	assert.Equal(t, "john 3:16", mergeVerses("john 3:16", "John 3:16"), "case doesn't make a new verse")
+}
