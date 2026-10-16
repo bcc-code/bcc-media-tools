@@ -2107,10 +2107,18 @@ onBeforeRouteLeave(() => {
                                             A line each, rather than joined: a
                                             talk can carry ten references, and
                                             run together the name was just the
-                                            start of a long muted run. The name
-                                            also takes the heavier weight — it
-                                            is who the row is, and the reviewer
-                                            scans for it.
+                                            start of a long muted run. Three
+                                            steps down from the title: the name
+                                            keeps the full text colour and the
+                                            heavier weight, since it is who the
+                                            row is and what a reviewer scans
+                                            for, while the references drop to
+                                            the hint tone — ten of them wrap to
+                                            three lines and would otherwise
+                                            outweigh everything above them by
+                                            sheer volume. Dimmer rather than
+                                            smaller, because the people reading
+                                            this need the size.
 
                                             The name is skipped where the title
                                             field is already standing it in as
@@ -2122,7 +2130,7 @@ onBeforeRouteLeave(() => {
                                                 row.name &&
                                                 row.contributors
                                             "
-                                            class="text-body-3 text-text-muted mt-1 px-3 font-medium"
+                                            class="text-body-3 text-text-default mt-1 px-3 font-medium"
                                         >
                                             {{ row.contributors }}
                                         </p>
@@ -2131,7 +2139,7 @@ onBeforeRouteLeave(() => {
                                                 effectiveMode === 'simple' &&
                                                 row.bibleVerses
                                             "
-                                            class="text-body-3 text-text-muted mt-0.5 px-3 tabular-nums"
+                                            class="text-body-3 text-text-hint mt-0.5 px-3 tabular-nums"
                                         >
                                             {{ row.bibleVerses }}
                                         </p>
