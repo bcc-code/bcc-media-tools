@@ -6,8 +6,12 @@
 const SAMPLES = 5;
 const REMEASURE_MS = 10 * 60_000;
 
-function monotonicNow(): number {
-    return performance.timeOrigin + performance.now();
+// The wall clock, not performance.timeOrigin + performance.now(): on macOS
+// that monotonic clock stops while the computer sleeps, so a tab left open
+// overnight would read hours behind. A measurement lasts milliseconds, so a
+// system clock change in the middle of one doesn't matter.
+function wallNow(): number {
+    return Date.now();
 }
 
 export function useServerClock() {
@@ -22,10 +26,10 @@ export function useServerClock() {
         try {
             const samples: ClockSample[] = [];
             for (let i = 0; i < SAMPLES; i++) {
-                const sentAt = monotonicNow();
+                const sentAt = wallNow();
                 try {
                     const res = await api.getServerTime({});
-                    const receivedAt = monotonicNow();
+                    const receivedAt = wallNow();
                     const server = timestampToDate(res.now);
                     if (!server) continue;
                     samples.push({
@@ -51,7 +55,7 @@ export function useServerClock() {
     function serverNow(): number {
         return offsetMs.value === undefined
             ? Date.now()
-            : monotonicNow() + offsetMs.value;
+            : wallNow() + offsetMs.value;
     }
 
     let timer: ReturnType<typeof setInterval> | undefined;

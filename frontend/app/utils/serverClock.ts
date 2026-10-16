@@ -3,9 +3,8 @@
 // server read its clock halfway through. The quickest round trip is the least
 // distorted by network delay, so that sample wins.
 
-// One round trip. sentAt and receivedAt are on the monotonic clock
-// (performance.timeOrigin + performance.now()), so a system clock change
-// mid-measurement can't skew it; serverMs is the server's clock.
+// One round trip: sentAt and receivedAt on this computer's clock, serverMs
+// the server's.
 export interface ClockSample {
     sentAt: number;
     receivedAt: number;
