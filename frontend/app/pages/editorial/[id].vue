@@ -2009,14 +2009,50 @@ onBeforeRouteLeave(() => {
                                         />
                                     </td>
                                     <td class="py-2 pr-2 pl-3">
-                                        <div class="title-field">
-                                            <DesignInput
+                                        <DesignInput
+                                            v-if="effectiveMode === 'edit'"
+                                            v-model="row.name"
+                                            @focusin="nameBeforeEdit = row.name"
+                                            @change="persistName(row)"
+                                        />
+                                        <!--
+                                            Simple view wraps the title instead
+                                            of truncating it: the song titles
+                                            ("FMB 642 | Når valget for livet
+                                            skal tas") run well past the column,
+                                            and the reviewer scanning the list
+                                            needs the whole line. The invisible
+                                            twin under the field is the no-JS
+                                            way to grow a textarea with its
+                                            content — it holds the same text at
+                                            the same metrics and sets the row
+                                            height, and the textarea stretches
+                                            over it. Enter commits instead of
+                                            inserting a newline, so the field
+                                            wraps without the title itself
+                                            turning into two lines.
+                                        -->
+                                        <div v-else class="title-field grid">
+                                            <textarea
                                                 v-model="row.name"
+                                                rows="1"
+                                                class="border-border-1 text-body-3 text-text-default ds-focus-ring col-start-1 row-start-1 w-full resize-none overflow-hidden rounded-xl border px-3 py-2"
                                                 @focusin="
                                                     nameBeforeEdit = row.name
                                                 "
                                                 @change="persistName(row)"
+                                                @keydown.enter.prevent="
+                                                    (
+                                                        $event.target as HTMLTextAreaElement
+                                                    ).blur()
+                                                "
                                             />
+                                            <div
+                                                aria-hidden="true"
+                                                class="text-body-3 invisible col-start-1 row-start-1 w-full border px-3 py-2 break-words whitespace-pre-wrap"
+                                            >
+                                                {{ row.name }}&nbsp;
+                                            </div>
                                         </div>
                                         <!--
                                             Simple view folds Medvirkende in
