@@ -408,7 +408,10 @@
         "deletedByOther": "Denne gjennomgangen ble slettet",
         "syncedBy": "Playout-synk kjører i fanen til {name}",
         "takeOverSync": "Ta over synk",
-        "syncedInYourOtherTab": "Playout-synk kjører i den andre fanen din"
+        "syncedInYourOtherTab": "Playout-synk kjører i den andre fanen din",
+        "clockAhead": "Klokken på denne maskinen går {seconds} s foran serveren (±{plusMinus} s). Markørene bruker klokken på denne maskinen.",
+        "clockBehind": "Klokken på denne maskinen går {seconds} s etter serveren (±{plusMinus} s). Markørene bruker klokken på denne maskinen.",
+        "clockInSync": "Klokken stemmer med serveren (innenfor {ms} ms)"
     },
     "vault": {
         "searchPlaceholder": "Søk i vault",

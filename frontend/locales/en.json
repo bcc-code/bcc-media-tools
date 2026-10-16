@@ -408,7 +408,10 @@
         "deletedByOther": "This review was deleted",
         "syncedBy": "Playout sync runs in {name}'s tab",
         "takeOverSync": "Take over sync",
-        "syncedInYourOtherTab": "Playout sync runs in your other tab"
+        "syncedInYourOtherTab": "Playout sync runs in your other tab",
+        "clockAhead": "This computer's clock is {seconds} s ahead of the server (±{plusMinus} s). Markers use this computer's clock.",
+        "clockBehind": "This computer's clock is {seconds} s behind the server (±{plusMinus} s). Markers use this computer's clock.",
+        "clockInSync": "Clock matches the server (within {ms} ms)"
     },
     "vault": {
         "searchPlaceholder": "Search the vault",

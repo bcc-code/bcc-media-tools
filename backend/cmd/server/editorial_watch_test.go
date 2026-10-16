@@ -221,3 +221,16 @@ func TestSyncRefusedForOtherTabs(t *testing.T) {
 	_, err = api.SyncEditorialSessionFromPlayout(ctx, connect.NewRequest(&apiv1.SyncEditorialSessionFromPlayoutRequest{Id: id, ClientId: "tab-2"}))
 	assert.NoError(t, err)
 }
+
+func TestGetServerTime(t *testing.T) {
+	api := newTestEditorialAPI(t)
+	ctx := context.Background()
+
+	res, err := api.GetServerTime(ctx, connect.NewRequest(&apiv1.Void{}))
+	require.NoError(t, err)
+	assert.WithinDuration(t, time.Now(), res.Msg.Now.AsTime(), time.Second)
+
+	actAs(t, `{}`)
+	_, err = api.GetServerTime(ctx, connect.NewRequest(&apiv1.Void{}))
+	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
+}

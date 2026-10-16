@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // Several people work on one session at once, typically someone marking a
@@ -295,4 +296,14 @@ func (e EditorialAPI) TakeEditorialSync(ctx context.Context, req *connect.Reques
 		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("this tab isn't connected to the session"))
 	}
 	return connect.NewResponse(&apiv1.Void{}), nil
+}
+
+// GetServerTime reports the server's clock. A page compares it with its own
+// to see how far the computer's clock is off: markers are stamped with the
+// computer's clock, Playout's entries with Playout's.
+func (e EditorialAPI) GetServerTime(ctx context.Context, req *connect.Request[apiv1.Void]) (*connect.Response[apiv1.ServerTime], error) {
+	if _, err := requireEditorial(req, apiv1.EditorialReviewer); err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(&apiv1.ServerTime{Now: timestamppb.Now()}), nil
 }

@@ -595,6 +595,11 @@ message EditorialSessionEvent {
   string sync_client_id = 4;
 }
 
+// The server's clock, so a page can measure how far its own clock is off.
+message ServerTime {
+  google.protobuf.Timestamp now = 1;
+}
+
 // Tell the others what this tab is doing.
 message SetEditorialPresenceRequest {
   string session_id = 1;
@@ -814,4 +819,5 @@ service APIService {
   rpc WatchEditorialSession(WatchEditorialSessionRequest) returns (stream EditorialSessionEvent) {}
   rpc SetEditorialPresence(SetEditorialPresenceRequest) returns (Void) {}
   rpc TakeEditorialSync(TakeEditorialSyncRequest) returns (Void) {}
+  rpc GetServerTime(Void) returns (ServerTime) {}
 }

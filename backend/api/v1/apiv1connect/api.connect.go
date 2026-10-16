@@ -166,6 +166,9 @@ const (
 	// APIServiceTakeEditorialSyncProcedure is the fully-qualified name of the APIService's
 	// TakeEditorialSync RPC.
 	APIServiceTakeEditorialSyncProcedure = "/api.v1.APIService/TakeEditorialSync"
+	// APIServiceGetServerTimeProcedure is the fully-qualified name of the APIService's GetServerTime
+	// RPC.
+	APIServiceGetServerTimeProcedure = "/api.v1.APIService/GetServerTime"
 )
 
 // APIServiceClient is a client for the api.v1.APIService service.
@@ -237,6 +240,7 @@ type APIServiceClient interface {
 	WatchEditorialSession(context.Context, *connect.Request[v1.WatchEditorialSessionRequest]) (*connect.ServerStreamForClient[v1.EditorialSessionEvent], error)
 	SetEditorialPresence(context.Context, *connect.Request[v1.SetEditorialPresenceRequest]) (*connect.Response[v1.Void], error)
 	TakeEditorialSync(context.Context, *connect.Request[v1.TakeEditorialSyncRequest]) (*connect.Response[v1.Void], error)
+	GetServerTime(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.ServerTime], error)
 }
 
 // NewAPIServiceClient constructs a client for the api.v1.APIService service. By default, it uses
@@ -532,6 +536,12 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(aPIServiceMethods.ByName("TakeEditorialSync")),
 			connect.WithClientOptions(opts...),
 		),
+		getServerTime: connect.NewClient[v1.Void, v1.ServerTime](
+			httpClient,
+			baseURL+APIServiceGetServerTimeProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("GetServerTime")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -584,6 +594,7 @@ type aPIServiceClient struct {
 	watchEditorialSession             *connect.Client[v1.WatchEditorialSessionRequest, v1.EditorialSessionEvent]
 	setEditorialPresence              *connect.Client[v1.SetEditorialPresenceRequest, v1.Void]
 	takeEditorialSync                 *connect.Client[v1.TakeEditorialSyncRequest, v1.Void]
+	getServerTime                     *connect.Client[v1.Void, v1.ServerTime]
 }
 
 // GetPermissions calls api.v1.APIService.GetPermissions.
@@ -821,6 +832,11 @@ func (c *aPIServiceClient) TakeEditorialSync(ctx context.Context, req *connect.R
 	return c.takeEditorialSync.CallUnary(ctx, req)
 }
 
+// GetServerTime calls api.v1.APIService.GetServerTime.
+func (c *aPIServiceClient) GetServerTime(ctx context.Context, req *connect.Request[v1.Void]) (*connect.Response[v1.ServerTime], error) {
+	return c.getServerTime.CallUnary(ctx, req)
+}
+
 // APIServiceHandler is an implementation of the api.v1.APIService service.
 type APIServiceHandler interface {
 	// Permissions
@@ -890,6 +906,7 @@ type APIServiceHandler interface {
 	WatchEditorialSession(context.Context, *connect.Request[v1.WatchEditorialSessionRequest], *connect.ServerStream[v1.EditorialSessionEvent]) error
 	SetEditorialPresence(context.Context, *connect.Request[v1.SetEditorialPresenceRequest]) (*connect.Response[v1.Void], error)
 	TakeEditorialSync(context.Context, *connect.Request[v1.TakeEditorialSyncRequest]) (*connect.Response[v1.Void], error)
+	GetServerTime(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.ServerTime], error)
 }
 
 // NewAPIServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -1181,6 +1198,12 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(aPIServiceMethods.ByName("TakeEditorialSync")),
 		connect.WithHandlerOptions(opts...),
 	)
+	aPIServiceGetServerTimeHandler := connect.NewUnaryHandler(
+		APIServiceGetServerTimeProcedure,
+		svc.GetServerTime,
+		connect.WithSchema(aPIServiceMethods.ByName("GetServerTime")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/api.v1.APIService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case APIServiceGetPermissionsProcedure:
@@ -1277,6 +1300,8 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceSetEditorialPresenceHandler.ServeHTTP(w, r)
 		case APIServiceTakeEditorialSyncProcedure:
 			aPIServiceTakeEditorialSyncHandler.ServeHTTP(w, r)
+		case APIServiceGetServerTimeProcedure:
+			aPIServiceGetServerTimeHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -1472,4 +1497,8 @@ func (UnimplementedAPIServiceHandler) SetEditorialPresence(context.Context, *con
 
 func (UnimplementedAPIServiceHandler) TakeEditorialSync(context.Context, *connect.Request[v1.TakeEditorialSyncRequest]) (*connect.Response[v1.Void], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.TakeEditorialSync is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) GetServerTime(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.ServerTime], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.GetServerTime is not implemented"))
 }

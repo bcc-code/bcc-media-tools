@@ -719,6 +719,30 @@ const clientId =
     globalThis.crypto?.randomUUID?.() ??
     `tab-${Math.random().toString(36).slice(2)}`;
 const presence = ref<EditorialPresence[]>([]);
+// How far this computer's clock is from the server's. Shown to whoever marks;
+// not applied yet: Mark now still uses this computer's clock.
+const serverClock = useServerClock();
+const clockWarning = computed(() => {
+    const offset = serverClock.offsetMs.value;
+    if (offset === undefined || Math.abs(offset) < 1000) return "";
+    const { ahead, seconds } = describeOffset(offset);
+    const plusMinus = ((serverClock.uncertaintyMs.value ?? 0) / 1000).toFixed(
+        2,
+    );
+    return t(ahead ? "editorial.clockAhead" : "editorial.clockBehind", {
+        seconds,
+        plusMinus,
+    });
+});
+const clockInSync = computed(() => {
+    const offset = serverClock.offsetMs.value;
+    if (offset === undefined || Math.abs(offset) >= 1000) return "";
+    return t("editorial.clockInSync", {
+        ms: Math.round(
+            Math.abs(offset) + (serverClock.uncertaintyMs.value ?? 0),
+        ),
+    });
+});
 // The tab that runs the Playout sync for everyone ("" when no live tab is
 // connected). Only it syncs; other live users can take over.
 const syncClientId = ref("");
@@ -779,6 +803,7 @@ async function watchSession() {
                 { id: sessionId.value, clientId },
                 { signal: watchAbort.signal },
             )) {
+                if (!liveConnected.value) void serverClock.measure();
                 liveConnected.value = true;
                 backoff = 1000;
                 if (ev.deleted) {
@@ -1622,9 +1647,14 @@ onBeforeRouteLeave(() => {
                                 : 'text-semantic-warning'
                         "
                         :title="
-                            liveConnected
-                                ? t('editorial.connectedHint')
-                                : t('editorial.reconnectingHint')
+                            [
+                                liveConnected
+                                    ? t('editorial.connectedHint')
+                                    : t('editorial.reconnectingHint'),
+                                isLive && canLive ? clockInSync : '',
+                            ]
+                                .filter(Boolean)
+                                .join(' · ')
                         "
                     >
                         <span
@@ -1640,6 +1670,13 @@ onBeforeRouteLeave(() => {
                                 ? t("editorial.connected")
                                 : t("editorial.reconnecting")
                         }}
+                    </span>
+                    <span
+                        v-if="isLive && canLive && clockWarning"
+                        class="text-caption-1 bg-semantic-warning/15 text-semantic-warning flex items-center gap-1.5 rounded-full px-2.5 py-1"
+                    >
+                        <Icon name="tabler:clock-exclamation" class="size-4" />
+                        {{ clockWarning }}
                     </span>
                     <template v-if="isLive && canLive && !holdsSync">
                         <span class="text-caption-1 text-text-hint">
