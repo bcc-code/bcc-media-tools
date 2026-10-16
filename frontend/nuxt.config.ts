@@ -22,6 +22,9 @@ export default defineNuxtConfig({
     css: ["~/assets/css/main.css"],
     app: {
         head: {
+            // `viewport-fit=cover` is what makes `env(safe-area-inset-*)` non-zero;
+            // without it DesignSheet's bottom padding silently resolves to 1.5rem.
+            viewport: "width=device-width, initial-scale=1, viewport-fit=cover",
             bodyAttrs: {
                 class: "bg-neutral-100 dark:bg-neutral-950",
             },

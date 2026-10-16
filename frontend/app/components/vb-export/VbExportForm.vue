@@ -160,7 +160,7 @@ function startExport() {
 </script>
 
 <template>
-    <div class="mx-auto w-full max-w-3xl px-6 py-8">
+    <div class="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
         <!-- Bulk paste: detect VX-ids from arbitrary text -->
         <section v-if="bulkMode" class="mb-6 space-y-2">
             <h3 class="text-title-3 text-text-default font-semibold">

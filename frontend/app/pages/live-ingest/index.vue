@@ -35,7 +35,9 @@ const { t } = useI18n();
 </script>
 
 <template>
-    <div class="mx-auto flex w-full max-w-2xl flex-col gap-6 p-8">
+    <div
+        class="mx-auto flex w-full max-w-2xl flex-col gap-4 p-4 sm:gap-6 sm:p-8"
+    >
         <header>
             <h1 class="text-heading-3 text-text-default">
                 {{ $t("liveIngest.title") }}

@@ -5,9 +5,7 @@ defineProps<{
 </script>
 
 <template>
-    <div
-        class="grid-span-1 col-span-full grid grid-cols-subgrid items-baseline gap-4 p-4"
-    >
+    <div class="col-span-full grid grid-cols-subgrid items-baseline gap-4 p-4">
         <h3 class="text-text-muted text-sm leading-0">
             {{ title }}
         </h3>

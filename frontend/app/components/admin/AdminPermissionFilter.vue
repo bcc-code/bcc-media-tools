@@ -114,20 +114,20 @@ function clear() {
 </script>
 
 <template>
-    <div class="relative flex w-full items-center gap-2">
+    <div class="relative flex w-full flex-wrap items-center gap-2">
         <DesignSelect
             v-model="selectedLanguages"
             :items="languageItems"
             placeholder="Languages"
             multiple
-            class="w-32"
+            class="w-32 max-sm:flex-1"
         />
         <DesignSelect
             v-model="selectedRoles"
             :items="roles"
             placeholder="Roles"
             multiple
-            class="w-24"
+            class="w-24 max-sm:flex-1"
         />
         <DesignButton
             v-if="isShowingClearButton"
@@ -141,7 +141,7 @@ function clear() {
             v-model="searchQuery"
             placeholder="Search email..."
             leading-icon="tabler:search"
-            class="ml-auto w-64"
+            class="w-full sm:ml-auto sm:w-64"
         >
             <template #trailing>
                 <DesignButton

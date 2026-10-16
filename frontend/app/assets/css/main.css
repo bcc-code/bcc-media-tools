@@ -259,3 +259,37 @@ body,
     display: flex;
     flex-direction: column;
 }
+
+/*
+ * Backstop so a single over-wide child can never make the whole page scroll
+ * sideways on a phone. `clip` rather than `hidden`: it creates no scroll
+ * container, so the sticky header and fixed dialog positioners still work.
+ * Components that genuinely need sideways scrolling (the editorial table, the
+ * segment group) own an `overflow-x-auto` container and are unaffected.
+ */
+html {
+    overflow-x: clip;
+}
+
+/*
+ * Keep content clear of notches and rounded corners in landscape. Paired with
+ * `viewport-fit=cover` in nuxt.config — without that meta these resolve to 0.
+ */
+body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+}
+
+/*
+ * iOS Safari zooms the viewport when a focused field's font is under 16px, and
+ * the design scale puts inputs at 14px (--text-body-3). Bump just the fields,
+ * and only on phones, so desktop form density is untouched. `max(16px, 1em)`
+ * so inputs that deliberately use a larger face aren't shrunk.
+ */
+@media (max-width: 767px) {
+    input,
+    textarea,
+    select {
+        font-size: max(16px, 1em);
+    }
+}

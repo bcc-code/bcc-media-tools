@@ -71,12 +71,12 @@ const isOpen = ref(false);
         <LayoutGroup>
             <AnimatePresence>
                 <motion.button
-                    class="bg-surface-raise flex items-center justify-between p-4"
+                    class="bg-surface-raise flex flex-wrap items-center justify-between gap-2 p-4"
                     layout
                     @click="isOpen = !isOpen"
                 >
-                    <div class="flex items-center gap-2">
-                        <h3 class="text-text-default">{{ email }}</h3>
+                    <div class="flex min-w-0 items-center gap-2">
+                        <h3 class="text-text-default truncate">{{ email }}</h3>
                         <Icon
                             name="tabler:chevron-down"
                             :class="[
@@ -98,7 +98,7 @@ const isOpen = ref(false);
                 <motion.div
                     v-if="isOpen"
                     layout
-                    class="divide-border-1 border-border-1 grid max-w-full grid-cols-[1fr_3fr] divide-y overflow-hidden border-t"
+                    class="divide-border-1 border-border-1 grid max-w-full grid-cols-1 divide-y overflow-hidden border-t md:grid-cols-[1fr_3fr]"
                     :initial="{ height: 0 }"
                     :animate="{ height: 'auto' }"
                     :exit="{ height: 0 }"

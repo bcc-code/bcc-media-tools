@@ -18,7 +18,7 @@ withDefaults(defineProps<Props>(), {
 const page = defineModel<number>("page", { default: 1 });
 
 const triggerClass =
-    "ds-focus-ring text-text-default hover:bg-surface-indent flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg disabled:cursor-not-allowed disabled:opacity-40";
+    "ds-focus-ring text-text-default hover:bg-surface-indent flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg max-md:size-11 disabled:cursor-not-allowed disabled:opacity-40";
 </script>
 
 <template>
@@ -27,7 +27,7 @@ const triggerClass =
         :count="total"
         :page-size="pageSize"
         :sibling-count="siblingCount"
-        class="flex items-center gap-1"
+        class="flex flex-wrap items-center justify-center gap-1"
     >
         <Pagination.FirstTrigger
             v-if="showEdges"
@@ -48,7 +48,7 @@ const triggerClass =
                     :value="p.value"
                     :type="p.type"
                     :disabled="disabled"
-                    class="ds-focus-ring text-text-default hover:bg-surface-indent data-selected:bg-primary-default data-selected:text-on-primary text-title-3 flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg tabular-nums"
+                    class="ds-focus-ring text-text-default hover:bg-surface-indent data-selected:bg-primary-default data-selected:text-on-primary text-title-3 flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg tabular-nums max-md:size-11"
                 >
                     {{ p.value }}
                 </Pagination.Item>
@@ -56,7 +56,7 @@ const triggerClass =
                     v-else
                     :key="`e${index}`"
                     :index="index"
-                    class="text-text-hint flex size-9 items-center justify-center"
+                    class="text-text-hint flex size-9 items-center justify-center max-md:size-11"
                 >
                     …
                 </Pagination.Ellipsis>

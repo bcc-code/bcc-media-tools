@@ -429,6 +429,7 @@
         "searchPlaceholder": "Søk i vault",
         "filters": "Filtre",
         "clear": "Nullstill",
+        "done": "Ferdig",
         "mediaType": "Medietype",
         "results": "Søk",
         "resultsRange": "Resultater: {from} til {to} av {total}",

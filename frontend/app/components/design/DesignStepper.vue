@@ -28,7 +28,10 @@ const currentIndex = computed(() => {
                 :index="index"
                 class="flex flex-1 items-center gap-3 last:flex-none"
             >
-                <Steps.Trigger disabled class="group flex items-center gap-2">
+                <Steps.Trigger
+                    disabled
+                    class="group flex min-w-0 items-center gap-2"
+                >
                     <Steps.Indicator
                         class="bg-surface-indent text-text-hint group-data-current:bg-primary-default group-data-current:text-on-primary group-data-complete:bg-primary-default group-data-complete:text-on-primary ease-out-expo text-title-3 flex size-8 shrink-0 items-center justify-center rounded-full transition-colors duration-200"
                     >
@@ -39,15 +42,17 @@ const currentIndex = computed(() => {
                         />
                         <template v-else>{{ index + 1 }}</template>
                     </Steps.Indicator>
+                    <!-- On phones only the current step keeps its label; three
+                         nowrap labels in a row overflow a 390px viewport. -->
                     <span
-                        class="text-text-muted group-data-current:text-text-default text-title-3 whitespace-nowrap"
+                        class="text-text-muted group-data-current:text-text-default text-title-3 min-w-0 truncate whitespace-nowrap max-md:hidden max-md:group-data-current:inline"
                     >
                         {{ item.title }}
                     </span>
                 </Steps.Trigger>
                 <Steps.Separator
                     v-if="index < items.length - 1"
-                    class="bg-border-1 data-complete:bg-primary-default h-px flex-1"
+                    class="bg-border-1 data-complete:bg-primary-default h-px min-w-4 flex-1"
                 />
             </Steps.Item>
         </Steps.List>

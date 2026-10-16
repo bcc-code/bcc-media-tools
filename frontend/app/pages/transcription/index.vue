@@ -56,7 +56,7 @@ const { isTranscriptionAdmin } = usePermissions();
 <template>
     <div
         :class="[
-            'mx-auto flex h-[calc(100dvh-var(--header-height))] max-w-7xl overflow-hidden p-8',
+            'mx-auto flex h-[calc(100dvh-var(--header-height))] max-w-7xl overflow-hidden p-4 sm:p-8',
             {
                 'border-8 border-red-700': deleteMode,
             },

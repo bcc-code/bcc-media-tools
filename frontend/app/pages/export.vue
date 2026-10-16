@@ -190,7 +190,7 @@ const triggers: Trigger[] = [
 
         <div
             v-else-if="status === 'error'"
-            class="mx-auto flex w-full max-w-3xl flex-col items-center gap-4 p-8"
+            class="mx-auto flex w-full max-w-3xl flex-col items-center gap-4 p-4 sm:p-8"
         >
             <Icon name="tabler:alert-triangle" class="text-text-hint size-10" />
             <p class="text-text-muted text-center">
@@ -198,7 +198,7 @@ const triggers: Trigger[] = [
             </p>
         </div>
 
-        <div v-else class="mx-auto w-full max-w-3xl space-y-4 p-8">
+        <div v-else class="mx-auto w-full max-w-3xl space-y-4 p-4 sm:p-8">
             <DesignSkeleton class="mx-auto h-8 w-80" />
             <DesignSkeleton class="h-24 w-full" />
             <DesignSkeleton class="h-40 w-full" />
@@ -219,7 +219,7 @@ const triggers: Trigger[] = [
             />
             <div
                 v-else-if="bulkStatus === 'error'"
-                class="mx-auto flex w-full max-w-3xl flex-col items-center gap-4 p-8"
+                class="mx-auto flex w-full max-w-3xl flex-col items-center gap-4 p-4 sm:p-8"
             >
                 <Icon
                     name="tabler:alert-triangle"
@@ -229,7 +229,7 @@ const triggers: Trigger[] = [
                     {{ bulkError?.message ?? $t("export.loadFailed") }}
                 </p>
             </div>
-            <div v-else class="mx-auto w-full max-w-3xl space-y-4 p-8">
+            <div v-else class="mx-auto w-full max-w-3xl space-y-4 p-4 sm:p-8">
                 <DesignSkeleton class="h-24 w-full" />
                 <DesignSkeleton class="h-40 w-full" />
             </div>
