@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 	"time"
 
 	"connectrpc.com/connect"
@@ -63,6 +64,13 @@ var editorialRoleNames = map[apiv1.EditorialRole]string{
 	apiv1.EditorialEditor:   "editor",
 	apiv1.EditorialLive:     "live",
 	apiv1.EditorialAdmin:    "admin",
+}
+
+// editorialPreviewPath is what the client gets as a session's preview_url: a
+// path on this server, served by editorialPreviewHandler. Relative, so it
+// works whatever host the tools are reached on.
+func editorialPreviewPath(sessionID string) string {
+	return "/editorial/preview?session=" + url.QueryEscape(sessionID)
 }
 
 // editorialErr maps DB errors to appropriate connect codes.
@@ -144,14 +152,13 @@ func (e EditorialAPI) GetEditorialSession(ctx context.Context, req *connect.Requ
 	if err != nil {
 		return nil, editorialErr(err)
 	}
-	// The session (which the caller is authorized to see) is the authorization
-	// for its preview — resolve the URL here so the client never asks for a
-	// video by VXID. Best-effort: a preview failure shouldn't block the review.
-	// A live session has no asset to preview yet.
+	// Our own proxy, not the upstream URL: Cantemo wants an auth header the
+	// browser will not send, and its host only resolves on the internal
+	// network. The session the caller is authorized to see is what authorizes
+	// the video, so the path names the session and the handler resolves the
+	// asset. A live session has no asset to preview yet.
 	if out.VXID != "" {
-		if url, err := e.cantemo.GetPreviewUrl(out.VXID); err == nil {
-			out.PreviewUrl = url
-		}
+		out.PreviewUrl = editorialPreviewPath(out.Id)
 	}
 	return connect.NewResponse(out), nil
 }

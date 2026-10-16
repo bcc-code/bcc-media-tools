@@ -247,8 +247,8 @@ func (e EditorialAPI) AttachEditorialRecording(ctx context.Context, req *connect
 	if err != nil {
 		return nil, editorialErr(err)
 	}
-	if url, err := e.cantemo.GetPreviewUrl(vxID); err == nil {
-		out.PreviewUrl = url
+	if vxID != "" {
+		out.PreviewUrl = editorialPreviewPath(out.Id)
 	}
 	return connect.NewResponse(out), nil
 }

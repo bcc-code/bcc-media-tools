@@ -16,6 +16,15 @@ import { timestampDate, timestampFromDate } from "@bufbuild/protobuf/wkt";
 
 const route = useRoute("editorial-id");
 const sessionId = computed(() => route.params.id as string);
+const config = useRuntimeConfig();
+
+// The session's preview_url is a path on our own server — the proxy that
+// fetches the video from Cantemo, which wants an auth header the browser will
+// not send and whose host only resolves on the internal network. Like the
+// other tools' media URLs, it needs the API base in front of it.
+function previewSrc(path: string | undefined): string | undefined {
+    return path ? `${config.public.grpcUrl}${path}` : undefined;
+}
 
 const { t, te, locale } = useI18n();
 const api = useAPI();
@@ -287,7 +296,7 @@ async function load() {
         session.value = s;
         title.value = s.title;
         rows.value = s.markers.map(toRow);
-        previewUrl.value = s.previewUrl || undefined;
+        previewUrl.value = previewSrc(s.previewUrl);
         if (s.kind === "live") lastSyncedAt.value = Date.now();
     } catch {
         notFound.value = true;
@@ -697,7 +706,7 @@ async function applyServerSession(s: EditorialSession) {
     session.value = s;
     title.value = s.title;
     rows.value = s.markers.map(toRow);
-    if (s.previewUrl) previewUrl.value = s.previewUrl;
+    if (s.previewUrl) previewUrl.value = previewSrc(s.previewUrl);
     await nextTick();
     dirty.value = false;
     hydrated = true;
@@ -739,7 +748,7 @@ async function mergeServerSession(s: EditorialSession) {
     session.value = s;
     if (!document.activeElement?.closest("[data-session-title]"))
         title.value = s.title;
-    if (s.previewUrl) previewUrl.value = s.previewUrl;
+    if (s.previewUrl) previewUrl.value = previewSrc(s.previewUrl);
     rows.value = s.markers.map((m) => {
         const fresh = toRow(m);
         const row = byId.get(m.id);

@@ -188,6 +188,11 @@ func main() {
 		cantemoToken:  os.Getenv("CANTEMO_TOKEN"),
 	})
 
+	mux.Handle("/editorial/preview", editorialPreviewHandler{
+		editorial:    editorialAPI,
+		cantemoToken: os.Getenv("CANTEMO_TOKEN"),
+	})
+
 	mux.Handle("/vault/thumbnail", newVaultThumbnailHandler(vaultAPI))
 	mux.Handle("/vault/preview", vaultPreviewHandler{
 		cantemo:      cantemoClient,
