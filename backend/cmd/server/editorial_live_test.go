@@ -77,6 +77,7 @@ func TestMergeLiveWorkedExample(t *testing.T) {
 	// The second song had no blank mark left: its own row at Playout's time.
 	assert.Equal(t, int64(1_200_000), got[2].StartMs)
 	assert.Equal(t, "FMB 520", got[2].Name)
+	assert.Equal(t, "allsang", got[2].Type, "songs from Playout default to singsong")
 	assert.Equal(t, editorial.SourceImport, got[2].Source)
 
 	// The named mark is left alone and the speaker after it gets a row.

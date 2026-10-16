@@ -811,7 +811,8 @@ func editorialTypeFromPlayout(playoutType string) string {
 	case playout.ContentTypeSpeaker:
 		return "tale"
 	case playout.ContentTypeSong:
-		return "sang"
+		// Songs in a meeting are sung by everyone: singsong, not a solo.
+		return "allsang"
 	default:
 		return playoutType
 	}
