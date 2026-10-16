@@ -112,7 +112,7 @@ async function onStartExport({
 
         <div
             v-else-if="status === 'error'"
-            class="mx-auto flex w-full max-w-3xl flex-col items-center gap-4 p-8"
+            class="mx-auto flex w-full max-w-3xl flex-col items-center gap-4 p-4 sm:p-8"
         >
             <Icon name="tabler:alert-triangle" class="text-text-hint size-10" />
             <p class="text-text-muted text-center">
@@ -120,7 +120,7 @@ async function onStartExport({
             </p>
         </div>
 
-        <div v-else class="mx-auto w-full max-w-3xl space-y-4 p-8">
+        <div v-else class="mx-auto w-full max-w-3xl space-y-4 p-4 sm:p-8">
             <DesignSkeleton class="mx-auto h-8 w-80" />
             <DesignSkeleton class="h-40 w-full" />
             <DesignSkeleton class="h-12 w-full" />
@@ -140,7 +140,7 @@ async function onStartExport({
             />
             <div
                 v-else-if="bulkStatus === 'error'"
-                class="mx-auto flex w-full max-w-3xl flex-col items-center gap-4 p-8"
+                class="mx-auto flex w-full max-w-3xl flex-col items-center gap-4 p-4 sm:p-8"
             >
                 <Icon
                     name="tabler:alert-triangle"
@@ -150,7 +150,7 @@ async function onStartExport({
                     {{ bulkError?.message ?? $t("vbExport.loadFailed") }}
                 </p>
             </div>
-            <div v-else class="mx-auto w-full max-w-3xl space-y-4 p-8">
+            <div v-else class="mx-auto w-full max-w-3xl space-y-4 p-4 sm:p-8">
                 <DesignSkeleton class="h-24 w-full" />
                 <DesignSkeleton class="h-40 w-full" />
             </div>

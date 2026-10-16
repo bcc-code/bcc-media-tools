@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Dialog } from "@ark-ui/vue";
 
+// A centred modal on desktop that becomes a draggable bottom sheet below `md:`
+// — same props, same slot, so callers need no branching of their own.
 interface Props {
     title?: string;
     description?: string;
@@ -19,6 +21,10 @@ const props = withDefaults(defineProps<Props>(), {
     iconVariant: "neutral",
     align: "start",
 });
+
+// Every size collapses to the same width on a phone, so below `md:` the sheet
+// form takes over entirely rather than rendering a cramped centred card.
+const isPhone = useIsPhone();
 
 const maxWidthClass = computed(
     () =>
@@ -72,7 +78,23 @@ watch(open, async (isOpen) => {
 </script>
 
 <template>
+    <DesignSheet
+        v-if="isPhone"
+        v-model:open="open"
+        :title="title"
+        :description="description"
+        :icon="icon"
+        :icon-variant="iconVariant"
+        :align="align"
+    >
+        <template #trigger><slot name="trigger" /></template>
+        <template #default="{ initialFocus }">
+            <slot :initial-focus="initialFocus" />
+        </template>
+    </DesignSheet>
+
     <Dialog.Root
+        v-else
         v-model:open="open"
         lazy-mount
         unmount-on-exit
@@ -82,53 +104,64 @@ watch(open, async (isOpen) => {
 
         <Teleport to="#teleports">
             <Dialog.Backdrop
-                class="fixed inset-0 z-40 bg-black/40 transition-opacity duration-200 data-[state=closed]:opacity-0 data-[state=open]:opacity-100"
+                class="data-[state=closed]:fade-exit data-[state=open]:fade-enter fixed inset-0 z-40 bg-black/40"
             />
             <Dialog.Positioner
                 class="fixed inset-0 z-50 flex items-center justify-center p-4"
             >
+                <!-- Keyframes, not transitions: Ark's presence layer unmounts
+                     on close unless it sees a running CSS animation. -->
                 <Dialog.Content
-                    class="gradient-border bg-surface-raise shadow-floating ease-out-expo max-h-[85vh] w-full origin-center overflow-y-auto rounded-2xl p-6 transition-[opacity,transform] duration-200 data-[state=closed]:scale-95 data-[state=closed]:opacity-0 data-[state=open]:scale-100 data-[state=open]:opacity-100"
+                    class="gradient-border bg-surface-raise shadow-floating data-[state=closed]:dialog-exit data-[state=open]:dialog-enter relative flex max-h-[85dvh] w-full origin-center flex-col overflow-hidden rounded-2xl"
                     :class="maxWidthClass"
                 >
-                    <div
-                        v-if="title || description || icon"
-                        class="mb-5"
-                        :class="
-                            align === 'center'
-                                ? 'flex flex-col items-center text-center'
-                                : ''
-                        "
-                    >
+                    <div class="overflow-y-auto overscroll-contain p-6">
                         <div
-                            v-if="icon"
-                            class="mb-4 flex size-14 items-center justify-center rounded-full"
-                            :class="iconClass"
-                        >
-                            <Icon :name="icon" class="text-3xl" />
-                        </div>
-                        <Dialog.Title
-                            v-if="title"
-                            class="text-heading-3 text-text-default"
-                            :class="align === 'center' ? 'text-balance' : ''"
-                        >
-                            {{ title }}
-                        </Dialog.Title>
-                        <Dialog.Description
-                            v-if="description"
-                            class="text-body-3 text-text-muted mt-1"
+                            v-if="title || description || icon"
+                            class="mb-5"
                             :class="
                                 align === 'center'
-                                    ? 'mx-auto max-w-[36ch] text-pretty'
+                                    ? 'flex flex-col items-center text-center'
                                     : ''
                             "
                         >
-                            {{ description }}
-                        </Dialog.Description>
+                            <div
+                                v-if="icon"
+                                class="mb-4 flex size-14 items-center justify-center rounded-full"
+                                :class="iconClass"
+                            >
+                                <Icon :name="icon" class="text-3xl" />
+                            </div>
+                            <Dialog.Title
+                                v-if="title"
+                                class="text-heading-3 text-text-default"
+                                :class="
+                                    align === 'center'
+                                        ? 'text-balance'
+                                        : 'pr-10'
+                                "
+                            >
+                                {{ title }}
+                            </Dialog.Title>
+                            <Dialog.Description
+                                v-if="description"
+                                class="text-body-3 text-text-muted mt-1"
+                                :class="
+                                    align === 'center'
+                                        ? 'mx-auto max-w-[36ch] text-pretty'
+                                        : ''
+                                "
+                            >
+                                {{ description }}
+                            </Dialog.Description>
+                        </div>
+
+                        <slot :initial-focus="setInitialFocus" />
                     </div>
 
-                    <slot :initial-focus="setInitialFocus" />
-
+                    <!-- Anchored by `relative` on Content: without it this
+                         resolves against the full-screen positioner and lands in
+                         the viewport corner instead of the card's. -->
                     <Dialog.CloseTrigger
                         class="text-text-hint hover:text-text-default ds-focus-ring absolute top-4 right-4 cursor-pointer rounded-lg p-1"
                     >

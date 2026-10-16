@@ -15,10 +15,9 @@ onMounted(() => {
 });
 
 const MEDIA_CATEGORIES = ["video", "audio", "image"] as const;
-type MediaCategory = (typeof MEDIA_CATEGORIES)[number];
 
 const query = useQueryRef("q", "");
-const selectedTypes = useQueryRef<MediaCategory[]>("types", []);
+const selectedTypes = useQueryRef<string[]>("types", []);
 const page = useQueryRef("page", 1);
 
 const categoryItems = computed(() =>
@@ -69,20 +68,18 @@ watch(selectedTypes, () => {
 watch(page, load);
 onMounted(load);
 
-function facetCount(type: string): number {
-    return facets.value.find((f) => f.mediaType === type)?.count ?? 0;
-}
-
 const hasFilter = computed(() => selectedTypes.value.length > 0);
 function clearFilters() {
     selectedTypes.value = [];
 }
 
-function toggleType(value: MediaCategory, checked: boolean) {
-    selectedTypes.value = checked
-        ? [...selectedTypes.value, value]
-        : selectedTypes.value.filter((v) => v !== value);
-}
+const isPhone = useIsPhone();
+const filtersOpen = ref(false);
+
+// Shared by the skeleton and the results grid so the two cannot drift apart.
+// 320px rather than 400 so tablets still get two columns once the sidebar goes.
+const gridClass =
+    "grid grid-cols-1 gap-4 sm:grid-cols-[repeat(auto-fit,minmax(320px,1fr))]";
 
 const totalPages = computed(() =>
     Math.max(1, Math.ceil(totalHits.value / pageSize.value)),
@@ -99,13 +96,13 @@ const rangeTo = computed(() =>
     <div>
         <!-- Search bar -->
         <div
-            class="border-border-1 flex items-center justify-between gap-4 border-b px-6 py-5"
+            class="border-border-1 flex flex-col gap-3 border-b px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6 sm:py-5"
         >
             <DesignInput
                 v-model="query"
                 leading-icon="tabler:search"
                 :placeholder="t('vault.searchPlaceholder')"
-                class="w-full max-w-xl"
+                class="w-full sm:max-w-xl"
             >
                 <template #trailing>
                     <Icon
@@ -116,69 +113,50 @@ const rangeTo = computed(() =>
                 </template>
             </DesignInput>
 
-            <p class="text-text-muted">
-                {{
-                    t("vault.resultsRange", {
-                        from: formatNumber(rangeFrom),
-                        to: formatNumber(rangeTo),
-                        total: formatNumber(totalHits),
-                    })
-                }}
-            </p>
+            <!-- `sm:contents` dissolves this row above the phone breakpoint so the
+                 count returns to being a direct flex child, as it was before. -->
+            <div class="flex items-center justify-between gap-3 sm:contents">
+                <DesignButton
+                    v-if="isPhone"
+                    variant="secondary"
+                    size="small"
+                    icon="tabler:filter"
+                    @click="filtersOpen = true"
+                >
+                    {{ t("vault.filters")
+                    }}<span v-if="hasFilter">
+                        ({{ selectedTypes.length }})</span
+                    >
+                </DesignButton>
+                <p class="text-text-muted shrink-0 text-sm sm:text-base">
+                    {{
+                        t("vault.resultsRange", {
+                            from: formatNumber(rangeFrom),
+                            to: formatNumber(rangeTo),
+                            total: formatNumber(totalHits),
+                        })
+                    }}
+                </p>
+            </div>
         </div>
 
         <div class="flex items-start">
-            <!-- Filter sidebar -->
+            <!-- Filter sidebar — phones get the same component in a sheet below. -->
             <aside
-                class="border-border-1 w-64 shrink-0 self-stretch border-r p-6"
+                class="border-border-1 hidden w-64 shrink-0 self-stretch border-r p-6 md:block"
             >
-                <div class="mb-5 flex items-center justify-between">
-                    <h2 class="text-title-1 text-text-default font-semibold">
-                        {{ t("vault.filters") }}
-                    </h2>
-                    <button
-                        v-if="hasFilter"
-                        class="text-text-muted hover:text-text-default text-xs"
-                        @click="clearFilters"
-                    >
-                        {{ t("vault.clear") }}
-                    </button>
-                </div>
-                <fieldset>
-                    <legend
-                        class="text-text-muted mb-3 text-[11px] font-semibold tracking-wide uppercase"
-                    >
-                        {{ t("vault.mediaType") }}
-                    </legend>
-                    <div class="flex flex-col gap-y-2">
-                        <div
-                            v-for="item in categoryItems"
-                            :key="item.value"
-                            class="flex w-full items-center justify-between gap-2"
-                        >
-                            <DesignCheckbox
-                                :model-value="
-                                    selectedTypes.includes(item.value)
-                                "
-                                :label="item.label"
-                                @update:model-value="
-                                    toggleType(item.value, $event)
-                                "
-                            />
-                            <span class="text-text-muted font-mono text-xs">
-                                {{ formatNumber(facetCount(item.value)) }}
-                            </span>
-                        </div>
-                    </div>
-                </fieldset>
+                <VaultFilters
+                    v-model:selected="selectedTypes"
+                    :items="categoryItems"
+                    :facets="facets"
+                    :has-filter="hasFilter"
+                    @clear="clearFilters"
+                />
             </aside>
 
             <!-- Results -->
-            <main class="min-w-0 flex-1 p-6">
-                <div
-                    v-if="loading"
-                    class="grid grid-cols-[repeat(auto-fit,minmax(400px,1fr))] gap-4"
-                >
+            <main class="min-w-0 flex-1 p-4 sm:p-6">
+                <div v-if="loading" :class="gridClass">
                     <div
                         v-for="n in 15"
                         :key="n"
@@ -195,10 +173,7 @@ const rangeTo = computed(() =>
                     </div>
                 </div>
 
-                <div
-                    v-else-if="items.length"
-                    class="grid grid-cols-[repeat(auto-fit,minmax(400px,1fr))] gap-4"
-                >
+                <div v-else-if="items.length" :class="gridClass">
                     <VaultCard
                         v-for="item in items"
                         :key="item.VXID"
@@ -228,5 +203,20 @@ const rangeTo = computed(() =>
                 </div>
             </main>
         </div>
+
+        <!-- Filters apply live through the existing `watch(selectedTypes)`, so
+             this button only dismisses — there is nothing to "apply". -->
+        <DesignSheet v-if="isPhone" v-model:open="filtersOpen">
+            <VaultFilters
+                v-model:selected="selectedTypes"
+                :items="categoryItems"
+                :facets="facets"
+                :has-filter="hasFilter"
+                @clear="clearFilters"
+            />
+            <DesignButton class="mt-4 w-full" @click="filtersOpen = false">
+                {{ t("vault.done") }}
+            </DesignButton>
+        </DesignSheet>
     </div>
 </template>

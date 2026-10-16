@@ -110,7 +110,7 @@ const clockStartMs = computed(() =>
 
 const mode = ref<"simple" | "edit">("simple");
 // Phones get the card layout, which is simple mode: the edit table doesn't fit.
-const isPhone = useMediaQuery("(max-width: 767px)");
+const isPhone = useIsPhone();
 const effectiveMode = computed(() =>
     canLive.value && !isPhone.value ? mode.value : "simple",
 );

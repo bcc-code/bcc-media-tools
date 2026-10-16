@@ -15,7 +15,7 @@ const toastIcons: Record<string, { name: string; color: string }> = {
     <Teleport to="#teleports">
         <Toaster v-slot="toast" :toaster="toaster">
             <Toast.Root
-                class="gradient-border bg-surface-raise shadow-floating pointer-events-auto w-80 rounded-xl p-4"
+                class="gradient-border bg-surface-raise shadow-floating pointer-events-auto w-[min(20rem,calc(100vw-2rem))] rounded-xl p-4"
             >
                 <div class="flex items-start justify-between gap-3">
                     <Icon

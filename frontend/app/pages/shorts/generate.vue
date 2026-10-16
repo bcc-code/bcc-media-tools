@@ -288,7 +288,7 @@ useVideoKeyboardControls({
 
 <template>
     <div
-        class="flex w-full flex-col gap-4 p-8 lg:h-[calc(100dvh-var(--header-height))] lg:overflow-hidden"
+        class="flex w-full flex-col gap-4 p-4 sm:p-8 lg:h-[calc(100dvh-var(--header-height))] lg:overflow-hidden"
     >
         <header class="mb-4 flex shrink-0 items-center justify-between">
             <div>

@@ -81,10 +81,10 @@ const lengthLabel = computed(() => {
 </script>
 
 <template>
-    <div class="px-6 pt-8 pb-16">
+    <div class="px-4 pt-6 pb-16 sm:px-6 sm:pt-8">
         <div class="mx-auto max-w-7xl">
             <!-- header -->
-            <div class="mb-6 flex items-center gap-4">
+            <div class="mb-6 flex flex-wrap items-center gap-3 sm:gap-4">
                 <DesignButton
                     icon="tabler:arrow-left"
                     variant="secondary"
@@ -94,13 +94,15 @@ const lengthLabel = computed(() => {
                     {{ t("vault.back") }}
                 </DesignButton>
                 <h1
-                    class="min-w-0 truncate font-mono text-2xl font-semibold tracking-tight"
+                    class="min-w-0 truncate font-mono text-xl font-semibold tracking-tight sm:text-2xl"
                 >
                     {{ item?.title || vxId }}
                 </h1>
             </div>
 
-            <div class="grid grid-cols-[1.4fr_1fr] items-start gap-6">
+            <div
+                class="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.4fr_1fr] lg:gap-6"
+            >
                 <!-- preview -->
                 <div
                     class="bg-surface-default border-border-1 overflow-hidden rounded-[14px] border"
@@ -150,49 +152,49 @@ const lengthLabel = computed(() => {
 
                 <!-- summary -->
                 <div
-                    class="bg-surface-raise gradient-border shadow-resting rounded-2xl p-5"
+                    class="bg-surface-raise gradient-border shadow-resting rounded-2xl p-4 sm:p-5"
                 >
                     <h3 class="mb-4 text-sm font-semibold">
                         {{ t("vault.itemSummary") }}
                     </h3>
                     <dl class="flex flex-col">
                         <div
-                            class="border-border-1 flex items-center justify-between gap-4 border-b py-3"
+                            class="border-border-1 flex flex-col gap-0.5 border-b py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
                         >
                             <dt class="text-text-muted text-[13px]">
                                 {{ t("vault.title") }}
                             </dt>
-                            <dd class="text-right text-[13px] break-all">
+                            <dd class="text-[13px] break-all sm:text-right">
                                 {{ item?.title || "—" }}
                             </dd>
                         </div>
                         <div
-                            class="border-border-1 flex items-center justify-between gap-4 border-b py-3"
+                            class="border-border-1 flex flex-col gap-0.5 border-b py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
                         >
                             <dt class="text-text-muted text-[13px]">
                                 {{ t("vault.uploadDate") }}
                             </dt>
-                            <dd class="text-right text-[13px]">
+                            <dd class="text-[13px] sm:text-right">
                                 {{ item?.added || "—" }}
                             </dd>
                         </div>
                         <div
-                            class="border-border-1 flex items-center justify-between gap-4 border-b py-3"
+                            class="border-border-1 flex flex-col gap-0.5 border-b py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
                         >
                             <dt class="text-text-muted text-[13px]">
                                 {{ t("vault.size") }}
                             </dt>
-                            <dd class="text-right font-mono text-[13px]">
+                            <dd class="font-mono text-[13px] sm:text-right">
                                 {{ item?.size || "—" }}
                             </dd>
                         </div>
                         <div
-                            class="flex items-center justify-between gap-4 py-3"
+                            class="flex flex-col gap-0.5 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
                         >
                             <dt class="text-text-muted text-[13px]">
                                 {{ t("vault.length") }}
                             </dt>
-                            <dd class="text-right font-mono text-[13px]">
+                            <dd class="font-mono text-[13px] sm:text-right">
                                 {{ lengthLabel }}
                             </dd>
                         </div>

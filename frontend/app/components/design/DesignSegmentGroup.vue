@@ -25,9 +25,12 @@ const normalized = computed<SegmentItem[]>(() =>
 </script>
 
 <template>
+    <!-- The indicator is absolutely positioned from measured CSS vars, so the
+         items genuinely cannot wrap: scroll the group instead. The indicator
+         lives inside the scroller, so its offsets stay correct. -->
     <SegmentGroup.Root
         v-model="model"
-        class="bg-surface-indent relative isolate inline-flex items-center gap-0.5 rounded-xl p-1"
+        class="bg-surface-indent scrollbar-hide relative isolate inline-flex max-w-full touch-pan-x items-center gap-0.5 overflow-x-auto rounded-xl p-1"
     >
         <SegmentGroup.Indicator
             class="gradient-border bg-surface-raise shadow-resting absolute z-0 rounded-lg"
@@ -47,7 +50,7 @@ const normalized = computed<SegmentItem[]>(() =>
             v-for="item in normalized"
             :key="item.value"
             :value="item.value"
-            class="text-title-3 text-text-muted data-[state=checked]:text-text-default relative z-1 inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 select-none"
+            class="text-title-3 text-text-muted data-[state=checked]:text-text-default relative z-1 inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 select-none"
         >
             <Icon
                 v-if="item.icon"

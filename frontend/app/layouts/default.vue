@@ -35,10 +35,10 @@ function isActive(to: string) {
     <div class="flex grow flex-col">
         <header
             ref="header"
-            class="border-border-1 bg-surface-default sticky top-0 z-10 flex items-center gap-4 border-b px-4 py-2"
+            class="border-border-1 bg-surface-default sticky top-0 z-10 flex items-center gap-2 border-b px-4 py-2 md:gap-4"
         >
-            <NuxtLink to="/" class="flex items-center">
-                <AppLogo class="h-5 w-max" />
+            <NuxtLink to="/" class="flex shrink-0 items-center">
+                <AppLogo class="h-5 w-auto shrink-0" />
             </NuxtLink>
             <div class="flex md:hidden">
                 <DesignMenu
@@ -67,7 +67,7 @@ function isActive(to: string) {
                 </NuxtLink>
             </nav>
             <ThemeSwitch class="ml-auto" />
-            <LanguageSwitcher />
+            <LanguageSwitcher class="min-w-0" />
         </header>
         <main class="grow">
             <slot />

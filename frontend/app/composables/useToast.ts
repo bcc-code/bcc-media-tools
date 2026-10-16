@@ -9,6 +9,13 @@ export const useToast = () => {
             overlap: false,
             gap: 12,
             duration: 5000,
+            // Keep toasts clear of the home indicator on notched phones.
+            offsets: {
+                left: "1rem",
+                right: "1rem",
+                top: "1rem",
+                bottom: "max(1rem, env(safe-area-inset-bottom))",
+            },
         }),
     ).value;
 };

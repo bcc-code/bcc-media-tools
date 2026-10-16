@@ -66,9 +66,9 @@ const { data: exportDestinations } = useAsyncData(
 </script>
 
 <template>
-    <div class="flex h-screen w-screen" v-if="isAdmin">
-        <div class="mx-auto w-full max-w-3xl p-8">
-            <div class="flex items-center justify-between gap-2">
+    <div class="flex w-full" v-if="isAdmin">
+        <div class="mx-auto w-full max-w-3xl p-4 sm:p-8">
+            <div class="flex flex-wrap items-center justify-between gap-2">
                 <h2 class="text-heading-3 text-text-default">Admin</h2>
                 <DesignButton @click="showNewEmailForm = true">
                     Add new email
@@ -94,7 +94,7 @@ const { data: exportDestinations } = useAsyncData(
             >
                 <form
                     v-if="showNewEmailForm"
-                    class="border-border-1 flex items-center gap-2 rounded-2xl border-2 border-dashed p-4"
+                    class="border-border-1 flex flex-wrap items-center gap-2 rounded-2xl border-2 border-dashed p-4"
                     @submit.prevent="addEmail"
                 >
                     <DesignInput
@@ -124,7 +124,7 @@ const { data: exportDestinations } = useAsyncData(
     </div>
     <div
         v-else
-        class="flex h-screen w-screen flex-col items-center justify-center gap-4"
+        class="flex h-[calc(100dvh-var(--header-height))] w-full flex-col items-center justify-center gap-4 p-4"
     >
         <h1 class="text-heading-3 text-text-default">You are not an admin</h1>
         <NuxtLink to="/">

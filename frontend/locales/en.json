@@ -429,6 +429,7 @@
         "searchPlaceholder": "Search the vault",
         "filters": "Filters",
         "clear": "Clear",
+        "done": "Done",
         "mediaType": "Media type",
         "results": "Search",
         "resultsRange": "Results: {from} to {to} of {total}",
