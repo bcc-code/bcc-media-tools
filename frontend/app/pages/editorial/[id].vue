@@ -488,14 +488,6 @@ async function persistDetails(row: Row, before = detailsBefore.get(row.key)) {
     }
 }
 
-// DesignSelect's value can be a list (multi-select); this one is single.
-function setType(row: Row, value: string | string[]) {
-    const type = Array.isArray(value) ? (value[0] ?? "") : value;
-    const before = snapshot(row);
-    row.type = type;
-    void persistDetails(row, before);
-}
-
 function onMobileTitle(key: string, name: string) {
     const row = rowByKey(key);
     if (!row) return;
@@ -1485,7 +1477,11 @@ onBeforeRouteLeave(() => {
         <p class="text-body-2 text-text-muted">{{ t("noPermissions") }}</p>
     </div>
 
-    <div v-else class="mx-auto w-full max-w-[1700px] px-4 py-6">
+    <div
+        v-else
+        class="mx-auto w-full max-w-[1700px] px-4 py-6"
+        :class="effectiveMode === 'simple' ? 'large-type' : ''"
+    >
         <NuxtLink
             to="/editorial/"
             class="text-caption-1 text-text-hint hover:text-text-default mb-4 inline-flex items-center gap-1"
@@ -1897,11 +1893,13 @@ onBeforeRouteLeave(() => {
                                         {{ t("editorial.col.bibleVerses") }}
                                     </th>
                                     <th
+                                        v-if="effectiveMode === 'edit'"
                                         class="border-border-1 border-b px-2 py-2 font-normal"
                                     >
                                         {{ t("editorial.col.duration") }}
                                     </th>
                                     <th
+                                        v-if="effectiveMode === 'edit'"
                                         class="border-border-1 border-b px-2 py-2 font-normal"
                                     >
                                         {{ t("editorial.col.type") }}
@@ -2050,33 +2048,19 @@ onBeforeRouteLeave(() => {
                                         </span>
                                     </td>
                                     <td
+                                        v-if="effectiveMode === 'edit'"
                                         class="text-body-3 text-text-muted px-2 py-2 tabular-nums"
                                     >
                                         {{ durationOf(row, i) }}
                                     </td>
-                                    <td class="px-2 py-2">
+                                    <td
+                                        v-if="effectiveMode === 'edit'"
+                                        class="px-2 py-2"
+                                    >
                                         <DesignSelect
-                                            v-if="effectiveMode === 'edit'"
                                             v-model="row.type"
                                             :items="typeItems"
                                         />
-                                        <DesignSelect
-                                            v-else-if="canEditDetails"
-                                            :model-value="row.type"
-                                            :items="typeItems"
-                                            @update:model-value="
-                                                setType(row, $event)
-                                            "
-                                        />
-                                        <DesignBadge v-else-if="row.type">
-                                            {{ typeLabel(row.type) }}
-                                        </DesignBadge>
-                                        <span
-                                            v-else
-                                            class="text-body-3 text-text-hint"
-                                        >
-                                            —
-                                        </span>
                                     </td>
                                     <td
                                         v-if="
@@ -2499,3 +2483,33 @@ onBeforeRouteLeave(() => {
         </div>
     </DesignDialog>
 </template>
+
+<!--
+    The simple view is the one the editorial reviewers sit with for hours, and
+    several of them read it with tired eyes. Overriding the design system's
+    type-scale tokens on this subtree lifts every size at once — including the
+    text inside Design* components, which hard-code the token classes — instead
+    of rewriting a class on each of the hundred-odd elements below. Edit mode
+    keeps the Figma scale: it is a power-user view and needs the density.
+-->
+<style scoped>
+.large-type {
+    --text-heading-2: 36px;
+    --text-heading-3: 25px;
+
+    --text-title-1: 22px;
+    --text-title-2: 20px;
+    --text-title-3: 18px;
+
+    --text-body-1: 21px;
+    --text-body-2: 19px;
+    --text-body-2--line-height: 1.35;
+    --text-body-3: 17px;
+    --text-body-3--line-height: 1.35;
+
+    --text-caption-1: 14px;
+    --text-caption-1--line-height: 1.4;
+    --text-caption-2: 13px;
+    --text-caption-2--line-height: 1.4;
+}
+</style>
