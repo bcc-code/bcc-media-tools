@@ -375,6 +375,15 @@ async function onPublishToggle(
     }
 }
 
+// What rides under the title in simple view. Mirrors the phone card's subline:
+// the contributor only when the title is not already standing in for it (an
+// untitled row shows the name as the field's placeholder), then the reference.
+function metaLine(row: Row): string {
+    return [row.name ? row.contributors : "", row.bibleVerses]
+        .filter(Boolean)
+        .join(" · ");
+}
+
 // ── Row title/name (editable in both views, edit rights required) ──
 const nameBeforeEdit = ref("");
 
@@ -1877,7 +1886,7 @@ onBeforeRouteLeave(() => {
                                         class="border-border-1 border-b py-2 pr-2 pl-3 font-normal"
                                         :class="
                                             effectiveMode === 'simple'
-                                                ? 'w-[34%]'
+                                                ? 'w-[42%]'
                                                 : ''
                                         "
                                     >
@@ -1890,6 +1899,7 @@ onBeforeRouteLeave(() => {
                                         {{ t("editorial.col.contributors") }}
                                     </th>
                                     <th
+                                        v-if="effectiveMode === 'edit'"
                                         class="border-border-1 border-b px-2 py-2 font-normal"
                                     >
                                         {{ t("editorial.col.bibleVerses") }}
@@ -1954,6 +1964,17 @@ onBeforeRouteLeave(() => {
                                         i === dragIndex ? 'opacity-40' : '',
                                         dragOverIndex === i && dragIndex !== i
                                             ? '[&>td]:border-t-primary-default [&>td]:border-t'
+                                            : '',
+                                        // The title cell is the tall one once
+                                        // Medvirkende rides under it, and
+                                        // centring the rest against the whole
+                                        // stack drops them below the title.
+                                        // Topped out they line up with its
+                                        // first line: the cells share py-2, so
+                                        // the switches and the play button land
+                                        // within a pixel or two of it.
+                                        effectiveMode === 'simple'
+                                            ? '[&>td]:align-top'
                                             : '',
                                     ]"
                                     @dragover.prevent="onDragOver(i)"
@@ -2033,23 +2054,22 @@ onBeforeRouteLeave(() => {
                                             @change="persistName(row)"
                                         />
                                         <!--
-                                            Medvirkende rides under the title
-                                            rather than taking a column of its
-                                            own — but only when the row has a
-                                            title too, since otherwise the
-                                            placeholder above is already showing
-                                            it. Read-only here; contributors are
+                                            Medvirkende and Bibelvers ride under
+                                            the title rather than taking columns
+                                            of their own: both are empty on most
+                                            rows, and a column that is blank
+                                            most of the way down just holds the
+                                            row apart. Read-only here; both are
                                             set in Edit mode.
                                         -->
                                         <p
                                             v-if="
                                                 effectiveMode === 'simple' &&
-                                                row.name &&
-                                                row.contributors
+                                                metaLine(row)
                                             "
                                             class="text-body-3 text-text-muted mt-1 px-3"
                                         >
-                                            {{ row.contributors }}
+                                            {{ metaLine(row) }}
                                         </p>
                                     </td>
                                     <td
@@ -2067,12 +2087,6 @@ onBeforeRouteLeave(() => {
                                         <DesignInput
                                             v-model="row.bibleVerses"
                                         />
-                                    </td>
-                                    <td
-                                        v-else
-                                        class="text-body-3 text-text-default px-2 py-2 tabular-nums"
-                                    >
-                                        {{ row.bibleVerses }}
                                     </td>
                                     <td
                                         v-if="effectiveMode === 'edit'"
