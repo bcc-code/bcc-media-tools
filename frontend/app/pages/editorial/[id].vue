@@ -2046,6 +2046,7 @@ onBeforeRouteLeave(() => {
                                             v-else
                                             v-model="row.name"
                                             :placeholder="row.contributors"
+                                            placeholder-is-value
                                             :aria-label="
                                                 t('editorial.col.title')
                                             "
@@ -2135,14 +2136,17 @@ onBeforeRouteLeave(() => {
                                             reviewer writes, and the notes run
                                             longer than the column — so in
                                             simple view it wraps rather than
-                                            scrolling out of sight.
+                                            scrolling out of sight. No
+                                            placeholder: the column header
+                                            already says Kommentar, and
+                                            repeating it down every row of the
+                                            table only adds noise. The phone
+                                            cards keep theirs — a card has no
+                                            header to label the field.
                                         -->
                                         <EditorialGrowingTextarea
                                             v-else
                                             v-model="row.comment"
-                                            :placeholder="
-                                                t('editorial.addComment')
-                                            "
                                             :aria-label="
                                                 t('editorial.col.comment')
                                             "

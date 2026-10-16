@@ -13,6 +13,11 @@
 // a table row. Text that already holds newlines still renders them.
 defineProps<{
     placeholder?: string;
+    // A title's placeholder stands in for the row's name when it has no title
+    // of its own, so it is real content and carries the weight of it. An
+    // ordinary hint ("Legg til en kommentar...") stays dim, or it reads as
+    // something already written.
+    placeholderIsValue?: boolean;
     ariaLabel?: string;
 }>();
 
@@ -26,7 +31,12 @@ const model = defineModel<string>({ required: true });
             rows="1"
             :placeholder="placeholder"
             :aria-label="ariaLabel"
-            class="border-border-1 text-body-3 text-text-default placeholder:text-text-muted ds-focus-ring col-start-1 row-start-1 w-full resize-none overflow-hidden rounded-xl border px-3 py-2"
+            class="border-border-1 text-body-3 text-text-default ds-focus-ring col-start-1 row-start-1 w-full resize-none overflow-hidden rounded-xl border px-3 py-2"
+            :class="
+                placeholderIsValue
+                    ? 'placeholder:text-text-muted'
+                    : 'placeholder:text-text-hint'
+            "
             @keydown.enter.prevent="
                 ($event.target as HTMLTextAreaElement).blur()
             "
