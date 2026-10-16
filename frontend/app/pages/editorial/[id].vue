@@ -388,15 +388,6 @@ async function onPublishToggle(
     }
 }
 
-// What rides under the title in simple view. Mirrors the phone card's subline:
-// the contributor only when the title is not already standing in for it (an
-// untitled row shows the name as the field's placeholder), then the reference.
-function metaLine(row: Row): string {
-    return [row.name ? row.contributors : "", row.bibleVerses]
-        .filter(Boolean)
-        .join(" · ");
-}
-
 // ── Row title/name (editable in both views, edit rights required) ──
 const nameBeforeEdit = ref("");
 
@@ -2103,15 +2094,37 @@ onBeforeRouteLeave(() => {
                                             most of the way down just holds the
                                             row apart. Read-only here; both are
                                             set in Edit mode.
+
+                                            A line each, rather than joined: a
+                                            talk can carry ten references, and
+                                            run together the name was just the
+                                            start of a long muted run. The name
+                                            also takes the heavier weight — it
+                                            is who the row is, and the reviewer
+                                            scans for it.
+
+                                            The name is skipped where the title
+                                            field is already standing it in as
+                                            its placeholder.
                                         -->
                                         <p
                                             v-if="
                                                 effectiveMode === 'simple' &&
-                                                metaLine(row)
+                                                row.name &&
+                                                row.contributors
                                             "
-                                            class="text-body-3 text-text-muted mt-1 px-3"
+                                            class="text-body-3 text-text-muted mt-1 px-3 font-medium"
                                         >
-                                            {{ metaLine(row) }}
+                                            {{ row.contributors }}
+                                        </p>
+                                        <p
+                                            v-if="
+                                                effectiveMode === 'simple' &&
+                                                row.bibleVerses
+                                            "
+                                            class="text-body-3 text-text-muted mt-0.5 px-3 tabular-nums"
+                                        >
+                                            {{ row.bibleVerses }}
                                         </p>
                                     </td>
                                     <td
