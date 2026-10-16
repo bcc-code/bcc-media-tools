@@ -318,7 +318,10 @@
             "publishBmm": "BMM",
             "publishBcc": "BCC Media",
             "time": "Time",
-            "from": "From"
+            "from": "From",
+            "inOut": "In – out",
+            "in": "In",
+            "out": "Out"
         },
         "types": {
             "vitnesbyrd": "Testimony",
@@ -418,7 +421,9 @@
         "chaptersSaved": "Saved {n} chapter(s) to Mediabanken",
         "chaptersReplaced": "Replaced {n} from before.",
         "chaptersSkipped": "{n} marker(s) without a length were left out.",
-        "chaptersFailed": "Could not save chapters"
+        "chaptersFailed": "Could not save chapters",
+        "inOutKeys": "Keys I and O set the selected row's in and out to the video's position. A row's out stays the next row's in.",
+        "inOutKeysLive": "Key I sets the selected row's time to now."
     },
     "vault": {
         "searchPlaceholder": "Search the vault",

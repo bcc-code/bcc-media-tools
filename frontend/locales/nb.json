@@ -318,7 +318,10 @@
             "publishBmm": "BMM",
             "publishBcc": "BCC Media",
             "time": "Tid",
-            "from": "Fra"
+            "from": "Fra",
+            "inOut": "Inn – ut",
+            "in": "Inn",
+            "out": "Ut"
         },
         "types": {
             "vitnesbyrd": "Vitnesbyrd",
@@ -418,7 +421,9 @@
         "chaptersSaved": "Lagret {n} kapittel/kapitler i Mediabanken",
         "chaptersReplaced": "Erstattet {n} fra før.",
         "chaptersSkipped": "{n} markør(er) uten lengde ble utelatt.",
-        "chaptersFailed": "Kunne ikke lagre kapitler"
+        "chaptersFailed": "Kunne ikke lagre kapitler",
+        "inOutKeys": "Tastene I og O setter inn- og utpunkt for valgt rad til videoens posisjon. Utpunktet følger neste rads innpunkt.",
+        "inOutKeysLive": "Tasten I setter tiden for valgt rad til nå."
     },
     "vault": {
         "searchPlaceholder": "Søk i vault",

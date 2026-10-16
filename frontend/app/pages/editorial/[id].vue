@@ -132,13 +132,22 @@ const modeModel = computed<string>({
 const dirty = ref(false);
 let hydrated = false;
 
-function formatMs(ms: number): string {
-    const total = Math.max(0, Math.floor(ms / 1000));
+// "HH:MM:SS", or "HH:MM:SS.mmm" with withMs (the edit view edits to the
+// millisecond).
+function formatMs(ms: number, withMs = false): string {
+    const clamped = Math.max(0, Math.round(ms));
+    const total = Math.floor(clamped / 1000);
     const h = Math.floor(total / 3600);
     const m = Math.floor((total % 3600) / 60);
     const s = total % 60;
     const pad = (n: number) => String(n).padStart(2, "0");
-    return `${pad(h)}:${pad(m)}:${pad(s)}`;
+    const out = `${pad(h)}:${pad(m)}:${pad(s)}`;
+    return withMs ? `${out}.${String(clamped % 1000).padStart(3, "0")}` : out;
+}
+
+// A displayed time without its milliseconds, for the read-only views.
+function withoutMs(text: string): string {
+    return text.replace(/\.\d+$/, "");
 }
 
 const dateTimeFormatter = new Intl.DateTimeFormat("en-GB", {
@@ -160,9 +169,13 @@ const osloClock = new Intl.DateTimeFormat("en-GB", {
 });
 
 // Live rows show the time of day; recording rows show the offset.
+// Rows keep their times as text to the millisecond; read-only views drop
+// the milliseconds with withoutMs.
 function displayMs(ms: number): string {
-    if (!isLive.value) return formatMs(ms);
-    return osloClock.format(new Date(clockStartMs.value + ms));
+    if (!isLive.value) return formatMs(ms, true);
+    const at = clockStartMs.value + ms;
+    const millis = String(((at % 1000) + 1000) % 1000).padStart(3, "0");
+    return `${osloClock.format(new Date(at))}.${millis}`;
 }
 
 // Inverse of displayMs. A live time of day is read as the moment on or after
@@ -230,9 +243,15 @@ function durationOf(row: Row, i: number): string {
         // A live row runs until the next one; the last is still running.
         const next = rows.value[i + 1];
         if (!next) return t("editorial.running");
-        return formatMs(startMsOf(next) - startMsOf(row));
+        return formatMs(
+            startMsOf(next) - startMsOf(row),
+            effectiveMode.value === "edit",
+        );
     }
-    return formatMs(endMsOf(row) - startMsOf(row));
+    return formatMs(
+        endMsOf(row) - startMsOf(row),
+        effectiveMode.value === "edit",
+    );
 }
 
 // Where a live row's details came from, for the "From" column.
@@ -247,6 +266,7 @@ const previewUrl = ref<string>();
 const videoEl = useTemplateRef<HTMLVideoElement>("videoEl");
 
 function preview(row: Row) {
+    currentRowKey.value = row.key;
     const el = videoEl.value;
     if (!el) return;
     el.currentTime = startMsOf(row) / 1000;
@@ -425,7 +445,7 @@ const commentBeforeEdit = ref("");
 const mobileMarkers = computed<MobileMarker[]>(() => {
     const items = rows.value.map((r, i) => ({
         key: r.key,
-        time: r.start,
+        time: withoutMs(r.start),
         duration: durationOf(r, i),
         type: r.type,
         typeLabel: r.type ? typeLabel(r.type) : "",
@@ -959,7 +979,8 @@ async function markNow() {
 }
 
 function onKeydown(e: KeyboardEvent) {
-    if (e.key !== "m" && e.key !== "M") return;
+    const key = e.key.toLowerCase();
+    if (!["m", "i", "o"].includes(key)) return;
     if (e.metaKey || e.ctrlKey || e.altKey || e.repeat) return;
     const el = e.target as HTMLElement | null;
     if (
@@ -968,8 +989,51 @@ function onKeydown(e: KeyboardEvent) {
             ["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName))
     )
         return;
-    e.preventDefault();
-    void markNow();
+    if (key === "m") {
+        e.preventDefault();
+        void markNow();
+        return;
+    }
+    if (effectiveMode.value !== "edit") return;
+    if (setFromPlayhead(key === "i" ? "start" : "end")) e.preventDefault();
+}
+
+// ── In/out from the playhead (edit view) ──────────────────
+// I and O set the current row's in and out to where the video is (a live
+// session has no video: now). The row is the one last clicked into or
+// previewed, else the one playing. Each row's out stays the next row's in.
+const currentRowKey = ref<string>();
+const currentIndex = computed(() => {
+    const i = rows.value.findIndex((r) => r.key === currentRowKey.value);
+    return i >= 0 ? i : activeIndex.value;
+});
+
+function playheadMs(): number | undefined {
+    if (isLive.value) return Date.now() - clockStartMs.value;
+    const el = videoEl.value;
+    return el ? Math.round(el.currentTime * 1000) : undefined;
+}
+
+function setFromPlayhead(field: "start" | "end"): boolean {
+    const i = currentIndex.value;
+    const row = rows.value[i];
+    const ms = playheadMs();
+    if (!row || ms === undefined) return false;
+    // A live row ends where the next starts: only its in can be set.
+    if (isLive.value && field === "end") return false;
+    row[field] = displayMs(ms);
+    linkNeighbour(i, field);
+    return true;
+}
+
+// After a row's in or out changes, the neighbour's out or in follows.
+function linkNeighbour(i: number, field: "start" | "end") {
+    const row = rows.value[i];
+    if (!row || isLive.value) return;
+    const neighbour = rows.value[field === "start" ? i - 1 : i + 1];
+    if (!neighbour) return;
+    if (field === "start") neighbour.end = row.start;
+    else neighbour.start = row.end;
 }
 
 // Playout is re-read every two minutes while the session is open. Paused
@@ -2015,39 +2079,33 @@ onBeforeRouteLeave(() => {
                                                 : ''
                                         "
                                     >
-                                        {{ t("editorial.col.title") }}
+                                        <template
+                                            v-if="effectiveMode === 'edit'"
+                                        >
+                                            {{ t("editorial.col.title") }} /
+                                            {{
+                                                t("editorial.col.contributors")
+                                            }}
+                                        </template>
+                                        <template v-else>
+                                            {{ t("editorial.col.title") }}
+                                        </template>
                                     </th>
                                     <th
                                         v-if="effectiveMode === 'edit'"
                                         class="border-border-1 border-b px-2 py-2 font-normal"
                                     >
-                                        {{ t("editorial.col.contributors") }}
-                                    </th>
-                                    <th
-                                        v-if="effectiveMode === 'edit'"
-                                        class="border-border-1 border-b px-2 py-2 font-normal"
-                                    >
+                                        {{ t("editorial.col.type") }} /
                                         {{ t("editorial.col.bibleVerses") }}
                                     </th>
                                     <th
                                         v-if="effectiveMode === 'edit'"
                                         class="border-border-1 border-b px-2 py-2 font-normal"
                                     >
+                                        <template v-if="!isLive">
+                                            {{ t("editorial.col.inOut") }} /
+                                        </template>
                                         {{ t("editorial.col.duration") }}
-                                    </th>
-                                    <th
-                                        v-if="effectiveMode === 'edit'"
-                                        class="border-border-1 border-b px-2 py-2 font-normal"
-                                    >
-                                        {{ t("editorial.col.type") }}
-                                    </th>
-                                    <th
-                                        v-if="
-                                            effectiveMode === 'edit' && !isLive
-                                        "
-                                        class="border-border-1 border-b px-2 py-2 font-normal"
-                                    >
-                                        {{ t("editorial.col.start") }}
                                     </th>
                                     <th
                                         class="border-border-1 border-b px-2 py-2 font-normal"
@@ -2087,6 +2145,12 @@ onBeforeRouteLeave(() => {
                                             ? 'bg-primary-default/10'
                                             : '',
                                         i === dragIndex ? 'opacity-40' : '',
+                                        // the row I and O set
+                                        effectiveMode === 'edit' &&
+                                        i === currentIndex &&
+                                        i !== activeIndex
+                                            ? 'bg-surface-indent'
+                                            : '',
                                         dragOverIndex === i && dragIndex !== i
                                             ? '[&>td]:border-t-primary-default [&>td]:border-t'
                                             : '',
@@ -2102,6 +2166,7 @@ onBeforeRouteLeave(() => {
                                             ? '[&>td]:align-top'
                                             : '',
                                     ]"
+                                    @focusin="currentRowKey = row.key"
                                     @dragover.prevent="onDragOver(i)"
                                     @drop.prevent="onDrop(i)"
                                     @dragend="onDragEnd"
@@ -2137,7 +2202,7 @@ onBeforeRouteLeave(() => {
                                             v-else
                                             class="text-body-3 text-text-default tabular-nums"
                                         >
-                                            {{ row.start }}
+                                            {{ withoutMs(row.start) }}
                                         </span>
                                     </td>
                                     <td v-else class="py-2 pl-2">
@@ -2151,12 +2216,29 @@ onBeforeRouteLeave(() => {
                                         />
                                     </td>
                                     <td class="py-2 pr-2 pl-3">
-                                        <DesignInput
+                                        <div
                                             v-if="effectiveMode === 'edit'"
-                                            v-model="row.name"
-                                            @focusin="nameBeforeEdit = row.name"
-                                            @change="persistName(row)"
-                                        />
+                                            class="flex min-w-56 flex-col gap-1.5"
+                                        >
+                                            <DesignInput
+                                                v-model="row.name"
+                                                :placeholder="
+                                                    t('editorial.col.title')
+                                                "
+                                                @focusin="
+                                                    nameBeforeEdit = row.name
+                                                "
+                                                @change="persistName(row)"
+                                            />
+                                            <DesignInput
+                                                v-model="row.contributors"
+                                                :placeholder="
+                                                    t(
+                                                        'editorial.col.contributors',
+                                                    )
+                                                "
+                                            />
+                                        </div>
                                         <!--
                                             Simple view wraps the title instead
                                             of truncating it, and stands the
@@ -2233,45 +2315,64 @@ onBeforeRouteLeave(() => {
                                         v-if="effectiveMode === 'edit'"
                                         class="px-2 py-2"
                                     >
-                                        <DesignInput
-                                            v-model="row.contributors"
-                                        />
+                                        <div
+                                            class="flex min-w-44 flex-col gap-1.5"
+                                        >
+                                            <DesignSelect
+                                                v-model="row.type"
+                                                :items="typeItems"
+                                            />
+                                            <DesignInput
+                                                v-model="row.bibleVerses"
+                                                :placeholder="
+                                                    t(
+                                                        'editorial.col.bibleVerses',
+                                                    )
+                                                "
+                                            />
+                                        </div>
                                     </td>
                                     <td
                                         v-if="effectiveMode === 'edit'"
                                         class="px-2 py-2"
                                     >
-                                        <DesignInput
-                                            v-model="row.bibleVerses"
-                                        />
-                                    </td>
-                                    <td
-                                        v-if="effectiveMode === 'edit'"
-                                        class="text-body-3 text-text-muted px-2 py-2 tabular-nums"
-                                    >
-                                        {{ durationOf(row, i) }}
-                                    </td>
-                                    <td
-                                        v-if="effectiveMode === 'edit'"
-                                        class="px-2 py-2"
-                                    >
-                                        <DesignSelect
-                                            v-model="row.type"
-                                            :items="typeItems"
-                                        />
-                                    </td>
-                                    <td
-                                        v-if="
-                                            effectiveMode === 'edit' && !isLive
-                                        "
-                                        class="px-2 py-2"
-                                    >
-                                        <div class="flex items-center gap-1">
-                                            <DesignInput v-model="row.start" />
-                                            <span class="text-text-hint"
-                                                >–</span
+                                        <div class="flex flex-col gap-1.5">
+                                            <div
+                                                v-if="!isLive"
+                                                class="flex items-center gap-1"
                                             >
-                                            <DesignInput v-model="row.end" />
+                                                <DesignInput
+                                                    v-model="row.start"
+                                                    class="w-36 tabular-nums"
+                                                    :placeholder="
+                                                        t('editorial.col.in')
+                                                    "
+                                                    @change="
+                                                        linkNeighbour(
+                                                            i,
+                                                            'start',
+                                                        )
+                                                    "
+                                                />
+                                                <span class="text-text-hint"
+                                                    >–</span
+                                                >
+                                                <DesignInput
+                                                    v-model="row.end"
+                                                    class="w-36 tabular-nums"
+                                                    :placeholder="
+                                                        t('editorial.col.out')
+                                                    "
+                                                    @change="
+                                                        linkNeighbour(i, 'end')
+                                                    "
+                                                />
+                                            </div>
+                                            <span
+                                                class="text-body-3 text-text-muted px-1 tabular-nums"
+                                            >
+                                                {{ durationOf(row, i) }}
+                                            </span>
                                         </div>
                                     </td>
                                     <td
@@ -2404,6 +2505,16 @@ onBeforeRouteLeave(() => {
                     >
                         {{ t("editorial.addRow") }}
                     </DesignButton>
+                    <p
+                        v-if="effectiveMode === 'edit' && rows.length"
+                        class="text-caption-1 text-text-hint mt-2"
+                    >
+                        {{
+                            isLive
+                                ? t("editorial.inOutKeysLive")
+                                : t("editorial.inOutKeys")
+                        }}
+                    </p>
                 </div>
                 <div v-if="hasPreview">
                     <div
@@ -2467,7 +2578,7 @@ onBeforeRouteLeave(() => {
                                 <span
                                     class="text-caption-1 text-text-muted tabular-nums"
                                 >
-                                    {{ activeMarker.end }}
+                                    {{ withoutMs(activeMarker.end) }}
                                 </span>
                             </div>
                         </div>
