@@ -1198,6 +1198,84 @@ async function attachRecording() {
 }
 const deleteOpen = ref(false);
 
+// ── Session details (admin) ───────────────────────────────
+// Title, asset and, for a live session, its start and Playout event. Moving a
+// live session's start keeps its markers at the moment they were made.
+const detailsOpen = ref(false);
+const detailsTitle = ref("");
+const detailsVxid = ref("");
+const detailsEventId = ref("");
+const detailsStartDate = ref("");
+const detailsStartTime = ref("");
+const savingDetails = ref(false);
+const detailsEvents = ref<PlayoutEvent[]>([]);
+const loadingDetailsEvents = ref(false);
+
+// The inputs only hold minutes: an untouched start sends the exact original.
+const detailsStart = computed(() => {
+    const original = session.value?.clockStart;
+    if (
+        original &&
+        detailsStartDate.value === osloDateInput(timestampDate(original)) &&
+        detailsStartTime.value === osloTimeInput(timestampDate(original))
+    )
+        return original;
+    const d = osloToDate(detailsStartDate.value, detailsStartTime.value);
+    return d ? timestampFromDate(d) : undefined;
+});
+const canSaveDetails = computed(() =>
+    isLive.value
+        ? !!detailsStart.value && !!detailsEventId.value
+        : !!detailsVxid.value.trim(),
+);
+
+async function openDetails() {
+    const s = session.value;
+    if (!s) return;
+    detailsTitle.value = s.title;
+    detailsVxid.value = s.VXID;
+    detailsEventId.value = s.playoutEventId;
+    const start = s.clockStart ? timestampDate(s.clockStart) : new Date();
+    detailsStartDate.value = osloDateInput(start);
+    detailsStartTime.value = osloTimeInput(start);
+    detailsOpen.value = true;
+    if (!isLive.value || detailsEvents.value.length) return;
+    loadingDetailsEvents.value = true;
+    try {
+        detailsEvents.value = (await api.listPlayoutEvents({})).events;
+    } catch {
+        toaster.create({ title: t("editorial.importFailed"), type: "error" });
+    } finally {
+        loadingDetailsEvents.value = false;
+    }
+}
+
+async function saveDetails() {
+    if (!canSaveDetails.value || savingDetails.value) return;
+    savingDetails.value = true;
+    try {
+        const s = await api.updateEditorialSessionInfo({
+            id: sessionId.value,
+            title: detailsTitle.value.trim(),
+            VXID: detailsVxid.value.trim(),
+            playoutEventId: detailsEventId.value,
+            clockStart: isLive.value ? detailsStart.value : undefined,
+        });
+        previewUrl.value = previewSrc(s.previewUrl);
+        await applyServerSession(s);
+        detailsOpen.value = false;
+        toaster.create({ title: t("editorial.saved"), type: "success" });
+    } catch (e) {
+        toaster.create({
+            title: t("editorial.saveFailed"),
+            description: e instanceof ConnectError ? e.rawMessage : undefined,
+            type: "error",
+        });
+    } finally {
+        savingDetails.value = false;
+    }
+}
+
 // ── Import merge ──────────────────────────────────────────
 // A second import is usually a retry after correcting the window, so appending
 // would double the table. Ask, but only when there's something to replace.
@@ -1391,6 +1469,13 @@ const menuItems = computed(() => [
     ...(perms.isEditorialAdmin.value
         ? [
               {
+                  value: "details",
+                  label: t("editorial.editDetails"),
+                  icon: "tabler:pencil",
+                  // Saving reloads the session, which would drop unsaved edits.
+                  disabled: mutationInProgress.value || dirty.value,
+              },
+              {
                   value: "delete",
                   label: t("editorial.delete"),
                   icon: "tabler:trash",
@@ -1401,6 +1486,7 @@ const menuItems = computed(() => [
 ]);
 function onMenuSelect(value: string) {
     if (value === "delete") deleteOpen.value = true;
+    else if (value === "details") void openDetails();
     else if (value === "import") void importMarkers();
     else if (value === "import-playout") void openPlayoutPicker();
     else if (value === "attach") openAttach();
@@ -2643,6 +2729,76 @@ onBeforeRouteLeave(() => {
                 </DesignButton>
             </div>
         </div>
+    </DesignDialog>
+
+    <DesignDialog
+        v-model:open="detailsOpen"
+        :title="t('editorial.editDetails')"
+        :size="isLive ? 'lg' : undefined"
+    >
+        <template #default="{ initialFocus }">
+            <form class="flex flex-col gap-4" @submit.prevent="saveDetails">
+                <DesignInput
+                    :ref="initialFocus"
+                    v-model="detailsTitle"
+                    :label="t('editorial.titleLabel')"
+                />
+                <DesignInput
+                    v-if="!isLive"
+                    v-model="detailsVxid"
+                    :label="t('editorial.vxidLabel')"
+                    placeholder="VX-123456"
+                />
+                <template v-else>
+                    <div class="flex flex-wrap gap-3">
+                        <DesignInput
+                            v-model="detailsStartDate"
+                            type="date"
+                            :label="t('editorial.meetingDate')"
+                            class="min-w-40 grow"
+                        />
+                        <DesignInput
+                            v-model="detailsStartTime"
+                            placeholder="HH:MM"
+                            :invalid="
+                                !!detailsStartTime &&
+                                !isClockTime(detailsStartTime)
+                            "
+                            :label="t('editorial.meetingStart')"
+                            class="min-w-28 grow"
+                        />
+                    </div>
+                    <p class="text-caption-1 text-text-hint">
+                        {{ t("editorial.editStartHint") }}
+                    </p>
+                    <p class="text-caption-1 text-text-muted">
+                        {{ t("editorial.playoutEventLabel") }}
+                    </p>
+                    <EditorialPlayoutEventList
+                        :events="detailsEvents"
+                        :loading="loadingDetailsEvents"
+                        :selected-id="detailsEventId"
+                        @select="detailsEventId = $event.id"
+                    />
+                </template>
+                <div class="flex justify-end gap-2">
+                    <DesignButton
+                        variant="secondary"
+                        type="button"
+                        @click="detailsOpen = false"
+                    >
+                        {{ t("editorial.cancel") }}
+                    </DesignButton>
+                    <DesignButton
+                        type="submit"
+                        :loading="savingDetails"
+                        :disabled="!canSaveDetails"
+                    >
+                        {{ t("editorial.save") }}
+                    </DesignButton>
+                </div>
+            </form>
+        </template>
     </DesignDialog>
 
     <DesignDialog

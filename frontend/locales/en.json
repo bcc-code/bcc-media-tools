@@ -295,6 +295,8 @@
         "saving": "Saving…",
         "saved": "Saved",
         "saveFailed": "Could not save",
+        "editDetails": "Edit details",
+        "editStartHint": "Markers stay at the time they were made.",
         "delete": "Delete review",
         "deleteConfirmTitle": "Delete this review?",
         "deleteConfirmMessage": "This permanently removes the review and all its markers.",

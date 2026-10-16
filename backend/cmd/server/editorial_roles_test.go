@@ -124,6 +124,10 @@ func TestEditorialRoleAccess(t *testing.T) {
 			_, err := api.ImportEditorialMarkersFromPlayout(ctx, connect.NewRequest(&apiv1.ImportEditorialMarkersFromPlayoutRequest{}))
 			return err
 		}},
+		"session details": {apiv1.EditorialAdmin, func() error {
+			_, err := api.UpdateEditorialSessionInfo(ctx, connect.NewRequest(&apiv1.UpdateEditorialSessionInfoRequest{Id: "missing"}))
+			return err
+		}},
 		"delete session": {apiv1.EditorialAdmin, func() error {
 			// Run last for the admin (map order is random): a missing id keeps
 			// the session for the other calls.

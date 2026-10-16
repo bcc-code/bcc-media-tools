@@ -248,7 +248,7 @@ func (e EditorialAPI) AttachEditorialRecording(ctx context.Context, req *connect
 		return nil, editorialErr(err)
 	}
 	if vxID != "" {
-		out.PreviewUrl = editorialPreviewPath(out.Id)
+		out.PreviewUrl = editorialPreviewPath(out.Id, out.VXID)
 	}
 	return connect.NewResponse(out), nil
 }

@@ -247,6 +247,42 @@ func TestEditorialLiveSessionGivenStart(t *testing.T) {
 	assert.Equal(t, int64(5*60_000), synced.Msg.Markers[0].StartMs)
 }
 
+// Moving a live session's start keeps its markers at the moment they were made.
+func TestEditorialUpdateSessionInfoLive(t *testing.T) {
+	api := newTestEditorialAPI(t)
+	ctx := context.Background()
+
+	start := time.Now().Add(-30 * time.Minute).Truncate(time.Millisecond)
+	created, err := api.CreateEditorialSession(ctx, connect.NewRequest(&apiv1.CreateEditorialSessionRequest{
+		Live: true, Title: "Søndag", PlayoutEventId: "1149", ClockStart: timestamppb.New(start),
+	}))
+	require.NoError(t, err)
+	id := created.Msg.Id
+	for _, d := range []time.Duration{2 * time.Minute, 5 * time.Minute} {
+		_, err := api.AddEditorialMarker(ctx, connect.NewRequest(&apiv1.AddEditorialMarkerRequest{SessionId: id, At: timestamppb.New(start.Add(d))}))
+		require.NoError(t, err)
+	}
+
+	_, err = api.UpdateEditorialSessionInfo(ctx, connect.NewRequest(&apiv1.UpdateEditorialSessionInfoRequest{Id: id, PlayoutEventId: "1149"}))
+	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err), "live needs a start")
+
+	earlier := start.Add(-time.Minute)
+	res, err := api.UpdateEditorialSessionInfo(ctx, connect.NewRequest(&apiv1.UpdateEditorialSessionInfoRequest{
+		Id: id, Title: "Søndag formiddag", VXID: "VX-ignored", PlayoutEventId: "1150", ClockStart: timestamppb.New(earlier),
+	}))
+	require.NoError(t, err)
+	got := res.Msg
+	assert.Equal(t, "Søndag formiddag", got.Title)
+	assert.Empty(t, got.VXID, "a live session gets its VXID by attaching")
+	assert.Equal(t, "1150", got.PlayoutEventId)
+	assert.True(t, got.ClockStart.AsTime().Equal(earlier))
+	require.Len(t, got.Markers, 2)
+	assert.Equal(t, int64(3*60_000), got.Markers[0].StartMs)
+	assert.Equal(t, int64(6*60_000), got.Markers[0].EndMs)
+	assert.Equal(t, int64(6*60_000), got.Markers[1].StartMs)
+	assert.Zero(t, got.Markers[1].EndMs, "the open row stays open")
+}
+
 // Editing a speaker's row stops Playout from changing its fields, but verses
 // shown later in the speech still arrive; hand-typed verses stay.
 func TestMergeLiveEditedRowStillCollectsVerses(t *testing.T) {

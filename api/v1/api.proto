@@ -78,7 +78,8 @@ message EditorialPermission {
   // Reviewer: see all sessions, export them, comment, set publish flags and
   // change marker titles
   bool enabled = 1;
-  // Admin: everything, including deleting sessions
+  // Admin: everything, including changing a session's details and deleting
+  // sessions
   bool admin = 2;
   // Live: create meetings, mark, refresh from Playout, send to Mediabanken,
   // the edit view and imports
@@ -659,6 +660,21 @@ message SaveEditorialSessionRequest {
   repeated EditorialMarker markers = 3;
 }
 
+// Change a session's own details (admin only). Every field is written, so
+// send the current value of the ones that stay. A new VXID forgets the
+// recording window remembered for the old asset. A new clock start on a live
+// session keeps its markers at the moment they were made: their offsets move
+// by the difference.
+message UpdateEditorialSessionInfoRequest {
+  string id = 1;
+  string title = 2;
+  // recording sessions only; required there
+  string VXID = 3;
+  string playout_event_id = 4;
+  // live sessions only; required there
+  google.protobuf.Timestamp clock_start = 5;
+}
+
 message DeleteEditorialSessionRequest {
   string id = 1;
 }
@@ -822,6 +838,7 @@ service APIService {
   rpc SetEditorialComment(SetEditorialCommentRequest) returns (Void) {}
   rpc SetEditorialName(SetEditorialNameRequest) returns (Void) {}
   rpc SetEditorialDetails(SetEditorialDetailsRequest) returns (Void) {}
+  rpc UpdateEditorialSessionInfo(UpdateEditorialSessionInfoRequest) returns (EditorialSession) {}
   rpc DeleteEditorialSession(DeleteEditorialSessionRequest) returns (Void) {}
   rpc ImportEditorialMarkers(ImportEditorialMarkersRequest) returns (ImportEditorialMarkersResponse) {}
   rpc ImportEditorialMarkersFromPlayout(ImportEditorialMarkersFromPlayoutRequest) returns (ImportEditorialMarkersResponse) {}

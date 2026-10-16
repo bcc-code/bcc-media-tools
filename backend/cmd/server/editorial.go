@@ -70,9 +70,10 @@ var editorialRoleNames = map[apiv1.EditorialRole]string{
 
 // editorialPreviewPath is what the client gets as a session's preview_url: a
 // path on this server, served by editorialPreviewHandler. Relative, so it
-// works whatever host the tools are reached on.
-func editorialPreviewPath(sessionID string) string {
-	return "/editorial/preview?session=" + url.QueryEscape(sessionID)
+// works whatever host the tools are reached on. The handler ignores vxid; it
+// is there so the URL changes, and the player reloads, when the asset does.
+func editorialPreviewPath(sessionID, vxID string) string {
+	return "/editorial/preview?session=" + url.QueryEscape(sessionID) + "&vxid=" + url.QueryEscape(vxID)
 }
 
 // editorialErr maps DB errors to appropriate connect codes.
@@ -160,7 +161,7 @@ func (e EditorialAPI) GetEditorialSession(ctx context.Context, req *connect.Requ
 	// the video, so the path names the session and the handler resolves the
 	// asset. A live session has no asset to preview yet.
 	if out.VXID != "" {
-		out.PreviewUrl = editorialPreviewPath(out.Id)
+		out.PreviewUrl = editorialPreviewPath(out.Id, out.VXID)
 	}
 	return connect.NewResponse(out), nil
 }
@@ -274,6 +275,78 @@ func (e EditorialAPI) SetEditorialDetails(ctx context.Context, req *connect.Requ
 	}
 	e.hub.changed(sessionID)
 	return connect.NewResponse(&apiv1.Void{}), nil
+}
+
+// UpdateEditorialSessionInfo changes a session's own details. The kind is not
+// among them: a live session becomes a recording by attaching one.
+func (e EditorialAPI) UpdateEditorialSessionInfo(ctx context.Context, req *connect.Request[apiv1.UpdateEditorialSessionInfoRequest]) (*connect.Response[apiv1.EditorialSession], error) {
+	if _, err := requireEditorial(req, apiv1.EditorialAdmin); err != nil {
+		return nil, err
+	}
+	id := req.Msg.GetId()
+	now := time.Now().UnixMilli()
+
+	tx, err := e.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, editorialErr(fmt.Errorf("editorial: begin tx: %w", err))
+	}
+	defer func() { _ = tx.Rollback() }()
+	qtx := e.queries.WithTx(tx)
+
+	sess, err := qtx.GetSession(ctx, id)
+	if err != nil {
+		return nil, editorialErr(err)
+	}
+	params := editorial.UpdateSessionInfoParams{
+		Title:            req.Msg.GetTitle(),
+		Vxid:             sess.Vxid,
+		PlayoutEventID:   req.Msg.GetPlayoutEventId(),
+		ClockStartMs:     sess.ClockStartMs,
+		RecordingStartMs: sess.RecordingStartMs,
+		RecordingEndMs:   sess.RecordingEndMs,
+		UpdatedAt:        now,
+		ID:               id,
+	}
+	if sess.Kind == editorial.KindLive {
+		if req.Msg.GetClockStart() == nil {
+			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("missing clock_start"))
+		}
+		if params.PlayoutEventID == "" {
+			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("missing playout_event_id"))
+		}
+		params.ClockStartMs = req.Msg.GetClockStart().AsTime().UnixMilli()
+		// Markers stay at the moment they were made.
+		if delta := sess.ClockStartMs - params.ClockStartMs; delta != 0 {
+			if err := qtx.ShiftMarkers(ctx, editorial.ShiftMarkersParams{DeltaMs: delta, SessionID: id}); err != nil {
+				return nil, editorialErr(fmt.Errorf("editorial: shift markers: %w", err))
+			}
+		}
+	} else {
+		params.Vxid = req.Msg.GetVXID()
+		if params.Vxid == "" {
+			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("missing VXID"))
+		}
+		// A hand-corrected window belongs to the asset it was entered for.
+		if params.Vxid != sess.Vxid {
+			params.RecordingStartMs, params.RecordingEndMs = 0, 0
+		}
+	}
+	if _, err := qtx.UpdateSessionInfo(ctx, params); err != nil {
+		return nil, editorialErr(fmt.Errorf("editorial: update session: %w", err))
+	}
+	if err := tx.Commit(); err != nil {
+		return nil, editorialErr(fmt.Errorf("editorial: commit: %w", err))
+	}
+
+	e.hub.changed(id)
+	out, err := e.loadSession(ctx, id)
+	if err != nil {
+		return nil, editorialErr(err)
+	}
+	if out.VXID != "" {
+		out.PreviewUrl = editorialPreviewPath(out.Id, out.VXID)
+	}
+	return connect.NewResponse(out), nil
 }
 
 func (e EditorialAPI) DeleteEditorialSession(ctx context.Context, req *connect.Request[apiv1.DeleteEditorialSessionRequest]) (*connect.Response[apiv1.Void], error) {

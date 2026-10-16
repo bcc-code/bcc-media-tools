@@ -242,6 +242,10 @@ func (e EditorialAPI) watchUntilDone(ctx context.Context, sessionID, clientID, e
 		if err != nil {
 			return false, connect.NewError(connect.CodeInternal, err)
 		}
+		// So open pages switch video when an admin changes the asset.
+		if sess.VXID != "" {
+			sess.PreviewUrl = editorialPreviewPath(sess.Id, sess.VXID)
+		}
 		return false, send(&apiv1.EditorialSessionEvent{Session: sess, Presence: e.hub.presence(sessionID), SyncClientId: e.hub.syncClient(sessionID)})
 	}
 

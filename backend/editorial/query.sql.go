@@ -513,6 +513,22 @@ func (q *Queries) SetPlayoutWindow(ctx context.Context, arg SetPlayoutWindowPara
 	return result.RowsAffected()
 }
 
+const shiftMarkers = `-- name: ShiftMarkers :exec
+UPDATE markers SET start_ms = start_ms + ?1, end_ms = CASE WHEN end_ms = 0 THEN 0 ELSE end_ms + ?1 END
+WHERE session_id = ?2
+`
+
+type ShiftMarkersParams struct {
+	DeltaMs   int64
+	SessionID string
+}
+
+// Moves every marker of a session by delta_ms; an open end (0) stays open.
+func (q *Queries) ShiftMarkers(ctx context.Context, arg ShiftMarkersParams) error {
+	_, err := q.db.ExecContext(ctx, shiftMarkers, arg.DeltaMs, arg.SessionID)
+	return err
+}
+
 const touchSession = `-- name: TouchSession :exec
 UPDATE sessions SET updated_at = ?
 WHERE id = ?
@@ -526,6 +542,39 @@ type TouchSessionParams struct {
 func (q *Queries) TouchSession(ctx context.Context, arg TouchSessionParams) error {
 	_, err := q.db.ExecContext(ctx, touchSession, arg.UpdatedAt, arg.ID)
 	return err
+}
+
+const updateSessionInfo = `-- name: UpdateSessionInfo :execrows
+UPDATE sessions SET title = ?, vxid = ?, playout_event_id = ?, clock_start_ms = ?, recording_start_ms = ?, recording_end_ms = ?, updated_at = ?
+WHERE id = ?
+`
+
+type UpdateSessionInfoParams struct {
+	Title            string
+	Vxid             string
+	PlayoutEventID   string
+	ClockStartMs     int64
+	RecordingStartMs int64
+	RecordingEndMs   int64
+	UpdatedAt        int64
+	ID               string
+}
+
+func (q *Queries) UpdateSessionInfo(ctx context.Context, arg UpdateSessionInfoParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, updateSessionInfo,
+		arg.Title,
+		arg.Vxid,
+		arg.PlayoutEventID,
+		arg.ClockStartMs,
+		arg.RecordingStartMs,
+		arg.RecordingEndMs,
+		arg.UpdatedAt,
+		arg.ID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
 }
 
 const updateSessionTitle = `-- name: UpdateSessionTitle :execrows

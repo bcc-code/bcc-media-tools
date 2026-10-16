@@ -14,6 +14,15 @@ WHERE id = ?;
 UPDATE sessions SET title = ?, updated_at = ?
 WHERE id = ?;
 
+-- name: UpdateSessionInfo :execrows
+UPDATE sessions SET title = ?, vxid = ?, playout_event_id = ?, clock_start_ms = ?, recording_start_ms = ?, recording_end_ms = ?, updated_at = ?
+WHERE id = ?;
+
+-- name: ShiftMarkers :exec
+-- Moves every marker of a session by delta_ms; an open end (0) stays open.
+UPDATE markers SET start_ms = start_ms + sqlc.arg(delta_ms), end_ms = CASE WHEN end_ms = 0 THEN 0 ELSE end_ms + sqlc.arg(delta_ms) END
+WHERE session_id = sqlc.arg(session_id);
+
 -- name: TouchSession :exec
 UPDATE sessions SET updated_at = ?
 WHERE id = ?;

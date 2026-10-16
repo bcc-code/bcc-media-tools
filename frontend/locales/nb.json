@@ -295,6 +295,8 @@
         "saving": "Lagrer…",
         "saved": "Lagret",
         "saveFailed": "Kunne ikke lagre",
+        "editDetails": "Rediger detaljer",
+        "editStartHint": "Markørene blir stående på tidspunktet de ble laget.",
         "delete": "Slett gjennomgang",
         "deleteConfirmTitle": "Slette denne gjennomgangen?",
         "deleteConfirmMessage": "Dette fjerner gjennomgangen og alle markørene permanent.",

@@ -293,3 +293,46 @@ func TestEditorialSetDetails(t *testing.T) {
 	}))
 	requireNotFound(t, err)
 }
+
+// An admin corrects a recording session's details; a new asset forgets the
+// window remembered for the old one.
+func TestEditorialUpdateSessionInfoRecording(t *testing.T) {
+	api := newTestEditorialAPI(t)
+	ctx := context.Background()
+	sess := createTestSession(t, api, "VX-1", "old")
+	_, err := api.db.ExecContext(ctx, "UPDATE sessions SET recording_start_ms = 1, recording_end_ms = 2 WHERE id = ?", sess.Id)
+	require.NoError(t, err)
+
+	update := func(vxID string) (*apiv1.EditorialSession, error) {
+		res, err := api.UpdateEditorialSessionInfo(ctx, connect.NewRequest(&apiv1.UpdateEditorialSessionInfoRequest{
+			Id: sess.Id, Title: "new", VXID: vxID, PlayoutEventId: "1149",
+		}))
+		if err != nil {
+			return nil, err
+		}
+		return res.Msg, nil
+	}
+
+	_, err = update("")
+	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+
+	got, err := update("VX-1")
+	require.NoError(t, err)
+	assert.Equal(t, "new", got.Title)
+	assert.Equal(t, "1149", got.PlayoutEventId)
+	stored, err := api.queries.GetSession(ctx, sess.Id)
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), stored.RecordingStartMs, "same asset keeps its window")
+
+	got, err = update("VX-2")
+	require.NoError(t, err)
+	assert.Equal(t, "VX-2", got.VXID)
+	assert.Contains(t, got.PreviewUrl, "VX-2")
+	stored, err = api.queries.GetSession(ctx, sess.Id)
+	require.NoError(t, err)
+	assert.Zero(t, stored.RecordingStartMs)
+	assert.Zero(t, stored.RecordingEndMs)
+
+	_, err = api.UpdateEditorialSessionInfo(ctx, connect.NewRequest(&apiv1.UpdateEditorialSessionInfoRequest{Id: "missing", VXID: "VX-1"}))
+	requireNotFound(t, err)
+}
