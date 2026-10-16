@@ -123,7 +123,9 @@ func (e EditorialAPI) SyncEditorialSessionFromPlayout(ctx context.Context, req *
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("get Playout manifest: %w", err))
 	}
 	clockStart := time.UnixMilli(sess.ClockStartMs).UTC()
-	candidates := playoutCandidates(manifest.Entries, recordingWindow{Start: clockStart, End: time.Now().UTC()})
+	window := recordingWindow{Start: clockStart, End: time.Now().UTC()}
+	candidates := playoutCandidates(manifest.Entries, window)
+	scriptures := playoutScriptures(manifest.Entries, window)
 
 	now := time.Now().UnixMilli()
 	tx, err := e.db.BeginTx(ctx, nil)
@@ -146,7 +148,7 @@ func (e EditorialAPI) SyncEditorialSessionFromPlayout(ctx context.Context, req *
 		dismissed[k] = true
 	}
 
-	merged, changed := mergeLive(rows, candidates, dismissed, clockStart, uuid.NewString)
+	merged, changed := mergeLive(rows, candidates, scriptures, dismissed, clockStart, uuid.NewString)
 	if changed {
 		if err := replaceMarkers(ctx, qtx, sess.ID, merged, now); err != nil {
 			return nil, editorialErr(err)
@@ -310,11 +312,13 @@ func fillableBy(markerType, playoutType string) bool {
 
 // applyCandidate copies the fields Playout fills onto a row. keepType leaves an
 // editor-chosen type alone.
+//
+// Bible verses aren't copied: in a live session they go to whichever speech
+// marker they fall in (attachScriptures).
 func applyCandidate(m *editorial.Marker, c playoutCandidate, keepType bool) {
 	switch c.PlayoutType {
 	case playout.ContentTypeSpeaker:
 		m.Contributors = c.Contributors
-		m.BibleVerses = c.BibleVerses
 	default:
 		m.Name = c.Name
 	}
@@ -357,7 +361,7 @@ func mergeVerses(current, incoming string) string {
 //   - dismissed candidates (rows an editor removed) are skipped
 //
 // It returns the rows in time order and whether anything changed.
-func mergeLive(rows []editorial.Marker, candidates []playoutCandidate, dismissed map[string]bool, clockStart time.Time, newID func() string) ([]editorial.Marker, bool) {
+func mergeLive(rows []editorial.Marker, candidates []playoutCandidate, scriptures []scripture, dismissed map[string]bool, clockStart time.Time, newID func() string) ([]editorial.Marker, bool) {
 	rows = slices.Clone(rows)
 	normalizeLiveMarkers(rows)
 	before := slices.Clone(rows)
@@ -374,12 +378,10 @@ func mergeLive(rows []editorial.Marker, candidates []playoutCandidate, dismissed
 		if i, ok := byKey[c.Key]; ok {
 			// i < 0: added earlier in this pass (a duplicate manifest entry).
 			if i >= 0 {
+				// An edited row keeps its edits; its verses still arrive
+				// through attachScriptures.
 				if rows[i].PlayoutSynced {
 					applyCandidate(&rows[i], c, rows[i].Source == editorial.SourceManual)
-				} else {
-					// An edited row keeps its edits, but a speech still
-					// collects the verses shown after the edit.
-					rows[i].BibleVerses = mergeVerses(rows[i].BibleVerses, c.BibleVerses)
 				}
 			}
 			continue
@@ -425,7 +427,52 @@ func mergeLive(rows []editorial.Marker, candidates []playoutCandidate, dismissed
 
 	rows = append(rows, added...)
 	normalizeLiveMarkers(rows)
+	attachScriptures(rows, scriptures, clockStart)
 	return rows, len(added) > 0 || !slices.Equal(rows, before)
+}
+
+// scripture is a Bible verse shown on screen.
+type scripture struct {
+	At    time.Time
+	Label string
+}
+
+// playoutScriptures lists the verses shown inside window, in manifest order.
+func playoutScriptures(entries []playout.ManifestEntry, window recordingWindow) []scripture {
+	var out []scripture
+	for _, e := range entries {
+		if e.Type == playout.ContentTypeScripture && e.Label != "" && window.Contains(e.Timestamp) {
+			out = append(out, scripture{At: e.Timestamp, Label: e.Label})
+		}
+	}
+	return out
+}
+
+// isSpeech reports whether a marker type is someone speaking.
+func isSpeech(markerType string) bool {
+	return markerType == "tale" || markerType == "vitnesbyrd"
+}
+
+// attachScriptures adds each verse to the marker it falls in (rows in time
+// order) when that marker is a speech, whoever created it: a marker typed in
+// by hand collects verses as well as one Playout filled. Verses already
+// listed aren't added again, and none are removed.
+func attachScriptures(rows []editorial.Marker, scriptures []scripture, clockStart time.Time) {
+	for _, sc := range scriptures {
+		offset := sc.At.Sub(clockStart).Milliseconds()
+		i, _ := slices.BinarySearchFunc(rows, offset, func(m editorial.Marker, t int64) int {
+			if m.StartMs <= t {
+				return -1
+			}
+			return 1
+		})
+		// i is the first row starting after the verse; the one before
+		// holds it.
+		if i == 0 || !isSpeech(rows[i-1].Type) {
+			continue
+		}
+		rows[i-1].BibleVerses = mergeVerses(rows[i-1].BibleVerses, sc.Label)
+	}
 }
 
 func sessionIDOf(rows []editorial.Marker) string {
