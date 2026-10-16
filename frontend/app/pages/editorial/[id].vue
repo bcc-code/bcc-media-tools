@@ -449,20 +449,16 @@ type Details = Pick<
     Row,
     "name" | "contributors" | "type" | "bibleVerses" | "playoutSynced"
 >;
-const detailsBefore = new Map<string, Details>();
-
 function snapshot(row: Row): Details {
     const { name, contributors, type, bibleVerses, playoutSynced } = row;
     return { name, contributors, type, bibleVerses, playoutSynced };
 }
 
-function noteDetails(row: Row) {
-    if (!detailsBefore.has(row.key)) detailsBefore.set(row.key, snapshot(row));
-}
-
-async function persistDetails(row: Row, before = detailsBefore.get(row.key)) {
-    detailsBefore.delete(row.key);
-    if (effectiveMode.value === "edit" || !row.id || !before) return;
+// Only the phone drawer edits details now — the table shows them read-only in
+// simple mode and saves on the batch Save in edit mode — so the caller always
+// has the pre-edit snapshot on hand.
+async function persistDetails(row: Row, before: Details) {
+    if (effectiveMode.value === "edit" || !row.id) return;
     const changed =
         row.name !== before.name ||
         row.contributors !== before.contributors ||
@@ -2077,31 +2073,24 @@ onBeforeRouteLeave(() => {
                                     <td
                                         v-if="effectiveMode === 'edit'"
                                         class="px-2 py-2"
-                                        @focusin="noteDetails(row)"
-                                        @change="persistDetails(row)"
                                     >
                                         <DesignInput
                                             v-model="row.contributors"
                                         />
                                     </td>
                                     <td
+                                        v-if="effectiveMode === 'edit'"
                                         class="px-2 py-2"
-                                        @focusin="noteDetails(row)"
-                                        @change="persistDetails(row)"
                                     >
                                         <DesignInput
-                                            v-if="
-                                                effectiveMode === 'edit' ||
-                                                canEditDetails
-                                            "
                                             v-model="row.bibleVerses"
                                         />
-                                        <span
-                                            v-else
-                                            class="text-body-3 text-text-muted tabular-nums"
-                                        >
-                                            {{ row.bibleVerses || "—" }}
-                                        </span>
+                                    </td>
+                                    <td
+                                        v-else
+                                        class="text-body-3 text-text-default px-2 py-2 tabular-nums"
+                                    >
+                                        {{ row.bibleVerses }}
                                     </td>
                                     <td
                                         v-if="effectiveMode === 'edit'"
