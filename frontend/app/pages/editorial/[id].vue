@@ -115,9 +115,8 @@ const effectiveMode = computed(() =>
     canLive.value && !isPhone.value ? mode.value : "simple",
 );
 
-// Where the preview sits above the list, the page becomes a fixed shell and the
-// list scrolls inside it instead of the whole page moving. Live sessions have
-// no preview, and phones get the card layout, so both scroll normally.
+// Whether there is a preview column beside the list: a live session has no
+// asset to show yet, and phones get the card layout instead.
 const hasPreview = computed(() => !isLive.value && !isPhone.value);
 
 // Fixed-width mode control, so switching modes doesn't shift the layout.
@@ -1498,14 +1497,8 @@ onBeforeRouteLeave(() => {
 
     <div
         v-else
-        class="mx-auto flex w-full max-w-[1700px] flex-col px-4 py-6"
-        :class="[
-            effectiveMode === 'simple' ? 'large-type' : '',
-            // Caps the page at the viewport so the list, not the window, is
-            // what scrolls. Flex sorts out the rest: whatever the title block
-            // and toolbar take, the list gets what is left over.
-            hasPreview ? 'lg:h-[calc(100dvh-var(--header-height))]' : '',
-        ]"
+        class="mx-auto w-full max-w-[1700px] px-4 py-6"
+        :class="effectiveMode === 'simple' ? 'large-type' : ''"
     >
         <NuxtLink
             to="/editorial/"
@@ -1792,17 +1785,9 @@ onBeforeRouteLeave(() => {
 
             <div
                 class="grid gap-6"
-                :class="[
-                    isLive ? '' : 'lg:grid-cols-[1fr_500px]',
-                    // Only where the two columns actually sit side by side:
-                    // stacked, the preview belongs in the page's own scroll.
-                    hasPreview ? 'lg:min-h-0 lg:flex-1' : '',
-                ]"
+                :class="isLive ? '' : 'lg:grid-cols-[1fr_500px]'"
             >
-                <div
-                    class="min-w-0"
-                    :class="hasPreview ? 'lg:flex lg:min-h-0 lg:flex-col' : ''"
-                >
+                <div class="min-w-0">
                     <p
                         v-if="rows.length === 0"
                         class="text-body-3 text-text-hint bg-surface-indent rounded-2xl px-4 py-10 text-center"
@@ -1883,26 +1868,35 @@ onBeforeRouteLeave(() => {
                         />
                     </template>
                     <!--
-                        The scroll container, both ways: overflow-x for the wide
-                        edit table, overflow-y for the rows. Its headers stick to
-                        its top edge — a list you scroll past the first screen
-                        needs them more than a page you scroll as a whole.
+                        Horizontal scroll for the edit table's dozen columns
+                        only. It has to come off in simple view, because
+                        overflow-x makes this a scroll container on BOTH axes
+                        (the spec turns the other axis's `visible` into `auto`),
+                        and the sticky headers below would then stick to a box
+                        that never scrolls instead of to the page. Simple view's
+                        five columns fit the width anyway.
                     -->
                     <div
                         v-else-if="rows.length"
-                        class="overflow-x-auto"
                         :class="
-                            hasPreview
-                                ? 'lg:min-h-0 lg:flex-1 lg:overflow-y-auto'
-                                : ''
+                            effectiveMode === 'edit' ? 'overflow-x-auto' : ''
                         "
                     >
                         <table class="w-full border-separate border-spacing-0">
+                            <!--
+                                Parks under the app header, which is itself
+                                sticky at the top; below its z-10, so the header
+                                wins wherever they meet. The fill is the body's
+                                own background (nuxt.config bodyAttrs) rather
+                                than a surface token, so the row reads exactly
+                                as it did unstuck — it is only there to stop the
+                                rows showing through as they pass under.
+                            -->
                             <thead
                                 class="text-caption-1 text-text-hint text-left"
                                 :class="
-                                    hasPreview
-                                        ? 'lg:[&>tr>th]:bg-surface-default lg:[&>tr>th]:sticky lg:[&>tr>th]:top-0 lg:[&>tr>th]:z-10'
+                                    effectiveMode === 'simple'
+                                        ? '[&>tr>th]:sticky [&>tr>th]:top-[var(--header-height)] [&>tr>th]:z-[5] [&>tr>th]:bg-neutral-100 dark:[&>tr>th]:bg-neutral-950'
                                         : ''
                                 "
                             >
