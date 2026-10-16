@@ -2013,65 +2013,33 @@ onBeforeRouteLeave(() => {
                                         />
                                         <!--
                                             Simple view wraps the title instead
-                                            of truncating it: the song titles
-                                            ("FMB 642 | Når valget for livet
-                                            skal tas") run well past the column,
-                                            and the reviewer scanning the list
-                                            needs the whole line. The invisible
-                                            twin under the field is the no-JS
-                                            way to grow a textarea with its
-                                            content — it holds the same text at
-                                            the same metrics and sets the row
-                                            height, and the textarea stretches
-                                            over it. Enter commits instead of
-                                            inserting a newline, so the field
-                                            wraps without the title itself
-                                            turning into two lines.
+                                            of truncating it, and stands the
+                                            contributor in as the placeholder:
+                                            most rows are a contribution with no
+                                            title at all, and the name belongs on
+                                            the line reviewers scan rather than
+                                            in a footnote under an empty box.
+                                            Typing a title replaces it.
                                         -->
-                                        <div v-else class="title-field grid">
-                                            <textarea
-                                                v-model="row.name"
-                                                rows="1"
-                                                :placeholder="row.contributors"
-                                                :aria-label="
-                                                    t('editorial.col.title')
-                                                "
-                                                class="border-border-1 text-body-3 text-text-default placeholder:text-text-muted ds-focus-ring col-start-1 row-start-1 w-full resize-none overflow-hidden rounded-xl border px-3 py-2"
-                                                @focusin="
-                                                    nameBeforeEdit = row.name
-                                                "
-                                                @change="persistName(row)"
-                                                @keydown.enter.prevent="
-                                                    (
-                                                        $event.target as HTMLTextAreaElement
-                                                    ).blur()
-                                                "
-                                            />
-                                            <div
-                                                aria-hidden="true"
-                                                class="text-body-3 invisible col-start-1 row-start-1 w-full border px-3 py-2 break-words whitespace-pre-wrap"
-                                            >
-                                                {{
-                                                    row.name ||
-                                                    row.contributors
-                                                }}&nbsp;
-                                            </div>
-                                        </div>
+                                        <EditorialGrowingTextarea
+                                            v-else
+                                            v-model="row.name"
+                                            :placeholder="row.contributors"
+                                            :aria-label="
+                                                t('editorial.col.title')
+                                            "
+                                            class="title-field"
+                                            @focusin="nameBeforeEdit = row.name"
+                                            @change="persistName(row)"
+                                        />
                                         <!--
-                                            Medvirkende lives under the title as
-                                            read-only metadata rather than in a
-                                            column of its own. Most rows are a
-                                            contribution with no title at all,
-                                            so there it stands in as the title
-                                            field's placeholder instead — the
-                                            name belongs on the line reviewers
-                                            scan, not in a footnote under an
-                                            empty box, and typing a title simply
-                                            replaces it. Keeping it below as
-                                            well would only repeat it, so this
-                                            line appears only when the row has
-                                            both. Contributors are set in Edit
-                                            mode.
+                                            Medvirkende rides under the title
+                                            rather than taking a column of its
+                                            own — but only when the row has a
+                                            title too, since otherwise the
+                                            placeholder above is already showing
+                                            it. Read-only here; contributors are
+                                            set in Edit mode.
                                         -->
                                         <p
                                             v-if="
@@ -2144,7 +2112,27 @@ onBeforeRouteLeave(() => {
                                         @focusout="onCommentBlur"
                                         @change="persistComment(row)"
                                     >
-                                        <DesignInput v-model="row.comment" />
+                                        <DesignInput
+                                            v-if="effectiveMode === 'edit'"
+                                            v-model="row.comment"
+                                        />
+                                        <!--
+                                            The comment is the one thing every
+                                            reviewer writes, and the notes run
+                                            longer than the column — so in
+                                            simple view it wraps rather than
+                                            scrolling out of sight.
+                                        -->
+                                        <EditorialGrowingTextarea
+                                            v-else
+                                            v-model="row.comment"
+                                            :placeholder="
+                                                t('editorial.addComment')
+                                            "
+                                            :aria-label="
+                                                t('editorial.col.comment')
+                                            "
+                                        />
                                         <p
                                             v-if="
                                                 row.id && commentingOn(row.id)
