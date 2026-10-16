@@ -2032,7 +2032,11 @@ onBeforeRouteLeave(() => {
                                             <textarea
                                                 v-model="row.name"
                                                 rows="1"
-                                                class="border-border-1 text-body-3 text-text-default ds-focus-ring col-start-1 row-start-1 w-full resize-none overflow-hidden rounded-xl border px-3 py-2"
+                                                :placeholder="row.contributors"
+                                                :aria-label="
+                                                    t('editorial.col.title')
+                                                "
+                                                class="border-border-1 text-body-3 text-text-default placeholder:text-text-muted ds-focus-ring col-start-1 row-start-1 w-full resize-none overflow-hidden rounded-xl border px-3 py-2"
                                                 @focusin="
                                                     nameBeforeEdit = row.name
                                                 "
@@ -2047,22 +2051,32 @@ onBeforeRouteLeave(() => {
                                                 aria-hidden="true"
                                                 class="text-body-3 invisible col-start-1 row-start-1 w-full border px-3 py-2 break-words whitespace-pre-wrap"
                                             >
-                                                {{ row.name }}&nbsp;
+                                                {{
+                                                    row.name ||
+                                                    row.contributors
+                                                }}&nbsp;
                                             </div>
                                         </div>
                                         <!--
-                                            Simple view folds Medvirkende in
-                                            under the title as read-only
-                                            metadata rather than spending a
-                                            column on it: most rows are songs
-                                            with no contributor, and the title
-                                            is what reviewers scan by. Rows
-                                            without one stay a single line.
-                                            Contributors are set in Edit mode.
+                                            Medvirkende lives under the title as
+                                            read-only metadata rather than in a
+                                            column of its own. Most rows are a
+                                            contribution with no title at all,
+                                            so there it stands in as the title
+                                            field's placeholder instead — the
+                                            name belongs on the line reviewers
+                                            scan, not in a footnote under an
+                                            empty box, and typing a title simply
+                                            replaces it. Keeping it below as
+                                            well would only repeat it, so this
+                                            line appears only when the row has
+                                            both. Contributors are set in Edit
+                                            mode.
                                         -->
                                         <p
                                             v-if="
                                                 effectiveMode === 'simple' &&
+                                                row.name &&
                                                 row.contributors
                                             "
                                             class="text-body-3 text-text-muted mt-1 px-3"
