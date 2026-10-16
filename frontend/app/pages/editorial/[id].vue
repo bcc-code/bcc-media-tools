@@ -388,6 +388,14 @@ async function onPublishToggle(
     }
 }
 
+// What stands in for a missing title, in the order of what best says which row
+// this is: who contributed it, else what kind of item it is. Imported chapters
+// often carry a subclip type but no title, and those rows were reading as
+// blank. A row with none of the three stays blank — there is nothing to say.
+function titlePlaceholder(row: Row): string {
+    return row.contributors || (row.type ? typeLabel(row.type) : "");
+}
+
 // ── Row title/name (editable in both views, edit rights required) ──
 const nameBeforeEdit = ref("");
 
@@ -2067,17 +2075,18 @@ onBeforeRouteLeave(() => {
                                         <!--
                                             Simple view wraps the title instead
                                             of truncating it, and stands the
-                                            contributor in as the placeholder:
-                                            most rows are a contribution with no
-                                            title at all, and the name belongs on
-                                            the line reviewers scan rather than
-                                            in a footnote under an empty box.
-                                            Typing a title replaces it.
+                                            contributor — or failing that the
+                                            type — in as the placeholder: most
+                                            rows have no title at all, and what
+                                            the row is belongs on the line
+                                            reviewers scan rather than in a
+                                            footnote under an empty box. Typing
+                                            a title replaces it.
                                         -->
                                         <EditorialGrowingTextarea
                                             v-else
                                             v-model="row.name"
-                                            :placeholder="row.contributors"
+                                            :placeholder="titlePlaceholder(row)"
                                             placeholder-is-value
                                             :aria-label="
                                                 t('editorial.col.title')
