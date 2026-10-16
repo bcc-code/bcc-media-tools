@@ -1879,10 +1879,16 @@ onBeforeRouteLeave(() => {
                                     </th>
                                     <th
                                         class="border-border-1 border-b py-2 pr-2 pl-3 font-normal"
+                                        :class="
+                                            effectiveMode === 'simple'
+                                                ? 'w-[34%]'
+                                                : ''
+                                        "
                                     >
                                         {{ t("editorial.col.title") }}
                                     </th>
                                     <th
+                                        v-if="effectiveMode === 'edit'"
                                         class="border-border-1 border-b px-2 py-2 font-normal"
                                     >
                                         {{ t("editorial.col.contributors") }}
@@ -2003,30 +2009,44 @@ onBeforeRouteLeave(() => {
                                         />
                                     </td>
                                     <td class="py-2 pr-2 pl-3">
-                                        <DesignInput
-                                            v-model="row.name"
-                                            @focusin="nameBeforeEdit = row.name"
-                                            @change="persistName(row)"
-                                        />
+                                        <div class="title-field">
+                                            <DesignInput
+                                                v-model="row.name"
+                                                @focusin="
+                                                    nameBeforeEdit = row.name
+                                                "
+                                                @change="persistName(row)"
+                                            />
+                                        </div>
+                                        <!--
+                                            Simple view folds Medvirkende in
+                                            under the title as read-only
+                                            metadata rather than spending a
+                                            column on it: most rows are songs
+                                            with no contributor, and the title
+                                            is what reviewers scan by. Rows
+                                            without one stay a single line.
+                                            Contributors are set in Edit mode.
+                                        -->
+                                        <p
+                                            v-if="
+                                                effectiveMode === 'simple' &&
+                                                row.contributors
+                                            "
+                                            class="text-body-3 text-text-muted mt-1 px-3"
+                                        >
+                                            {{ row.contributors }}
+                                        </p>
                                     </td>
                                     <td
+                                        v-if="effectiveMode === 'edit'"
                                         class="px-2 py-2"
                                         @focusin="noteDetails(row)"
                                         @change="persistDetails(row)"
                                     >
                                         <DesignInput
-                                            v-if="
-                                                effectiveMode === 'edit' ||
-                                                canEditDetails
-                                            "
                                             v-model="row.contributors"
                                         />
-                                        <span
-                                            v-else
-                                            class="text-body-3 text-text-muted"
-                                        >
-                                            {{ row.contributors || "—" }}
-                                        </span>
                                     </td>
                                     <td
                                         class="px-2 py-2"
@@ -2511,5 +2531,14 @@ onBeforeRouteLeave(() => {
     --text-caption-1--line-height: 1.4;
     --text-caption-2: 13px;
     --text-caption-2--line-height: 1.4;
+}
+
+/*
+    The title carries the row, so it steps up once more above the body text
+    around it. DesignInput hard-codes text-body-3 on its own input, so the
+    token is the way in.
+*/
+.title-field {
+    --text-body-3: 20px;
 }
 </style>
