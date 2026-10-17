@@ -8,6 +8,8 @@ import type {
 } from "~~/src/gen/api/v1/api_pb";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
 import { Code, ConnectError } from "@connectrpc/connect";
+import { clone, equals } from "@bufbuild/protobuf";
+import { EditorialSessionSchema } from "~~/src/gen/api/v1/api_pb";
 import type {
     MobileMarker,
     MarkerDetails,
@@ -315,6 +317,7 @@ async function load() {
         session.value = s;
         title.value = s.title;
         rows.value = s.markers.map(toRow);
+        serverBase = s;
         previewUrl.value = previewSrc(s.previewUrl);
         if (s.kind === "live") lastSyncedAt.value = Date.now();
     } catch {
@@ -722,6 +725,9 @@ const mutationInProgress = computed(
 async function applyServerSession(s: EditorialSession) {
     hydrated = false;
     session.value = s;
+    serverBase = s;
+    heldSession = undefined;
+    remoteChanged.value = false;
     title.value = s.title;
     rows.value = s.markers.map(toRow);
     if (s.previewUrl) previewUrl.value = previewSrc(s.previewUrl);
@@ -772,15 +778,52 @@ const remoteChanged = ref(false);
 let unmounted = false;
 let watchAbort: AbortController | undefined;
 let fallbackTimer: ReturnType<typeof setInterval> | undefined;
+// The session as this tab last took it from the server, to tell someone
+// else's change from the echo of this tab's own while it has unsaved edits.
+let serverBase: EditorialSession | undefined;
+// Markers this tab added with Mark now.
+const ownMarkerIds = new Set<string>();
+// A session that arrived while this tab's save or mark was in flight: its
+// echo can't be told apart until the call returns, so it waits for that.
+let heldSession: EditorialSession | undefined;
+
+// Whether s differs from what this tab last took only by markers it added
+// itself since.
+function onlyOwnChanges(s: EditorialSession): boolean {
+    const base = serverBase;
+    if (!base) return false;
+    const known = new Set(base.markers.map((m) => m.id));
+    const comparable = (x: EditorialSession) => {
+        const c = clone(EditorialSessionSchema, x);
+        c.updatedAt = undefined;
+        c.previewUrl = "";
+        c.markers = c.markers.filter(
+            (m) => known.has(m.id) || !ownMarkerIds.has(m.id),
+        );
+        return c;
+    };
+    return equals(EditorialSessionSchema, comparable(s), comparable(base));
+}
+
+// Looks at a session held back while a save or mark was in flight.
+function releaseHeldSession() {
+    const s = heldSession;
+    heldSession = undefined;
+    if (s) void mergeServerSession(s);
+}
 
 // Merge a session from the server into the page without counting it as an
 // edit. Rows keep their keys (and so their DOM and focus); the row being
 // typed in keeps its text fields until the field is left.
 async function mergeServerSession(s: EditorialSession) {
     if (effectiveMode.value === "edit" && dirty.value) {
-        remoteChanged.value = true;
+        if (saving.value || marking.value) heldSession = s;
+        else if (onlyOwnChanges(s)) serverBase = s;
+        else remoteChanged.value = true;
         return;
     }
+    serverBase = s;
+    remoteChanged.value = false;
     const focusedKey = (document.activeElement as HTMLElement | null)
         ?.closest("[data-row-key]")
         ?.getAttribute("data-row-key");
@@ -965,6 +1008,7 @@ async function markNow() {
                 at: timestampFromDate(at),
             }),
         );
+        ownMarkerIds.add(m.id);
         // Adding a saved row is not an unsaved edit: keep sync running.
         const wasDirty = dirty.value;
         // The stream may have delivered it already.
@@ -975,14 +1019,27 @@ async function markNow() {
         toaster.create({ title: t("editorial.saveFailed"), type: "error" });
     } finally {
         marking.value = false;
+        releaseHeldSession();
     }
 }
 
 function onKeydown(e: KeyboardEvent) {
-    const key = e.key.toLowerCase();
-    if (!["m", "i", "o"].includes(key)) return;
     if (e.metaKey || e.ctrlKey || e.altKey || e.repeat) return;
     const el = e.target as HTMLElement | null;
+    // Enter marks from anywhere on the page, a text field included, so the
+    // marker can be set without leaving the row being typed in. Not in a
+    // dialog, where Enter confirms, nor on a phone, whose keyboard's return
+    // key ends a comment.
+    if (e.key === "Enter") {
+        if (!isLive.value || !canLive.value || isPhone.value) return;
+        if (e.isComposing || el?.closest("[role=dialog], [role=alertdialog]"))
+            return;
+        e.preventDefault();
+        void markNow();
+        return;
+    }
+    const key = e.key.toLowerCase();
+    if (!["m", "i", "o"].includes(key)) return;
     if (
         el &&
         (el.isContentEditable ||
@@ -1690,6 +1747,7 @@ async function save() {
         toaster.create({ title: t("editorial.saveFailed"), type: "error" });
     } finally {
         saving.value = false;
+        releaseHeldSession();
     }
 }
 
@@ -1800,7 +1858,7 @@ onBeforeRouteLeave(() => {
                     {{ t("editorial.markNow") }}
                     <span
                         class="text-caption-2 rounded-md border border-current px-1.5 opacity-70"
-                        >M</span
+                        >M / Enter</span
                     >
                 </DesignButton>
                 <!--
