@@ -374,7 +374,6 @@
         "markNow": "Mark now",
         "markNowHint": "Add a marker at the current time (M or Enter)",
         "syncing": "Syncing with Playout…",
-        "syncPaused": "Playout sync paused until you save",
         "syncFailed": "Couldn't reach Playout. Trying again in 2 minutes.",
         "syncStatus": "Synced with Playout {time} · next in {next}",
         "syncNow": "Sync now",

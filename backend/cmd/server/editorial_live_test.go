@@ -355,3 +355,67 @@ func TestMergeLiveVersesReachHandMadeSpeech(t *testing.T) {
 	assert.Equal(t, "Fil 4:6", got[1].BibleVerses)
 	assert.Empty(t, got[2].BibleVerses, "not a speech")
 }
+
+// The live edit view saves each change on its own: moving a marker keeps the
+// rows in time order, a removed Playout row stays removed after a sync, and a
+// rename touches only the title.
+func TestEditorialLiveEditsSaveAtOnce(t *testing.T) {
+	api := newTestEditorialAPI(t)
+	ctx := context.Background()
+	created, err := api.CreateEditorialSession(ctx, connect.NewRequest(&apiv1.CreateEditorialSessionRequest{Live: true, Title: "Søndag", PlayoutEventId: "1149"}))
+	require.NoError(t, err)
+	id := created.Msg.Id
+	clockStart := time.Now().Add(-time.Hour).Truncate(time.Millisecond)
+	_, err = api.db.ExecContext(ctx, "UPDATE sessions SET clock_start_ms = ? WHERE id = ?", clockStart.UnixMilli(), id)
+	require.NoError(t, err)
+
+	mark := func(d time.Duration) string {
+		m, err := api.AddEditorialMarker(ctx, connect.NewRequest(&apiv1.AddEditorialMarkerRequest{SessionId: id, At: timestamppb.New(clockStart.Add(d))}))
+		require.NoError(t, err)
+		return m.Msg.Id
+	}
+	first := mark(10 * time.Second)
+	second := mark(20 * time.Second)
+
+	_, err = api.SetEditorialMarkerStart(ctx, connect.NewRequest(&apiv1.SetEditorialMarkerStartRequest{SessionId: id, MarkerId: first, StartMs: 30_000}))
+	require.NoError(t, err)
+	got, err := api.GetEditorialSession(ctx, connect.NewRequest(&apiv1.GetEditorialSessionRequest{Id: id}))
+	require.NoError(t, err)
+	require.Len(t, got.Msg.Markers, 2)
+	assert.Equal(t, second, got.Msg.Markers[0].Id)
+	assert.Equal(t, int64(30_000), got.Msg.Markers[0].EndMs)
+	assert.Equal(t, first, got.Msg.Markers[1].Id)
+
+	_, err = api.SetEditorialMarkerStart(ctx, connect.NewRequest(&apiv1.SetEditorialMarkerStartRequest{SessionId: id, MarkerId: "missing", StartMs: 1}))
+	requireNotFound(t, err)
+
+	at := func(d time.Duration) string { return clockStart.Add(d).UTC().Format(time.RFC3339Nano) }
+	api.playout = fakePlayout{manifest: &playout.Manifest{Entries: []playout.ManifestEntry{
+		songEntry(t, "HV 16", at(5*time.Second)),
+	}}}
+	synced, err := api.SyncEditorialSessionFromPlayout(ctx, connect.NewRequest(&apiv1.SyncEditorialSessionFromPlayoutRequest{Id: id}))
+	require.NoError(t, err)
+	require.Len(t, synced.Msg.Markers, 3)
+	song := synced.Msg.Markers[0]
+	require.Equal(t, "HV 16", song.Name)
+
+	// Removing a marker someone else already removed is not an error.
+	_, err = api.DeleteEditorialMarkers(ctx, connect.NewRequest(&apiv1.DeleteEditorialMarkersRequest{SessionId: id, MarkerIds: []string{song.Id, "gone"}}))
+	require.NoError(t, err)
+	again, err := api.SyncEditorialSessionFromPlayout(ctx, connect.NewRequest(&apiv1.SyncEditorialSessionFromPlayoutRequest{Id: id}))
+	require.NoError(t, err)
+	require.Len(t, again.Msg.Markers, 2)
+	assert.Equal(t, int64(0), again.Msg.Markers[1].EndMs, "the last row stays open")
+
+	_, err = api.SetEditorialTitle(ctx, connect.NewRequest(&apiv1.SetEditorialTitleRequest{Id: id, Title: "Søndag formiddag"}))
+	require.NoError(t, err)
+	renamed, err := api.GetEditorialSession(ctx, connect.NewRequest(&apiv1.GetEditorialSessionRequest{Id: id}))
+	require.NoError(t, err)
+	assert.Equal(t, "Søndag formiddag", renamed.Msg.Title)
+	assert.Len(t, renamed.Msg.Markers, 2)
+
+	// Moving is for live sessions only.
+	rec := createTestSession(t, api, "VX-1", "rec")
+	_, err = api.SetEditorialMarkerStart(ctx, connect.NewRequest(&apiv1.SetEditorialMarkerStartRequest{SessionId: rec.Id, MarkerId: "x"}))
+	assert.Equal(t, connect.CodeFailedPrecondition, connect.CodeOf(err))
+}

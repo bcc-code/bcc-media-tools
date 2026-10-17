@@ -374,7 +374,6 @@
         "markNow": "Marker nå",
         "markNowHint": "Legg til en markør på nåværende tidspunkt (M eller Enter)",
         "syncing": "Synkroniserer med Playout…",
-        "syncPaused": "Playout-synk er satt på pause til du lagrer",
         "syncFailed": "Fikk ikke kontakt med Playout. Prøver igjen om 2 minutter.",
         "syncStatus": "Synkronisert med Playout {time} · neste om {next}",
         "syncNow": "Synkroniser nå",

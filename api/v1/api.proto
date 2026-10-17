@@ -553,6 +553,27 @@ message AddEditorialMarkerRequest {
   string type = 3;
 }
 
+// Move one marker of a live session to start at start_ms (from the clock
+// start), saved at once. The rows stay in time order.
+message SetEditorialMarkerStartRequest {
+  string session_id = 1;
+  string marker_id = 2;
+  int64 start_ms = 3;
+}
+
+// Remove markers, saved at once. A removed Playout row is dismissed, so the
+// next sync doesn't bring it back.
+message DeleteEditorialMarkersRequest {
+  string session_id = 1;
+  repeated string marker_ids = 2;
+}
+
+// Rename a session, saved at once.
+message SetEditorialTitleRequest {
+  string id = 1;
+  string title = 2;
+}
+
 // The session's markers as an Excel workbook, in the saved state.
 message ExportEditorialSessionRequest {
   string id = 1;
@@ -845,6 +866,9 @@ service APIService {
   rpc ListPlayoutEvents(ListPlayoutEventsRequest) returns (ListPlayoutEventsResponse) {}
   rpc GetRecordingWindow(GetRecordingWindowRequest) returns (GetRecordingWindowResponse) {}
   rpc AddEditorialMarker(AddEditorialMarkerRequest) returns (EditorialMarker) {}
+  rpc SetEditorialMarkerStart(SetEditorialMarkerStartRequest) returns (Void) {}
+  rpc DeleteEditorialMarkers(DeleteEditorialMarkersRequest) returns (Void) {}
+  rpc SetEditorialTitle(SetEditorialTitleRequest) returns (Void) {}
   rpc SyncEditorialSessionFromPlayout(SyncEditorialSessionFromPlayoutRequest) returns (EditorialSession) {}
   rpc AttachEditorialRecording(AttachEditorialRecordingRequest) returns (EditorialSession) {}
   rpc ExportEditorialSession(ExportEditorialSessionRequest) returns (ExportEditorialSessionResponse) {}

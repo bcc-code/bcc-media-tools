@@ -99,6 +99,127 @@ func (e EditorialAPI) AddEditorialMarker(ctx context.Context, req *connect.Reque
 	return nil, editorialErr(errEditorialNotFound)
 }
 
+// editMarkers changes a session's markers in one transaction and tells the
+// watchers. edit gets the session and its markers in order and returns them
+// as they should be saved; a live session's are put back in time order.
+func (e EditorialAPI) editMarkers(ctx context.Context, sessionID string, edit func(sess editorial.Session, qtx *editorial.Queries, rows []editorial.Marker) ([]editorial.Marker, error)) error {
+	now := time.Now().UnixMilli()
+	tx, err := e.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("editorial: begin tx: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+	qtx := e.queries.WithTx(tx)
+
+	sess, err := qtx.GetSession(ctx, sessionID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return errEditorialNotFound
+	}
+	if err != nil {
+		return fmt.Errorf("editorial: get session: %w", err)
+	}
+	rows, err := qtx.ListMarkersForSession(ctx, sess.ID)
+	if err != nil {
+		return fmt.Errorf("editorial: list markers: %w", err)
+	}
+	rows, err = edit(sess, qtx, rows)
+	if err != nil {
+		return err
+	}
+	if sess.Kind == editorial.KindLive {
+		normalizeLiveMarkers(rows)
+	}
+	if err := replaceMarkers(ctx, qtx, sess.ID, rows, now); err != nil {
+		return err
+	}
+	if err := qtx.TouchSession(ctx, editorial.TouchSessionParams{UpdatedAt: now, ID: sess.ID}); err != nil {
+		return fmt.Errorf("editorial: touch session: %w", err)
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("editorial: commit: %w", err)
+	}
+	e.hub.changed(sess.ID)
+	return nil
+}
+
+// SetEditorialMarkerStart moves one live marker. The live edit view saves each
+// change as it is made, so the Playout sync never waits on unsaved edits.
+func (e EditorialAPI) SetEditorialMarkerStart(ctx context.Context, req *connect.Request[apiv1.SetEditorialMarkerStartRequest]) (*connect.Response[apiv1.Void], error) {
+	if _, err := requireEditorial(req, apiv1.EditorialLive); err != nil {
+		return nil, err
+	}
+	if req.Msg.GetSessionId() == "" || req.Msg.GetMarkerId() == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("missing session_id or marker_id"))
+	}
+	err := e.editMarkers(ctx, req.Msg.GetSessionId(), func(sess editorial.Session, _ *editorial.Queries, rows []editorial.Marker) ([]editorial.Marker, error) {
+		if sess.Kind != editorial.KindLive {
+			return nil, errNotLive
+		}
+		for i := range rows {
+			if rows[i].ID == req.Msg.GetMarkerId() {
+				rows[i].StartMs = req.Msg.GetStartMs()
+				return rows, nil
+			}
+		}
+		return nil, errEditorialNotFound
+	})
+	if err != nil {
+		return nil, liveErr(err)
+	}
+	return connect.NewResponse(&apiv1.Void{}), nil
+}
+
+// DeleteEditorialMarkers removes markers. A removed Playout row is dismissed
+// so the next sync doesn't bring it back. Markers already gone (someone else
+// removed them first) are skipped.
+func (e EditorialAPI) DeleteEditorialMarkers(ctx context.Context, req *connect.Request[apiv1.DeleteEditorialMarkersRequest]) (*connect.Response[apiv1.Void], error) {
+	if _, err := requireEditorial(req, apiv1.EditorialLive); err != nil {
+		return nil, err
+	}
+	if req.Msg.GetSessionId() == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("missing session_id"))
+	}
+	remove := map[string]bool{}
+	for _, id := range req.Msg.GetMarkerIds() {
+		remove[id] = true
+	}
+	err := e.editMarkers(ctx, req.Msg.GetSessionId(), func(sess editorial.Session, qtx *editorial.Queries, rows []editorial.Marker) ([]editorial.Marker, error) {
+		kept := rows[:0]
+		for _, m := range rows {
+			if !remove[m.ID] {
+				kept = append(kept, m)
+				continue
+			}
+			if m.PlayoutKey != "" {
+				if err := qtx.DismissPlayoutKey(ctx, editorial.DismissPlayoutKeyParams{SessionID: sess.ID, PlayoutKey: m.PlayoutKey}); err != nil {
+					return nil, fmt.Errorf("editorial: dismiss playout row: %w", err)
+				}
+			}
+		}
+		return kept, nil
+	})
+	if err != nil {
+		return nil, editorialErr(err)
+	}
+	return connect.NewResponse(&apiv1.Void{}), nil
+}
+
+// SetEditorialTitle renames a session.
+func (e EditorialAPI) SetEditorialTitle(ctx context.Context, req *connect.Request[apiv1.SetEditorialTitleRequest]) (*connect.Response[apiv1.Void], error) {
+	if _, err := requireEditorial(req, apiv1.EditorialLive); err != nil {
+		return nil, err
+	}
+	n, err := e.queries.UpdateSessionTitle(ctx, editorial.UpdateSessionTitleParams{Title: req.Msg.GetTitle(), UpdatedAt: time.Now().UnixMilli(), ID: req.Msg.GetId()})
+	if err != nil {
+		return nil, editorialErr(fmt.Errorf("editorial: update session: %w", err))
+	}
+	if n == 0 {
+		return nil, editorialErr(errEditorialNotFound)
+	}
+	e.hub.changed(req.Msg.GetId())
+	return connect.NewResponse(&apiv1.Void{}), nil
+}
+
 // SyncEditorialSessionFromPlayout re-reads the session's Playout manifest from
 // its clock start until now and merges it into the saved markers (mergeLive).
 // Safe to repeat: entries already merged are recognised by their key.

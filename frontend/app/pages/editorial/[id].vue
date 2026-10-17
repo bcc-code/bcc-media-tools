@@ -116,6 +116,12 @@ const isPhone = useIsPhone();
 const effectiveMode = computed(() =>
     canLive.value && !isPhone.value ? mode.value : "simple",
 );
+// The edit view of a recording collects changes for one Save. A live session's
+// saves each change as it is made, like the simple view: others marking and
+// the Playout sync keep running, and nobody's changes wait on anyone's Save.
+const batchEdit = computed(
+    () => effectiveMode.value === "edit" && !isLive.value,
+);
 
 // Whether there is a preview column beside the list: a live session has no
 // asset to show yet, and phones get the card layout instead.
@@ -333,9 +339,9 @@ onMounted(load);
 watch(
     [title, rows],
     () => {
-        // Simple-mode changes are saved as they're made, so only edit mode
-        // has unsaved changes.
-        if (hydrated && effectiveMode.value === "edit") dirty.value = true;
+        // Changes are saved as they're made except in a recording's edit
+        // view, the only place with unsaved changes.
+        if (hydrated && batchEdit.value) dirty.value = true;
     },
     { deep: true },
 );
@@ -392,9 +398,9 @@ async function onPublishToggle(
 ) {
     if (target === "bmm") row.publishBmm = value;
     else row.publishBcc = value;
-    // In edit mode the change is persisted on Save. In simple mode there is no
-    // Save button, so persist immediately (both flags, from the row's state).
-    if (effectiveMode.value === "edit") return;
+    // A recording's edit view persists the change on Save. Otherwise there is
+    // no Save button, so persist immediately (both flags, from the row's state).
+    if (batchEdit.value) return;
     try {
         await tracked(() =>
             api.setEditorialPublish({
@@ -422,9 +428,10 @@ function titlePlaceholder(row: Row): string {
 // ── Row title/name (editable in both views, edit rights required) ──
 const nameBeforeEdit = ref("");
 
-// Edit mode persists on the batch Save; simple mode writes immediately.
+// A recording's edit view persists on the batch Save; otherwise it's written
+// immediately.
 async function persistName(row: Row) {
-    if (effectiveMode.value === "edit") return;
+    if (batchEdit.value) return;
     if (!row.id || row.name === nameBeforeEdit.value) return;
     try {
         await tracked(() =>
@@ -498,11 +505,10 @@ function snapshot(row: Row): Details {
     return { name, contributors, type, bibleVerses, playoutSynced };
 }
 
-// Only the phone drawer edits details now — the table shows them read-only in
-// simple mode and saves on the batch Save in edit mode — so the caller always
-// has the pre-edit snapshot on hand.
+// The phone drawer and the live edit view edit details; the table shows them
+// read-only in simple mode, and a recording's edit view saves on Save.
 async function persistDetails(row: Row, before: Details) {
-    if (effectiveMode.value === "edit" || !row.id) return;
+    if (batchEdit.value || !row.id) return;
     const changed =
         row.name !== before.name ||
         row.contributors !== before.contributors ||
@@ -576,7 +582,7 @@ function onMobilePublish(key: string, target: "bmm" | "bcc", value: boolean) {
 }
 
 async function persistComment(row: Row) {
-    if (effectiveMode.value === "edit") return;
+    if (batchEdit.value) return;
     if (!row.id || row.comment === commentBeforeEdit.value) return;
     try {
         await tracked(() =>
@@ -589,6 +595,84 @@ async function persistComment(row: Row) {
     } catch {
         row.comment = commentBeforeEdit.value;
         toaster.create({ title: t("editorial.saveFailed"), type: "error" });
+    }
+}
+
+// ── Live edit view: each change saved as it is made ───────
+// The marker as the server last sent it, to see what this tab changed.
+function serverMarker(id: string): EditorialMarker | undefined {
+    return serverBase?.markers.find((m) => m.id === id);
+}
+
+// Contributors, type or Bible verses changed in the live edit view.
+function persistLiveDetails(row: Row) {
+    if (!isLive.value) return;
+    const m = row.id ? serverMarker(row.id) : undefined;
+    if (!m) return;
+    void persistDetails(row, {
+        name: m.name,
+        contributors: m.contributors,
+        type: m.type,
+        bibleVerses: m.bibleVerses,
+        playoutSynced: m.playoutSynced,
+    });
+}
+
+const TIME_PATTERN = /^\s*\d{1,2}(:\d{1,2}){0,2}(\.\d{1,3})?\s*$/;
+
+// A live marker's time changed. The server keeps the rows in time order, so
+// the row moves into place when the change comes back.
+async function persistStart(row: Row) {
+    if (!isLive.value || !row.id) return;
+    if (!TIME_PATTERN.test(row.start)) {
+        row.start = row.shown.start;
+        return;
+    }
+    const startMs = startMsOf(row);
+    if (startMs === Number(serverMarker(row.id)?.startMs ?? startMs)) return;
+    try {
+        await tracked(() =>
+            api.setEditorialMarkerStart({
+                sessionId: sessionId.value,
+                markerId: row.id,
+                startMs: BigInt(startMs),
+            }),
+        );
+    } catch {
+        row.start = row.shown.start;
+        toaster.create({ title: t("editorial.saveFailed"), type: "error" });
+    }
+}
+
+const titleBeforeEdit = ref("");
+async function persistTitle() {
+    if (!isLive.value || title.value === titleBeforeEdit.value) return;
+    try {
+        await tracked(() =>
+            api.setEditorialTitle({ id: sessionId.value, title: title.value }),
+        );
+    } catch {
+        title.value = titleBeforeEdit.value;
+        toaster.create({ title: t("editorial.saveFailed"), type: "error" });
+    }
+}
+
+// Removes live rows at once; on failure the page takes the session as saved.
+async function deleteLiveRows(removed: Row[]) {
+    const markerIds = removed.map((r) => r.id).filter(Boolean);
+    if (!markerIds.length) return;
+    try {
+        await tracked(() =>
+            api.deleteEditorialMarkers({
+                sessionId: sessionId.value,
+                markerIds,
+            }),
+        );
+    } catch {
+        toaster.create({ title: t("editorial.saveFailed"), type: "error" });
+        await applyServerSession(
+            await api.getEditorialSession({ id: sessionId.value }),
+        );
     }
 }
 
@@ -615,8 +699,10 @@ function addRow() {
 
 function removeRow(i: number) {
     const row = rows.value[i];
-    if (row) selectedKeys.value.delete(row.key);
+    if (!row) return;
+    selectedKeys.value.delete(row.key);
     rows.value.splice(i, 1);
+    if (isLive.value) void deleteLiveRows([row]);
 }
 
 // ── Bulk selection ────────────────────────────────────────
@@ -667,10 +753,12 @@ function toggleAll(on: boolean) {
     rangeAnchor = null;
 }
 function removeSelected() {
+    const removed = rows.value.filter((r) => selectedKeys.value.has(r.key));
     rows.value = rows.value.filter((r) => !selectedKeys.value.has(r.key));
     selectedKeys.value = new Set();
     rangeAnchor = null;
-    dirty.value = true;
+    if (isLive.value) void deleteLiveRows(removed);
+    else dirty.value = true;
 }
 
 // Drag-to-reorder. Only the grip handle is draggable so the row's inputs stay
@@ -778,55 +866,63 @@ const remoteChanged = ref(false);
 let unmounted = false;
 let watchAbort: AbortController | undefined;
 let fallbackTimer: ReturnType<typeof setInterval> | undefined;
-// The session as this tab last took it from the server, to tell someone
-// else's change from the echo of this tab's own while it has unsaved edits.
+// The session as this tab last took it from the server: what the live edit
+// view compares a row with to see what changed, and what tells a real change
+// from a repeat while a recording's edit view has unsaved edits.
 let serverBase: EditorialSession | undefined;
-// Markers this tab added with Mark now.
-const ownMarkerIds = new Set<string>();
-// A session that arrived while this tab's save or mark was in flight: its
-// echo can't be told apart until the call returns, so it waits for that.
+// A session that arrived while this tab's Save was in flight: the echo of
+// that Save, which the Save's own answer replaces.
 let heldSession: EditorialSession | undefined;
 
-// Whether s differs from what this tab last took only by markers it added
-// itself since.
-function onlyOwnChanges(s: EditorialSession): boolean {
+// Whether s is what this tab last took, apart from when it was touched.
+function sameAsBase(s: EditorialSession): boolean {
     const base = serverBase;
     if (!base) return false;
-    const known = new Set(base.markers.map((m) => m.id));
     const comparable = (x: EditorialSession) => {
         const c = clone(EditorialSessionSchema, x);
         c.updatedAt = undefined;
         c.previewUrl = "";
-        c.markers = c.markers.filter(
-            (m) => known.has(m.id) || !ownMarkerIds.has(m.id),
-        );
         return c;
     };
     return equals(EditorialSessionSchema, comparable(s), comparable(base));
 }
 
-// Looks at a session held back while a save or mark was in flight.
+// Looks at a session held back while a Save was in flight.
 function releaseHeldSession() {
     const s = heldSession;
     heldSession = undefined;
     if (s) void mergeServerSession(s);
 }
 
+// The text fields of a row that can be typed in, as named by data-field.
+const TYPED_FIELDS = [
+    "name",
+    "contributors",
+    "bibleVerses",
+    "comment",
+    "start",
+] as const;
+type TypedField = (typeof TYPED_FIELDS)[number];
+
 // Merge a session from the server into the page without counting it as an
-// edit. Rows keep their keys (and so their DOM and focus); the row being
-// typed in keeps its text fields until the field is left.
+// edit. Rows keep their keys (and so their DOM and focus) and take every
+// change, except the one field being typed in, which keeps its text until it
+// is left (and saved).
 async function mergeServerSession(s: EditorialSession) {
-    if (effectiveMode.value === "edit" && dirty.value) {
-        if (saving.value || marking.value) heldSession = s;
-        else if (onlyOwnChanges(s)) serverBase = s;
-        else remoteChanged.value = true;
+    if (batchEdit.value && dirty.value) {
+        if (saving.value) heldSession = s;
+        else if (!sameAsBase(s)) remoteChanged.value = true;
         return;
     }
     serverBase = s;
     remoteChanged.value = false;
-    const focusedKey = (document.activeElement as HTMLElement | null)
+    const active = document.activeElement as HTMLElement | null;
+    const focusedKey = active
         ?.closest("[data-row-key]")
         ?.getAttribute("data-row-key");
+    const focusedField = active
+        ?.closest("[data-field]")
+        ?.getAttribute("data-field") as TypedField | null | undefined;
     const byId = new Map(rows.value.filter((r) => r.id).map((r) => [r.id, r]));
 
     hydrated = false;
@@ -838,19 +934,13 @@ async function mergeServerSession(s: EditorialSession) {
         const fresh = toRow(m);
         const row = byId.get(m.id);
         if (!row) return fresh;
-        if (row.key === focusedKey) {
-            const { name, contributors, bibleVerses, comment, type } = row;
-            Object.assign(row, fresh, {
-                key: row.key,
-                name,
-                contributors,
-                bibleVerses,
-                comment,
-                type,
-            });
-        } else {
-            Object.assign(row, fresh, { key: row.key });
-        }
+        const typing =
+            row.key === focusedKey &&
+            focusedField &&
+            TYPED_FIELDS.includes(focusedField)
+                ? { [focusedField]: row[focusedField] }
+                : {};
+        Object.assign(row, fresh, { key: row.key }, typing);
         return row;
     });
     await nextTick();
@@ -940,12 +1030,10 @@ function onCommentFocus(row: Row | undefined) {
     if (row?.id) reportPresence("commenting", row.id);
 }
 function onCommentBlur() {
-    reportPresence(
-        effectiveMode.value === "edit" && dirty.value ? "editing" : "viewing",
-    );
+    reportPresence(batchEdit.value && dirty.value ? "editing" : "viewing");
 }
 watch(
-    () => effectiveMode.value === "edit" && dirty.value,
+    () => batchEdit.value && dirty.value,
     (editing) => reportPresence(editing ? "editing" : "viewing"),
 );
 
@@ -1008,18 +1096,12 @@ async function markNow() {
                 at: timestampFromDate(at),
             }),
         );
-        ownMarkerIds.add(m.id);
-        // Adding a saved row is not an unsaved edit: keep sync running.
-        const wasDirty = dirty.value;
         // The stream may have delivered it already.
         if (!rows.value.some((r) => r.id === m.id)) rows.value.push(toRow(m));
-        await nextTick();
-        dirty.value = wasDirty;
     } catch {
         toaster.create({ title: t("editorial.saveFailed"), type: "error" });
     } finally {
         marking.value = false;
-        releaseHeldSession();
     }
 }
 
@@ -1080,6 +1162,7 @@ function setFromPlayhead(field: "start" | "end"): boolean {
     if (isLive.value && field === "end") return false;
     row[field] = displayMs(ms);
     linkNeighbour(i, field);
+    if (isLive.value) void persistStart(row);
     return true;
 }
 
@@ -1093,9 +1176,9 @@ function linkNeighbour(i: number, field: "start" | "end") {
     else neighbour.start = row.end;
 }
 
-// Playout is re-read every two minutes while the session is open. Paused
-// while there are unsaved edits (a Save would overwrite what arrived) or the
-// editor is typing in a row.
+// Playout is re-read every two minutes while the session is open, whatever
+// anyone is doing: every change in a live session is saved as it is made,
+// and what the sync brings merges around the field being typed in.
 const SYNC_INTERVAL_MS = 2 * 60_000;
 const lastSyncedAt = ref<number>();
 const syncFailed = ref(false);
@@ -1107,14 +1190,6 @@ const nextSyncIn = computed(() => {
     if (!lastSyncedAt.value) return 0;
     return Math.max(0, lastSyncedAt.value + SYNC_INTERVAL_MS - nowTick.value);
 });
-const syncPaused = computed(
-    () => dirty.value && effectiveMode.value === "edit",
-);
-
-function editingARow(): boolean {
-    const el = document.activeElement as HTMLElement | null;
-    return !!el && ["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName);
-}
 
 // Without a connection nobody is known to hold the lock, so try: the server
 // refuses if another tab holds it.
@@ -1137,7 +1212,6 @@ const syncHolderLabel = computed(() => {
 
 async function syncNow() {
     if (!isLive.value || !holdsSync.value || mutationInProgress.value) return;
-    if (dirty.value) return;
     syncing.value = true;
     try {
         // Everyone else gets the result through the stream.
@@ -1157,16 +1231,11 @@ async function syncNow() {
     }
 }
 
-function scheduledSync() {
-    if (editingARow()) return;
-    void syncNow();
-}
-
 watch(isLive, (live) => {
     clearInterval(syncTimer);
     clearInterval(clockTimer);
     if (!live) return;
-    syncTimer = setInterval(scheduledSync, SYNC_INTERVAL_MS);
+    syncTimer = setInterval(syncNow, SYNC_INTERVAL_MS);
     clockTimer = setInterval(() => (nowTick.value = Date.now()), 1000);
     void syncNow();
 });
@@ -1806,6 +1875,8 @@ onBeforeRouteLeave(() => {
                     v-model="title"
                     data-session-title
                     :placeholder="session?.VXID"
+                    @focusin="titleBeforeEdit = title"
+                    @change="persistTitle"
                 />
                 <div v-else class="flex min-w-0 items-center gap-3">
                     <h1 class="text-heading-2 text-text-default truncate">
@@ -1969,9 +2040,6 @@ onBeforeRouteLeave(() => {
                             <template v-if="syncing">
                                 {{ t("editorial.syncing") }}
                             </template>
-                            <template v-else-if="syncPaused">
-                                {{ t("editorial.syncPaused") }}
-                            </template>
                             <template v-else-if="syncFailed">
                                 {{ t("editorial.syncFailed") }}
                             </template>
@@ -1990,7 +2058,7 @@ onBeforeRouteLeave(() => {
                             variant="tertiary"
                             icon="tabler:refresh"
                             class="border-border-1 border"
-                            :disabled="mutationInProgress || dirty"
+                            :disabled="mutationInProgress"
                             @click="syncNow"
                         >
                             {{ t("editorial.syncNow") }}
@@ -2026,7 +2094,7 @@ onBeforeRouteLeave(() => {
                     </span>
                     <template v-if="canLive">
                         <DesignButton
-                            v-if="effectiveMode === 'edit'"
+                            v-if="batchEdit"
                             icon="tabler:device-floppy"
                             :loading="saving"
                             :disabled="importing || importingPlayout"
@@ -2340,7 +2408,9 @@ onBeforeRouteLeave(() => {
                                         <DesignInput
                                             v-if="effectiveMode === 'edit'"
                                             v-model="row.start"
+                                            data-field="start"
                                             class="w-28"
+                                            @change="persistStart(row)"
                                         />
                                         <span
                                             v-else
@@ -2366,6 +2436,7 @@ onBeforeRouteLeave(() => {
                                         >
                                             <DesignInput
                                                 v-model="row.name"
+                                                data-field="name"
                                                 :placeholder="
                                                     t('editorial.col.title')
                                                 "
@@ -2376,10 +2447,14 @@ onBeforeRouteLeave(() => {
                                             />
                                             <DesignInput
                                                 v-model="row.contributors"
+                                                data-field="contributors"
                                                 :placeholder="
                                                     t(
                                                         'editorial.col.contributors',
                                                     )
+                                                "
+                                                @change="
+                                                    persistLiveDetails(row)
                                                 "
                                             />
                                         </div>
@@ -2397,6 +2472,7 @@ onBeforeRouteLeave(() => {
                                         <EditorialGrowingTextarea
                                             v-else
                                             v-model="row.name"
+                                            data-field="name"
                                             :placeholder="titlePlaceholder(row)"
                                             placeholder-is-value
                                             :aria-label="
@@ -2463,15 +2539,23 @@ onBeforeRouteLeave(() => {
                                             class="flex min-w-44 flex-col gap-1.5"
                                         >
                                             <DesignSelect
-                                                v-model="row.type"
+                                                :model-value="row.type"
                                                 :items="typeItems"
+                                                @update:model-value="
+                                                    row.type = $event as string;
+                                                    persistLiveDetails(row);
+                                                "
                                             />
                                             <DesignInput
                                                 v-model="row.bibleVerses"
+                                                data-field="bibleVerses"
                                                 :placeholder="
                                                     t(
                                                         'editorial.col.bibleVerses',
                                                     )
+                                                "
+                                                @change="
+                                                    persistLiveDetails(row)
                                                 "
                                             />
                                         </div>
@@ -2531,6 +2615,7 @@ onBeforeRouteLeave(() => {
                                         <DesignInput
                                             v-if="effectiveMode === 'edit'"
                                             v-model="row.comment"
+                                            data-field="comment"
                                         />
                                         <!--
                                             The comment is the one thing every
@@ -2548,6 +2633,7 @@ onBeforeRouteLeave(() => {
                                         <EditorialGrowingTextarea
                                             v-else
                                             v-model="row.comment"
+                                            data-field="comment"
                                             :aria-label="
                                                 t('editorial.col.comment')
                                             "

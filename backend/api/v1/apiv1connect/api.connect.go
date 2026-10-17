@@ -151,6 +151,15 @@ const (
 	// APIServiceAddEditorialMarkerProcedure is the fully-qualified name of the APIService's
 	// AddEditorialMarker RPC.
 	APIServiceAddEditorialMarkerProcedure = "/api.v1.APIService/AddEditorialMarker"
+	// APIServiceSetEditorialMarkerStartProcedure is the fully-qualified name of the APIService's
+	// SetEditorialMarkerStart RPC.
+	APIServiceSetEditorialMarkerStartProcedure = "/api.v1.APIService/SetEditorialMarkerStart"
+	// APIServiceDeleteEditorialMarkersProcedure is the fully-qualified name of the APIService's
+	// DeleteEditorialMarkers RPC.
+	APIServiceDeleteEditorialMarkersProcedure = "/api.v1.APIService/DeleteEditorialMarkers"
+	// APIServiceSetEditorialTitleProcedure is the fully-qualified name of the APIService's
+	// SetEditorialTitle RPC.
+	APIServiceSetEditorialTitleProcedure = "/api.v1.APIService/SetEditorialTitle"
 	// APIServiceSyncEditorialSessionFromPlayoutProcedure is the fully-qualified name of the
 	// APIService's SyncEditorialSessionFromPlayout RPC.
 	APIServiceSyncEditorialSessionFromPlayoutProcedure = "/api.v1.APIService/SyncEditorialSessionFromPlayout"
@@ -241,6 +250,9 @@ type APIServiceClient interface {
 	ListPlayoutEvents(context.Context, *connect.Request[v1.ListPlayoutEventsRequest]) (*connect.Response[v1.ListPlayoutEventsResponse], error)
 	GetRecordingWindow(context.Context, *connect.Request[v1.GetRecordingWindowRequest]) (*connect.Response[v1.GetRecordingWindowResponse], error)
 	AddEditorialMarker(context.Context, *connect.Request[v1.AddEditorialMarkerRequest]) (*connect.Response[v1.EditorialMarker], error)
+	SetEditorialMarkerStart(context.Context, *connect.Request[v1.SetEditorialMarkerStartRequest]) (*connect.Response[v1.Void], error)
+	DeleteEditorialMarkers(context.Context, *connect.Request[v1.DeleteEditorialMarkersRequest]) (*connect.Response[v1.Void], error)
+	SetEditorialTitle(context.Context, *connect.Request[v1.SetEditorialTitleRequest]) (*connect.Response[v1.Void], error)
 	SyncEditorialSessionFromPlayout(context.Context, *connect.Request[v1.SyncEditorialSessionFromPlayoutRequest]) (*connect.Response[v1.EditorialSession], error)
 	AttachEditorialRecording(context.Context, *connect.Request[v1.AttachEditorialRecordingRequest]) (*connect.Response[v1.EditorialSession], error)
 	ExportEditorialSession(context.Context, *connect.Request[v1.ExportEditorialSessionRequest]) (*connect.Response[v1.ExportEditorialSessionResponse], error)
@@ -514,6 +526,24 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(aPIServiceMethods.ByName("AddEditorialMarker")),
 			connect.WithClientOptions(opts...),
 		),
+		setEditorialMarkerStart: connect.NewClient[v1.SetEditorialMarkerStartRequest, v1.Void](
+			httpClient,
+			baseURL+APIServiceSetEditorialMarkerStartProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("SetEditorialMarkerStart")),
+			connect.WithClientOptions(opts...),
+		),
+		deleteEditorialMarkers: connect.NewClient[v1.DeleteEditorialMarkersRequest, v1.Void](
+			httpClient,
+			baseURL+APIServiceDeleteEditorialMarkersProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("DeleteEditorialMarkers")),
+			connect.WithClientOptions(opts...),
+		),
+		setEditorialTitle: connect.NewClient[v1.SetEditorialTitleRequest, v1.Void](
+			httpClient,
+			baseURL+APIServiceSetEditorialTitleProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("SetEditorialTitle")),
+			connect.WithClientOptions(opts...),
+		),
 		syncEditorialSessionFromPlayout: connect.NewClient[v1.SyncEditorialSessionFromPlayoutRequest, v1.EditorialSession](
 			httpClient,
 			baseURL+APIServiceSyncEditorialSessionFromPlayoutProcedure,
@@ -609,6 +639,9 @@ type aPIServiceClient struct {
 	listPlayoutEvents                 *connect.Client[v1.ListPlayoutEventsRequest, v1.ListPlayoutEventsResponse]
 	getRecordingWindow                *connect.Client[v1.GetRecordingWindowRequest, v1.GetRecordingWindowResponse]
 	addEditorialMarker                *connect.Client[v1.AddEditorialMarkerRequest, v1.EditorialMarker]
+	setEditorialMarkerStart           *connect.Client[v1.SetEditorialMarkerStartRequest, v1.Void]
+	deleteEditorialMarkers            *connect.Client[v1.DeleteEditorialMarkersRequest, v1.Void]
+	setEditorialTitle                 *connect.Client[v1.SetEditorialTitleRequest, v1.Void]
 	syncEditorialSessionFromPlayout   *connect.Client[v1.SyncEditorialSessionFromPlayoutRequest, v1.EditorialSession]
 	attachEditorialRecording          *connect.Client[v1.AttachEditorialRecordingRequest, v1.EditorialSession]
 	exportEditorialSession            *connect.Client[v1.ExportEditorialSessionRequest, v1.ExportEditorialSessionResponse]
@@ -829,6 +862,21 @@ func (c *aPIServiceClient) AddEditorialMarker(ctx context.Context, req *connect.
 	return c.addEditorialMarker.CallUnary(ctx, req)
 }
 
+// SetEditorialMarkerStart calls api.v1.APIService.SetEditorialMarkerStart.
+func (c *aPIServiceClient) SetEditorialMarkerStart(ctx context.Context, req *connect.Request[v1.SetEditorialMarkerStartRequest]) (*connect.Response[v1.Void], error) {
+	return c.setEditorialMarkerStart.CallUnary(ctx, req)
+}
+
+// DeleteEditorialMarkers calls api.v1.APIService.DeleteEditorialMarkers.
+func (c *aPIServiceClient) DeleteEditorialMarkers(ctx context.Context, req *connect.Request[v1.DeleteEditorialMarkersRequest]) (*connect.Response[v1.Void], error) {
+	return c.deleteEditorialMarkers.CallUnary(ctx, req)
+}
+
+// SetEditorialTitle calls api.v1.APIService.SetEditorialTitle.
+func (c *aPIServiceClient) SetEditorialTitle(ctx context.Context, req *connect.Request[v1.SetEditorialTitleRequest]) (*connect.Response[v1.Void], error) {
+	return c.setEditorialTitle.CallUnary(ctx, req)
+}
+
 // SyncEditorialSessionFromPlayout calls api.v1.APIService.SyncEditorialSessionFromPlayout.
 func (c *aPIServiceClient) SyncEditorialSessionFromPlayout(ctx context.Context, req *connect.Request[v1.SyncEditorialSessionFromPlayoutRequest]) (*connect.Response[v1.EditorialSession], error) {
 	return c.syncEditorialSessionFromPlayout.CallUnary(ctx, req)
@@ -933,6 +981,9 @@ type APIServiceHandler interface {
 	ListPlayoutEvents(context.Context, *connect.Request[v1.ListPlayoutEventsRequest]) (*connect.Response[v1.ListPlayoutEventsResponse], error)
 	GetRecordingWindow(context.Context, *connect.Request[v1.GetRecordingWindowRequest]) (*connect.Response[v1.GetRecordingWindowResponse], error)
 	AddEditorialMarker(context.Context, *connect.Request[v1.AddEditorialMarkerRequest]) (*connect.Response[v1.EditorialMarker], error)
+	SetEditorialMarkerStart(context.Context, *connect.Request[v1.SetEditorialMarkerStartRequest]) (*connect.Response[v1.Void], error)
+	DeleteEditorialMarkers(context.Context, *connect.Request[v1.DeleteEditorialMarkersRequest]) (*connect.Response[v1.Void], error)
+	SetEditorialTitle(context.Context, *connect.Request[v1.SetEditorialTitleRequest]) (*connect.Response[v1.Void], error)
 	SyncEditorialSessionFromPlayout(context.Context, *connect.Request[v1.SyncEditorialSessionFromPlayoutRequest]) (*connect.Response[v1.EditorialSession], error)
 	AttachEditorialRecording(context.Context, *connect.Request[v1.AttachEditorialRecordingRequest]) (*connect.Response[v1.EditorialSession], error)
 	ExportEditorialSession(context.Context, *connect.Request[v1.ExportEditorialSessionRequest]) (*connect.Response[v1.ExportEditorialSessionResponse], error)
@@ -1202,6 +1253,24 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(aPIServiceMethods.ByName("AddEditorialMarker")),
 		connect.WithHandlerOptions(opts...),
 	)
+	aPIServiceSetEditorialMarkerStartHandler := connect.NewUnaryHandler(
+		APIServiceSetEditorialMarkerStartProcedure,
+		svc.SetEditorialMarkerStart,
+		connect.WithSchema(aPIServiceMethods.ByName("SetEditorialMarkerStart")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aPIServiceDeleteEditorialMarkersHandler := connect.NewUnaryHandler(
+		APIServiceDeleteEditorialMarkersProcedure,
+		svc.DeleteEditorialMarkers,
+		connect.WithSchema(aPIServiceMethods.ByName("DeleteEditorialMarkers")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aPIServiceSetEditorialTitleHandler := connect.NewUnaryHandler(
+		APIServiceSetEditorialTitleProcedure,
+		svc.SetEditorialTitle,
+		connect.WithSchema(aPIServiceMethods.ByName("SetEditorialTitle")),
+		connect.WithHandlerOptions(opts...),
+	)
 	aPIServiceSyncEditorialSessionFromPlayoutHandler := connect.NewUnaryHandler(
 		APIServiceSyncEditorialSessionFromPlayoutProcedure,
 		svc.SyncEditorialSessionFromPlayout,
@@ -1336,6 +1405,12 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceGetRecordingWindowHandler.ServeHTTP(w, r)
 		case APIServiceAddEditorialMarkerProcedure:
 			aPIServiceAddEditorialMarkerHandler.ServeHTTP(w, r)
+		case APIServiceSetEditorialMarkerStartProcedure:
+			aPIServiceSetEditorialMarkerStartHandler.ServeHTTP(w, r)
+		case APIServiceDeleteEditorialMarkersProcedure:
+			aPIServiceDeleteEditorialMarkersHandler.ServeHTTP(w, r)
+		case APIServiceSetEditorialTitleProcedure:
+			aPIServiceSetEditorialTitleHandler.ServeHTTP(w, r)
 		case APIServiceSyncEditorialSessionFromPlayoutProcedure:
 			aPIServiceSyncEditorialSessionFromPlayoutHandler.ServeHTTP(w, r)
 		case APIServiceAttachEditorialRecordingProcedure:
@@ -1527,6 +1602,18 @@ func (UnimplementedAPIServiceHandler) GetRecordingWindow(context.Context, *conne
 
 func (UnimplementedAPIServiceHandler) AddEditorialMarker(context.Context, *connect.Request[v1.AddEditorialMarkerRequest]) (*connect.Response[v1.EditorialMarker], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.AddEditorialMarker is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) SetEditorialMarkerStart(context.Context, *connect.Request[v1.SetEditorialMarkerStartRequest]) (*connect.Response[v1.Void], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.SetEditorialMarkerStart is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) DeleteEditorialMarkers(context.Context, *connect.Request[v1.DeleteEditorialMarkersRequest]) (*connect.Response[v1.Void], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.DeleteEditorialMarkers is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) SetEditorialTitle(context.Context, *connect.Request[v1.SetEditorialTitleRequest]) (*connect.Response[v1.Void], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.SetEditorialTitle is not implemented"))
 }
 
 func (UnimplementedAPIServiceHandler) SyncEditorialSessionFromPlayout(context.Context, *connect.Request[v1.SyncEditorialSessionFromPlayoutRequest]) (*connect.Response[v1.EditorialSession], error) {

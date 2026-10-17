@@ -104,6 +104,20 @@ func TestEditorialRoleAccess(t *testing.T) {
 			_, err := api.AddEditorialMarker(ctx, connect.NewRequest(&apiv1.AddEditorialMarkerRequest{SessionId: rec.Id, At: timestamppb.Now()}))
 			return err
 		}},
+		"move marker": {apiv1.EditorialLive, func() error {
+			// Not a live session: past the permission check it fails differently.
+			_, err := api.SetEditorialMarkerStart(ctx, connect.NewRequest(&apiv1.SetEditorialMarkerStartRequest{SessionId: rec.Id, MarkerId: markerID}))
+			return err
+		}},
+		"remove markers": {apiv1.EditorialLive, func() error {
+			// Nothing to remove keeps the marker for the other calls.
+			_, err := api.DeleteEditorialMarkers(ctx, connect.NewRequest(&apiv1.DeleteEditorialMarkersRequest{SessionId: rec.Id}))
+			return err
+		}},
+		"rename session": {apiv1.EditorialLive, func() error {
+			_, err := api.SetEditorialTitle(ctx, connect.NewRequest(&apiv1.SetEditorialTitleRequest{Id: rec.Id, Title: "recording"}))
+			return err
+		}},
 		"refresh from Playout": {apiv1.EditorialLive, func() error {
 			_, err := api.SyncEditorialSessionFromPlayout(ctx, connect.NewRequest(&apiv1.SyncEditorialSessionFromPlayoutRequest{Id: rec.Id}))
 			return err
