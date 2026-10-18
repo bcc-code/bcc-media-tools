@@ -391,29 +391,65 @@ async function tracked<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 // ── Publish toggle ────────────────────────────────────────
+// Publish writes in progress, by marker id. A row's writes go one at a time
+// (a toggle made meanwhile is sent when the running one lands), so they can't
+// reach the server out of order, and while any is pending the session merge
+// leaves the row's switches as they are shown. `confirmed` is what the server
+// last had, to fall back to if a write fails.
+type PublishFlags = { publishBmm: boolean; publishBcc: boolean };
+const publishWrites = new Map<
+    string,
+    { confirmed: PublishFlags; again: boolean }
+>();
+
 async function onPublishToggle(
     row: Row,
     target: "bmm" | "bcc",
     value: boolean,
 ) {
+    const id = row.id;
+    const pending = publishWrites.get(id);
+    const confirmed = pending?.confirmed ?? {
+        publishBmm: row.publishBmm,
+        publishBcc: row.publishBcc,
+    };
     if (target === "bmm") row.publishBmm = value;
     else row.publishBcc = value;
     // A recording's edit view persists the change on Save. Otherwise there is
     // no Save button, so persist immediately (both flags, from the row's state).
-    if (batchEdit.value) return;
+    if (batchEdit.value || !id) return;
+    if (pending) {
+        pending.again = true;
+        return;
+    }
+    const write = { confirmed, again: false };
+    publishWrites.set(id, write);
+    // The row is looked up again each round: a merge may have replaced it.
+    const current = () => rows.value.find((r) => r.id === id);
     try {
-        await tracked(() =>
-            api.setEditorialPublish({
-                sessionId: sessionId.value,
-                markerId: row.id,
-                publishBmm: row.publishBmm,
-                publishBcc: row.publishBcc,
-            }),
-        );
+        do {
+            write.again = false;
+            const r = current();
+            if (!r) break;
+            const sent = {
+                publishBmm: r.publishBmm,
+                publishBcc: r.publishBcc,
+            };
+            await tracked(() =>
+                api.setEditorialPublish({
+                    sessionId: sessionId.value,
+                    markerId: id,
+                    ...sent,
+                }),
+            );
+            write.confirmed = sent;
+        } while (write.again);
     } catch {
-        if (target === "bmm") row.publishBmm = !value;
-        else row.publishBcc = !value;
+        const r = current();
+        if (r) Object.assign(r, write.confirmed);
         toaster.create({ title: t("editorial.saveFailed"), type: "error" });
+    } finally {
+        publishWrites.delete(id);
     }
 }
 
@@ -940,7 +976,21 @@ async function mergeServerSession(s: EditorialSession) {
             TYPED_FIELDS.includes(focusedField)
                 ? { [focusedField]: row[focusedField] }
                 : {};
-        Object.assign(row, fresh, { key: row.key }, typing);
+        // A publish write still pending: the server's flags are what it
+        // last had, to fall back to; the switches stay as toggled.
+        const write = publishWrites.get(m.id);
+        let publishing = {};
+        if (write) {
+            write.confirmed = {
+                publishBmm: fresh.publishBmm,
+                publishBcc: fresh.publishBcc,
+            };
+            publishing = {
+                publishBmm: row.publishBmm,
+                publishBcc: row.publishBcc,
+            };
+        }
+        Object.assign(row, fresh, { key: row.key }, typing, publishing);
         return row;
     });
     await nextTick();
