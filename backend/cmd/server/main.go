@@ -115,18 +115,18 @@ func main() {
 		log.L.Debug().Str("temp_path", tempPath).Msg("TEMP_PATH not set, using random path")
 	}
 
-	vidispineClient := vsapi.NewClient(
-		os.Getenv("VIDISPINE_BASE_URL"),
-		os.Getenv("VIDISPINE_USERNAME"),
-		os.Getenv("VIDISPINE_PASSWORD"),
-	)
+	vidispineClient := vsapi.NewClient(vidispineConfig{
+		baseURL:  os.Getenv("VIDISPINE_BASE_URL"),
+		username: os.Getenv("VIDISPINE_USERNAME"),
+		password: os.Getenv("VIDISPINE_PASSWORD"),
+	})
 
 	permissionsApi := PermissionsAPI{}
 	bmmApi := NewBMMApi(os.Getenv("BMM_BASE_URL"), bmmToken)
 	transcriptionAPI := NewTranscriptionAPI(os.Getenv("CANTEMO_URL"), os.Getenv("CANTEMO_TOKEN"), temporalClient)
 
 	// Shared Cantemo client for tool previews and the VAULT proxy handlers.
-	cantemoClient := cantemo.NewClient(os.Getenv("CANTEMO_URL"), os.Getenv("CANTEMO_TOKEN"))
+	cantemoClient := cantemo.NewClient(cantemoConfig{url: os.Getenv("CANTEMO_URL"), token: os.Getenv("CANTEMO_TOKEN")})
 	playoutClient := playout.NewClient(
 		os.Getenv("PLAYOUT_API_URL"),
 		os.Getenv("PLAYOUT_API_KEY"),

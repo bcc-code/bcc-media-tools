@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"time"
 
-	bccmflows "github.com/bcc-code/bcc-media-flows"
+	"github.com/bcc-code/bcc-media-flows/languages"
 	"github.com/samber/lo"
 
 	"connectrpc.com/connect"
@@ -242,13 +242,13 @@ func (a BMMApi) GetBMMTranscription(_ context.Context, req *connect.Request[apiv
 		return nil, err
 	}
 
-	lang, err := bccmflows.ParseLanguageCode(req.Msg.Language)
+	lang, err := languages.ParseLanguageCode(req.Msg.Language)
 	if err != nil {
 		return nil, err
 	}
 
 	bmmReq := a.client.R().SetAuthToken(a.token.GetAccessToken()).SetResult([]*apiv1.Segments{})
-	res, err := bmmReq.Get(fmt.Sprintf("track/%s/transcription/%s?unpublished=show", id.String(), lang.BMMLangauageCode))
+	res, err := bmmReq.Get(fmt.Sprintf("track/%s/transcription/%s?unpublished=show", id.String(), lang.BMMLanguageCode))
 
 	if err != nil {
 		return nil, err

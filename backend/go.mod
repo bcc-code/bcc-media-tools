@@ -5,7 +5,7 @@ go 1.26.0
 require (
 	connectrpc.com/connect v1.18.1
 	connectrpc.com/cors v0.1.0
-	github.com/bcc-code/bcc-media-flows v0.0.0-20260714132258-8a7d866558ea
+	github.com/bcc-code/bcc-media-flows v0.0.0-20261022100226-a3d1c18a8a7e
 	github.com/bcc-code/mediabank-bridge v1.1.1
 	github.com/go-resty/resty/v2 v2.16.5
 	github.com/google/uuid v1.6.0
