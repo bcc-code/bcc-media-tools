@@ -19,7 +19,7 @@ type TranscriptionAPI struct {
 
 func NewTranscriptionAPI(baseURL, token string, temporalClient client.Client) *TranscriptionAPI {
 	return &TranscriptionAPI{
-		cantemoClient:  cantemo.NewClient(baseURL, token),
+		cantemoClient:  cantemo.NewClient(cantemoConfig{url: baseURL, token: token}),
 		temporalClient: temporalClient,
 	}
 }

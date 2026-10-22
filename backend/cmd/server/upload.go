@@ -144,7 +144,7 @@ func (u uploadHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		TrackID:                   trackID,
 		UploadedBy:                getEmailFromHttp(r),
 		FilePath:                  filePath,
-		BmmTargetEnvionment:       targetEnvironment,
+		BmmTargetEnvironment:      targetEnvironment,
 		ForceReplaceTranscription: forceReplaceTranscription,
 		IsPodcast:                 isPodcast,
 	})

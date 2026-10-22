@@ -402,7 +402,7 @@ func (v VaultAPI) originalShapeSize(vxID string) int64 {
 	if err != nil || shapes == nil {
 		return 0
 	}
-	shape := shapes.GetShape("original")
+	shape := shapes.GetShape(vsapi.ShapeTagOriginal)
 	if shape == nil {
 		return 0
 	}

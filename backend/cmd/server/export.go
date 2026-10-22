@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"connectrpc.com/connect"
-	bccmflows "github.com/bcc-code/bcc-media-flows"
+	"github.com/bcc-code/bcc-media-flows/languages"
 	"github.com/bcc-code/bcc-media-flows/services/vidispine"
 	"github.com/bcc-code/bcc-media-flows/services/vidispine/vsapi"
 	"github.com/bcc-code/bcc-media-flows/services/vidispine/vscommon"
@@ -74,11 +74,11 @@ func overlayFilenames() []string {
 // config, ordered by language number. The code is the ISO6391 value, which is
 // exactly what VXExportParams.Languages expects (matching trigger_ui).
 func exportLanguages() []*apiv1.ExportLanguage {
-	langs := lo.Values(bccmflows.LanguagesByISO)
+	langs := lo.Values(languages.LanguagesByISO)
 	sort.Slice(langs, func(i, j int) bool {
 		return langs[i].LanguageNumber < langs[j].LanguageNumber
 	})
-	return lo.Map(langs, func(l bccmflows.Language, _ int) *apiv1.ExportLanguage {
+	return lo.Map(langs, func(l languages.Language, _ int) *apiv1.ExportLanguage {
 		return &apiv1.ExportLanguage{
 			Code: l.ISO6391,
 			Name: l.LanguageName,
@@ -549,10 +549,16 @@ func (e ExportAPI) StartVBExport(ctx context.Context, req *connect.Request[apiv1
 	if len(msg.GetDestinations()) == 0 {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("no destinations selected"))
 	}
+	var destinations []vbexportworkflows.Destination
 	for _, d := range msg.GetDestinations() {
 		if !perms.CanVBExportTo(d) {
 			return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("not authorized to export to %q", d))
 		}
+		dest := vbexportworkflows.Destinations.Parse(d)
+		if dest == nil {
+			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("unknown destination %q", d))
+		}
+		destinations = append(destinations, *dest)
 	}
 
 	// "None" / empty means no subtitle burn-in.
@@ -563,7 +569,7 @@ func (e ExportAPI) StartVBExport(ctx context.Context, req *connect.Request[apiv1
 
 	params := vbexportworkflows.VBExportParams{
 		VXID:             vxID,
-		Destinations:     msg.GetDestinations(),
+		Destinations:     destinations,
 		SubtitleShapeTag: subtitleShape,
 		SubtitleStyle:    msg.GetSubtitleStyle(),
 	}
