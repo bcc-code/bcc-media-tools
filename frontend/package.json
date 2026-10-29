@@ -22,7 +22,7 @@
         "@nuxtjs/i18n": "^10.4.1",
         "@tailwindcss/vite": "^4.3.3",
         "@vue/test-utils": "^2.5.1",
-        "happy-dom": "^20.14.5",
+        "happy-dom": "^21.0.4",
         "prettier": "^3.9.5",
         "prettier-plugin-tailwindcss": "^0.8.1",
         "tailwindcss": "^4.3.3",
