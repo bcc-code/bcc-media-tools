@@ -75,8 +75,8 @@ message LiveIngestPermission {
 // Four roles, each including the ones before it:
 // reviewer (enabled) < editor < live < admin.
 message EditorialPermission {
-  // Reviewer: see all sessions, export them, comment, set publish flags and
-  // change marker titles
+  // Reviewer: see all sessions, export them, comment, set publish flags,
+  // approve sessions and change marker titles
   bool enabled = 1;
   // Admin: everything, including changing a session's details and deleting
   // sessions
@@ -527,6 +527,17 @@ message EditorialSession {
   string playout_event_id = 12;
   // only set on live sessions
   google.protobuf.Timestamp clock_start = 13;
+  // sign-offs on the whole session; set on every response
+  EditorialApproval redactional_approval = 14;
+  EditorialApproval technical_approval = 15;
+}
+
+// One sign-off on a review session. by and at are only set while approved.
+message EditorialApproval {
+  bool approved = 1;
+  // email of who approved
+  string by = 2;
+  google.protobuf.Timestamp at = 3;
 }
 
 message ListEditorialSessionsResponse {
@@ -765,6 +776,16 @@ message SetEditorialPublishRequest {
   bool publish_bcc = 4;
 }
 
+// Set or clear one approval on a session, saved at once. Reviewer role.
+// Approving records the caller and the time; clearing forgets them. Editing
+// markers or the title leaves approvals as they are.
+message SetEditorialApprovalRequest {
+  string session_id = 1;
+  // "redactional" or "technical"
+  string approval = 2;
+  bool approved = 3;
+}
+
 // Update a single marker's free-text comment. Like SetEditorialPublish this is
 // a write path available in the simple view (no edit rights required).
 message SetEditorialCommentRequest {
@@ -856,6 +877,7 @@ service APIService {
   rpc GetEditorialSession(GetEditorialSessionRequest) returns (EditorialSession) {}
   rpc SaveEditorialSession(SaveEditorialSessionRequest) returns (EditorialSession) {}
   rpc SetEditorialPublish(SetEditorialPublishRequest) returns (Void) {}
+  rpc SetEditorialApproval(SetEditorialApprovalRequest) returns (Void) {}
   rpc SetEditorialComment(SetEditorialCommentRequest) returns (Void) {}
   rpc SetEditorialName(SetEditorialNameRequest) returns (Void) {}
   rpc SetEditorialDetails(SetEditorialDetailsRequest) returns (Void) {}

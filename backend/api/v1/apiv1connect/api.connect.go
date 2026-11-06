@@ -121,6 +121,9 @@ const (
 	// APIServiceSetEditorialPublishProcedure is the fully-qualified name of the APIService's
 	// SetEditorialPublish RPC.
 	APIServiceSetEditorialPublishProcedure = "/api.v1.APIService/SetEditorialPublish"
+	// APIServiceSetEditorialApprovalProcedure is the fully-qualified name of the APIService's
+	// SetEditorialApproval RPC.
+	APIServiceSetEditorialApprovalProcedure = "/api.v1.APIService/SetEditorialApproval"
 	// APIServiceSetEditorialCommentProcedure is the fully-qualified name of the APIService's
 	// SetEditorialComment RPC.
 	APIServiceSetEditorialCommentProcedure = "/api.v1.APIService/SetEditorialComment"
@@ -240,6 +243,7 @@ type APIServiceClient interface {
 	GetEditorialSession(context.Context, *connect.Request[v1.GetEditorialSessionRequest]) (*connect.Response[v1.EditorialSession], error)
 	SaveEditorialSession(context.Context, *connect.Request[v1.SaveEditorialSessionRequest]) (*connect.Response[v1.EditorialSession], error)
 	SetEditorialPublish(context.Context, *connect.Request[v1.SetEditorialPublishRequest]) (*connect.Response[v1.Void], error)
+	SetEditorialApproval(context.Context, *connect.Request[v1.SetEditorialApprovalRequest]) (*connect.Response[v1.Void], error)
 	SetEditorialComment(context.Context, *connect.Request[v1.SetEditorialCommentRequest]) (*connect.Response[v1.Void], error)
 	SetEditorialName(context.Context, *connect.Request[v1.SetEditorialNameRequest]) (*connect.Response[v1.Void], error)
 	SetEditorialDetails(context.Context, *connect.Request[v1.SetEditorialDetailsRequest]) (*connect.Response[v1.Void], error)
@@ -466,6 +470,12 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(aPIServiceMethods.ByName("SetEditorialPublish")),
 			connect.WithClientOptions(opts...),
 		),
+		setEditorialApproval: connect.NewClient[v1.SetEditorialApprovalRequest, v1.Void](
+			httpClient,
+			baseURL+APIServiceSetEditorialApprovalProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("SetEditorialApproval")),
+			connect.WithClientOptions(opts...),
+		),
 		setEditorialComment: connect.NewClient[v1.SetEditorialCommentRequest, v1.Void](
 			httpClient,
 			baseURL+APIServiceSetEditorialCommentProcedure,
@@ -629,6 +639,7 @@ type aPIServiceClient struct {
 	getEditorialSession               *connect.Client[v1.GetEditorialSessionRequest, v1.EditorialSession]
 	saveEditorialSession              *connect.Client[v1.SaveEditorialSessionRequest, v1.EditorialSession]
 	setEditorialPublish               *connect.Client[v1.SetEditorialPublishRequest, v1.Void]
+	setEditorialApproval              *connect.Client[v1.SetEditorialApprovalRequest, v1.Void]
 	setEditorialComment               *connect.Client[v1.SetEditorialCommentRequest, v1.Void]
 	setEditorialName                  *connect.Client[v1.SetEditorialNameRequest, v1.Void]
 	setEditorialDetails               *connect.Client[v1.SetEditorialDetailsRequest, v1.Void]
@@ -812,6 +823,11 @@ func (c *aPIServiceClient) SetEditorialPublish(ctx context.Context, req *connect
 	return c.setEditorialPublish.CallUnary(ctx, req)
 }
 
+// SetEditorialApproval calls api.v1.APIService.SetEditorialApproval.
+func (c *aPIServiceClient) SetEditorialApproval(ctx context.Context, req *connect.Request[v1.SetEditorialApprovalRequest]) (*connect.Response[v1.Void], error) {
+	return c.setEditorialApproval.CallUnary(ctx, req)
+}
+
 // SetEditorialComment calls api.v1.APIService.SetEditorialComment.
 func (c *aPIServiceClient) SetEditorialComment(ctx context.Context, req *connect.Request[v1.SetEditorialCommentRequest]) (*connect.Response[v1.Void], error) {
 	return c.setEditorialComment.CallUnary(ctx, req)
@@ -971,6 +987,7 @@ type APIServiceHandler interface {
 	GetEditorialSession(context.Context, *connect.Request[v1.GetEditorialSessionRequest]) (*connect.Response[v1.EditorialSession], error)
 	SaveEditorialSession(context.Context, *connect.Request[v1.SaveEditorialSessionRequest]) (*connect.Response[v1.EditorialSession], error)
 	SetEditorialPublish(context.Context, *connect.Request[v1.SetEditorialPublishRequest]) (*connect.Response[v1.Void], error)
+	SetEditorialApproval(context.Context, *connect.Request[v1.SetEditorialApprovalRequest]) (*connect.Response[v1.Void], error)
 	SetEditorialComment(context.Context, *connect.Request[v1.SetEditorialCommentRequest]) (*connect.Response[v1.Void], error)
 	SetEditorialName(context.Context, *connect.Request[v1.SetEditorialNameRequest]) (*connect.Response[v1.Void], error)
 	SetEditorialDetails(context.Context, *connect.Request[v1.SetEditorialDetailsRequest]) (*connect.Response[v1.Void], error)
@@ -1193,6 +1210,12 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(aPIServiceMethods.ByName("SetEditorialPublish")),
 		connect.WithHandlerOptions(opts...),
 	)
+	aPIServiceSetEditorialApprovalHandler := connect.NewUnaryHandler(
+		APIServiceSetEditorialApprovalProcedure,
+		svc.SetEditorialApproval,
+		connect.WithSchema(aPIServiceMethods.ByName("SetEditorialApproval")),
+		connect.WithHandlerOptions(opts...),
+	)
 	aPIServiceSetEditorialCommentHandler := connect.NewUnaryHandler(
 		APIServiceSetEditorialCommentProcedure,
 		svc.SetEditorialComment,
@@ -1385,6 +1408,8 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceSaveEditorialSessionHandler.ServeHTTP(w, r)
 		case APIServiceSetEditorialPublishProcedure:
 			aPIServiceSetEditorialPublishHandler.ServeHTTP(w, r)
+		case APIServiceSetEditorialApprovalProcedure:
+			aPIServiceSetEditorialApprovalHandler.ServeHTTP(w, r)
 		case APIServiceSetEditorialCommentProcedure:
 			aPIServiceSetEditorialCommentHandler.ServeHTTP(w, r)
 		case APIServiceSetEditorialNameProcedure:
@@ -1562,6 +1587,10 @@ func (UnimplementedAPIServiceHandler) SaveEditorialSession(context.Context, *con
 
 func (UnimplementedAPIServiceHandler) SetEditorialPublish(context.Context, *connect.Request[v1.SetEditorialPublishRequest]) (*connect.Response[v1.Void], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.SetEditorialPublish is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) SetEditorialApproval(context.Context, *connect.Request[v1.SetEditorialApprovalRequest]) (*connect.Response[v1.Void], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.SetEditorialApproval is not implemented"))
 }
 
 func (UnimplementedAPIServiceHandler) SetEditorialComment(context.Context, *connect.Request[v1.SetEditorialCommentRequest]) (*connect.Response[v1.Void], error) {

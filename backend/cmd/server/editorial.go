@@ -205,6 +205,11 @@ func (e EditorialAPI) SetEditorialPublish(ctx context.Context, req *connect.Requ
 	return connect.NewResponse(&apiv1.Void{}), nil
 }
 
+// SetEditorialApproval sets or clears one sign-off on a session.
+func (e EditorialAPI) SetEditorialApproval(ctx context.Context, req *connect.Request[apiv1.SetEditorialApprovalRequest]) (*connect.Response[apiv1.Void], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, fmt.Errorf("editorial: approvals not implemented yet"))
+}
+
 func (e EditorialAPI) SetEditorialComment(ctx context.Context, req *connect.Request[apiv1.SetEditorialCommentRequest]) (*connect.Response[apiv1.Void], error) {
 	if _, err := requireEditorial(req, apiv1.EditorialReviewer); err != nil {
 		return nil, err
