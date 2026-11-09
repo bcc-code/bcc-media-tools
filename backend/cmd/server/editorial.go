@@ -205,9 +205,52 @@ func (e EditorialAPI) SetEditorialPublish(ctx context.Context, req *connect.Requ
 	return connect.NewResponse(&apiv1.Void{}), nil
 }
 
-// SetEditorialApproval sets or clears one sign-off on a session.
+// SetEditorialApproval sets or clears one sign-off on a session. Approving
+// records the caller and the time; clearing forgets them.
 func (e EditorialAPI) SetEditorialApproval(ctx context.Context, req *connect.Request[apiv1.SetEditorialApprovalRequest]) (*connect.Response[apiv1.Void], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, fmt.Errorf("editorial: approvals not implemented yet"))
+	email, err := requireEditorial(req, apiv1.EditorialReviewer)
+	if err != nil {
+		return nil, err
+	}
+	sessionID := req.Msg.GetSessionId()
+	if sessionID == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("missing session_id"))
+	}
+	approved := req.Msg.GetApproved()
+	now := time.Now().UnixMilli()
+	by, at := "", int64(0)
+	if approved {
+		by, at = email, now
+	}
+	var n int64
+	switch req.Msg.GetApproval() {
+	case apiv1.EditorialApprovalKind_EDITORIAL_APPROVAL_KIND_REDACTIONAL:
+		n, err = e.queries.SetRedactionalApproval(ctx, editorial.SetRedactionalApprovalParams{
+			RedactionalApproved:   approved,
+			RedactionalApprovedBy: by,
+			RedactionalApprovedAt: at,
+			UpdatedAt:             now,
+			ID:                    sessionID,
+		})
+	case apiv1.EditorialApprovalKind_EDITORIAL_APPROVAL_KIND_TECHNICAL:
+		n, err = e.queries.SetTechnicalApproval(ctx, editorial.SetTechnicalApprovalParams{
+			TechnicalApproved:   approved,
+			TechnicalApprovedBy: by,
+			TechnicalApprovedAt: at,
+			UpdatedAt:           now,
+			ID:                  sessionID,
+		})
+	default:
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("unknown approval %q", req.Msg.GetApproval()))
+	}
+	if err != nil {
+		return nil, editorialErr(fmt.Errorf("editorial: set approval: %w", err))
+	}
+	if n == 0 {
+		return nil, editorialErr(errEditorialNotFound)
+	}
+	e.hub.changed(sessionID)
+	return connect.NewResponse(&apiv1.Void{}), nil
 }
 
 func (e EditorialAPI) SetEditorialComment(ctx context.Context, req *connect.Request[apiv1.SetEditorialCommentRequest]) (*connect.Response[apiv1.Void], error) {
@@ -909,12 +952,27 @@ func editorialSessionToProto(s editorial.Session, markers []editorial.Marker) *a
 		UpdatedAt:      timestamppb.New(time.UnixMilli(s.UpdatedAt)),
 		Kind:           s.Kind,
 		PlayoutEventId: s.PlayoutEventID,
+		RedactionalApproval: editorialApprovalToProto(
+			s.RedactionalApproved, s.RedactionalApprovedBy, s.RedactionalApprovedAt),
+		TechnicalApproval: editorialApprovalToProto(
+			s.TechnicalApproved, s.TechnicalApprovedBy, s.TechnicalApprovedAt),
 	}
 	if s.Kind == editorial.KindLive {
 		out.ClockStart = timestamppb.New(time.UnixMilli(s.ClockStartMs))
 	}
 	for _, m := range markers {
 		out.Markers = append(out.Markers, editorialMarkerToProto(m))
+	}
+	return out
+}
+
+// editorialApprovalToProto is set on every session, approved or not; who and
+// when only while approved.
+func editorialApprovalToProto(approved bool, by string, atMs int64) *apiv1.EditorialApproval {
+	out := &apiv1.EditorialApproval{Approved: approved}
+	if approved {
+		out.By = by
+		out.At = timestamppb.New(time.UnixMilli(atMs))
 	}
 	return out
 }

@@ -179,6 +179,75 @@ func TestEditorialSetPublishNotFound(t *testing.T) {
 	requireNotFound(t, err)
 }
 
+func TestEditorialSetApproval(t *testing.T) {
+	api := newTestEditorialAPI(t)
+	ctx := context.Background()
+	sess := createTestSession(t, api, "VX-9", "stream")
+	setApproval := func(kind apiv1.EditorialApprovalKind, approved bool) {
+		t.Helper()
+		_, err := api.SetEditorialApproval(ctx, connect.NewRequest(&apiv1.SetEditorialApprovalRequest{
+			SessionId: sess.Id, Approval: kind, Approved: approved,
+		}))
+		require.NoError(t, err)
+	}
+
+	// A new session carries both approvals, unapproved.
+	assert.False(t, sess.RedactionalApproval.GetApproved())
+	assert.False(t, sess.TechnicalApproval.GetApproved())
+
+	setApproval(apiv1.EditorialApprovalKind_EDITORIAL_APPROVAL_KIND_REDACTIONAL, true)
+	got, err := api.loadSession(ctx, sess.Id)
+	require.NoError(t, err)
+	assert.True(t, got.RedactionalApproval.Approved)
+	assert.Equal(t, "editor@bcc.media", got.RedactionalApproval.By)
+	assert.NotNil(t, got.RedactionalApproval.At)
+	assert.False(t, got.TechnicalApproval.Approved, "the other approval is untouched")
+
+	setApproval(apiv1.EditorialApprovalKind_EDITORIAL_APPROVAL_KIND_TECHNICAL, true)
+	setApproval(apiv1.EditorialApprovalKind_EDITORIAL_APPROVAL_KIND_REDACTIONAL, false)
+	got, err = api.loadSession(ctx, sess.Id)
+	require.NoError(t, err)
+	assert.False(t, got.RedactionalApproval.Approved)
+	assert.Empty(t, got.RedactionalApproval.By, "clearing forgets who")
+	assert.Nil(t, got.RedactionalApproval.At, "clearing forgets when")
+	assert.True(t, got.TechnicalApproval.Approved)
+	assert.Equal(t, "editor@bcc.media", got.TechnicalApproval.By)
+
+	// Editing the session leaves approvals as they are.
+	saveTestSession(t, api, sess.Id, "renamed", []*apiv1.EditorialMarker{{Name: "m", StartMs: 0, EndMs: 1}})
+	list, err := api.ListEditorialSessions(ctx, connect.NewRequest(&apiv1.Void{}))
+	require.NoError(t, err)
+	require.Len(t, list.Msg.Sessions, 1)
+	assert.True(t, list.Msg.Sessions[0].TechnicalApproval.GetApproved())
+	assert.False(t, list.Msg.Sessions[0].RedactionalApproval.GetApproved())
+}
+
+func TestEditorialSetApprovalInvalid(t *testing.T) {
+	api := newTestEditorialAPI(t)
+	ctx := context.Background()
+	sess := createTestSession(t, api, "VX-9", "stream")
+
+	for _, kind := range []apiv1.EditorialApprovalKind{
+		apiv1.EditorialApprovalKind_EDITORIAL_APPROVAL_KIND_UNSPECIFIED,
+		apiv1.EditorialApprovalKind(99),
+	} {
+		_, err := api.SetEditorialApproval(ctx, connect.NewRequest(&apiv1.SetEditorialApprovalRequest{
+			SessionId: sess.Id, Approval: kind, Approved: true,
+		}))
+		assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err), "approval %v", kind)
+	}
+
+	_, err := api.SetEditorialApproval(ctx, connect.NewRequest(&apiv1.SetEditorialApprovalRequest{
+		Approval: apiv1.EditorialApprovalKind_EDITORIAL_APPROVAL_KIND_TECHNICAL, Approved: true,
+	}))
+	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err), "missing session_id")
+
+	_, err = api.SetEditorialApproval(ctx, connect.NewRequest(&apiv1.SetEditorialApprovalRequest{
+		SessionId: "missing", Approval: apiv1.EditorialApprovalKind_EDITORIAL_APPROVAL_KIND_TECHNICAL, Approved: true,
+	}))
+	requireNotFound(t, err)
+}
+
 func TestEditorialSetComment(t *testing.T) {
 	api := newTestEditorialAPI(t)
 	ctx := context.Background()

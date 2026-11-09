@@ -48,6 +48,14 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 UPDATE markers SET publish_bmm = ?, publish_bcc = ?, updated_at = ?
 WHERE id = ? AND session_id = ?;
 
+-- name: SetRedactionalApproval :execrows
+UPDATE sessions SET redactional_approved = ?, redactional_approved_by = ?, redactional_approved_at = ?, updated_at = ?
+WHERE id = ?;
+
+-- name: SetTechnicalApproval :execrows
+UPDATE sessions SET technical_approved = ?, technical_approved_by = ?, technical_approved_at = ?, updated_at = ?
+WHERE id = ?;
+
 -- name: SetMarkerComment :execrows
 UPDATE markers SET comment = ?, updated_at = ?
 WHERE id = ? AND session_id = ?;

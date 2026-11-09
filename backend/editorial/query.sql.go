@@ -122,7 +122,7 @@ func (q *Queries) DismissPlayoutKey(ctx context.Context, arg DismissPlayoutKeyPa
 }
 
 const getSession = `-- name: GetSession :one
-SELECT id, vxid, title, status, created_by, created_at, updated_at, playout_event_id, recording_start_ms, recording_end_ms, kind, clock_start_ms FROM sessions
+SELECT id, vxid, title, status, created_by, created_at, updated_at, playout_event_id, recording_start_ms, recording_end_ms, kind, clock_start_ms, redactional_approved, redactional_approved_by, redactional_approved_at, technical_approved, technical_approved_by, technical_approved_at FROM sessions
 WHERE id = ?
 `
 
@@ -142,6 +142,12 @@ func (q *Queries) GetSession(ctx context.Context, id string) (Session, error) {
 		&i.RecordingEndMs,
 		&i.Kind,
 		&i.ClockStartMs,
+		&i.RedactionalApproved,
+		&i.RedactionalApprovedBy,
+		&i.RedactionalApprovedAt,
+		&i.TechnicalApproved,
+		&i.TechnicalApprovedBy,
+		&i.TechnicalApprovedAt,
 	)
 	return i, err
 }
@@ -336,7 +342,7 @@ func (q *Queries) ListMarkersForSession(ctx context.Context, sessionID string) (
 }
 
 const listSessions = `-- name: ListSessions :many
-SELECT id, vxid, title, status, created_by, created_at, updated_at, playout_event_id, recording_start_ms, recording_end_ms, kind, clock_start_ms FROM sessions
+SELECT id, vxid, title, status, created_by, created_at, updated_at, playout_event_id, recording_start_ms, recording_end_ms, kind, clock_start_ms, redactional_approved, redactional_approved_by, redactional_approved_at, technical_approved, technical_approved_by, technical_approved_at FROM sessions
 ORDER BY created_at DESC
 `
 
@@ -362,6 +368,12 @@ func (q *Queries) ListSessions(ctx context.Context) ([]Session, error) {
 			&i.RecordingEndMs,
 			&i.Kind,
 			&i.ClockStartMs,
+			&i.RedactionalApproved,
+			&i.RedactionalApprovedBy,
+			&i.RedactionalApprovedAt,
+			&i.TechnicalApproved,
+			&i.TechnicalApprovedBy,
+			&i.TechnicalApprovedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -504,6 +516,60 @@ func (q *Queries) SetPlayoutWindow(ctx context.Context, arg SetPlayoutWindowPara
 		arg.PlayoutEventID,
 		arg.RecordingStartMs,
 		arg.RecordingEndMs,
+		arg.UpdatedAt,
+		arg.ID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const setRedactionalApproval = `-- name: SetRedactionalApproval :execrows
+UPDATE sessions SET redactional_approved = ?, redactional_approved_by = ?, redactional_approved_at = ?, updated_at = ?
+WHERE id = ?
+`
+
+type SetRedactionalApprovalParams struct {
+	RedactionalApproved   bool
+	RedactionalApprovedBy string
+	RedactionalApprovedAt int64
+	UpdatedAt             int64
+	ID                    string
+}
+
+func (q *Queries) SetRedactionalApproval(ctx context.Context, arg SetRedactionalApprovalParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, setRedactionalApproval,
+		arg.RedactionalApproved,
+		arg.RedactionalApprovedBy,
+		arg.RedactionalApprovedAt,
+		arg.UpdatedAt,
+		arg.ID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const setTechnicalApproval = `-- name: SetTechnicalApproval :execrows
+UPDATE sessions SET technical_approved = ?, technical_approved_by = ?, technical_approved_at = ?, updated_at = ?
+WHERE id = ?
+`
+
+type SetTechnicalApprovalParams struct {
+	TechnicalApproved   bool
+	TechnicalApprovedBy string
+	TechnicalApprovedAt int64
+	UpdatedAt           int64
+	ID                  string
+}
+
+func (q *Queries) SetTechnicalApproval(ctx context.Context, arg SetTechnicalApprovalParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, setTechnicalApproval,
+		arg.TechnicalApproved,
+		arg.TechnicalApprovedBy,
+		arg.TechnicalApprovedAt,
 		arg.UpdatedAt,
 		arg.ID,
 	)
