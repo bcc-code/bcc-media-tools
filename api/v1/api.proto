@@ -776,13 +776,19 @@ message SetEditorialPublishRequest {
   bool publish_bcc = 4;
 }
 
+// Which sign-off on a session. UNSPECIFIED is rejected.
+enum EditorialApprovalKind {
+  EDITORIAL_APPROVAL_KIND_UNSPECIFIED = 0;
+  EDITORIAL_APPROVAL_KIND_REDACTIONAL = 1;
+  EDITORIAL_APPROVAL_KIND_TECHNICAL = 2;
+}
+
 // Set or clear one approval on a session, saved at once. Reviewer role.
 // Approving records the caller and the time; clearing forgets them. Editing
 // markers or the title leaves approvals as they are.
 message SetEditorialApprovalRequest {
   string session_id = 1;
-  // "redactional" or "technical"
-  string approval = 2;
+  EditorialApprovalKind approval = 2;
   bool approved = 3;
 }
 
