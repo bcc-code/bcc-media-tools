@@ -47,6 +47,10 @@
 
     /* Borders */
     --color-border-1: var(--ds-border-1);
+    /* The edge of an empty form control (checkbox box). Unlike border-1,
+       which is decorative, it has to stand out from the page at 3:1
+       (WCAG 1.4.11). */
+    --color-border-control: var(--ds-border-control);
 
     /* Semantic */
     --color-semantic-error: var(--ds-semantic-error);
@@ -145,6 +149,8 @@
         --ds-text-dark-hint: rgb(0 0 0 / 0.6);
 
         --ds-border-1: rgb(13 25 17 / 0.1);
+        /* about 4.2:1 on the neutral-100 page */
+        --ds-border-control: #767676;
 
         --ds-semantic-error: #dc2626;
         --ds-semantic-success: #16a34a;
@@ -171,6 +177,8 @@
         --ds-text-hint: #99a39c;
 
         --ds-border-1: rgb(255 255 255 / 0.1);
+        /* about 3.7:1 on the neutral-950 page */
+        --ds-border-control: #6b6b6b;
 
         --ds-semantic-error: #ec6565;
         --ds-semantic-success: #4dd27d;

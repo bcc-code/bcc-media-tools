@@ -2065,23 +2065,23 @@ onBeforeRouteLeave(() => {
                     :aria-label="t('editorial.approvals')"
                     class="text-caption-1 flex shrink-0 flex-col gap-3 md:w-[27em]"
                 >
-                    <div
+                    <DesignCheckbox
                         v-for="key in APPROVAL_KEYS"
                         :key="key"
-                        class="flex min-w-0 flex-col gap-0.5"
+                        class="w-full"
+                        :model-value="isApproved(key)"
+                        :label="t(`editorial.${key}Approval`)"
+                        @update:model-value="onApprovalToggle(key, $event)"
                     >
-                        <DesignCheckbox
-                            :model-value="isApproved(key)"
-                            :label="t(`editorial.${key}Approval`)"
-                            @update:model-value="onApprovalToggle(key, $event)"
-                        />
-                        <p
-                            class="text-caption-1 text-text-hint truncate pl-7.5"
-                            :title="approvalDetail(key)"
-                        >
-                            {{ approvalDetail(key) }}
-                        </p>
-                    </div>
+                        <template #description>
+                            <span
+                                class="block truncate"
+                                :title="approvalDetail(key)"
+                            >
+                                {{ approvalDetail(key) }}
+                            </span>
+                        </template>
+                    </DesignCheckbox>
                 </div>
             </div>
 
