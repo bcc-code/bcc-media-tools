@@ -503,6 +503,7 @@ async function onApprovalToggle(key: ApprovalKey, value: boolean) {
         approvalAgain.add(key);
         return;
     }
+    const before = !!approvals.value[key]?.approved;
     try {
         let sent: boolean;
         do {
@@ -520,6 +521,14 @@ async function onApprovalToggle(key: ApprovalKey, value: boolean) {
         if (approvals.value[key]?.approved !== sent)
             approvals.value[key] = create(EditorialApprovalSchema, {
                 approved: sent,
+            });
+        // Ticked and unticked again before the first save landed: no change.
+        if (sent !== before)
+            toaster.create({
+                title: t(
+                    `editorial.${key}Approval${sent ? "Recorded" : "Removed"}`,
+                ),
+                type: "success",
             });
     } catch {
         toaster.create({ title: t("editorial.saveFailed"), type: "error" });
