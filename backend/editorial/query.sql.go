@@ -122,7 +122,7 @@ func (q *Queries) DismissPlayoutKey(ctx context.Context, arg DismissPlayoutKeyPa
 }
 
 const getSession = `-- name: GetSession :one
-SELECT id, vxid, title, status, created_by, created_at, updated_at, playout_event_id, recording_start_ms, recording_end_ms, kind, clock_start_ms FROM sessions
+SELECT id, vxid, title, status, created_by, created_at, updated_at, playout_event_id, recording_start_ms, recording_end_ms, kind, clock_start_ms, redactional_approved, redactional_approved_by, redactional_approved_at, technical_approved, technical_approved_by, technical_approved_at FROM sessions
 WHERE id = ?
 `
 
@@ -142,6 +142,12 @@ func (q *Queries) GetSession(ctx context.Context, id string) (Session, error) {
 		&i.RecordingEndMs,
 		&i.Kind,
 		&i.ClockStartMs,
+		&i.RedactionalApproved,
+		&i.RedactionalApprovedBy,
+		&i.RedactionalApprovedAt,
+		&i.TechnicalApproved,
+		&i.TechnicalApprovedBy,
+		&i.TechnicalApprovedAt,
 	)
 	return i, err
 }
@@ -336,7 +342,7 @@ func (q *Queries) ListMarkersForSession(ctx context.Context, sessionID string) (
 }
 
 const listSessions = `-- name: ListSessions :many
-SELECT id, vxid, title, status, created_by, created_at, updated_at, playout_event_id, recording_start_ms, recording_end_ms, kind, clock_start_ms FROM sessions
+SELECT id, vxid, title, status, created_by, created_at, updated_at, playout_event_id, recording_start_ms, recording_end_ms, kind, clock_start_ms, redactional_approved, redactional_approved_by, redactional_approved_at, technical_approved, technical_approved_by, technical_approved_at FROM sessions
 ORDER BY created_at DESC
 `
 
@@ -362,6 +368,12 @@ func (q *Queries) ListSessions(ctx context.Context) ([]Session, error) {
 			&i.RecordingEndMs,
 			&i.Kind,
 			&i.ClockStartMs,
+			&i.RedactionalApproved,
+			&i.RedactionalApprovedBy,
+			&i.RedactionalApprovedAt,
+			&i.TechnicalApproved,
+			&i.TechnicalApprovedBy,
+			&i.TechnicalApprovedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -527,6 +539,76 @@ type ShiftMarkersParams struct {
 func (q *Queries) ShiftMarkers(ctx context.Context, arg ShiftMarkersParams) error {
 	_, err := q.db.ExecContext(ctx, shiftMarkers, arg.DeltaMs, arg.SessionID)
 	return err
+}
+
+const swapRedactionalApproval = `-- name: SwapRedactionalApproval :execrows
+UPDATE sessions SET redactional_approved = ?1, redactional_approved_by = ?2, redactional_approved_at = ?3, updated_at = ?4
+WHERE id = ?5 AND redactional_approved = ?6 AND redactional_approved_by = ?7 AND redactional_approved_at = ?8
+`
+
+type SwapRedactionalApprovalParams struct {
+	Approved      bool
+	ApprovedBy    string
+	ApprovedAt    int64
+	UpdatedAt     int64
+	ID            string
+	WasApproved   bool
+	WasApprovedBy string
+	WasApprovedAt int64
+}
+
+// Changes the approval only while it is still as the caller last saw it, so a
+// change made in between is never overwritten.
+func (q *Queries) SwapRedactionalApproval(ctx context.Context, arg SwapRedactionalApprovalParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, swapRedactionalApproval,
+		arg.Approved,
+		arg.ApprovedBy,
+		arg.ApprovedAt,
+		arg.UpdatedAt,
+		arg.ID,
+		arg.WasApproved,
+		arg.WasApprovedBy,
+		arg.WasApprovedAt,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const swapTechnicalApproval = `-- name: SwapTechnicalApproval :execrows
+UPDATE sessions SET technical_approved = ?1, technical_approved_by = ?2, technical_approved_at = ?3, updated_at = ?4
+WHERE id = ?5 AND technical_approved = ?6 AND technical_approved_by = ?7 AND technical_approved_at = ?8
+`
+
+type SwapTechnicalApprovalParams struct {
+	Approved      bool
+	ApprovedBy    string
+	ApprovedAt    int64
+	UpdatedAt     int64
+	ID            string
+	WasApproved   bool
+	WasApprovedBy string
+	WasApprovedAt int64
+}
+
+// Changes the approval only while it is still as the caller last saw it, so a
+// change made in between is never overwritten.
+func (q *Queries) SwapTechnicalApproval(ctx context.Context, arg SwapTechnicalApprovalParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, swapTechnicalApproval,
+		arg.Approved,
+		arg.ApprovedBy,
+		arg.ApprovedAt,
+		arg.UpdatedAt,
+		arg.ID,
+		arg.WasApproved,
+		arg.WasApprovedBy,
+		arg.WasApprovedAt,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
 }
 
 const touchSession = `-- name: TouchSession :exec

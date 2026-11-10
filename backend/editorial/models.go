@@ -39,16 +39,22 @@ type PlayoutDismissed struct {
 }
 
 type Session struct {
-	ID               string
-	Vxid             string
-	Title            string
-	Status           string
-	CreatedBy        string
-	CreatedAt        int64
-	UpdatedAt        int64
-	PlayoutEventID   string
-	RecordingStartMs int64
-	RecordingEndMs   int64
-	Kind             string
-	ClockStartMs     int64
+	ID                    string
+	Vxid                  string
+	Title                 string
+	Status                string
+	CreatedBy             string
+	CreatedAt             int64
+	UpdatedAt             int64
+	PlayoutEventID        string
+	RecordingStartMs      int64
+	RecordingEndMs        int64
+	Kind                  string
+	ClockStartMs          int64
+	RedactionalApproved   bool
+	RedactionalApprovedBy string
+	RedactionalApprovedAt int64
+	TechnicalApproved     bool
+	TechnicalApprovedBy   string
+	TechnicalApprovedAt   int64
 }

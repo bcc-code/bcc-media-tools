@@ -33,6 +33,12 @@ const toastIcons: Record<string, { name: string; color: string }> = {
                         >
                             {{ toast.description }}
                         </Toast.Description>
+                        <Toast.ActionTrigger
+                            v-if="toast.action"
+                            class="text-title-3 text-primary-contrast bg-surface-indent hover:bg-surface-default ds-focus-ring mt-2 cursor-pointer rounded-lg px-3 py-1"
+                        >
+                            {{ toast.action.label }}
+                        </Toast.ActionTrigger>
                     </div>
                     <Toast.CloseTrigger
                         class="text-text-hint hover:text-text-default ds-focus-ring -m-1 flex grow-0 cursor-pointer rounded-lg p-1"
