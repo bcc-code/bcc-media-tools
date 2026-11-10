@@ -793,6 +793,8 @@ message SetEditorialApprovalRequest {
 message SetEditorialApprovalResponse {
   // for UndoEditorialApproval; empty when nothing changed
   string undo_token = 1;
+  // the approval as it now is, also when nothing changed
+  EditorialApproval approval = 2;
 }
 
 // Restore the approval as it was, with its original approver and time.
