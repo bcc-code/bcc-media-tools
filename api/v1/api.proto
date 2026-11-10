@@ -490,7 +490,7 @@ message EditorialMarker {
   reserved "publish";
   // "import" (from Mediabanken chapters) or "manual"
   string source = 8;
-  // "Medvirkende" — who takes part in the marker
+  // "Medvirkende" — contributor_list names joined with ", "
   string contributors = 9;
   // optional free-text editorial comment
   string comment = 10;
@@ -505,6 +505,14 @@ message EditorialMarker {
   // true while Playout still refreshes the row; cleared when an editor changes
   // a field Playout fills. Server-managed, ignored on save.
   bool playout_synced = 15;
+  // wins over contributors on save when non-empty
+  repeated EditorialContributor contributor_list = 16;
+}
+
+message EditorialContributor {
+  string name = 1;
+  // BCC Members personID; empty when typed in by hand
+  string person_id = 2;
 }
 
 // A review session tied to a single Mediabanken asset.
@@ -791,6 +799,29 @@ message SetEditorialDetailsRequest {
   string contributors = 4;
   string type = 5;
   string bible_verses = 6;
+  // takes precedence over contributors, as on EditorialMarker
+  repeated EditorialContributor contributor_list = 7;
+}
+
+// Find people in BCC Members by name, for contributor suggestions. Requires
+// the editor role.
+message SearchMembersRequest {
+  string query = 1;
+  // defaults to 10
+  int32 limit = 2;
+}
+
+// A person in BCC Members: only what a contributor needs, as this is
+// personal data.
+message Member {
+  string person_id = 1;
+  string display_name = 2;
+}
+
+// Best matches first. Empty when Members can't be reached, so a name can
+// still be typed in by hand.
+message SearchMembersResponse {
+  repeated Member members = 1;
 }
 
 service APIService {
@@ -877,4 +908,5 @@ service APIService {
   rpc TakeEditorialSync(TakeEditorialSyncRequest) returns (Void) {}
   rpc GetServerTime(Void) returns (ServerTime) {}
   rpc ExportEditorialChapters(ExportEditorialChaptersRequest) returns (ExportEditorialChaptersResponse) {}
+  rpc SearchMembers(SearchMembersRequest) returns (SearchMembersResponse) {}
 }
