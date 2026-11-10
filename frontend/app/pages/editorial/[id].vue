@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type {
+    EditorialApproval,
     EditorialSession,
     EditorialMarker,
     EditorialPresence,
@@ -8,8 +9,12 @@ import type {
 } from "~~/src/gen/api/v1/api_pb";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
 import { Code, ConnectError } from "@connectrpc/connect";
-import { clone, equals } from "@bufbuild/protobuf";
-import { EditorialSessionSchema } from "~~/src/gen/api/v1/api_pb";
+import { clone, create, equals } from "@bufbuild/protobuf";
+import {
+    EditorialApprovalKind,
+    EditorialApprovalSchema,
+    EditorialSessionSchema,
+} from "~~/src/gen/api/v1/api_pb";
 import type {
     MobileMarker,
     MarkerDetails,
@@ -321,6 +326,7 @@ async function load() {
     try {
         const s = await api.getEditorialSession({ id: sessionId.value });
         session.value = s;
+        takeApprovals(s);
         title.value = s.title;
         rows.value = s.markers.map(toRow);
         serverBase = s;
@@ -450,6 +456,77 @@ async function onPublishToggle(
         toaster.create({ title: t("editorial.saveFailed"), type: "error" });
     } finally {
         publishWrites.delete(id);
+    }
+}
+
+// ── Session approvals (any reviewer, saved at once) ──
+const APPROVAL_KEYS = ["redactional", "technical"] as const;
+type ApprovalKey = (typeof APPROVAL_KEYS)[number];
+const APPROVAL_KINDS: Record<ApprovalKey, EditorialApprovalKind> = {
+    redactional: EditorialApprovalKind.REDACTIONAL,
+    technical: EditorialApprovalKind.TECHNICAL,
+};
+// The latest from the server, taken from every session that arrives, even one
+// the edit view holds back while it has unsaved changes.
+const approvals = ref<Partial<Record<ApprovalKey, EditorialApproval>>>({});
+function takeApprovals(s: EditorialSession) {
+    approvals.value = {
+        redactional: s.redactionalApproval,
+        technical: s.technicalApproval,
+    };
+}
+// The switch's value while its write is in flight, so a session that arrives
+// meanwhile doesn't flip it back.
+const approvalPending = ref<Partial<Record<ApprovalKey, boolean>>>({});
+const approvalAgain = new Set<ApprovalKey>();
+
+function isApproved(key: ApprovalKey): boolean {
+    return approvalPending.value[key] ?? !!approvals.value[key]?.approved;
+}
+
+// Always one line, so the layout holds still while it changes.
+function approvalDetail(key: ApprovalKey): string {
+    const a = approvals.value[key];
+    if (approvalPending.value[key] !== undefined || (a?.approved && !a.by))
+        return t("editorial.saving");
+    if (!a?.approved) return t("editorial.notApproved");
+    return t("editorial.approvedBy", {
+        name: a.by,
+        date: formatDateTime(a.at),
+    });
+}
+
+async function onApprovalToggle(key: ApprovalKey, value: boolean) {
+    const writing = approvalPending.value[key] !== undefined;
+    approvalPending.value[key] = value;
+    if (writing) {
+        approvalAgain.add(key);
+        return;
+    }
+    try {
+        let sent: boolean;
+        do {
+            approvalAgain.delete(key);
+            sent = approvalPending.value[key]!;
+            await tracked(() =>
+                api.setEditorialApproval({
+                    sessionId: sessionId.value,
+                    approval: APPROVAL_KINDS[key],
+                    approved: sent,
+                }),
+            );
+        } while (approvalAgain.has(key));
+        // Saved: show it until the watch stream brings who and when.
+        if (approvals.value[key]?.approved !== sent)
+            approvals.value[key] = create(EditorialApprovalSchema, {
+                approved: sent,
+            });
+    } catch {
+        toaster.create({ title: t("editorial.saveFailed"), type: "error" });
+    } finally {
+        // The server's value takes over again.
+        approvalAgain.delete(key);
+        delete approvalPending.value[key];
     }
 }
 
@@ -849,6 +926,7 @@ const mutationInProgress = computed(
 async function applyServerSession(s: EditorialSession) {
     hydrated = false;
     session.value = s;
+    takeApprovals(s);
     serverBase = s;
     heldSession = undefined;
     remoteChanged.value = false;
@@ -910,7 +988,8 @@ let serverBase: EditorialSession | undefined;
 // that Save, which the Save's own answer replaces.
 let heldSession: EditorialSession | undefined;
 
-// Whether s is what this tab last took, apart from when it was touched.
+// Whether s is what this tab last took, apart from when it was touched and
+// its approvals, which are saved apart from the edit view.
 function sameAsBase(s: EditorialSession): boolean {
     const base = serverBase;
     if (!base) return false;
@@ -918,6 +997,8 @@ function sameAsBase(s: EditorialSession): boolean {
         const c = clone(EditorialSessionSchema, x);
         c.updatedAt = undefined;
         c.previewUrl = "";
+        c.redactionalApproval = undefined;
+        c.technicalApproval = undefined;
         return c;
     };
     return equals(EditorialSessionSchema, comparable(s), comparable(base));
@@ -945,6 +1026,7 @@ type TypedField = (typeof TYPED_FIELDS)[number];
 // change, except the one field being typed in, which keeps its text until it
 // is left (and saved).
 async function mergeServerSession(s: EditorialSession) {
+    takeApprovals(s);
     if (batchEdit.value && dirty.value) {
         if (saving.value) heldSession = s;
         else if (!sameAsBase(s)) remoteChanged.value = true;
@@ -1919,42 +2001,79 @@ onBeforeRouteLeave(() => {
         </p>
 
         <template v-else>
-            <div class="mb-4 max-w-xl">
-                <DesignInput
-                    v-if="effectiveMode === 'edit'"
-                    v-model="title"
-                    data-session-title
-                    :placeholder="session?.VXID"
-                    @focusin="titleBeforeEdit = title"
-                    @change="persistTitle"
-                />
-                <div v-else class="flex min-w-0 items-center gap-3">
-                    <h1 class="text-heading-2 text-text-default truncate">
-                        {{ title || session?.VXID || t("editorial.untitled") }}
-                    </h1>
-                    <DesignBadge v-if="isLive" variant="warning">
-                        {{ t("editorial.live") }}
-                    </DesignBadge>
+            <div
+                class="mb-4 flex flex-col gap-x-8 gap-y-4 md:flex-row md:items-start md:justify-between"
+            >
+                <div class="max-w-xl min-w-0 md:flex-1">
+                    <DesignInput
+                        v-if="effectiveMode === 'edit'"
+                        v-model="title"
+                        data-session-title
+                        :placeholder="session?.VXID"
+                        @focusin="titleBeforeEdit = title"
+                        @change="persistTitle"
+                    />
+                    <div v-else class="flex min-w-0 items-center gap-3">
+                        <h1 class="text-heading-2 text-text-default truncate">
+                            {{
+                                title ||
+                                session?.VXID ||
+                                t("editorial.untitled")
+                            }}
+                        </h1>
+                        <DesignBadge v-if="isLive" variant="warning">
+                            {{ t("editorial.live") }}
+                        </DesignBadge>
+                    </div>
+                    <p v-if="isLive" class="text-caption-1 text-text-hint mt-1">
+                        {{ t("editorial.notInMediabanken") }}
+                    </p>
+                    <p
+                        v-else-if="title && title !== session?.VXID"
+                        class="text-caption-1 text-text-hint mt-1"
+                    >
+                        {{ session?.VXID }}
+                    </p>
+                    <p
+                        v-if="session?.updatedAt"
+                        class="text-caption-1 text-text-hint mt-1"
+                    >
+                        {{
+                            t("editorial.lastUpdated", {
+                                date: formatDateTime(session.updatedAt),
+                            })
+                        }}
+                    </p>
                 </div>
-                <p v-if="isLive" class="text-caption-1 text-text-hint mt-1">
-                    {{ t("editorial.notInMediabanken") }}
-                </p>
-                <p
-                    v-else-if="title && title !== session?.VXID"
-                    class="text-caption-1 text-text-hint mt-1"
+                <!--
+                    A fixed width and one detail line per approval that is
+                    always there, so ticking a box doesn't move anything. The
+                    width is in em of the detail text, so it grows with the
+                    simple view's larger type and the line still fits.
+                -->
+                <div
+                    role="group"
+                    :aria-label="t('editorial.approvals')"
+                    class="text-caption-1 flex shrink-0 flex-col gap-3 md:w-[27em]"
                 >
-                    {{ session?.VXID }}
-                </p>
-                <p
-                    v-if="session?.updatedAt"
-                    class="text-caption-1 text-text-hint mt-1"
-                >
-                    {{
-                        t("editorial.lastUpdated", {
-                            date: formatDateTime(session.updatedAt),
-                        })
-                    }}
-                </p>
+                    <div
+                        v-for="key in APPROVAL_KEYS"
+                        :key="key"
+                        class="flex min-w-0 flex-col gap-0.5"
+                    >
+                        <DesignCheckbox
+                            :model-value="isApproved(key)"
+                            :label="t(`editorial.${key}Approval`)"
+                            @update:model-value="onApprovalToggle(key, $event)"
+                        />
+                        <p
+                            class="text-caption-1 text-text-hint truncate pl-7.5"
+                            :title="approvalDetail(key)"
+                        >
+                            {{ approvalDetail(key) }}
+                        </p>
+                    </div>
+                </div>
             </div>
 
             <div
