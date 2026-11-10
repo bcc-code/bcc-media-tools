@@ -542,18 +542,23 @@ async function onApprovalToggle(key: ApprovalKey, value: boolean) {
         return;
     }
     const before = !!approvals.value[key]?.approved;
+    const sid = sessionId.value;
     try {
         let sent: boolean;
+        // The last write that changed anything; one that found the approval
+        // already as asked returns no token and leaves the earlier one valid.
+        let undoToken = "";
         do {
             approvalAgain.delete(key);
             sent = approvalPending.value[key]!;
-            await tracked(() =>
+            const res = await tracked(() =>
                 api.setEditorialApproval({
-                    sessionId: sessionId.value,
+                    sessionId: sid,
                     approval: APPROVAL_KINDS[key],
                     approved: sent,
                 }),
             );
+            undoToken = res.undoToken || undoToken;
         } while (approvalAgain.has(key));
         // Saved: show it until the watch stream brings who and when.
         if (approvals.value[key]?.approved !== sent)
@@ -567,6 +572,14 @@ async function onApprovalToggle(key: ApprovalKey, value: boolean) {
                     `editorial.${key}Approval${sent ? "Recorded" : "Removed"}`,
                 ),
                 type: "success",
+                // Longer than the usual 5s: it carries a button to reach.
+                duration: 8000,
+                action: undoToken
+                    ? {
+                          label: t("editorial.undo"),
+                          onClick: () => undoApproval(key, sid, undoToken),
+                      }
+                    : undefined,
             });
     } catch {
         toaster.create({ title: t("editorial.saveFailed"), type: "error" });
@@ -574,6 +587,31 @@ async function onApprovalToggle(key: ApprovalKey, value: boolean) {
         // The server's value takes over again.
         approvalAgain.delete(key);
         delete approvalPending.value[key];
+    }
+}
+
+// Puts the approval back as it was, with its original approver and time; the
+// watch stream brings the restored state.
+async function undoApproval(key: ApprovalKey, sid: string, undoToken: string) {
+    try {
+        await tracked(() =>
+            api.undoEditorialApproval({ sessionId: sid, undoToken }),
+        );
+        toaster.create({
+            title: t(`editorial.${key}ApprovalRestored`),
+            type: "success",
+        });
+    } catch (e) {
+        const changed =
+            e instanceof ConnectError && e.code === Code.FailedPrecondition;
+        toaster.create({
+            title: t(
+                changed
+                    ? "editorial.undoFailedChanged"
+                    : "editorial.saveFailed",
+            ),
+            type: "error",
+        });
     }
 }
 

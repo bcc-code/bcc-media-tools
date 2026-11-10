@@ -87,6 +87,11 @@ func TestEditorialRoleAccess(t *testing.T) {
 			_, err := api.SetEditorialApproval(ctx, connect.NewRequest(&apiv1.SetEditorialApprovalRequest{SessionId: rec.Id, Approval: apiv1.EditorialApprovalKind_EDITORIAL_APPROVAL_KIND_TECHNICAL, Approved: true}))
 			return err
 		}},
+		"undo approval": {apiv1.EditorialReviewer, func() error {
+			// No such token: past the permission check it fails differently.
+			_, err := api.UndoEditorialApproval(ctx, connect.NewRequest(&apiv1.UndoEditorialApprovalRequest{SessionId: rec.Id, UndoToken: "none"}))
+			return err
+		}},
 		"title": {apiv1.EditorialReviewer, func() error {
 			_, err := api.SetEditorialName(ctx, connect.NewRequest(&apiv1.SetEditorialNameRequest{SessionId: rec.Id, MarkerId: markerID, Name: "t"}))
 			return err
