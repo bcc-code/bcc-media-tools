@@ -484,16 +484,54 @@ function isApproved(key: ApprovalKey): boolean {
     return approvalPending.value[key] ?? !!approvals.value[key]?.approved;
 }
 
-// Always one line, so the layout holds still while it changes.
-function approvalDetail(key: ApprovalKey): string {
-    const a = approvals.value[key];
-    if (approvalPending.value[key] !== undefined || (a?.approved && !a.by))
-        return t("editorial.saving");
-    if (!a?.approved) return t("editorial.notApproved");
-    return t("editorial.approvedBy", {
-        name: a.by,
-        date: formatDateTime(a.at),
-    });
+// The line under an approval, always one line so the layout holds still while
+// it changes: a status, or who approved it (their address) and when.
+interface ApprovalLine {
+    status: string;
+    email: string;
+    date: string;
+}
+const approvalLines = computed(() => {
+    const out = {} as Record<ApprovalKey, ApprovalLine>;
+    for (const key of APPROVAL_KEYS) {
+        const a = approvals.value[key];
+        const line = { status: "", email: "", date: "" };
+        if (approvalPending.value[key] !== undefined || (a?.approved && !a.by))
+            line.status = t("editorial.saving");
+        else if (!a?.approved) line.status = t("editorial.notApproved");
+        else {
+            line.email = a.by;
+            line.date = formatApprovalDate(a.at);
+        }
+        out[key] = line;
+    }
+    return out;
+});
+
+// "9 Nov, 15:40", with the year only when it isn't this year.
+const approvalDateOptions: Intl.DateTimeFormatOptions = {
+    timeZone: "Europe/Oslo",
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+};
+const approvalDate = new Intl.DateTimeFormat("en-GB", approvalDateOptions);
+const approvalDateWithYear = new Intl.DateTimeFormat("en-GB", {
+    ...approvalDateOptions,
+    year: "numeric",
+});
+const osloYear = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Oslo",
+    year: "numeric",
+});
+function formatApprovalDate(ts?: Timestamp): string {
+    if (!ts) return "";
+    const d = timestampDate(ts);
+    return osloYear.format(d) === osloYear.format(new Date())
+        ? approvalDate.format(d)
+        : approvalDateWithYear.format(d);
 }
 
 async function onApprovalToggle(key: ApprovalKey, value: boolean) {
@@ -2075,11 +2113,35 @@ onBeforeRouteLeave(() => {
                     >
                         <template #description>
                             <span
+                                v-if="approvalLines[key].status"
                                 class="block truncate"
-                                :title="approvalDetail(key)"
                             >
-                                {{ approvalDetail(key) }}
+                                {{ approvalLines[key].status }}
                             </span>
+                            <!--
+                                Only the address gives way, cut off with an
+                                ellipsis (all of it on hover), so the date
+                                stays readable in a narrow column.
+                            -->
+                            <i18n-t
+                                v-else
+                                keypath="editorial.approvedBy"
+                                tag="span"
+                                class="flex min-w-0 whitespace-pre"
+                            >
+                                <template #name>
+                                    <DesignTooltip
+                                        :content="approvalLines[key].email"
+                                    >
+                                        <span class="min-w-0 truncate">
+                                            {{ approvalLines[key].email }}
+                                        </span>
+                                    </DesignTooltip>
+                                </template>
+                                <template #date>
+                                    {{ approvalLines[key].date }}
+                                </template>
+                            </i18n-t>
                         </template>
                     </DesignCheckbox>
                 </div>
