@@ -424,7 +424,12 @@
         "chaptersSkipped": "{n} markør(er) uten lengde ble utelatt.",
         "chaptersFailed": "Kunne ikke lagre kapitler",
         "inOutKeys": "Tastene I og O setter inn- og utpunkt for valgt rad til videoens posisjon. Utpunktet følger neste rads innpunkt.",
-        "inOutKeysLive": "Tasten I setter tiden for valgt rad til nå."
+        "inOutKeysLive": "Tasten I setter tiden for valgt rad til nå.",
+        "contributor": {
+            "linked": "Koblet til BCC Members (personID {id})",
+            "remove": "Fjern {name}",
+            "enterToAdd": "Ikke i lista? Trykk Enter for å legge til navnet som skrevet."
+        }
     },
     "vault": {
         "searchPlaceholder": "Søk i vault",
