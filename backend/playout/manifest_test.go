@@ -37,19 +37,19 @@ func TestGetManifest(t *testing.T) {
 					"eventStartSource": "scheduled",
 					"manifest": [{
 						"type": "SPEAKER",
-						"label": "Kåre J. Smith",
+						"label": "Ola Nordmann",
 						"timestamp": "2026-07-26T12:06:31.123Z",
-						"data": {"personId":"10425","uid":"10425","name":"Kåre J. Smith"}
+						"data": {"personId":"90001","uid":"90001","name":"Ola Nordmann"}
 					}, {
 						"type": "SPEAKER",
-						"label": "Bjørn Nilsen",
+						"label": "Per Hansen",
 						"timestamp": "2026-07-26T12:07:00Z",
-						"data": {"personId":1337,"uid":"1337","name":"Bjørn Nilsen"}
+						"data": {"personId":1337,"uid":"1337","name":"Per Hansen"}
 					}, {
 						"type": "SONG",
-						"label": "HV 117 - Troen alene kan seier gi, fremgang på livets vei",
+						"label": "HV 1 - Test song",
 						"timestamp": "2026-07-26T12:10:00Z",
-						"data": {"uid":"iFiklwSarWynMhvKKVbN","key":"HV 117","metadata":{"author":"Thorleif Hansen","composer":null,"arranger":"Carolin Schneider","soloist":"Jostein Østmoen"}}
+						"data": {"uid":"song-1","key":"HV 1","metadata":{"author":"Test Author","composer":null,"arranger":null,"soloist":null}}
 					}],
 					"unknownField": "ignored"
 				}`)
@@ -68,19 +68,19 @@ func TestGetManifest(t *testing.T) {
 				EventStartSource: &source,
 				Entries: []ManifestEntry{{
 					Type:      ContentTypeSpeaker,
-					Label:     "Kåre J. Smith",
+					Label:     "Ola Nordmann",
 					Timestamp: time.Date(2026, time.July, 26, 12, 6, 31, 123000000, time.UTC),
-					Data:      json.RawMessage(`{"personId":"10425","uid":"10425","name":"Kåre J. Smith"}`),
+					Data:      json.RawMessage(`{"personId":"90001","uid":"90001","name":"Ola Nordmann"}`),
 				}, {
 					Type:      ContentTypeSpeaker,
-					Label:     "Bjørn Nilsen",
+					Label:     "Per Hansen",
 					Timestamp: time.Date(2026, time.July, 26, 12, 7, 0, 0, time.UTC),
-					Data:      json.RawMessage(`{"personId":1337,"uid":"1337","name":"Bjørn Nilsen"}`),
+					Data:      json.RawMessage(`{"personId":1337,"uid":"1337","name":"Per Hansen"}`),
 				}, {
 					Type:      ContentTypeSong,
-					Label:     "HV 117 - Troen alene kan seier gi, fremgang på livets vei",
+					Label:     "HV 1 - Test song",
 					Timestamp: time.Date(2026, time.July, 26, 12, 10, 0, 0, time.UTC),
-					Data:      json.RawMessage(`{"uid":"iFiklwSarWynMhvKKVbN","key":"HV 117","metadata":{"author":"Thorleif Hansen","composer":null,"arranger":"Carolin Schneider","soloist":"Jostein Østmoen"}}`),
+					Data:      json.RawMessage(`{"uid":"song-1","key":"HV 1","metadata":{"author":"Test Author","composer":null,"arranger":null,"soloist":null}}`),
 				}},
 			}
 			if !reflect.DeepEqual(manifest, want) {

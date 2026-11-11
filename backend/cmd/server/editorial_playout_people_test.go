@@ -21,33 +21,33 @@ func speakerWithData(t *testing.T, label, data, at string) playout.ManifestEntry
 func TestPlayoutCandidatesReadPersonIDs(t *testing.T) {
 	window := recordingWindow{Start: ts(t, "2026-10-17T11:00:00Z"), End: ts(t, "2026-10-17T12:00:00Z")}
 	got := playoutCandidates([]playout.ManifestEntry{
-		speakerWithData(t, "Harald Kronstad", `{"personId":"10205","uid":"10205","name":"Harald Kronstad"}`, "2026-10-17T11:15:50Z"),
-		speakerWithData(t, "Bjørn Nilsen", `{"personId":1337,"uid":"1337","name":"Bjørn Nilsen"}`, "2026-10-17T11:29:31Z"),
-		speakerWithData(t, "Kåre J. Smith", `{"personId":10425,"name":"Kåre J. Smith"}`, "2026-10-17T11:30:41Z"),
+		speakerWithData(t, "Kari Nordmann", `{"personId":"90002","uid":"90002","name":"Kari Nordmann"}`, "2026-10-17T11:15:50Z"),
+		speakerWithData(t, "Per Hansen", `{"personId":1337,"uid":"1337","name":"Per Hansen"}`, "2026-10-17T11:29:31Z"),
+		speakerWithData(t, "Ola Nordmann", `{"personId":90001,"name":"Ola Nordmann"}`, "2026-10-17T11:30:41Z"),
 		speakerWithData(t, "Odd", `{"personId":{"id":1},"name":"Odd"}`, "2026-10-17T11:31:00Z"),
 		speakerWithData(t, "Label Only", ``, "2026-10-17T11:32:00Z"),
-		songEntry(t, "HV 117 - Troen alene kan seier gi", "2026-10-17T11:35:10Z"),
+		songEntry(t, "HV 1 - Test song", "2026-10-17T11:35:10Z"),
 	}, window)
 
 	require.Len(t, got, 6)
-	assert.Equal(t, []contributor{{"Harald Kronstad", "10205"}}, got[0].Contributors)
-	assert.Equal(t, []contributor{{"Bjørn Nilsen", ""}}, got[1].Contributors, "1337 is a placeholder")
-	assert.Equal(t, []contributor{{"Kåre J. Smith", "10425"}}, got[2].Contributors, "a numeric personId")
+	assert.Equal(t, []contributor{{"Kari Nordmann", "90002"}}, got[0].Contributors)
+	assert.Equal(t, []contributor{{"Per Hansen", ""}}, got[1].Contributors, "1337 is a placeholder")
+	assert.Equal(t, []contributor{{"Ola Nordmann", "90001"}}, got[2].Contributors, "a numeric personId")
 	assert.Equal(t, []contributor{{"Odd", ""}}, got[3].Contributors, "an odd personId keeps the name")
 	assert.Equal(t, []contributor{{"Label Only", ""}}, got[4].Contributors, "no data falls back to the label")
 	assert.Empty(t, got[5].Contributors)
-	assert.Equal(t, "HV 117 - Troen alene kan seier gi", got[5].Name)
+	assert.Equal(t, "HV 1 - Test song", got[5].Name)
 }
 
 func TestImportFromPlayoutCarriesPersonIDs(t *testing.T) {
 	api := EditorialAPI{playout: fakePlayout{manifest: &playout.Manifest{Entries: []playout.ManifestEntry{
-		speakerWithData(t, "Harald Kronstad", `{"personId":"10205","uid":"10205","name":"Harald Kronstad"}`, "2026-10-17T11:15:50Z"),
+		speakerWithData(t, "Kari Nordmann", `{"personId":"90002","uid":"90002","name":"Kari Nordmann"}`, "2026-10-17T11:15:50Z"),
 	}}}}
 	markers, err := api.importFromPlayout(context.Background(), "1154", recordingWindow{Start: ts(t, "2026-10-17T11:00:00Z"), End: ts(t, "2026-10-17T12:00:00Z")})
 	require.NoError(t, err)
 	require.Len(t, markers, 1)
-	assert.Equal(t, "Harald Kronstad", markers[0].Contributors)
-	assert.Equal(t, []contributor{{"Harald Kronstad", "10205"}}, fromProto(markers[0].ContributorList))
+	assert.Equal(t, "Kari Nordmann", markers[0].Contributors)
+	assert.Equal(t, []contributor{{"Kari Nordmann", "90002"}}, fromProto(markers[0].ContributorList))
 }
 
 // A synced row follows Playout's corrections, IDs included, until an editor
@@ -74,18 +74,18 @@ func TestEditorialLiveSyncPersonIDs(t *testing.T) {
 		return res.Msg.Markers[0]
 	}
 
-	row := sync(`{"personId":1337,"name":"Kåre J. Smith"}`)
-	assert.Equal(t, []contributor{{"Kåre J. Smith", ""}}, fromProto(row.ContributorList))
+	row := sync(`{"personId":1337,"name":"Ola Nordmann"}`)
+	assert.Equal(t, []contributor{{"Ola Nordmann", ""}}, fromProto(row.ContributorList))
 	assert.True(t, row.PlayoutSynced)
 
-	row = sync(`{"personId":"10425","name":"Kåre J. Smith"}`)
-	assert.Equal(t, []contributor{{"Kåre J. Smith", "10425"}}, fromProto(row.ContributorList), "a synced row takes Playout's correction")
+	row = sync(`{"personId":"90001","name":"Ola Nordmann"}`)
+	assert.Equal(t, []contributor{{"Ola Nordmann", "90001"}}, fromProto(row.ContributorList), "a synced row takes Playout's correction")
 	assert.True(t, row.PlayoutSynced)
 
-	row.ContributorList = []*apiv1.EditorialContributor{{Name: "Kåre J. Smith", PersonId: "16264"}}
+	row.ContributorList = []*apiv1.EditorialContributor{{Name: "Ola Nordmann", PersonId: "90003"}}
 	saved := saveTestSession(t, api, sess.Id, "Lørdag", []*apiv1.EditorialMarker{row})
 	assert.False(t, saved.Markers[0].PlayoutSynced, "a member picked by hand stops the sync")
 
-	row = sync(`{"personId":"10205","name":"Harald Kronstad"}`)
-	assert.Equal(t, []contributor{{"Kåre J. Smith", "16264"}}, fromProto(row.ContributorList), "the pick stays")
+	row = sync(`{"personId":"90002","name":"Kari Nordmann"}`)
+	assert.Equal(t, []contributor{{"Ola Nordmann", "90003"}}, fromProto(row.ContributorList), "the pick stays")
 }

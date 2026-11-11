@@ -3,6 +3,7 @@ package main
 import (
 	apiv1 "bcc-media-tools/api/v1"
 	"bcc-media-tools/editorial"
+	"bcc-media-tools/members"
 	"bcc-media-tools/playout"
 	"context"
 	"database/sql"
@@ -38,6 +39,8 @@ type EditorialAPI struct {
 	hub *editorialHub
 	// Writes chapters (subclips); nil when Vidispine isn't configured.
 	vsMetadata vidispineMetadata
+	// Suggests contributors; nil finds no one.
+	members members.Searcher
 }
 
 type playoutClient interface {
