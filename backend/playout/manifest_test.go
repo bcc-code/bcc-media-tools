@@ -39,7 +39,17 @@ func TestGetManifest(t *testing.T) {
 						"type": "SPEAKER",
 						"label": "Kåre J. Smith",
 						"timestamp": "2026-07-26T12:06:31.123Z",
-						"data": {"name":"Kåre J. Smith","id":42}
+						"data": {"personId":"10425","uid":"10425","name":"Kåre J. Smith"}
+					}, {
+						"type": "SPEAKER",
+						"label": "Bjørn Nilsen",
+						"timestamp": "2026-07-26T12:07:00Z",
+						"data": {"personId":1337,"uid":"1337","name":"Bjørn Nilsen"}
+					}, {
+						"type": "SONG",
+						"label": "HV 117 - Troen alene kan seier gi, fremgang på livets vei",
+						"timestamp": "2026-07-26T12:10:00Z",
+						"data": {"uid":"iFiklwSarWynMhvKKVbN","key":"HV 117","metadata":{"author":"Thorleif Hansen","composer":null,"arranger":"Carolin Schneider","soloist":"Jostein Østmoen"}}
 					}],
 					"unknownField": "ignored"
 				}`)
@@ -60,7 +70,17 @@ func TestGetManifest(t *testing.T) {
 					Type:      ContentTypeSpeaker,
 					Label:     "Kåre J. Smith",
 					Timestamp: time.Date(2026, time.July, 26, 12, 6, 31, 123000000, time.UTC),
-					Data:      json.RawMessage(`{"name":"Kåre J. Smith","id":42}`),
+					Data:      json.RawMessage(`{"personId":"10425","uid":"10425","name":"Kåre J. Smith"}`),
+				}, {
+					Type:      ContentTypeSpeaker,
+					Label:     "Bjørn Nilsen",
+					Timestamp: time.Date(2026, time.July, 26, 12, 7, 0, 0, time.UTC),
+					Data:      json.RawMessage(`{"personId":1337,"uid":"1337","name":"Bjørn Nilsen"}`),
+				}, {
+					Type:      ContentTypeSong,
+					Label:     "HV 117 - Troen alene kan seier gi, fremgang på livets vei",
+					Timestamp: time.Date(2026, time.July, 26, 12, 10, 0, 0, time.UTC),
+					Data:      json.RawMessage(`{"uid":"iFiklwSarWynMhvKKVbN","key":"HV 117","metadata":{"author":"Thorleif Hansen","composer":null,"arranger":"Carolin Schneider","soloist":"Jostein Østmoen"}}`),
 				}},
 			}
 			if !reflect.DeepEqual(manifest, want) {

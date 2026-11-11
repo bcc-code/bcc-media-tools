@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 
 	"connectrpc.com/connect"
@@ -800,12 +801,13 @@ func (e EditorialAPI) importFromPlayout(ctx context.Context, eventID string, win
 	out := make([]*apiv1.EditorialMarker, 0, len(candidates))
 	for i, c := range candidates {
 		marker := &apiv1.EditorialMarker{
-			Name:         c.Name,
-			Contributors: c.Contributors,
-			BibleVerses:  c.BibleVerses,
-			Type:         editorialTypeFromPlayout(c.PlayoutType),
-			StartMs:      c.At.Sub(window.Start).Milliseconds(),
-			Source:       editorial.SourceImport,
+			Name:            c.Name,
+			Contributors:    strings.Join(contributorNames(c.Contributors), ", "),
+			ContributorList: contributorsToProto(c.Contributors),
+			BibleVerses:     c.BibleVerses,
+			Type:            editorialTypeFromPlayout(c.PlayoutType),
+			StartMs:         c.At.Sub(window.Start).Milliseconds(),
+			Source:          editorial.SourceImport,
 		}
 		// The next content action marks the end of the previous segment.
 		// Nothing follows the final segment to bound it, but the recording
@@ -828,8 +830,29 @@ type playoutCandidate struct {
 	PlayoutType  string
 	At           time.Time
 	Name         string
-	Contributors string
+	Contributors []contributor
 	BibleVerses  string
+}
+
+// playoutPlaceholderPersonID is not a person: Playout sends it with speakers
+// of many different names.
+const playoutPlaceholderPersonID = "1337"
+
+// playoutPersonID is a SPEAKER's personId (the BCC Members personID), which
+// Playout sends as a string or a number. Any other value reads as none.
+type playoutPersonID string
+
+func (p *playoutPersonID) UnmarshalJSON(b []byte) error {
+	var s string
+	if json.Unmarshal(b, &s) == nil {
+		*p = playoutPersonID(strings.TrimSpace(s))
+		return nil
+	}
+	var n json.Number
+	if json.Unmarshal(b, &n) == nil {
+		*p = playoutPersonID(n.String())
+	}
+	return nil
 }
 
 // playoutKey identifies a manifest entry: Playout gives entries no id, but a
@@ -873,12 +896,19 @@ func playoutCandidates(entries []playout.ManifestEntry, window recordingWindow) 
 		switch entry.Type {
 		case playout.ContentTypeSpeaker:
 			var data struct {
-				Name string `json:"name"`
+				Name     string          `json:"name"`
+				PersonID playoutPersonID `json:"personId"`
 			}
-			if json.Unmarshal(entry.Data, &data) == nil && data.Name != "" {
-				c.Contributors = data.Name
-			} else {
-				c.Contributors = entry.Label
+			_ = json.Unmarshal(entry.Data, &data)
+			speaker := contributor{Name: strings.TrimSpace(data.Name), PersonID: string(data.PersonID)}
+			if speaker.Name == "" {
+				speaker = contributor{Name: strings.TrimSpace(entry.Label)}
+			}
+			if speaker.PersonID == playoutPlaceholderPersonID {
+				speaker.PersonID = ""
+			}
+			if speaker.Name != "" {
+				c.Contributors = []contributor{speaker}
 			}
 			currentSpeaker = len(out)
 			currentSpeakerVerses = map[string]struct{}{}
