@@ -4,6 +4,7 @@ import (
 	"bcc-media-tools/api/v1/apiv1connect"
 	"bcc-media-tools/bmm"
 	"bcc-media-tools/editorial"
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -155,6 +156,8 @@ func main() {
 	defer editorialDB.Close()
 	editorialAPI := NewEditorialAPI(editorialDB, vidispineClient, cantemoClient, playoutClient)
 	editorialAPI.members = newMembersSearcher()
+	editorialAPI.speakers = newFrequentSpeakers(playoutClient)
+	go editorialAPI.speakers.run(context.Background())
 	editorialAPI.vsMetadata = newVidispineMetadata(
 		os.Getenv("VIDISPINE_BASE_URL"),
 		os.Getenv("VIDISPINE_USERNAME"),

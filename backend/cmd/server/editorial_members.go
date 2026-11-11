@@ -34,30 +34,48 @@ const (
 	maxMemberResults     = 25
 )
 
-// SearchMembers suggests BCC Members people for a marker's contributors. When
-// Members fails it finds no one, so a name can still be typed in by hand.
+// SearchMembers suggests people for a marker's contributors: frequent Playout
+// speakers first, then BCC Members' best matches. An empty query lists the
+// frequent speakers. When Members fails only they are found, so a name can
+// still be typed in by hand.
 func (e EditorialAPI) SearchMembers(ctx context.Context, req *connect.Request[apiv1.SearchMembersRequest]) (*connect.Response[apiv1.SearchMembersResponse], error) {
 	if _, err := requireEditorial(req, apiv1.EditorialEditor); err != nil {
 		return nil, err
 	}
-	res := &apiv1.SearchMembersResponse{}
 	query := strings.TrimSpace(req.Msg.GetQuery())
-	if e.members == nil || utf8.RuneCountInString(query) < 2 {
-		return connect.NewResponse(res), nil
-	}
 	limit := int(req.Msg.GetLimit())
 	if limit <= 0 {
 		limit = defaultMemberResults
 	}
 	limit = min(limit, maxMemberResults)
 
+	res := &apiv1.SearchMembersResponse{}
+	seen := map[string]bool{}
+	for _, p := range e.speakers.match(query, limit) {
+		seen[p.PersonID] = true
+		res.Members = append(res.Members, &apiv1.Member{PersonId: p.PersonID, DisplayName: p.Name, Appearances: int32(p.Events)})
+	}
+	if e.members == nil || utf8.RuneCountInString(query) < 2 || len(res.Members) == limit {
+		return connect.NewResponse(res), nil
+	}
 	people, err := e.members.Search(ctx, query, limit)
 	if err != nil {
 		log.L.Warn().Err(err).Msg("member search failed")
 		return connect.NewResponse(res), nil
 	}
 	for _, p := range people {
-		res.Members = append(res.Members, &apiv1.Member{PersonId: p.PersonID, DisplayName: p.DisplayName})
+		if len(res.Members) == limit {
+			break
+		}
+		if seen[p.PersonID] {
+			continue
+		}
+		seen[p.PersonID] = true
+		res.Members = append(res.Members, &apiv1.Member{
+			PersonId:    p.PersonID,
+			DisplayName: p.DisplayName,
+			Appearances: int32(e.speakers.appearances(p.PersonID)),
+		})
 	}
 	return connect.NewResponse(res), nil
 }

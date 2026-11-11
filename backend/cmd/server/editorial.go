@@ -41,6 +41,8 @@ type EditorialAPI struct {
 	vsMetadata vidispineMetadata
 	// Suggests contributors; nil finds no one.
 	members members.Searcher
+	// Puts the usual Playout speakers first in those suggestions; nil skips it.
+	speakers *frequentSpeakers
 }
 
 type playoutClient interface {
@@ -841,6 +843,24 @@ type playoutCandidate struct {
 // of many different names.
 const playoutPlaceholderPersonID = "1337"
 
+// playoutSpeaker reads who a SPEAKER entry shows. The name falls back to the
+// entry's label; the personID is empty for the placeholder or none.
+func playoutSpeaker(entry playout.ManifestEntry) contributor {
+	var data struct {
+		Name     string          `json:"name"`
+		PersonID playoutPersonID `json:"personId"`
+	}
+	_ = json.Unmarshal(entry.Data, &data)
+	speaker := contributor{Name: strings.TrimSpace(data.Name), PersonID: string(data.PersonID)}
+	if speaker.Name == "" {
+		speaker.Name = strings.TrimSpace(entry.Label)
+	}
+	if speaker.PersonID == playoutPlaceholderPersonID {
+		speaker.PersonID = ""
+	}
+	return speaker
+}
+
 // playoutPersonID is a SPEAKER's personId (the BCC Members personID), which
 // Playout sends as a string or a number. Any other value reads as none.
 type playoutPersonID string
@@ -898,19 +918,7 @@ func playoutCandidates(entries []playout.ManifestEntry, window recordingWindow) 
 		c := playoutCandidate{Key: playoutKey(entry), PlayoutType: entry.Type, At: entry.Timestamp}
 		switch entry.Type {
 		case playout.ContentTypeSpeaker:
-			var data struct {
-				Name     string          `json:"name"`
-				PersonID playoutPersonID `json:"personId"`
-			}
-			_ = json.Unmarshal(entry.Data, &data)
-			speaker := contributor{Name: strings.TrimSpace(data.Name), PersonID: string(data.PersonID)}
-			if speaker.Name == "" {
-				speaker = contributor{Name: strings.TrimSpace(entry.Label)}
-			}
-			if speaker.PersonID == playoutPlaceholderPersonID {
-				speaker.PersonID = ""
-			}
-			if speaker.Name != "" {
+			if speaker := playoutSpeaker(entry); speaker.Name != "" {
 				c.Contributors = []contributor{speaker}
 			}
 			currentSpeaker = len(out)

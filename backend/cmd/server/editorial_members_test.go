@@ -15,13 +15,21 @@ import (
 )
 
 type fakeMembers struct {
-	limit int
-	err   error
+	// found for any query; Ola Nordmann when nil
+	people []members.Person
+	limit  int
+	err    error
 }
 
 func (f *fakeMembers) Search(_ context.Context, _ string, limit int) ([]members.Person, error) {
 	f.limit = limit
-	return []members.Person{{PersonID: "90001", DisplayName: "Ola Nordmann"}}, f.err
+	if f.err != nil {
+		return nil, f.err
+	}
+	if f.people != nil {
+		return f.people, nil
+	}
+	return []members.Person{{PersonID: "90001", DisplayName: "Ola Nordmann"}}, nil
 }
 
 func searchMembers(t *testing.T, api *EditorialAPI, query string, limit int32) ([]*apiv1.Member, error) {
