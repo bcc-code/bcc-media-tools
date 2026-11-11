@@ -505,7 +505,7 @@ message EditorialMarker {
   // true while Playout still refreshes the row; cleared when an editor changes
   // a field Playout fills. Server-managed, ignored on save.
   bool playout_synced = 15;
-  // wins over contributors on save when non-empty
+  // used on save unless contributors was edited to other names
   repeated EditorialContributor contributor_list = 16;
 }
 
@@ -799,7 +799,7 @@ message SetEditorialDetailsRequest {
   string contributors = 4;
   string type = 5;
   string bible_verses = 6;
-  // takes precedence over contributors, as on EditorialMarker
+  // as on EditorialMarker
   repeated EditorialContributor contributor_list = 7;
 }
 

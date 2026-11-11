@@ -173,28 +173,29 @@ func (q *Queries) InsertExportedChapter(ctx context.Context, arg InsertExportedC
 }
 
 const insertMarker = `-- name: InsertMarker :exec
-INSERT INTO markers (id, session_id, sort_order, name, contributors, comment, bible_verses, type, start_ms, end_ms, publish_bmm, publish_bcc, source, created_at, updated_at, playout_key, playout_synced)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO markers (id, session_id, sort_order, name, contributors, contributor_list, comment, bible_verses, type, start_ms, end_ms, publish_bmm, publish_bcc, source, created_at, updated_at, playout_key, playout_synced)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `
 
 type InsertMarkerParams struct {
-	ID            string
-	SessionID     string
-	SortOrder     int64
-	Name          string
-	Contributors  string
-	Comment       string
-	BibleVerses   string
-	Type          string
-	StartMs       int64
-	EndMs         int64
-	PublishBmm    bool
-	PublishBcc    bool
-	Source        string
-	CreatedAt     int64
-	UpdatedAt     int64
-	PlayoutKey    string
-	PlayoutSynced bool
+	ID              string
+	SessionID       string
+	SortOrder       int64
+	Name            string
+	Contributors    string
+	ContributorList string
+	Comment         string
+	BibleVerses     string
+	Type            string
+	StartMs         int64
+	EndMs           int64
+	PublishBmm      bool
+	PublishBcc      bool
+	Source          string
+	CreatedAt       int64
+	UpdatedAt       int64
+	PlayoutKey      string
+	PlayoutSynced   bool
 }
 
 func (q *Queries) InsertMarker(ctx context.Context, arg InsertMarkerParams) error {
@@ -204,6 +205,7 @@ func (q *Queries) InsertMarker(ctx context.Context, arg InsertMarkerParams) erro
 		arg.SortOrder,
 		arg.Name,
 		arg.Contributors,
+		arg.ContributorList,
 		arg.Comment,
 		arg.BibleVerses,
 		arg.Type,
@@ -289,7 +291,7 @@ func (q *Queries) ListExportedChapters(ctx context.Context, arg ListExportedChap
 }
 
 const listMarkersForSession = `-- name: ListMarkersForSession :many
-SELECT id, session_id, sort_order, name, contributors, comment, bible_verses, type, start_ms, end_ms, publish_bmm, publish_bcc, source, created_at, updated_at, playout_key, playout_synced FROM markers
+SELECT id, session_id, sort_order, name, contributors, comment, bible_verses, type, start_ms, end_ms, publish_bmm, publish_bcc, source, created_at, updated_at, playout_key, playout_synced, contributor_list FROM markers
 WHERE session_id = ?
 ORDER BY sort_order ASC
 `
@@ -321,6 +323,7 @@ func (q *Queries) ListMarkersForSession(ctx context.Context, sessionID string) (
 			&i.UpdatedAt,
 			&i.PlayoutKey,
 			&i.PlayoutSynced,
+			&i.ContributorList,
 		); err != nil {
 			return nil, err
 		}
@@ -402,18 +405,19 @@ func (q *Queries) SetMarkerComment(ctx context.Context, arg SetMarkerCommentPara
 }
 
 const setMarkerDetails = `-- name: SetMarkerDetails :execrows
-UPDATE markers SET name = ?, contributors = ?, type = ?, bible_verses = ?, playout_synced = 0, updated_at = ?
+UPDATE markers SET name = ?, contributors = ?, contributor_list = ?, type = ?, bible_verses = ?, playout_synced = 0, updated_at = ?
 WHERE id = ? AND session_id = ?
 `
 
 type SetMarkerDetailsParams struct {
-	Name         string
-	Contributors string
-	Type         string
-	BibleVerses  string
-	UpdatedAt    int64
-	ID           string
-	SessionID    string
+	Name            string
+	Contributors    string
+	ContributorList string
+	Type            string
+	BibleVerses     string
+	UpdatedAt       int64
+	ID              string
+	SessionID       string
 }
 
 // Hand-edited details stop Playout from refreshing the row.
@@ -421,6 +425,7 @@ func (q *Queries) SetMarkerDetails(ctx context.Context, arg SetMarkerDetailsPara
 	result, err := q.db.ExecContext(ctx, setMarkerDetails,
 		arg.Name,
 		arg.Contributors,
+		arg.ContributorList,
 		arg.Type,
 		arg.BibleVerses,
 		arg.UpdatedAt,

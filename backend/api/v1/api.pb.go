@@ -4115,7 +4115,7 @@ type EditorialMarker struct {
 	// true while Playout still refreshes the row; cleared when an editor changes
 	// a field Playout fills. Server-managed, ignored on save.
 	PlayoutSynced bool `protobuf:"varint,15,opt,name=playout_synced,json=playoutSynced,proto3" json:"playout_synced,omitempty"`
-	// wins over contributors on save when non-empty
+	// used on save unless contributors was edited to other names
 	ContributorList []*EditorialContributor `protobuf:"bytes,16,rep,name=contributor_list,json=contributorList,proto3" json:"contributor_list,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
@@ -6403,7 +6403,7 @@ type SetEditorialDetailsRequest struct {
 	Contributors string                 `protobuf:"bytes,4,opt,name=contributors,proto3" json:"contributors,omitempty"`
 	Type         string                 `protobuf:"bytes,5,opt,name=type,proto3" json:"type,omitempty"`
 	BibleVerses  string                 `protobuf:"bytes,6,opt,name=bible_verses,json=bibleVerses,proto3" json:"bible_verses,omitempty"`
-	// takes precedence over contributors, as on EditorialMarker
+	// as on EditorialMarker
 	ContributorList []*EditorialContributor `protobuf:"bytes,7,rep,name=contributor_list,json=contributorList,proto3" json:"contributor_list,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache

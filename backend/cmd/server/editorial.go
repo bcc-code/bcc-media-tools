@@ -260,14 +260,27 @@ func (e EditorialAPI) SetEditorialDetails(ctx context.Context, req *connect.Requ
 	}
 	sessionID, markerID := req.Msg.GetSessionId(), req.Msg.GetMarkerId()
 	err := e.updateMarker(ctx, sessionID, func(qtx *editorial.Queries, now int64) (int64, error) {
+		markers, err := qtx.ListMarkersForSession(ctx, sessionID)
+		if err != nil {
+			return 0, err
+		}
+		var stored []contributor
+		for _, m := range markers {
+			if m.ID == markerID {
+				stored = markerContributors(m)
+			}
+		}
+		var contributors editorial.Marker
+		setContributors(&contributors, contributorsFromRequest(req.Msg.GetContributorList(), req.Msg.GetContributors(), stored))
 		return qtx.SetMarkerDetails(ctx, editorial.SetMarkerDetailsParams{
-			Name:         req.Msg.GetName(),
-			Contributors: req.Msg.GetContributors(),
-			Type:         req.Msg.GetType(),
-			BibleVerses:  req.Msg.GetBibleVerses(),
-			UpdatedAt:    now,
-			ID:           markerID,
-			SessionID:    sessionID,
+			Name:            req.Msg.GetName(),
+			Contributors:    contributors.Contributors,
+			ContributorList: contributors.ContributorList,
+			Type:            req.Msg.GetType(),
+			BibleVerses:     req.Msg.GetBibleVerses(),
+			UpdatedAt:       now,
+			ID:              markerID,
+			SessionID:       sessionID,
 		})
 	})
 	if err != nil {
@@ -424,20 +437,24 @@ func (e EditorialAPI) saveSession(ctx context.Context, id, title string, markers
 	kept := map[string]bool{}
 	for _, m := range markers {
 		row := editorial.Marker{
-			ID:           m.GetId(),
-			SessionID:    id,
-			Name:         m.GetName(),
-			Contributors: m.GetContributors(),
-			Comment:      m.GetComment(),
-			BibleVerses:  m.GetBibleVerses(),
-			Type:         m.GetType(),
-			StartMs:      m.GetStartMs(),
-			EndMs:        m.GetEndMs(),
-			PublishBmm:   m.GetPublishBmm(),
-			PublishBcc:   m.GetPublishBcc(),
-			Source:       m.GetSource(),
-			PlayoutKey:   m.GetPlayoutKey(),
+			ID:          m.GetId(),
+			SessionID:   id,
+			Name:        m.GetName(),
+			Comment:     m.GetComment(),
+			BibleVerses: m.GetBibleVerses(),
+			Type:        m.GetType(),
+			StartMs:     m.GetStartMs(),
+			EndMs:       m.GetEndMs(),
+			PublishBmm:  m.GetPublishBmm(),
+			PublishBcc:  m.GetPublishBcc(),
+			Source:      m.GetSource(),
+			PlayoutKey:  m.GetPlayoutKey(),
 		}
+		var stored []contributor
+		if prev, ok := storedByID[row.ID]; ok {
+			stored = markerContributors(prev)
+		}
+		setContributors(&row, contributorsFromRequest(m.GetContributorList(), m.GetContributors(), stored))
 		if row.ID == "" {
 			row.ID = uuid.NewString()
 		}
@@ -479,23 +496,24 @@ func replaceMarkers(ctx context.Context, qtx *editorial.Queries, sessionID strin
 	}
 	for i, m := range rows {
 		if err := qtx.InsertMarker(ctx, editorial.InsertMarkerParams{
-			ID:            m.ID,
-			SessionID:     sessionID,
-			SortOrder:     int64(i),
-			Name:          m.Name,
-			Contributors:  m.Contributors,
-			Comment:       m.Comment,
-			BibleVerses:   m.BibleVerses,
-			Type:          m.Type,
-			StartMs:       m.StartMs,
-			EndMs:         m.EndMs,
-			PublishBmm:    m.PublishBmm,
-			PublishBcc:    m.PublishBcc,
-			Source:        m.Source,
-			CreatedAt:     now,
-			UpdatedAt:     now,
-			PlayoutKey:    m.PlayoutKey,
-			PlayoutSynced: m.PlayoutSynced,
+			ID:              m.ID,
+			SessionID:       sessionID,
+			SortOrder:       int64(i),
+			Name:            m.Name,
+			Contributors:    m.Contributors,
+			ContributorList: contributorListColumn(m),
+			Comment:         m.Comment,
+			BibleVerses:     m.BibleVerses,
+			Type:            m.Type,
+			StartMs:         m.StartMs,
+			EndMs:           m.EndMs,
+			PublishBmm:      m.PublishBmm,
+			PublishBcc:      m.PublishBcc,
+			Source:          m.Source,
+			CreatedAt:       now,
+			UpdatedAt:       now,
+			PlayoutKey:      m.PlayoutKey,
+			PlayoutSynced:   m.PlayoutSynced,
 		}); err != nil {
 			return fmt.Errorf("editorial: insert marker: %w", err)
 		}
@@ -505,7 +523,7 @@ func replaceMarkers(ctx context.Context, qtx *editorial.Queries, sessionID strin
 
 // playoutFieldsChanged reports whether an editor touched a field Playout fills.
 func playoutFieldsChanged(a, b editorial.Marker) bool {
-	return a.Name != b.Name || a.Contributors != b.Contributors || a.BibleVerses != b.BibleVerses || a.Type != b.Type
+	return a.Name != b.Name || contributorsChanged(a, b) || a.BibleVerses != b.BibleVerses || a.Type != b.Type
 }
 
 // updateMarker runs a single-marker update (which returns the affected row
@@ -916,19 +934,20 @@ func editorialSessionToProto(s editorial.Session, markers []editorial.Marker) *a
 
 func editorialMarkerToProto(m editorial.Marker) *apiv1.EditorialMarker {
 	return &apiv1.EditorialMarker{
-		Id:            m.ID,
-		SortOrder:     int32(m.SortOrder),
-		Name:          m.Name,
-		Contributors:  m.Contributors,
-		Comment:       m.Comment,
-		BibleVerses:   m.BibleVerses,
-		Type:          m.Type,
-		StartMs:       m.StartMs,
-		EndMs:         m.EndMs,
-		PublishBmm:    m.PublishBmm,
-		PublishBcc:    m.PublishBcc,
-		Source:        m.Source,
-		PlayoutKey:    m.PlayoutKey,
-		PlayoutSynced: m.PlayoutSynced,
+		Id:              m.ID,
+		SortOrder:       int32(m.SortOrder),
+		Name:            m.Name,
+		Contributors:    m.Contributors,
+		ContributorList: contributorsToProto(markerContributors(m)),
+		Comment:         m.Comment,
+		BibleVerses:     m.BibleVerses,
+		Type:            m.Type,
+		StartMs:         m.StartMs,
+		EndMs:           m.EndMs,
+		PublishBmm:      m.PublishBmm,
+		PublishBcc:      m.PublishBcc,
+		Source:          m.Source,
+		PlayoutKey:      m.PlayoutKey,
+		PlayoutSynced:   m.PlayoutSynced,
 	}
 }

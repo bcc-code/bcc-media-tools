@@ -1954,7 +1954,7 @@ export type EditorialMarker = Message<"api.v1.EditorialMarker"> & {
   playoutSynced: boolean;
 
   /**
-   * wins over contributors on save when non-empty
+   * used on save unless contributors was edited to other names
    *
    * @generated from field: repeated api.v1.EditorialContributor contributor_list = 16;
    */
@@ -3054,7 +3054,7 @@ export type SetEditorialDetailsRequest = Message<"api.v1.SetEditorialDetailsRequ
   bibleVerses: string;
 
   /**
-   * takes precedence over contributors, as on EditorialMarker
+   * as on EditorialMarker
    *
    * @generated from field: repeated api.v1.EditorialContributor contributor_list = 7;
    */
