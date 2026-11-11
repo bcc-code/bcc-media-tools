@@ -806,6 +806,7 @@ message SetEditorialDetailsRequest {
 // Find people in BCC Members by name, for contributor suggestions. Requires
 // the editor role.
 message SearchMembersRequest {
+  // empty lists the people who speak most often
   string query = 1;
   // defaults to 10
   int32 limit = 2;
@@ -816,10 +817,12 @@ message SearchMembersRequest {
 message Member {
   string person_id = 1;
   string display_name = 2;
+  // Playout events this person spoke at; 0 when not among the frequent
+  int32 appearances = 3;
 }
 
-// Best matches first. Empty when Members can't be reached, so a name can
-// still be typed in by hand.
+// Frequent speakers first, then Members' best matches. Empty when neither can
+// be reached, so a name can still be typed in by hand.
 message SearchMembersResponse {
   repeated Member members = 1;
 }
