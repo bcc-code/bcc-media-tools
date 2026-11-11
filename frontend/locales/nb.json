@@ -428,7 +428,8 @@
         "contributor": {
             "linked": "Koblet til BCC Members (personID {id})",
             "remove": "Fjern {name}",
-            "enterToAdd": "Ikke i lista? Trykk Enter for å legge til navnet som skrevet."
+            "enterToAdd": "Ikke i lista? Trykk Enter for å legge til navnet som skrevet.",
+            "frequent": "Faste talere"
         }
     },
     "vault": {

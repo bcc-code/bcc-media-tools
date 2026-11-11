@@ -428,7 +428,8 @@
         "contributor": {
             "linked": "Linked to BCC Members (personID {id})",
             "remove": "Remove {name}",
-            "enterToAdd": "Not listed? Press Enter to add the name as typed."
+            "enterToAdd": "Not listed? Press Enter to add the name as typed.",
+            "frequent": "Frequent speakers"
         }
     },
     "vault": {

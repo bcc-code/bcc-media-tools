@@ -817,7 +817,7 @@ message SearchMembersRequest {
 message Member {
   string person_id = 1;
   string display_name = 2;
-  // Playout events this person spoke at; 0 when not among the frequent
+  // days this person spoke on in Playout; 0 when not among the frequent
   int32 appearances = 3;
 }
 

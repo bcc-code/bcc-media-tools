@@ -209,3 +209,40 @@ func TestMatchPutsTheSpellingTypedFirst(t *testing.T) {
 	assert.Equal(t, []string{"Ola Aadalen"}, names("aad", 1), "the limit keeps the spelling typed")
 	assert.Equal(t, []string{"Kari Ådalen", "Ola Aadalen"}, names("", 10), "no query, by frequency")
 }
+
+// A week-long conference counts each day spoken: more days beat more events.
+func TestFrequentSpeakersRankByDaysSpoken(t *testing.T) {
+	log.ConfigureGlobalLogger(zerolog.Disabled)
+	noSpeakerWaits(t)
+	p := &playoutEvents{
+		events: []playout.Event{{ID: "1", Status: "archived"}, {ID: "2", Status: "archived"}, {ID: "3", Status: "archived"}},
+		manifests: map[string][]playout.ManifestEntry{
+			// Ola speaks on three days of one conference, twice on the first.
+			"1": {
+				speakerAt(t, "Ola Nordmann", `"90001"`, "2026-07-26T10:00:00Z"),
+				speakerAt(t, "Ola Nordmann", `"90001"`, "2026-07-26T17:00:00Z"),
+				speakerAt(t, "Ola Nordmann", `"90001"`, "2026-07-27T10:00:00Z"),
+				speakerAt(t, "Ola Nordmann", `"90001"`, "2026-07-28T10:00:00Z"),
+			},
+			// Kari speaks at two one-day events.
+			"2": {speakerAt(t, "Kari Nordmann", `"90002"`, "2026-08-02T10:00:00Z")},
+			"3": {
+				speakerAt(t, "Kari Nordmann", `"90002"`, "2026-08-09T10:00:00Z"),
+				// 22:30 UTC is past midnight in Oslo: the next day there.
+				speakerAt(t, "Per Hansen", `"90005"`, "2026-08-09T21:30:00Z"),
+				speakerAt(t, "Per Hansen", `"90005"`, "2026-08-09T22:30:00Z"),
+			},
+		},
+	}
+	f := newFrequentSpeakers(p)
+	require.NoError(t, f.refresh(context.Background()))
+
+	got := f.match("", 10)
+	require.Len(t, got, 3)
+	assert.Equal(t, []string{"90001", "90002", "90005"}, []string{got[0].PersonID, got[1].PersonID, got[2].PersonID})
+	assert.Equal(t, 3, got[0].Days, "two talks on one day count once")
+	assert.Equal(t, 1, got[0].Events)
+	assert.Equal(t, 2, got[1].Days)
+	assert.Equal(t, 2, got[2].Days, "days are Oslo dates")
+	assert.Equal(t, 3, f.appearances("90001"))
+}

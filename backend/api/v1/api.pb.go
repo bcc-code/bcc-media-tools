@@ -6550,7 +6550,7 @@ type Member struct {
 	state       protoimpl.MessageState `protogen:"open.v1"`
 	PersonId    string                 `protobuf:"bytes,1,opt,name=person_id,json=personId,proto3" json:"person_id,omitempty"`
 	DisplayName string                 `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
-	// Playout events this person spoke at; 0 when not among the frequent
+	// days this person spoke on in Playout; 0 when not among the frequent
 	Appearances   int32 `protobuf:"varint,3,opt,name=appearances,proto3" json:"appearances,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

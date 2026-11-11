@@ -28,6 +28,8 @@ const playoutEventArchived = "archived"
 // frequentSpeakers counts Playout speakers with a personID, in memory.
 type frequentSpeakers struct {
 	playout playoutClient
+	// days are counted in the meetings' time zone
+	loc *time.Location
 
 	mu     sync.RWMutex
 	people []frequentSpeaker
@@ -39,21 +41,28 @@ type frequentSpeakers struct {
 type frequentSpeaker struct {
 	PersonID string
 	// latest name in Playout
-	Name            string
-	Events, Entries int
+	Name string
+	// days spoken, the ranking; events and entries break ties
+	Days, Events, Entries int
 	// folded for matching; spelt keeps "aa" apart from "å"
 	words, spelt []string
 	lastSeen     time.Time
 }
 
 type eventSpeaker struct {
-	Name     string
-	Entries  int
+	Name    string
+	Entries int
+	// dates spoken, "2006-01-02"
+	Days     map[string]bool
 	LastSeen time.Time
 }
 
 func newFrequentSpeakers(p playoutClient) *frequentSpeakers {
-	return &frequentSpeakers{playout: p, archived: map[string]map[string]eventSpeaker{}}
+	loc, err := time.LoadLocation(recordingTZ)
+	if err != nil {
+		loc = time.UTC
+	}
+	return &frequentSpeakers{playout: p, loc: loc, archived: map[string]map[string]eventSpeaker{}}
 }
 
 // run refreshes now and every speakersRefreshEvery, until ctx ends.
@@ -103,7 +112,7 @@ func (f *frequentSpeakers) refresh(ctx context.Context) error {
 				refused = append(refused, ev)
 				continue
 			}
-			perEvent[ev.ID] = countSpeakers(manifest.Entries)
+			perEvent[ev.ID] = countSpeakers(manifest.Entries, f.loc)
 		}
 		pending = refused
 	}
@@ -125,7 +134,7 @@ func (f *frequentSpeakers) refresh(ctx context.Context) error {
 	return nil
 }
 
-func countSpeakers(entries []playout.ManifestEntry) map[string]eventSpeaker {
+func countSpeakers(entries []playout.ManifestEntry, loc *time.Location) map[string]eventSpeaker {
 	counts := map[string]eventSpeaker{}
 	for _, entry := range entries {
 		if entry.Type != playout.ContentTypeSpeaker {
@@ -137,6 +146,10 @@ func countSpeakers(entries []playout.ManifestEntry) map[string]eventSpeaker {
 		}
 		c := counts[s.PersonID]
 		c.Entries++
+		if c.Days == nil {
+			c.Days = map[string]bool{}
+		}
+		c.Days[entry.Timestamp.In(loc).Format(time.DateOnly)] = true
 		if !entry.Timestamp.Before(c.LastSeen) {
 			c.Name, c.LastSeen = s.Name, entry.Timestamp
 		}
@@ -145,9 +158,11 @@ func countSpeakers(entries []playout.ManifestEntry) map[string]eventSpeaker {
 	return counts
 }
 
-// rankSpeakers orders by events, then entries: a meeting repeats names.
+// rankSpeakers orders by days spoken: an event can be one meeting or a
+// week-long conference, and a meeting repeats names.
 func rankSpeakers(perEvent map[string]map[string]eventSpeaker) ([]frequentSpeaker, map[string]frequentSpeaker) {
 	byID := map[string]frequentSpeaker{}
+	days := map[string]map[string]bool{}
 	for _, counts := range perEvent {
 		for id, c := range counts {
 			p := byID[id]
@@ -158,16 +173,24 @@ func rankSpeakers(perEvent map[string]map[string]eventSpeaker) ([]frequentSpeake
 				p.Name, p.lastSeen = c.Name, c.LastSeen
 			}
 			byID[id] = p
+			if days[id] == nil {
+				days[id] = map[string]bool{}
+			}
+			for d := range c.Days {
+				days[id][d] = true
+			}
 		}
 	}
 	people := make([]frequentSpeaker, 0, len(byID))
 	for id, p := range byID {
+		p.Days = len(days[id])
 		p.words, p.spelt = nameWords(fold(p.Name)), nameWords(foldAccents(p.Name))
 		byID[id] = p
 		people = append(people, p)
 	}
 	slices.SortFunc(people, func(a, b frequentSpeaker) int {
 		return cmp.Or(
+			cmp.Compare(b.Days, a.Days),
 			cmp.Compare(b.Events, a.Events),
 			cmp.Compare(b.Entries, a.Entries),
 			strings.Compare(a.Name, b.Name),
@@ -223,7 +246,7 @@ func (f *frequentSpeakers) appearances(personID string) int {
 	}
 	f.mu.RLock()
 	defer f.mu.RUnlock()
-	return f.byID[personID].Events
+	return f.byID[personID].Days
 }
 
 // sleep reports false when ctx ends first.

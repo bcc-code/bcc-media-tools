@@ -3115,7 +3115,7 @@ export type Member = Message<"api.v1.Member"> & {
   displayName: string;
 
   /**
-   * Playout events this person spoke at; 0 when not among the frequent
+   * days this person spoke on in Playout; 0 when not among the frequent
    *
    * @generated from field: int32 appearances = 3;
    */

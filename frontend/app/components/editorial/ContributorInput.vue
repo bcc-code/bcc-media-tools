@@ -1,7 +1,8 @@
 <script setup lang="ts">
-// Contributors as chips: typing suggests people from BCC Members, and a pick
-// keeps their personID. Enter or a comma (or leaving the field) adds what was
-// typed as a name of its own, linked to no one.
+// Contributors as chips: typing suggests people from BCC Members, the usual
+// Playout speakers first, and a pick keeps their personID. An empty field
+// offers the usual speakers. Enter or a comma (or leaving the field) adds what
+// was typed as a name of its own, linked to no one.
 import { Combobox, createListCollection } from "@ark-ui/vue";
 import type { Member } from "~~/src/gen/api/v1/api_pb";
 
@@ -40,25 +41,26 @@ const collection = computed(() =>
 
 // Answers can arrive out of order; only the latest counts.
 let searchSeq = 0;
-watchDebounced(
-    query,
-    async (q) => {
-        const seq = ++searchSeq;
-        if (q.trim().length < 2) {
-            results.value = [];
-            return;
-        }
-        try {
-            const res = await api.searchMembers({ query: q.trim(), limit: 8 });
-            if (seq !== searchSeq) return;
-            const linked = new Set(model.value.map((c) => c.personId));
-            results.value = res.members.filter((m) => !linked.has(m.personId));
-        } catch {
-            if (seq === searchSeq) results.value = [];
-        }
-    },
-    { debounce: 250 },
-);
+async function search(q: string) {
+    const seq = ++searchSeq;
+    try {
+        // an empty query lists the usual speakers
+        const res = await api.searchMembers({ query: q.trim(), limit: 8 });
+        if (seq !== searchSeq) return;
+        const linked = new Set(model.value.map((c) => c.personId));
+        results.value = res.members.filter((m) => !linked.has(m.personId));
+    } catch {
+        if (seq === searchSeq) results.value = [];
+    }
+}
+watchDebounced(query, search, { debounce: 250 });
+
+const typing = computed(() => query.value.trim() !== "");
+
+function onFocus() {
+    focused.value = true;
+    if (!typing.value) void search("");
+}
 
 watch([results, focused], () => {
     open.value = focused.value && results.value.length > 0;
@@ -179,7 +181,7 @@ function onBlur() {
                     'text-text-default placeholder:text-text-hint min-w-24 flex-1 bg-transparent px-1 outline-none',
                     large ? 'text-body-2' : 'text-body-3',
                 ]"
-                @focus="focused = true"
+                @focus="onFocus"
                 @blur="onBlur"
                 @keydown="onKeydown"
             />
@@ -188,8 +190,14 @@ function onBlur() {
         <Teleport to="#teleports">
             <Combobox.Positioner class="z-60">
                 <Combobox.Content
-                    class="gradient-border bg-surface-raise shadow-floating min-w-(--reference-width) rounded-xl p-1"
+                    class="gradient-border bg-surface-raise shadow-floating w-max max-w-[min(24rem,calc(100vw-2rem))] min-w-(--reference-width) rounded-xl p-1"
                 >
+                    <p
+                        v-if="!typing"
+                        class="text-caption-1 text-text-hint px-3 pt-1.5 pb-1"
+                    >
+                        {{ t("editorial.contributor.frequent") }}
+                    </p>
                     <Combobox.Item
                         v-for="m in results"
                         :key="m.personId"
@@ -204,7 +212,10 @@ function onBlur() {
                             m.displayName
                         }}</Combobox.ItemText>
                     </Combobox.Item>
-                    <p class="text-caption-1 text-text-hint px-3 pt-1 pb-1.5">
+                    <p
+                        v-if="typing"
+                        class="text-caption-1 text-text-hint px-3 pt-1 pb-1.5"
+                    >
                         {{ t("editorial.contributor.enterToAdd") }}
                     </p>
                 </Combobox.Content>
