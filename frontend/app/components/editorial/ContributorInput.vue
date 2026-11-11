@@ -3,7 +3,7 @@
 // Playout speakers first, and a pick keeps their personID. An empty field
 // offers the usual speakers. Enter or a comma (or leaving the field) adds what
 // was typed as a name of its own, linked to no one.
-import { Combobox, createListCollection } from "@ark-ui/vue";
+import { Combobox, createListCollection, useCombobox } from "@ark-ui/vue";
 import type { Member } from "~~/src/gen/api/v1/api_pb";
 
 export interface Contributor {
@@ -27,8 +27,6 @@ const api = useAPI();
 
 const query = ref("");
 const results = ref<Member[]>([]);
-const open = ref(false);
-const highlighted = ref<string>();
 const focused = ref(false);
 
 const collection = computed(() =>
@@ -62,8 +60,30 @@ function onFocus() {
     if (!typing.value) void search("");
 }
 
-watch([results, focused], () => {
-    open.value = focused.value && results.value.length > 0;
+// The list opens and closes on its own; open isn't bound, as closing a bound
+// one puts the focus back in the input. Only suggestions arriving while the
+// field has focus open it from here.
+const combobox = useCombobox(
+    computed(() => ({
+        collection: collection.value,
+        allowCustomValue: true,
+        inputBehavior: "none" as const,
+        selectionBehavior: "clear" as const,
+        openOnClick: false,
+        positioning: { placement: "bottom-start" as const, gutter: 4 },
+        value: [],
+        inputValue: query.value,
+        onInputValueChange: (d: { inputValue: string }) => {
+            query.value = d.inputValue;
+        },
+        onValueChange: onSelect,
+    })),
+);
+watch(results, (found) => {
+    if (!focused.value) return;
+    if (found.length && !combobox.value.open) combobox.value.setOpen(true);
+    else if (!found.length && combobox.value.open)
+        combobox.value.setOpen(false);
 });
 
 function update(next: Contributor[]) {
@@ -77,6 +97,8 @@ function onSelect(details: { items: Member[] }) {
     query.value = "";
     results.value = [];
     update([...model.value, { name: m.displayName, personId: m.personId }]);
+    // the usual speakers again, for the next one
+    if (focused.value) void search("");
 }
 
 // Adds what was typed; a pasted "A, B" adds both.
@@ -100,7 +122,7 @@ function remove(i: number) {
 }
 
 function onKeydown(e: KeyboardEvent) {
-    if (e.key === "Enter" && highlighted.value == null) {
+    if (e.key === "Enter" && combobox.value.highlightedValue == null) {
         e.preventDefault();
         addTyped();
     } else if (e.key === ",") {
@@ -122,19 +144,7 @@ function onBlur() {
 </script>
 
 <template>
-    <Combobox.Root
-        v-model:input-value="query"
-        v-model:open="open"
-        v-model:highlighted-value="highlighted"
-        :collection="collection"
-        :model-value="[]"
-        allow-custom-value
-        input-behavior="none"
-        selection-behavior="clear"
-        :open-on-click="false"
-        :positioning="{ placement: 'bottom-start', gutter: 4 }"
-        @value-change="onSelect"
-    >
+    <Combobox.RootProvider :value="combobox">
         <Combobox.Control
             :class="[
                 'border-border-1 flex w-full flex-wrap items-center gap-1 rounded-xl border px-2 focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-(--color-focus-ring)',
@@ -221,5 +231,5 @@ function onBlur() {
                 </Combobox.Content>
             </Combobox.Positioner>
         </Teleport>
-    </Combobox.Root>
+    </Combobox.RootProvider>
 </template>
