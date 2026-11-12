@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"slices"
+	"sync"
 	"testing"
 	"time"
 
@@ -21,8 +22,20 @@ type fakeMembers struct {
 	people []members.Person
 	limit  int
 	err    error
-	// GetMany's calls; it knows the IDs below 90100, as "Person <id>"
+	// GetMany's calls
 	lookups [][]string
+	// GetMany finds these; when nil, the IDs below 90100, as "Person <id>"
+	byID map[string]members.Person
+	// each GetMany takes this long
+	delay time.Duration
+	mu    sync.Mutex
+	gets  map[string]int
+}
+
+func (f *fakeMembers) getCount(id string) int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.gets[id]
 }
 
 func (f *fakeMembers) Search(_ context.Context, _ string, limit int) ([]members.Person, error) {
@@ -36,14 +49,29 @@ func (f *fakeMembers) Search(_ context.Context, _ string, limit int) ([]members.
 	return []members.Person{{PersonID: "90001", DisplayName: "Ola Nordmann"}}, nil
 }
 
-func (f *fakeMembers) GetMany(_ context.Context, ids []string) ([]members.Person, error) {
+func (f *fakeMembers) GetMany(ctx context.Context, ids []string) ([]members.Person, error) {
+	f.mu.Lock()
 	f.lookups = append(f.lookups, ids)
+	if f.gets == nil {
+		f.gets = map[string]int{}
+	}
+	for _, id := range ids {
+		f.gets[id]++
+	}
+	f.mu.Unlock()
+	select {
+	case <-time.After(f.delay):
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
 	if f.err != nil {
 		return nil, f.err
 	}
 	var out []members.Person
 	for _, id := range slices.Backward(ids) {
-		if id < "90100" {
+		if p, ok := f.byID[id]; ok {
+			out = append(out, p)
+		} else if f.byID == nil && id < "90100" {
 			out = append(out, members.Person{PersonID: id, DisplayName: "Person " + id})
 		}
 	}

@@ -42,11 +42,22 @@ func NewClient(cfg Config) *Client {
 	return &Client{cfg: cfg, rest: resty.New().SetTimeout(5 * time.Second).SetDisableWarn(true)}
 }
 
-type personsResponse struct {
-	Data []struct {
-		PersonID    int    `json:"personID"`
-		DisplayName string `json:"displayName"`
-	} `json:"data"`
+const personFields = "personID,displayName,birthDate"
+
+type corePerson struct {
+	PersonID    int    `json:"personID"`
+	DisplayName string `json:"displayName"`
+	// "2006-01-02"
+	BirthDate string `json:"birthDate"`
+}
+
+func (p corePerson) person() Person {
+	out := Person{PersonID: strconv.Itoa(p.PersonID), DisplayName: p.DisplayName}
+	if len(p.BirthDate) >= len(time.DateOnly) {
+		// zero, unknown, when it doesn't parse
+		out.BirthDate, _ = time.Parse(time.DateOnly, p.BirthDate[:len(time.DateOnly)])
+	}
+	return out
 }
 
 // Search uses the Core API's fuzzy name search, which ignores accents and
@@ -93,7 +104,7 @@ func (c *Client) persons(ctx context.Context, params map[string]string) ([]Perso
 		SetContext(ctx).
 		SetAuthToken(token).
 		SetHeader("Accept", "application/json").
-		SetQueryParam("fields", "personID,displayName").
+		SetQueryParam("fields", personFields).
 		SetQueryParams(params).
 		Get(c.cfg.APIURL + "/v2/persons")
 	if err != nil {
@@ -108,13 +119,15 @@ func (c *Client) persons(ctx context.Context, params map[string]string) ([]Perso
 	if !resp.IsSuccess() {
 		return nil, fmt.Errorf("unexpected status %s", resp.Status())
 	}
-	var body personsResponse
+	var body struct {
+		Data []corePerson `json:"data"`
+	}
 	if err := json.Unmarshal(resp.Body(), &body); err != nil {
 		return nil, fmt.Errorf("decode: %w", err)
 	}
 	out := make([]Person, 0, len(body.Data))
 	for _, p := range body.Data {
-		out = append(out, Person{PersonID: strconv.Itoa(p.PersonID), DisplayName: p.DisplayName})
+		out = append(out, p.person())
 	}
 	return out, nil
 }
