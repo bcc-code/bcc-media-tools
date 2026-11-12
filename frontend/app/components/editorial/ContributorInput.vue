@@ -25,6 +25,7 @@ const emit = defineEmits<{ change: [] }>();
 const { t } = useI18n();
 const api = useAPI();
 
+const input = useTemplateRef<ComponentPublicInstance>("input");
 const query = ref("");
 const results = ref<Member[]>([]);
 const focused = ref(false);
@@ -97,8 +98,9 @@ function onSelect(details: { items: Member[] }) {
     query.value = "";
     results.value = [];
     update([...model.value, { name: m.displayName, personId: m.personId }]);
-    // the usual speakers again, for the next one
-    if (focused.value) void search("");
+    // Leave the field; a click opens the list again. A frame later, as the
+    // combobox first puts focus back in the input.
+    requestAnimationFrame(() => input.value?.$el?.blur());
 }
 
 // Adds what was typed; a pasted "A, B" adds both.
@@ -188,9 +190,10 @@ function onBlur() {
             <Combobox.Input
                 :placeholder="model.length ? '' : props.placeholder"
                 :class="[
-                    'text-text-default placeholder:text-text-hint min-w-24 flex-1 bg-transparent px-1 outline-none',
+                    'text-text-default placeholder:text-text-hint w-0 min-w-6 flex-1 bg-transparent px-1 outline-none focus:min-w-24',
                     large ? 'text-body-2' : 'text-body-3',
                 ]"
+                ref="input"
                 @focus="onFocus"
                 @blur="onBlur"
                 @keydown="onKeydown"
