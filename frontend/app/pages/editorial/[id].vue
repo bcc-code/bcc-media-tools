@@ -14,6 +14,7 @@ import type {
     MobileMarker,
     MarkerDetails,
 } from "~/components/editorial/MobileMarkerList.vue";
+import type { Contributor } from "~/components/editorial/ContributorInput.vue";
 import { timestampDate, timestampFromDate } from "@bufbuild/protobuf/wkt";
 
 const route = useRoute("editorial-id");
@@ -79,7 +80,9 @@ interface Row {
     key: string;
     id: string;
     name: string;
+    // the names of contributorList joined, as the table shows them
     contributors: string;
+    contributorList: Contributor[];
     bibleVerses: string;
     comment: string;
     type: string;
@@ -232,6 +235,10 @@ function toRow(m: EditorialMarker): Row {
         id: m.id,
         name: m.name,
         contributors: m.contributors,
+        contributorList: m.contributorList.map((c) => ({
+            name: c.name,
+            personId: c.personId,
+        })),
         bibleVerses: m.bibleVerses,
         comment: m.comment,
         type: m.type,
@@ -497,6 +504,7 @@ const mobileMarkers = computed<MobileMarker[]>(() => {
         typeLabel: r.type ? typeLabel(r.type) : "",
         name: r.name,
         contributors: r.contributors,
+        contributorList: r.contributorList,
         bibleVerses: r.bibleVerses,
         comment: r.comment,
         publishBmm: r.publishBmm,
@@ -534,11 +542,38 @@ async function onMobileComment(key: string, comment: string) {
 // Simple and phone views save each change on its own; edit mode saves on Save.
 type Details = Pick<
     Row,
-    "name" | "contributors" | "type" | "bibleVerses" | "playoutSynced"
+    | "name"
+    | "contributors"
+    | "contributorList"
+    | "type"
+    | "bibleVerses"
+    | "playoutSynced"
 >;
 function snapshot(row: Row): Details {
-    const { name, contributors, type, bibleVerses, playoutSynced } = row;
-    return { name, contributors, type, bibleVerses, playoutSynced };
+    const { name, contributors, contributorList, type, bibleVerses } = row;
+    return {
+        name,
+        contributors,
+        contributorList: [...contributorList],
+        type,
+        bibleVerses,
+        playoutSynced: row.playoutSynced,
+    };
+}
+
+function sameContributors(a: Contributor[], b: Contributor[]): boolean {
+    return (
+        a.length === b.length &&
+        a.every(
+            (c, i) => c.name === b[i]!.name && c.personId === b[i]!.personId,
+        )
+    );
+}
+
+// The chips changed: the joined names follow.
+function setContributors(row: Row, list: Contributor[]) {
+    row.contributorList = list;
+    row.contributors = list.map((c) => c.name).join(", ");
 }
 
 // The phone drawer and the live edit view edit details; the table shows them
@@ -547,7 +582,7 @@ async function persistDetails(row: Row, before: Details) {
     if (batchEdit.value || !row.id) return;
     const changed =
         row.name !== before.name ||
-        row.contributors !== before.contributors ||
+        !sameContributors(row.contributorList, before.contributorList) ||
         row.type !== before.type ||
         row.bibleVerses !== before.bibleVerses;
     if (!changed) return;
@@ -560,6 +595,7 @@ async function persistDetails(row: Row, before: Details) {
                 markerId: row.id,
                 name: row.name,
                 contributors: row.contributors,
+                contributorList: row.contributorList,
                 type: row.type,
                 bibleVerses: row.bibleVerses,
             }),
@@ -648,6 +684,10 @@ function persistLiveDetails(row: Row) {
     void persistDetails(row, {
         name: m.name,
         contributors: m.contributors,
+        contributorList: m.contributorList.map((c) => ({
+            name: c.name,
+            personId: c.personId,
+        })),
         type: m.type,
         bibleVerses: m.bibleVerses,
         playoutSynced: m.playoutSynced,
@@ -719,6 +759,7 @@ function addRow() {
         id: "",
         name: "",
         contributors: "",
+        contributorList: [],
         bibleVerses: "",
         comment: "",
         type: "",
@@ -974,7 +1015,12 @@ async function mergeServerSession(s: EditorialSession) {
             row.key === focusedKey &&
             focusedField &&
             TYPED_FIELDS.includes(focusedField)
-                ? { [focusedField]: row[focusedField] }
+                ? focusedField === "contributors"
+                    ? {
+                          contributors: row.contributors,
+                          contributorList: row.contributorList,
+                      }
+                    : { [focusedField]: row[focusedField] }
                 : {};
         // A publish write still pending: the server's flags are what it
         // last had, to fall back to; the switches stay as toggled.
@@ -1849,6 +1895,7 @@ async function save() {
                 sortOrder: i,
                 name: r.name,
                 contributors: r.contributors,
+                contributorList: r.contributorList,
                 bibleVerses: r.bibleVerses,
                 comment: r.comment,
                 type: r.type,
@@ -2495,13 +2542,18 @@ onBeforeRouteLeave(() => {
                                                 "
                                                 @change="persistName(row)"
                                             />
-                                            <DesignInput
-                                                v-model="row.contributors"
+                                            <EditorialContributorInput
+                                                :model-value="
+                                                    row.contributorList
+                                                "
                                                 data-field="contributors"
                                                 :placeholder="
                                                     t(
                                                         'editorial.col.contributors',
                                                     )
+                                                "
+                                                @update:model-value="
+                                                    setContributors(row, $event)
                                                 "
                                                 @change="
                                                     persistLiveDetails(row)

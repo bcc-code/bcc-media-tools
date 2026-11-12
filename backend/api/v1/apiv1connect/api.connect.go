@@ -184,6 +184,9 @@ const (
 	// APIServiceExportEditorialChaptersProcedure is the fully-qualified name of the APIService's
 	// ExportEditorialChapters RPC.
 	APIServiceExportEditorialChaptersProcedure = "/api.v1.APIService/ExportEditorialChapters"
+	// APIServiceSearchMembersProcedure is the fully-qualified name of the APIService's SearchMembers
+	// RPC.
+	APIServiceSearchMembersProcedure = "/api.v1.APIService/SearchMembers"
 )
 
 // APIServiceClient is a client for the api.v1.APIService service.
@@ -261,6 +264,7 @@ type APIServiceClient interface {
 	TakeEditorialSync(context.Context, *connect.Request[v1.TakeEditorialSyncRequest]) (*connect.Response[v1.Void], error)
 	GetServerTime(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.ServerTime], error)
 	ExportEditorialChapters(context.Context, *connect.Request[v1.ExportEditorialChaptersRequest]) (*connect.Response[v1.ExportEditorialChaptersResponse], error)
+	SearchMembers(context.Context, *connect.Request[v1.SearchMembersRequest]) (*connect.Response[v1.SearchMembersResponse], error)
 }
 
 // NewAPIServiceClient constructs a client for the api.v1.APIService service. By default, it uses
@@ -592,6 +596,12 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(aPIServiceMethods.ByName("ExportEditorialChapters")),
 			connect.WithClientOptions(opts...),
 		),
+		searchMembers: connect.NewClient[v1.SearchMembersRequest, v1.SearchMembersResponse](
+			httpClient,
+			baseURL+APIServiceSearchMembersProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("SearchMembers")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -650,6 +660,7 @@ type aPIServiceClient struct {
 	takeEditorialSync                 *connect.Client[v1.TakeEditorialSyncRequest, v1.Void]
 	getServerTime                     *connect.Client[v1.Void, v1.ServerTime]
 	exportEditorialChapters           *connect.Client[v1.ExportEditorialChaptersRequest, v1.ExportEditorialChaptersResponse]
+	searchMembers                     *connect.Client[v1.SearchMembersRequest, v1.SearchMembersResponse]
 }
 
 // GetPermissions calls api.v1.APIService.GetPermissions.
@@ -917,6 +928,11 @@ func (c *aPIServiceClient) ExportEditorialChapters(ctx context.Context, req *con
 	return c.exportEditorialChapters.CallUnary(ctx, req)
 }
 
+// SearchMembers calls api.v1.APIService.SearchMembers.
+func (c *aPIServiceClient) SearchMembers(ctx context.Context, req *connect.Request[v1.SearchMembersRequest]) (*connect.Response[v1.SearchMembersResponse], error) {
+	return c.searchMembers.CallUnary(ctx, req)
+}
+
 // APIServiceHandler is an implementation of the api.v1.APIService service.
 type APIServiceHandler interface {
 	// Permissions
@@ -992,6 +1008,7 @@ type APIServiceHandler interface {
 	TakeEditorialSync(context.Context, *connect.Request[v1.TakeEditorialSyncRequest]) (*connect.Response[v1.Void], error)
 	GetServerTime(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.ServerTime], error)
 	ExportEditorialChapters(context.Context, *connect.Request[v1.ExportEditorialChaptersRequest]) (*connect.Response[v1.ExportEditorialChaptersResponse], error)
+	SearchMembers(context.Context, *connect.Request[v1.SearchMembersRequest]) (*connect.Response[v1.SearchMembersResponse], error)
 }
 
 // NewAPIServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -1319,6 +1336,12 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(aPIServiceMethods.ByName("ExportEditorialChapters")),
 		connect.WithHandlerOptions(opts...),
 	)
+	aPIServiceSearchMembersHandler := connect.NewUnaryHandler(
+		APIServiceSearchMembersProcedure,
+		svc.SearchMembers,
+		connect.WithSchema(aPIServiceMethods.ByName("SearchMembers")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/api.v1.APIService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case APIServiceGetPermissionsProcedure:
@@ -1427,6 +1450,8 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceGetServerTimeHandler.ServeHTTP(w, r)
 		case APIServiceExportEditorialChaptersProcedure:
 			aPIServiceExportEditorialChaptersHandler.ServeHTTP(w, r)
+		case APIServiceSearchMembersProcedure:
+			aPIServiceSearchMembersHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -1646,4 +1671,8 @@ func (UnimplementedAPIServiceHandler) GetServerTime(context.Context, *connect.Re
 
 func (UnimplementedAPIServiceHandler) ExportEditorialChapters(context.Context, *connect.Request[v1.ExportEditorialChaptersRequest]) (*connect.Response[v1.ExportEditorialChaptersResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.ExportEditorialChapters is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) SearchMembers(context.Context, *connect.Request[v1.SearchMembersRequest]) (*connect.Response[v1.SearchMembersResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.SearchMembers is not implemented"))
 }

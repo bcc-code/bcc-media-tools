@@ -439,7 +439,7 @@ func fillableBy(markerType, playoutType string) bool {
 func applyCandidate(m *editorial.Marker, c playoutCandidate, keepType bool) {
 	switch c.PlayoutType {
 	case playout.ContentTypeSpeaker:
-		m.Contributors = c.Contributors
+		setContributors(m, c.Contributors)
 	default:
 		m.Name = c.Name
 	}

@@ -41,8 +41,8 @@ DELETE FROM markers
 WHERE session_id = ?;
 
 -- name: InsertMarker :exec
-INSERT INTO markers (id, session_id, sort_order, name, contributors, comment, bible_verses, type, start_ms, end_ms, publish_bmm, publish_bcc, source, created_at, updated_at, playout_key, playout_synced)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO markers (id, session_id, sort_order, name, contributors, contributor_list, comment, bible_verses, type, start_ms, end_ms, publish_bmm, publish_bcc, source, created_at, updated_at, playout_key, playout_synced)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 -- name: SetMarkerPublish :execrows
 UPDATE markers SET publish_bmm = ?, publish_bcc = ?, updated_at = ?
@@ -59,7 +59,7 @@ WHERE id = ? AND session_id = ?;
 
 -- name: SetMarkerDetails :execrows
 -- Hand-edited details stop Playout from refreshing the row.
-UPDATE markers SET name = ?, contributors = ?, type = ?, bible_verses = ?, playout_synced = 0, updated_at = ?
+UPDATE markers SET name = ?, contributors = ?, contributor_list = ?, type = ?, bible_verses = ?, playout_synced = 0, updated_at = ?
 WHERE id = ? AND session_id = ?;
 
 -- name: SetPlayoutWindow :execrows
