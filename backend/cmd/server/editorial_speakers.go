@@ -240,15 +240,6 @@ func nameWords(s string) []string {
 	})
 }
 
-func (f *frequentSpeakers) appearances(personID string) int {
-	if f == nil {
-		return 0
-	}
-	f.mu.RLock()
-	defer f.mu.RUnlock()
-	return f.byID[personID].Days
-}
-
 // sleep reports false when ctx ends first.
 func sleep(ctx context.Context, d time.Duration) bool {
 	if d <= 0 {

@@ -53,7 +53,7 @@ func (e EditorialAPI) SearchMembers(ctx context.Context, req *connect.Request[ap
 	seen := map[string]bool{}
 	for _, p := range e.speakers.match(query, limit) {
 		seen[p.PersonID] = true
-		res.Members = append(res.Members, &apiv1.Member{PersonId: p.PersonID, DisplayName: p.Name, Appearances: int32(p.Days)})
+		res.Members = append(res.Members, &apiv1.Member{PersonId: p.PersonID, DisplayName: p.Name})
 	}
 	if e.members == nil || utf8.RuneCountInString(query) < 2 || len(res.Members) == limit {
 		return connect.NewResponse(res), nil
@@ -71,11 +71,7 @@ func (e EditorialAPI) SearchMembers(ctx context.Context, req *connect.Request[ap
 			continue
 		}
 		seen[p.PersonID] = true
-		res.Members = append(res.Members, &apiv1.Member{
-			PersonId:    p.PersonID,
-			DisplayName: p.DisplayName,
-			Appearances: int32(e.speakers.appearances(p.PersonID)),
-		})
+		res.Members = append(res.Members, &apiv1.Member{PersonId: p.PersonID, DisplayName: p.DisplayName})
 	}
 	return connect.NewResponse(res), nil
 }

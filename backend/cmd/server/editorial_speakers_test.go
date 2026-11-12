@@ -84,8 +84,6 @@ func TestFrequentSpeakersCountsEventsAndSkipsPlaceholders(t *testing.T) {
 	assert.Equal(t, 2, all[0].Events)
 	assert.Equal(t, "90001", all[1].PersonID)
 	assert.Equal(t, 5, all[1].Entries)
-	assert.Equal(t, 1, f.appearances("90004"))
-	assert.Zero(t, f.appearances("90009"))
 
 	got := f.match("ase", 10)
 	require.Len(t, got, 1, "accents don't matter")
@@ -139,34 +137,31 @@ func TestSearchMembersPutsFrequentSpeakersFirst(t *testing.T) {
 		{PersonID: "90003", DisplayName: "Ola Nordvik"},
 		{PersonID: "90001", DisplayName: "Ola Nordmann"},
 	}}
-	type member struct {
-		ID, Name    string
-		Appearances int32
-	}
+	type member struct{ ID, Name string }
 	ids := func(ms []*apiv1.Member) []member {
 		var out []member
 		for _, m := range ms {
-			out = append(out, member{m.PersonId, m.DisplayName, m.Appearances})
+			out = append(out, member{m.PersonId, m.DisplayName})
 		}
 		return out
 	}
 
 	got, err := searchMembers(t, api, "", 0)
 	require.NoError(t, err)
-	assert.Equal(t, []member{{"90002", "Kari Nordmann", 2}, {"90001", "Ola Nordmann", 1}}, ids(got), "an empty field lists the frequent")
+	assert.Equal(t, []member{{"90002", "Kari Nordmann"}, {"90001", "Ola Nordmann"}}, ids(got), "an empty field lists the frequent")
 
 	got, err = searchMembers(t, api, "ola", 0)
 	require.NoError(t, err)
-	assert.Equal(t, []member{{"90001", "Ola Nordmann", 1}, {"90003", "Ola Nordvik", 0}}, ids(got), "frequent first, Members after, no repeats")
+	assert.Equal(t, []member{{"90001", "Ola Nordmann"}, {"90003", "Ola Nordvik"}}, ids(got), "frequent first, Members after, no repeats")
 
 	got, err = searchMembers(t, api, "o", 0)
 	require.NoError(t, err)
-	assert.Equal(t, []member{{"90001", "Ola Nordmann", 1}}, ids(got), "one letter finds only the frequent")
+	assert.Equal(t, []member{{"90001", "Ola Nordmann"}}, ids(got), "one letter finds only the frequent")
 
 	api.members = &fakeMembers{err: errors.New("members down")}
 	got, err = searchMembers(t, api, "kari", 0)
 	require.NoError(t, err)
-	assert.Equal(t, []member{{"90002", "Kari Nordmann", 2}}, ids(got), "frequent speakers without Members")
+	assert.Equal(t, []member{{"90002", "Kari Nordmann"}}, ids(got), "frequent speakers without Members")
 }
 
 func TestFoldTreatsAaAsÅ(t *testing.T) {
@@ -244,5 +239,4 @@ func TestFrequentSpeakersRankByDaysSpoken(t *testing.T) {
 	assert.Equal(t, 1, got[0].Events)
 	assert.Equal(t, 2, got[1].Days)
 	assert.Equal(t, 2, got[2].Days, "days are Oslo dates")
-	assert.Equal(t, 3, f.appearances("90001"))
 }

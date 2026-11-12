@@ -6547,11 +6547,9 @@ func (x *SearchMembersRequest) GetLimit() int32 {
 // A person in BCC Members: only what a contributor needs, as this is
 // personal data.
 type Member struct {
-	state       protoimpl.MessageState `protogen:"open.v1"`
-	PersonId    string                 `protobuf:"bytes,1,opt,name=person_id,json=personId,proto3" json:"person_id,omitempty"`
-	DisplayName string                 `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
-	// days this person spoke on in Playout; 0 when not among the frequent
-	Appearances   int32 `protobuf:"varint,3,opt,name=appearances,proto3" json:"appearances,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PersonId      string                 `protobuf:"bytes,1,opt,name=person_id,json=personId,proto3" json:"person_id,omitempty"`
+	DisplayName   string                 `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6598,13 +6596,6 @@ func (x *Member) GetDisplayName() string {
 		return x.DisplayName
 	}
 	return ""
-}
-
-func (x *Member) GetAppearances() int32 {
-	if x != nil {
-		return x.Appearances
-	}
-	return 0
 }
 
 // Frequent speakers first, then Members' best matches. Empty when neither can
@@ -7133,11 +7124,10 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\x10contributor_list\x18\a \x03(\v2\x1c.api.v1.EditorialContributorR\x0fcontributorList\"B\n" +
 	"\x14SearchMembersRequest\x12\x14\n" +
 	"\x05query\x18\x01 \x01(\tR\x05query\x12\x14\n" +
-	"\x05limit\x18\x02 \x01(\x05R\x05limit\"j\n" +
+	"\x05limit\x18\x02 \x01(\x05R\x05limit\"H\n" +
 	"\x06Member\x12\x1b\n" +
 	"\tperson_id\x18\x01 \x01(\tR\bpersonId\x12!\n" +
-	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\x12 \n" +
-	"\vappearances\x18\x03 \x01(\x05R\vappearances\"A\n" +
+	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\"A\n" +
 	"\x15SearchMembersResponse\x12(\n" +
 	"\amembers\x18\x01 \x03(\v2\x0e.api.v1.MemberR\amembers*1\n" +
 	"\x0eBmmEnvironment\x12\x0e\n" +

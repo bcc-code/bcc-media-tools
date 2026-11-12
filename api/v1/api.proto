@@ -817,8 +817,6 @@ message SearchMembersRequest {
 message Member {
   string person_id = 1;
   string display_name = 2;
-  // days this person spoke on in Playout; 0 when not among the frequent
-  int32 appearances = 3;
 }
 
 // Frequent speakers first, then Members' best matches. Empty when neither can
