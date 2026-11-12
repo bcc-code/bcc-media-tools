@@ -156,6 +156,7 @@ func main() {
 	defer editorialDB.Close()
 	editorialAPI := NewEditorialAPI(editorialDB, vidispineClient, cantemoClient, playoutClient)
 	editorialAPI.members = newMembersSearcher()
+	editorialAPI.ages = newMemberAges(editorialAPI.members)
 	editorialAPI.speakers = newFrequentSpeakers(playoutClient)
 	go editorialAPI.speakers.run(context.Background())
 	editorialAPI.vsMetadata = newVidispineMetadata(

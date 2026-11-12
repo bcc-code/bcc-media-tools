@@ -16,15 +16,15 @@ import (
 // exportLabels are the workbook's words in one language. The editorial team
 // works in Norwegian, so the frontend asks for its own UI language.
 type exportLabels struct {
-	Time, Start, End, Duration, Title, Contributors, BibleVerses, Type, Comment, PublishBmm, PublishBcc, From string
-	Yes, No                                                                                                   string
-	FromPlayout, FromYouFilled, FromYou                                                                       string
-	Types                                                                                                     map[string]string
+	Time, Start, End, Duration, Title, Contributors, U26, BibleVerses, Type, Comment, PublishBmm, PublishBcc, From string
+	Yes, No                                                                                                        string
+	FromPlayout, FromYouFilled, FromYou                                                                            string
+	Types                                                                                                          map[string]string
 }
 
 var exportLabelsByLanguage = map[string]exportLabels{
 	"en": {
-		Time: "Time", Start: "Start", End: "End", Duration: "Duration", Title: "Title", Contributors: "Contributors",
+		Time: "Time", Start: "Start", End: "End", Duration: "Duration", Title: "Title", Contributors: "Contributors", U26: "U26",
 		BibleVerses: "Bible verses", Type: "Type", Comment: "Comment", PublishBmm: "BMM", PublishBcc: "BCC Media", From: "From",
 		Yes: "Yes", No: "No",
 		FromPlayout: "Playout", FromYouFilled: "You · filled by Playout", FromYou: "You",
@@ -34,7 +34,7 @@ var exportLabelsByLanguage = map[string]exportLabels{
 		},
 	},
 	"nb": {
-		Time: "Tid", Start: "Start", End: "Slutt", Duration: "Varighet", Title: "Tittel", Contributors: "Medvirkende",
+		Time: "Tid", Start: "Start", End: "Slutt", Duration: "Varighet", Title: "Tittel", Contributors: "Medvirkende", U26: "U26",
 		BibleVerses: "Bibelvers", Type: "Type", Comment: "Kommentar", PublishBmm: "BMM", PublishBcc: "BCC Media", From: "Fra",
 		Yes: "Ja", No: "Nei",
 		FromPlayout: "Playout", FromYouFilled: "Du · fylt ut av Playout", FromYou: "Du",
@@ -62,7 +62,7 @@ func (e EditorialAPI) ExportEditorialSession(ctx context.Context, req *connect.R
 		labels = exportLabelsByLanguage["en"]
 	}
 
-	data, err := editorialWorkbook(sess, markers, labels)
+	data, err := editorialWorkbook(sess, markers, e.u26Contributors(ctx, markers), labels)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
@@ -75,7 +75,9 @@ func (e EditorialAPI) ExportEditorialSession(ctx context.Context, req *connect.R
 // editorialWorkbook lays the markers out like the tool's table. Times are real
 // Excel times so the sheet can be sorted and summed: a live session's clock
 // time of day (Oslo), or a recording's offsets.
-func editorialWorkbook(sess editorial.Session, markers []editorial.Marker, l exportLabels) ([]byte, error) {
+//
+// u26 tells which linked contributors are under 26, by personID.
+func editorialWorkbook(sess editorial.Session, markers []editorial.Marker, u26 map[string]bool, l exportLabels) ([]byte, error) {
 	live := sess.Kind == editorial.KindLive
 	loc, err := time.LoadLocation(recordingTZ)
 	if err != nil {
@@ -88,7 +90,7 @@ func editorialWorkbook(sess editorial.Session, markers []editorial.Marker, l exp
 	} else {
 		header = []any{l.Start, l.End}
 	}
-	header = append(header, l.Duration, l.Title, l.Contributors, l.BibleVerses, l.Type, l.Comment, l.PublishBmm, l.PublishBcc)
+	header = append(header, l.Duration, l.Title, l.Contributors, l.U26, l.BibleVerses, l.Type, l.Comment, l.PublishBmm, l.PublishBcc)
 	if live {
 		header = append(header, l.From)
 	}
@@ -127,7 +129,13 @@ func editorialWorkbook(sess editorial.Session, markers []editorial.Marker, l exp
 		if durationMs > 0 {
 			duration = excelDuration(durationMs)
 		}
-		row = append(row, duration, m.Name, m.Contributors, m.BibleVerses, typeLabel(m.Type, l), m.Comment,
+		var young []string
+		for _, c := range markerContributors(m) {
+			if u26[c.PersonID] {
+				young = append(young, c.Name)
+			}
+		}
+		row = append(row, duration, m.Name, m.Contributors, strings.Join(young, ", "), m.BibleVerses, typeLabel(m.Type, l), m.Comment,
 			yesNo(m.PublishBmm), yesNo(m.PublishBcc))
 		if live {
 			row = append(row, sourceLabel(m, l))
@@ -199,9 +207,9 @@ func styleWorkbook(f *excelize.File, sheet string, cols, rows int, live bool) er
 	}
 
 	// Narrow time and Yes/No columns, wide text columns.
-	widths := []float64{10, 10, 36, 28, 22, 14, 30, 8, 11, 24}
+	widths := []float64{10, 10, 36, 28, 20, 22, 14, 30, 8, 11, 24}
 	if !live {
-		widths = []float64{10, 10, 10, 36, 28, 22, 14, 30, 8, 11}
+		widths = []float64{10, 10, 10, 36, 28, 20, 22, 14, 30, 8, 11}
 	}
 	for i, w := range widths {
 		col, _ := excelize.ColumnNumberToName(i + 1)

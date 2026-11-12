@@ -5,7 +5,9 @@ import (
 	"bcc-media-tools/members"
 	"context"
 	"errors"
+	"sync"
 	"testing"
+	"time"
 
 	"connectrpc.com/connect"
 	"github.com/bcc-code/mediabank-bridge/log"
@@ -19,6 +21,38 @@ type fakeMembers struct {
 	people []members.Person
 	limit  int
 	err    error
+
+	// for Get; others aren't found
+	byID map[string]members.Person
+	// each Get takes this long
+	delay time.Duration
+	mu    sync.Mutex
+	gets  map[string]int
+}
+
+func (f *fakeMembers) Get(ctx context.Context, id string) (members.Person, error) {
+	f.mu.Lock()
+	if f.gets == nil {
+		f.gets = map[string]int{}
+	}
+	f.gets[id]++
+	f.mu.Unlock()
+	select {
+	case <-time.After(f.delay):
+	case <-ctx.Done():
+		return members.Person{}, ctx.Err()
+	}
+	p, ok := f.byID[id]
+	if !ok {
+		return members.Person{}, members.ErrNotFound
+	}
+	return p, nil
+}
+
+func (f *fakeMembers) getCount(id string) int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.gets[id]
 }
 
 func (f *fakeMembers) Search(_ context.Context, _ string, limit int) ([]members.Person, error) {
