@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/bcc-code/mediabank-bridge/log"
 	"github.com/rs/zerolog"
@@ -22,6 +23,8 @@ type playoutEvents struct {
 	manifests map[string][]playout.ManifestEntry
 	// reads of an event refused before it answers; -1 always refuses
 	refuse map[string]int
+	// called before each read
+	onRead func(id string)
 
 	mu    sync.Mutex
 	reads map[string]int
@@ -30,6 +33,9 @@ type playoutEvents struct {
 func (p *playoutEvents) ListEvents(context.Context) ([]playout.Event, error) { return p.events, nil }
 
 func (p *playoutEvents) GetManifest(_ context.Context, id string, _ ...string) (*playout.Manifest, error) {
+	if p.onRead != nil {
+		p.onRead(id)
+	}
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	if p.reads == nil {
@@ -119,6 +125,59 @@ func TestFrequentSpeakersRetriesRefusedEvents(t *testing.T) {
 	require.NoError(t, f.refresh(context.Background()))
 	assert.Len(t, f.match("", 10), 3)
 	assert.Equal(t, map[string]int{"1": 1, "2": 2, "3": 2 + speakersRetries}, p.reads)
+}
+
+// The list fills in while Playout is read, and stays whole while it's read again.
+func TestFrequentSpeakersPublishAsTheyRead(t *testing.T) {
+	log.ConfigureGlobalLogger(zerolog.Disabled)
+	noSpeakerWaits(t)
+	p := &playoutEvents{
+		events: []playout.Event{{ID: "1", Status: "archived"}, {ID: "2", Status: "active"}},
+		manifests: map[string][]playout.ManifestEntry{
+			"1": {speakerAt(t, "Ola Nordmann", `"90001"`, "2026-01-10T10:00:00Z")},
+			"2": {speakerAt(t, "Kari Nordmann", `"90002"`, "2026-02-10T10:00:00Z")},
+		},
+	}
+	f := newFrequentSpeakers(p)
+	seen := map[string]int{}
+	p.onRead = func(id string) { seen[id] = len(f.match("", 10)) }
+
+	require.NoError(t, f.refresh(context.Background()))
+	assert.Equal(t, map[string]int{"1": 0, "2": 1}, seen, "event 1's speaker is listed before event 2 is read")
+
+	require.NoError(t, f.refresh(context.Background()))
+	assert.Equal(t, 2, seen["2"], "event 2's last speakers stay while it's read again")
+	assert.Len(t, f.match("", 10), 2)
+
+	// An event Playout no longer lists is dropped.
+	p.events = p.events[:1]
+	require.NoError(t, f.refresh(context.Background()))
+	assert.Len(t, f.match("", 10), 1)
+}
+
+func TestFrequentSpeakersCountOnlyRecentEvents(t *testing.T) {
+	log.ConfigureGlobalLogger(zerolog.Disabled)
+	noSpeakerWaits(t)
+	ago := func(months int) string { return time.Now().AddDate(0, -months, 0).Format(time.DateOnly) }
+	p := &playoutEvents{
+		events: []playout.Event{
+			{ID: "old", Status: "archived", Date: ago(13)},
+			{ID: "recent", Status: "archived", Date: ago(11)},
+			{ID: "timed", Status: "archived", Date: ago(1) + "T10:00:00Z"},
+			{ID: "undated", Status: "draft"},
+		},
+		manifests: map[string][]playout.ManifestEntry{
+			"old":     {speakerAt(t, "Ola Nordmann", `"90001"`, "2025-01-10T10:00:00Z")},
+			"recent":  {speakerAt(t, "Kari Nordmann", `"90002"`, "2026-01-10T10:00:00Z")},
+			"timed":   {speakerAt(t, "Per Hansen", `"90005"`, "2026-10-10T10:00:00Z")},
+			"undated": {speakerAt(t, "Åse Testesen", `"90004"`, "2026-11-10T10:00:00Z")},
+		},
+	}
+	f := newFrequentSpeakers(p)
+	require.NoError(t, f.refresh(context.Background()))
+	assert.Equal(t, map[string]int{"recent": 1, "timed": 1, "undated": 1}, p.reads, "the old event isn't read")
+	assert.Len(t, f.match("", 10), 3)
+	assert.Empty(t, f.match("ola", 10))
 }
 
 func TestSearchMembersPutsFrequentSpeakersFirst(t *testing.T) {

@@ -20,6 +20,8 @@ var (
 	speakersPause        = 250 * time.Millisecond
 	speakersRetryAfter   = time.Minute
 	speakersRetries      = 3
+	// only events this recent count
+	speakersMonths = 12
 )
 
 // Archived manifests don't change: read once.
@@ -34,8 +36,10 @@ type frequentSpeakers struct {
 	mu     sync.RWMutex
 	people []frequentSpeaker
 	byID   map[string]frequentSpeaker
-	// by event ID
-	archived map[string]map[string]eventSpeaker
+	// by event ID, as last read
+	counts map[string]map[string]eventSpeaker
+	// events read once archived: not read again
+	archived map[string]bool
 }
 
 type frequentSpeaker struct {
@@ -62,7 +66,7 @@ func newFrequentSpeakers(p playoutClient) *frequentSpeakers {
 	if err != nil {
 		loc = time.UTC
 	}
-	return &frequentSpeakers{playout: p, loc: loc, archived: map[string]map[string]eventSpeaker{}}
+	return &frequentSpeakers{playout: p, loc: loc}
 }
 
 // run refreshes now and every speakersRefreshEvery, until ctx ends.
@@ -79,22 +83,34 @@ func (f *frequentSpeakers) run(ctx context.Context) {
 	}
 }
 
-// refresh skips events still refused after the retries.
+// refresh publishes after each manifest, so the list fills in as Playout
+// answers. Events still refused after the retries keep their last counts.
 func (f *frequentSpeakers) refresh(ctx context.Context) error {
-	events, err := f.playout.ListEvents(ctx)
+	listed, err := f.playout.ListEvents(ctx)
 	if err != nil {
 		return err
 	}
+	since := time.Now().AddDate(0, -speakersMonths, 0).Format(time.DateOnly)
+	var events []playout.Event
+	for _, ev := range listed {
+		// undated events are read; dates may carry a time
+		if ev.Date == "" || ev.Date[:min(len(ev.Date), len(time.DateOnly))] >= since {
+			events = append(events, ev)
+		}
+	}
 	f.mu.RLock()
-	archived := f.archived
+	last, archived := f.counts, f.archived
 	f.mu.RUnlock()
 
+	// last counts stand in until an event is read again
 	perEvent := map[string]map[string]eventSpeaker{}
+	read := map[string]bool{}
 	var pending []playout.Event
 	for _, ev := range events {
-		if counts, ok := archived[ev.ID]; ok {
+		if counts, ok := last[ev.ID]; ok {
 			perEvent[ev.ID] = counts
-		} else {
+		}
+		if !archived[ev.ID] {
 			pending = append(pending, ev)
 		}
 	}
@@ -113,6 +129,8 @@ func (f *frequentSpeakers) refresh(ctx context.Context) error {
 				continue
 			}
 			perEvent[ev.ID] = countSpeakers(manifest.Entries, f.loc)
+			read[ev.ID] = true
+			f.publish(perEvent)
 		}
 		pending = refused
 	}
@@ -120,18 +138,25 @@ func (f *frequentSpeakers) refresh(ctx context.Context) error {
 		log.L.Info().Int("events", len(pending)).Msg("frequent speakers: some Playout manifests could not be read")
 	}
 
-	nextArchived := map[string]map[string]eventSpeaker{}
+	nextArchived := map[string]bool{}
 	for _, ev := range events {
-		if counts, ok := perEvent[ev.ID]; ok && ev.Status == playoutEventArchived {
-			nextArchived[ev.ID] = counts
+		if archived[ev.ID] || read[ev.ID] && ev.Status == playoutEventArchived {
+			nextArchived[ev.ID] = true
 		}
 	}
-	people, byID := rankSpeakers(perEvent)
-
+	// also drops events Playout no longer lists
+	f.publish(perEvent)
 	f.mu.Lock()
-	f.people, f.byID, f.archived = people, byID, nextArchived
+	f.counts, f.archived = perEvent, nextArchived
 	f.mu.Unlock()
 	return nil
+}
+
+func (f *frequentSpeakers) publish(perEvent map[string]map[string]eventSpeaker) {
+	people, byID := rankSpeakers(perEvent)
+	f.mu.Lock()
+	f.people, f.byID = people, byID
+	f.mu.Unlock()
 }
 
 func countSpeakers(entries []playout.ManifestEntry, loc *time.Location) map[string]eventSpeaker {
