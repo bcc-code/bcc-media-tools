@@ -513,6 +513,8 @@ message EditorialContributor {
   string name = 1;
   // BCC Members personID; empty when typed in by hand
   string person_id = 2;
+  // under 26 on the recording day; set by the server, for linked people only
+  bool u26 = 3;
 }
 
 // A review session tied to a single Mediabanken asset.
@@ -810,6 +812,8 @@ message SearchMembersRequest {
   string query = 1;
   // defaults to 10
   int32 limit = 2;
+  // marks u26 as of this session's recording day; today when empty
+  string session_id = 3;
 }
 
 // A person in BCC Members: only what a contributor needs, as this is
@@ -817,6 +821,8 @@ message SearchMembersRequest {
 message Member {
   string person_id = 1;
   string display_name = 2;
+  // under 26 on the recording day; never the birth date itself
+  bool u26 = 3;
 }
 
 // Frequent speakers first, then Members' best matches. Empty when neither can

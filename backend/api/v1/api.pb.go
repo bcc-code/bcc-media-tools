@@ -4260,7 +4260,9 @@ type EditorialContributor struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Name  string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// BCC Members personID; empty when typed in by hand
-	PersonId      string `protobuf:"bytes,2,opt,name=person_id,json=personId,proto3" json:"person_id,omitempty"`
+	PersonId string `protobuf:"bytes,2,opt,name=person_id,json=personId,proto3" json:"person_id,omitempty"`
+	// under 26 on the recording day; set by the server, for linked people only
+	U26           bool `protobuf:"varint,3,opt,name=u26,proto3" json:"u26,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4307,6 +4309,13 @@ func (x *EditorialContributor) GetPersonId() string {
 		return x.PersonId
 	}
 	return ""
+}
+
+func (x *EditorialContributor) GetU26() bool {
+	if x != nil {
+		return x.U26
+	}
+	return false
 }
 
 // A review session tied to a single Mediabanken asset.
@@ -6495,7 +6504,9 @@ type SearchMembersRequest struct {
 	// empty lists the people who speak most often
 	Query string `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
 	// defaults to 10
-	Limit         int32 `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+	Limit int32 `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+	// marks u26 as of this session's recording day; today when empty
+	SessionId     string `protobuf:"bytes,3,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6544,12 +6555,21 @@ func (x *SearchMembersRequest) GetLimit() int32 {
 	return 0
 }
 
+func (x *SearchMembersRequest) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
 // A person in BCC Members: only what a contributor needs, as this is
 // personal data.
 type Member struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	PersonId      string                 `protobuf:"bytes,1,opt,name=person_id,json=personId,proto3" json:"person_id,omitempty"`
-	DisplayName   string                 `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	PersonId    string                 `protobuf:"bytes,1,opt,name=person_id,json=personId,proto3" json:"person_id,omitempty"`
+	DisplayName string                 `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	// under 26 on the recording day; never the birth date itself
+	U26           bool `protobuf:"varint,3,opt,name=u26,proto3" json:"u26,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6596,6 +6616,13 @@ func (x *Member) GetDisplayName() string {
 		return x.DisplayName
 	}
 	return ""
+}
+
+func (x *Member) GetU26() bool {
+	if x != nil {
+		return x.U26
+	}
+	return false
 }
 
 // Frequent speakers first, then Members' best matches. Empty when neither can
@@ -6955,10 +6982,11 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\vplayout_key\x18\x0e \x01(\tR\n" +
 	"playoutKey\x12%\n" +
 	"\x0eplayout_synced\x18\x0f \x01(\bR\rplayoutSynced\x12G\n" +
-	"\x10contributor_list\x18\x10 \x03(\v2\x1c.api.v1.EditorialContributorR\x0fcontributorListJ\x04\b\a\x10\bR\apublish\"G\n" +
+	"\x10contributor_list\x18\x10 \x03(\v2\x1c.api.v1.EditorialContributorR\x0fcontributorListJ\x04\b\a\x10\bR\apublish\"Y\n" +
 	"\x14EditorialContributor\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1b\n" +
-	"\tperson_id\x18\x02 \x01(\tR\bpersonId\"\xc8\x03\n" +
+	"\tperson_id\x18\x02 \x01(\tR\bpersonId\x12\x10\n" +
+	"\x03u26\x18\x03 \x01(\bR\x03u26\"\xc8\x03\n" +
 	"\x10EditorialSession\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04VXID\x18\x02 \x01(\tR\x04VXID\x12\x14\n" +
@@ -7121,13 +7149,16 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\fcontributors\x18\x04 \x01(\tR\fcontributors\x12\x12\n" +
 	"\x04type\x18\x05 \x01(\tR\x04type\x12!\n" +
 	"\fbible_verses\x18\x06 \x01(\tR\vbibleVerses\x12G\n" +
-	"\x10contributor_list\x18\a \x03(\v2\x1c.api.v1.EditorialContributorR\x0fcontributorList\"B\n" +
+	"\x10contributor_list\x18\a \x03(\v2\x1c.api.v1.EditorialContributorR\x0fcontributorList\"a\n" +
 	"\x14SearchMembersRequest\x12\x14\n" +
 	"\x05query\x18\x01 \x01(\tR\x05query\x12\x14\n" +
-	"\x05limit\x18\x02 \x01(\x05R\x05limit\"H\n" +
+	"\x05limit\x18\x02 \x01(\x05R\x05limit\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x03 \x01(\tR\tsessionId\"Z\n" +
 	"\x06Member\x12\x1b\n" +
 	"\tperson_id\x18\x01 \x01(\tR\bpersonId\x12!\n" +
-	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\"A\n" +
+	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\x12\x10\n" +
+	"\x03u26\x18\x03 \x01(\bR\x03u26\"A\n" +
 	"\x15SearchMembersResponse\x12(\n" +
 	"\amembers\x18\x01 \x03(\v2\x0e.api.v1.MemberR\amembers*1\n" +
 	"\x0eBmmEnvironment\x12\x0e\n" +
