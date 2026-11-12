@@ -4261,7 +4261,8 @@ type EditorialContributor struct {
 	Name  string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// BCC Members personID; empty when typed in by hand
 	PersonId string `protobuf:"bytes,2,opt,name=person_id,json=personId,proto3" json:"person_id,omitempty"`
-	// under 26 on the recording day; set by the server, for linked people only
+	// under 26 today; set by the server when read, for linked people only, and
+	// never stored
 	U26           bool `protobuf:"varint,3,opt,name=u26,proto3" json:"u26,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -6504,9 +6505,7 @@ type SearchMembersRequest struct {
 	// empty lists the people who speak most often
 	Query string `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
 	// defaults to 10
-	Limit int32 `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
-	// marks u26 as of this session's recording day; today when empty
-	SessionId     string `protobuf:"bytes,3,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	Limit         int32 `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6555,20 +6554,13 @@ func (x *SearchMembersRequest) GetLimit() int32 {
 	return 0
 }
 
-func (x *SearchMembersRequest) GetSessionId() string {
-	if x != nil {
-		return x.SessionId
-	}
-	return ""
-}
-
 // A person in BCC Members: only what a contributor needs, as this is
 // personal data.
 type Member struct {
 	state       protoimpl.MessageState `protogen:"open.v1"`
 	PersonId    string                 `protobuf:"bytes,1,opt,name=person_id,json=personId,proto3" json:"person_id,omitempty"`
 	DisplayName string                 `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
-	// under 26 on the recording day; never the birth date itself
+	// under 26 today; never the birth date itself
 	U26           bool `protobuf:"varint,3,opt,name=u26,proto3" json:"u26,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -7149,12 +7141,10 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\fcontributors\x18\x04 \x01(\tR\fcontributors\x12\x12\n" +
 	"\x04type\x18\x05 \x01(\tR\x04type\x12!\n" +
 	"\fbible_verses\x18\x06 \x01(\tR\vbibleVerses\x12G\n" +
-	"\x10contributor_list\x18\a \x03(\v2\x1c.api.v1.EditorialContributorR\x0fcontributorList\"a\n" +
+	"\x10contributor_list\x18\a \x03(\v2\x1c.api.v1.EditorialContributorR\x0fcontributorList\"B\n" +
 	"\x14SearchMembersRequest\x12\x14\n" +
 	"\x05query\x18\x01 \x01(\tR\x05query\x12\x14\n" +
-	"\x05limit\x18\x02 \x01(\x05R\x05limit\x12\x1d\n" +
-	"\n" +
-	"session_id\x18\x03 \x01(\tR\tsessionId\"Z\n" +
+	"\x05limit\x18\x02 \x01(\x05R\x05limit\"Z\n" +
 	"\x06Member\x12\x1b\n" +
 	"\tperson_id\x18\x01 \x01(\tR\bpersonId\x12!\n" +
 	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\x12\x10\n" +
