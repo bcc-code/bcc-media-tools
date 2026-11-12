@@ -205,12 +205,6 @@ function onBlur() {
                 <Combobox.Content
                     class="gradient-border bg-surface-raise shadow-floating w-max max-w-[min(24rem,calc(100vw-2rem))] min-w-(--reference-width) rounded-xl p-1"
                 >
-                    <p
-                        v-if="!typing"
-                        class="text-caption-1 text-text-hint px-3 pt-1.5 pb-1"
-                    >
-                        {{ t("editorial.contributor.frequent") }}
-                    </p>
                     <Combobox.Item
                         v-for="m in results"
                         :key="m.personId"
@@ -225,11 +219,17 @@ function onBlur() {
                             m.displayName
                         }}</Combobox.ItemText>
                     </Combobox.Item>
+                    <!-- one line in one place, so typing doesn't shift the list -->
                     <p
-                        v-if="typing"
-                        class="text-caption-1 text-text-hint px-3 pt-1 pb-1.5"
+                        class="text-caption-1 text-text-hint px-3 pt-1 pb-1.5 contain-inline-size"
                     >
-                        {{ t("editorial.contributor.enterToAdd") }}
+                        {{
+                            t(
+                                typing
+                                    ? "editorial.contributor.enterToAdd"
+                                    : "editorial.contributor.frequent",
+                            )
+                        }}
                     </p>
                 </Combobox.Content>
             </Combobox.Positioner>

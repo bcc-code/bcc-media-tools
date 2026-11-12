@@ -429,7 +429,7 @@
             "linked": "Linked to BCC Members (personID {id})",
             "remove": "Remove {name}",
             "enterToAdd": "Not listed? Press Enter to add the name as typed.",
-            "frequent": "Frequent speakers"
+            "frequent": "Frequent speakers. Type to search BCC Members."
         }
     },
     "vault": {
