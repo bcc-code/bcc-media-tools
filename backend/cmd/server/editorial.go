@@ -43,6 +43,8 @@ type EditorialAPI struct {
 	members members.Searcher
 	// Puts the usual Playout speakers first in those suggestions; nil skips it.
 	speakers *frequentSpeakers
+	// Tells which linked contributors are U26; nil marks no one.
+	ages *memberAges
 }
 
 type playoutClient interface {
@@ -397,7 +399,9 @@ func (e EditorialAPI) loadSession(ctx context.Context, id string) (*apiv1.Editor
 	if err != nil {
 		return nil, fmt.Errorf("editorial: list markers: %w", err)
 	}
-	return editorialSessionToProto(sess, markers), nil
+	out := editorialSessionToProto(sess, markers)
+	e.markU26(ctx, out.Markers)
+	return out, nil
 }
 
 // saveSession updates the session title and fully replaces its markers in a

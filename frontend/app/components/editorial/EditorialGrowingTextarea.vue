@@ -22,6 +22,9 @@ defineProps<{
 }>();
 
 const model = defineModel<string>({ required: true });
+// The end slot sits at the right of the first line, outside the text: room is
+// kept for it so the text doesn't run under it.
+const slots = defineSlots<{ end?: () => unknown }>();
 </script>
 
 <template>
@@ -31,12 +34,13 @@ const model = defineModel<string>({ required: true });
             rows="1"
             :placeholder="placeholder"
             :aria-label="ariaLabel"
-            class="border-border-1 text-body-3 text-text-default ds-focus-ring col-start-1 row-start-1 w-full resize-none overflow-hidden rounded-xl border px-3 py-2"
-            :class="
+            class="border-border-1 text-body-3 text-text-default ds-focus-ring col-start-1 row-start-1 w-full resize-none overflow-hidden rounded-xl border py-2 pl-3"
+            :class="[
                 placeholderIsValue
                     ? 'placeholder:text-text-muted'
-                    : 'placeholder:text-text-hint'
-            "
+                    : 'placeholder:text-text-hint',
+                slots.end ? 'pr-12' : 'pr-3',
+            ]"
             @keydown.enter.prevent="
                 ($event.target as HTMLTextAreaElement).blur()
             "
@@ -47,9 +51,17 @@ const model = defineModel<string>({ required: true });
         -->
         <div
             aria-hidden="true"
-            class="text-body-3 invisible col-start-1 row-start-1 w-full border px-3 py-2 break-words whitespace-pre-wrap"
+            class="text-body-3 invisible col-start-1 row-start-1 w-full border py-2 pl-3 break-words whitespace-pre-wrap"
+            :class="slots.end ? 'pr-12' : 'pr-3'"
         >
             {{ model || placeholder }}&nbsp;
+        </div>
+        <!-- same border and padding as the text, so it shares the first line's baseline -->
+        <div
+            v-if="slots.end"
+            class="text-body-3 col-start-1 row-start-1 self-start justify-self-end border border-transparent py-2 pr-3"
+        >
+            <slot name="end" />
         </div>
     </div>
 </template>

@@ -238,6 +238,7 @@ function toRow(m: EditorialMarker): Row {
         contributorList: m.contributorList.map((c) => ({
             name: c.name,
             personId: c.personId,
+            u26: c.u26,
         })),
         bibleVerses: m.bibleVerses,
         comment: m.comment,
@@ -576,6 +577,10 @@ function setContributors(row: Row, list: Contributor[]) {
     row.contributors = list.map((c) => c.name).join(", ");
 }
 
+function hasU26(row: Row): boolean {
+    return row.contributorList.some((c) => c.u26);
+}
+
 // The phone drawer and the live edit view edit details; the table shows them
 // read-only in simple mode, and a recording's edit view saves on Save.
 async function persistDetails(row: Row, before: Details) {
@@ -687,6 +692,7 @@ function persistLiveDetails(row: Row) {
         contributorList: m.contributorList.map((c) => ({
             name: c.name,
             personId: c.personId,
+            u26: c.u26,
         })),
         type: m.type,
         bibleVerses: m.bibleVerses,
@@ -2583,7 +2589,15 @@ onBeforeRouteLeave(() => {
                                             class="title-field"
                                             @focusin="nameBeforeEdit = row.name"
                                             @change="persistName(row)"
-                                        />
+                                        >
+                                            <!-- with a title, the names and U26 go on the line below -->
+                                            <template
+                                                v-if="!row.name && hasU26(row)"
+                                                #end
+                                            >
+                                                <EditorialU26Badge />
+                                            </template>
+                                        </EditorialGrowingTextarea>
                                         <!--
                                             Medvirkende and Bibelvers ride under
                                             the title rather than taking columns
@@ -2619,9 +2633,12 @@ onBeforeRouteLeave(() => {
                                                 row.name &&
                                                 row.contributors
                                             "
-                                            class="text-body-3 text-text-default mt-1 px-3 font-medium"
+                                            class="text-body-3 text-text-default mt-1 flex items-baseline gap-1.5 px-3 font-medium"
                                         >
                                             {{ row.contributors }}
+                                            <EditorialU26Badge
+                                                v-if="hasU26(row)"
+                                            />
                                         </p>
                                         <p
                                             v-if="

@@ -513,6 +513,9 @@ message EditorialContributor {
   string name = 1;
   // BCC Members personID; empty when typed in by hand
   string person_id = 2;
+  // under 26 today; set by the server when read, for linked people only, and
+  // never stored
+  bool u26 = 3;
 }
 
 // A review session tied to a single Mediabanken asset.
@@ -817,6 +820,8 @@ message SearchMembersRequest {
 message Member {
   string person_id = 1;
   string display_name = 2;
+  // under 26 today; never the birth date itself
+  bool u26 = 3;
 }
 
 // Frequent speakers first, then Members' best matches. Empty when neither can

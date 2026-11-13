@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"sync"
@@ -23,7 +24,7 @@ type Config struct {
 	ClientSecret string
 }
 
-// Client searches the Core API's persons with an Auth0 client-credentials
+// Client reads the Core API's persons with an Auth0 client-credentials
 // token. The token is fetched on first use and reused until shortly before it
 // expires.
 type Client struct {
@@ -41,51 +42,87 @@ func NewClient(cfg Config) *Client {
 	return &Client{cfg: cfg, rest: resty.New().SetTimeout(5 * time.Second).SetDisableWarn(true)}
 }
 
-type personsResponse struct {
-	Data []struct {
-		PersonID    int    `json:"personID"`
-		DisplayName string `json:"displayName"`
-	} `json:"data"`
+const personFields = "personID,displayName,birthDate"
+
+type corePerson struct {
+	PersonID    int    `json:"personID"`
+	DisplayName string `json:"displayName"`
+	// "2006-01-02"
+	BirthDate string `json:"birthDate"`
+}
+
+func (p corePerson) person() Person {
+	out := Person{PersonID: strconv.Itoa(p.PersonID), DisplayName: p.DisplayName}
+	if len(p.BirthDate) >= len(time.DateOnly) {
+		// zero, unknown, when it doesn't parse
+		out.BirthDate, _ = time.Parse(time.DateOnly, p.BirthDate[:len(time.DateOnly)])
+	}
+	return out
 }
 
 // Search uses the Core API's fuzzy name search, which ignores accents and
 // ranks by similarity.
 func (c *Client) Search(ctx context.Context, query string, limit int) ([]Person, error) {
+	var body struct {
+		Data []corePerson `json:"data"`
+	}
+	err := c.get(ctx, "/v2/persons", map[string]string{
+		"search": query,
+		"fields": personFields,
+		"limit":  strconv.Itoa(limit),
+	}, &body)
+	if err != nil {
+		return nil, fmt.Errorf("search members: %w", err)
+	}
+	out := make([]Person, 0, len(body.Data))
+	for _, p := range body.Data {
+		out = append(out, p.person())
+	}
+	return out, nil
+}
+
+// Get looks one person up by personID; ErrNotFound when there's no such person.
+func (c *Client) Get(ctx context.Context, personID string) (Person, error) {
+	var body struct {
+		Data corePerson `json:"data"`
+	}
+	err := c.get(ctx, "/v2/persons/"+url.PathEscape(personID), map[string]string{"fields": personFields}, &body)
+	if err != nil {
+		return Person{}, fmt.Errorf("get member %s: %w", personID, err)
+	}
+	return body.Data.person(), nil
+}
+
+func (c *Client) get(ctx context.Context, path string, params map[string]string, out any) error {
 	token, err := c.accessToken(ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	resp, err := c.rest.R().
 		SetContext(ctx).
 		SetAuthToken(token).
 		SetHeader("Accept", "application/json").
-		SetQueryParams(map[string]string{
-			"search": query,
-			"fields": "personID,displayName",
-			"limit":  strconv.Itoa(limit),
-		}).
-		Get(c.cfg.APIURL + "/v2/persons")
+		SetQueryParams(params).
+		Get(c.cfg.APIURL + path)
 	if err != nil {
-		return nil, fmt.Errorf("search members: %w", err)
+		return err
 	}
-	if resp.StatusCode() == http.StatusUnauthorized {
+	switch resp.StatusCode() {
+	case http.StatusUnauthorized:
 		// revoked or rotated: fetch a new one next time
 		c.mu.Lock()
 		c.token = ""
 		c.mu.Unlock()
+	case http.StatusNotFound:
+		return ErrNotFound
 	}
 	if !resp.IsSuccess() {
-		return nil, fmt.Errorf("search members: unexpected status %s", resp.Status())
+		return fmt.Errorf("unexpected status %s", resp.Status())
 	}
-	var body personsResponse
-	if err := json.Unmarshal(resp.Body(), &body); err != nil {
-		return nil, fmt.Errorf("decode members: %w", err)
+	if err := json.Unmarshal(resp.Body(), out); err != nil {
+		return fmt.Errorf("decode: %w", err)
 	}
-	out := make([]Person, 0, len(body.Data))
-	for _, p := range body.Data {
-		out = append(out, Person{PersonID: strconv.Itoa(p.PersonID), DisplayName: p.DisplayName})
-	}
-	return out, nil
+	return nil
 }
 
 type tokenResponse struct {

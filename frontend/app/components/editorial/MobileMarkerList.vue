@@ -165,6 +165,9 @@ const current = computed(() =>
                     {{ m.duration }}
                 </span>
                 <span class="grow" />
+                <EditorialU26Badge
+                    v-if="m.contributorList.some((c) => c.u26)"
+                />
                 <DesignBadge v-if="m.typeLabel">{{ m.typeLabel }}</DesignBadge>
                 <button
                     type="button"
