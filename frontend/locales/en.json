@@ -425,6 +425,9 @@
         "chaptersFailed": "Could not save chapters",
         "inOutKeys": "Keys I and O set the selected row's in and out to the video's position. A row's out stays the next row's in.",
         "inOutKeysLive": "Key I sets the selected row's time to now.",
+        "u26": {
+            "hint": "Under 26"
+        },
         "contributor": {
             "linked": "Linked to BCC Members (personID {id})",
             "remove": "Remove {name}",

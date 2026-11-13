@@ -425,6 +425,9 @@
         "chaptersFailed": "Kunne ikke lagre kapitler",
         "inOutKeys": "Tastene I og O setter inn- og utpunkt for valgt rad til videoens posisjon. Utpunktet følger neste rads innpunkt.",
         "inOutKeysLive": "Tasten I setter tiden for valgt rad til nå.",
+        "u26": {
+            "hint": "Under 26 år"
+        },
         "contributor": {
             "linked": "Koblet til BCC Members (personID {id})",
             "remove": "Fjern {name}",
