@@ -2589,7 +2589,15 @@ onBeforeRouteLeave(() => {
                                             class="title-field"
                                             @focusin="nameBeforeEdit = row.name"
                                             @change="persistName(row)"
-                                        />
+                                        >
+                                            <!-- with a title, the names and U26 go on the line below -->
+                                            <template
+                                                v-if="!row.name && hasU26(row)"
+                                                #end
+                                            >
+                                                <EditorialU26Badge />
+                                            </template>
+                                        </EditorialGrowingTextarea>
                                         <!--
                                             Medvirkende and Bibelvers ride under
                                             the title rather than taking columns
