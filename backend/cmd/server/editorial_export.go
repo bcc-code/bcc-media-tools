@@ -129,13 +129,18 @@ func editorialWorkbook(sess editorial.Session, markers []editorial.Marker, u26 m
 		if durationMs > 0 {
 			duration = excelDuration(durationMs)
 		}
-		var young []string
+		// Yes or No for linked contributors; empty when none is linked, as
+		// the age of a name typed by hand isn't known.
+		var linked, young bool
 		for _, c := range markerContributors(m) {
-			if u26[c.PersonID] {
-				young = append(young, c.Name)
-			}
+			linked = linked || c.PersonID != ""
+			young = young || u26[c.PersonID]
 		}
-		row = append(row, duration, m.Name, m.Contributors, strings.Join(young, ", "), m.BibleVerses, typeLabel(m.Type, l), m.Comment,
+		var u26Cell string
+		if linked {
+			u26Cell = yesNo(young)
+		}
+		row = append(row, duration, m.Name, m.Contributors, u26Cell, m.BibleVerses, typeLabel(m.Type, l), m.Comment,
 			yesNo(m.PublishBmm), yesNo(m.PublishBcc))
 		if live {
 			row = append(row, sourceLabel(m, l))
@@ -207,9 +212,9 @@ func styleWorkbook(f *excelize.File, sheet string, cols, rows int, live bool) er
 	}
 
 	// Narrow time and Yes/No columns, wide text columns.
-	widths := []float64{10, 10, 36, 28, 20, 22, 14, 30, 8, 11, 24}
+	widths := []float64{10, 10, 36, 28, 8, 22, 14, 30, 8, 11, 24}
 	if !live {
-		widths = []float64{10, 10, 10, 36, 28, 20, 22, 14, 30, 8, 11}
+		widths = []float64{10, 10, 10, 36, 28, 8, 22, 14, 30, 8, 11}
 	}
 	for i, w := range widths {
 		col, _ := excelize.ColumnNumberToName(i + 1)
