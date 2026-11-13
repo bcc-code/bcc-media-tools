@@ -5,6 +5,7 @@ import (
 	"bcc-media-tools/editorial"
 	"bcc-media-tools/members"
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -146,14 +147,27 @@ func TestSearchMembersMarksU26(t *testing.T) {
 	assert.Zero(t, fake.getCount("90005"), "a search result brings its birth date")
 }
 
+// Yes when a linked contributor is U26, No when none is, empty when no one is
+// linked: a name typed by hand has no known age.
 func TestEditorialWorkbookU26Column(t *testing.T) {
 	sess := editorial.Session{Vxid: "VX-1", Kind: editorial.KindRecording}
-	m := markerRow{Marker: editorial.Marker{EndMs: 60_000}, Contributors: []contributor{{Name: "Ola Nordmann", PersonID: "90001"}, {Name: "Kari Nordmann", PersonID: "90002"}, {Name: "Per Hansen"}}}
-	data, err := editorialWorkbook(sess, []markerRow{m}, map[string]bool{"90001": true}, exportLabelsByLanguage["en"])
+	marker := func(list ...contributor) markerRow {
+		return markerRow{Marker: editorial.Marker{EndMs: 60_000}, Contributors: list}
+	}
+	markers := []markerRow{
+		marker(contributor{Name: "Ola Nordmann", PersonID: "90001"}, contributor{Name: "Kari Nordmann", PersonID: "90002"}, contributor{Name: "Per Hansen"}),
+		marker(contributor{Name: "Kari Nordmann", PersonID: "90002"}),
+		marker(contributor{Name: "Per Hansen"}),
+		marker(),
+	}
+	data, err := editorialWorkbook(sess, markers, map[string]bool{"90001": true}, exportLabelsByLanguage["en"])
 	require.NoError(t, err)
 	f, sheet := openWorkbook(t, data)
-	rows, err := f.GetRows(sheet)
-	require.NoError(t, err)
-	assert.Equal(t, []string{"Contributors", "U26"}, rows[0][4:6])
-	assert.Equal(t, []string{"Ola Nordmann, Kari Nordmann, Per Hansen", "Ola Nordmann"}, rows[1][4:6])
+	var got []string
+	for row := 1; row <= 5; row++ {
+		v, err := f.GetCellValue(sheet, fmt.Sprintf("F%d", row))
+		require.NoError(t, err)
+		got = append(got, v)
+	}
+	assert.Equal(t, []string{"U26", "Yes", "No", "", ""}, got)
 }
