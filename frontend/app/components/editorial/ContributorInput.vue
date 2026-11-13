@@ -11,6 +11,8 @@ export interface Contributor {
     name: string;
     // BCC Members personID; empty when typed in by hand
     personId: string;
+    // under 26 today, as the server tells
+    u26?: boolean;
 }
 
 const props = defineProps<{
@@ -103,7 +105,10 @@ function onSelect(details: { items: Member[] }) {
     if (!m) return;
     query.value = "";
     results.value = [];
-    update([...model.value, { name: m.displayName, personId: m.personId }]);
+    update([
+        ...model.value,
+        { name: m.displayName, personId: m.personId, u26: m.u26 },
+    ]);
     // Leave the field; a click opens the list again. A frame later, as the
     // combobox first puts focus back in the input.
     requestAnimationFrame(() => input.value?.$el?.blur());
@@ -181,7 +186,9 @@ function onBlur() {
                         "
                     />
                 </DesignTooltip>
-                <span class="truncate">{{ c.name }}</span>
+                <!-- the name and U26 share a baseline; the icons stay centred -->
+                <span class="self-baseline truncate">{{ c.name }}</span>
+                <EditorialU26Badge v-if="c.u26" class="ml-0.5 self-baseline" />
                 <button
                     type="button"
                     class="text-text-hint hover:text-text-default ds-focus-ring rounded p-0.5"
@@ -222,9 +229,13 @@ function onBlur() {
                                 name="tabler:user"
                                 class="text-text-muted size-4 shrink-0"
                             />
-                            <Combobox.ItemText>{{
+                            <Combobox.ItemText class="self-baseline">{{
                                 m.displayName
                             }}</Combobox.ItemText>
+                            <EditorialU26Badge
+                                v-if="m.u26"
+                                class="ml-auto self-baseline pl-2"
+                            />
                         </Combobox.Item>
                     </div>
                     <!-- one line in one place, so typing doesn't shift the list -->
