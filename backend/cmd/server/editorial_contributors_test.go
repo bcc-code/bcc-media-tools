@@ -38,21 +38,19 @@ func TestContributorsFromRequest(t *testing.T) {
 	}
 }
 
-func TestMarkerContributorsReadsRowsFromBeforeTheList(t *testing.T) {
-	assert.Equal(t, []contributor{{"A", ""}, {"B", ""}}, markerContributors(editorial.Marker{Contributors: "A, B", ContributorList: "[]"}))
-	assert.Equal(t, []contributor{{"A", "1"}}, markerContributors(editorial.Marker{Contributors: "A", ContributorList: `[{"name":"A","personId":"1"}]`}))
-	assert.Empty(t, markerContributors(editorial.Marker{}))
+func TestPlayoutFieldsChangedComparesContributorIDs(t *testing.T) {
+	picked := markerRow{Contributors: []contributor{{"Ola Nordmann", "90001"}}}
+	typed := markerRow{Contributors: []contributor{{"Ola Nordmann", ""}}}
+	assert.True(t, playoutFieldsChanged(typed, picked), "picking a member for the same name is an edit")
 }
 
-func TestPlayoutFieldsChangedComparesContributorIDs(t *testing.T) {
-	var picked editorial.Marker
-	setContributors(&picked, []contributor{{"Ola Nordmann", "90001"}})
-	var typed editorial.Marker
-	setContributors(&typed, []contributor{{"Ola Nordmann", ""}})
-	old := editorial.Marker{Contributors: "Ola Nordmann", ContributorList: "[]"}
-
-	assert.True(t, playoutFieldsChanged(typed, picked), "picking a member for the same name is an edit")
-	assert.False(t, playoutFieldsChanged(old, typed), "a row from before the list is not edited by saving it as it is")
+// markerRows wraps markers that have no contributors.
+func markerRows(markers []editorial.Marker) []markerRow {
+	rows := make([]markerRow, len(markers))
+	for i, m := range markers {
+		rows[i] = markerRow{Marker: m}
+	}
+	return rows
 }
 
 func TestEditorialContributorListRoundTrip(t *testing.T) {

@@ -292,6 +292,15 @@ func TestEditorialSetDetails(t *testing.T) {
 		SessionId: sess.Id, MarkerId: "missing",
 	}))
 	requireNotFound(t, err)
+
+	other := createTestSession(t, api, "VX-8", "other")
+	_, err = api.SetEditorialDetails(ctx, connect.NewRequest(&apiv1.SetEditorialDetailsRequest{
+		SessionId: other.Id, MarkerId: saved.Markers[0].Id, Contributors: "C",
+	}))
+	requireNotFound(t, err)
+	got, err = api.loadSession(ctx, sess.Id)
+	require.NoError(t, err)
+	assert.Equal(t, "B", got.Markers[0].Contributors, "another session's marker keeps its contributors")
 }
 
 // An admin corrects a recording session's details; a new asset forgets the

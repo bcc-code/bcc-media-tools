@@ -3,38 +3,74 @@ package main
 import (
 	apiv1 "bcc-media-tools/api/v1"
 	"bcc-media-tools/editorial"
-	"encoding/json"
+	"context"
+	"database/sql"
+	"fmt"
 	"slices"
 	"strings"
 )
 
-// contributor is one contributor_list entry; PersonID is empty when typed in.
+// contributor is one of a marker's contributors; PersonID is empty when typed in
 type contributor struct {
-	Name     string `json:"name"`
-	PersonID string `json:"personId,omitempty"`
+	Name     string
+	PersonID string
 }
 
-// markerContributors falls back to the contributors string for older rows.
-func markerContributors(m editorial.Marker) []contributor {
-	var list []contributor
-	if m.ContributorList != "" {
-		_ = json.Unmarshal([]byte(m.ContributorList), &list)
-	}
-	if len(list) == 0 {
-		return splitContributors(m.Contributors)
-	}
-	return list
+// markerRow is a marker with its contributors. Reassign Contributors, never
+// change it in place: row copies share the slice.
+type markerRow struct {
+	editorial.Marker
+	Contributors []contributor
 }
 
-// setContributors also sets the contributors string to the joined names.
-func setContributors(m *editorial.Marker, list []contributor) {
-	m.Contributors = strings.Join(contributorNames(list), ", ")
-	if len(list) == 0 {
-		m.ContributorList = "[]"
-		return
+func (m markerRow) equal(o markerRow) bool {
+	return m.Marker == o.Marker && slices.Equal(m.Contributors, o.Contributors)
+}
+
+// contributorString is the names joined with ", ", as the API and the Excel
+// export show them.
+func (m markerRow) contributorString() string {
+	return strings.Join(contributorNames(m.Contributors), ", ")
+}
+
+// listMarkers returns a session's markers in order, with their contributors.
+func listMarkers(ctx context.Context, q *editorial.Queries, sessionID string) ([]markerRow, error) {
+	markers, err := q.ListMarkersForSession(ctx, sessionID)
+	if err != nil {
+		return nil, fmt.Errorf("editorial: list markers: %w", err)
 	}
-	b, _ := json.Marshal(list)
-	m.ContributorList = string(b)
+	contributors, err := q.ListContributorsForSession(ctx, sessionID)
+	if err != nil {
+		return nil, fmt.Errorf("editorial: list contributors: %w", err)
+	}
+	byMarker := map[string][]contributor{}
+	for _, c := range contributors {
+		byMarker[c.MarkerID] = append(byMarker[c.MarkerID], contributorFromRow(c))
+	}
+	rows := make([]markerRow, len(markers))
+	for i, m := range markers {
+		rows[i] = markerRow{Marker: m, Contributors: byMarker[m.ID]}
+	}
+	return rows, nil
+}
+
+// writeContributors stores a marker's contributors; it has none stored yet.
+func writeContributors(ctx context.Context, q *editorial.Queries, markerID string, list []contributor) error {
+	for i, c := range list {
+		if err := q.InsertMarkerContributor(ctx, editorial.InsertMarkerContributorParams{
+			MarkerID: markerID,
+			Position: int64(i),
+			Name:     c.Name,
+			PersonID: sql.NullString{String: c.PersonID, Valid: c.PersonID != ""},
+		}); err != nil {
+			return fmt.Errorf("editorial: insert contributor: %w", err)
+		}
+	}
+	return nil
+}
+
+func contributorFromRow(c editorial.MarkerContributor) contributor {
+	return contributor{Name: c.Name, PersonID: c.PersonID.String}
 }
 
 // contributorsFromRequest uses the list unless the string names others; then
@@ -80,18 +116,6 @@ func splitContributors(s string) []contributor {
 		}
 	}
 	return out
-}
-
-// contributorListColumn writes "[]" for rows built without contributors.
-func contributorListColumn(m editorial.Marker) string {
-	if m.ContributorList == "" {
-		return "[]"
-	}
-	return m.ContributorList
-}
-
-func contributorsChanged(a, b editorial.Marker) bool {
-	return !slices.Equal(markerContributors(a), markerContributors(b))
 }
 
 func contributorsToProto(list []contributor) []*apiv1.EditorialContributor {
