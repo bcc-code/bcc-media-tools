@@ -1,8 +1,9 @@
 <script setup lang="ts">
-// Contributors as chips: typing suggests people from BCC Members, the usual
-// Playout speakers first, and a pick keeps their personID. An empty field
-// offers the usual speakers. Enter or a comma (or leaving the field) adds what
-// was typed as a name of its own, linked to no one.
+// Contributors as chips: typing suggests people from BCC Members, those
+// already linked first, and a pick keeps their personID. An empty field offers
+// the frequent contributors. Without the members permission there are no
+// suggestions. Enter or a comma (or leaving the field) adds what was typed as
+// a name of its own, linked to no one.
 import { Combobox, createListCollection, useCombobox } from "@ark-ui/vue";
 import type { Member } from "~~/src/gen/api/v1/api_pb";
 
@@ -24,6 +25,7 @@ const emit = defineEmits<{ change: [] }>();
 
 const { t } = useI18n();
 const api = useAPI();
+const { canLookUpMembers } = usePermissions();
 
 const input = useTemplateRef<ComponentPublicInstance>("input");
 const query = ref("");
@@ -41,10 +43,14 @@ const collection = computed(() =>
 // Answers can arrive out of order; only the latest counts.
 let searchSeq = 0;
 async function search(q: string) {
+    if (!canLookUpMembers.value) return;
     const seq = ++searchSeq;
     try {
-        // an empty query lists the usual speakers
-        const res = await api.searchMembers({ query: q.trim(), limit: 8 });
+        // an empty query lists the frequent contributors
+        const res = await api.searchMembers({
+            query: q.trim(),
+            limit: q.trim() ? 8 : 20,
+        });
         if (seq !== searchSeq) return;
         const linked = new Set(model.value.map((c) => c.personId));
         results.value = res.members.filter((m) => !linked.has(m.personId));
@@ -205,20 +211,22 @@ function onBlur() {
                 <Combobox.Content
                     class="gradient-border bg-surface-raise shadow-floating w-max max-w-[min(24rem,calc(100vw-2rem))] min-w-(--reference-width) rounded-xl p-1"
                 >
-                    <Combobox.Item
-                        v-for="m in results"
-                        :key="m.personId"
-                        :item="m"
-                        class="text-body-3 text-text-default data-highlighted:bg-surface-indent flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2"
-                    >
-                        <Icon
-                            name="tabler:user"
-                            class="text-text-muted size-4 shrink-0"
-                        />
-                        <Combobox.ItemText>{{
-                            m.displayName
-                        }}</Combobox.ItemText>
-                    </Combobox.Item>
+                    <div class="max-h-80 overflow-y-auto">
+                        <Combobox.Item
+                            v-for="m in results"
+                            :key="m.personId"
+                            :item="m"
+                            class="text-body-3 text-text-default data-highlighted:bg-surface-indent flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2"
+                        >
+                            <Icon
+                                name="tabler:user"
+                                class="text-text-muted size-4 shrink-0"
+                            />
+                            <Combobox.ItemText>{{
+                                m.displayName
+                            }}</Combobox.ItemText>
+                        </Combobox.Item>
+                    </div>
                     <!-- one line in one place, so typing doesn't shift the list -->
                     <p
                         class="text-caption-1 text-text-hint px-3 pt-1 pb-1.5 contain-inline-size"
