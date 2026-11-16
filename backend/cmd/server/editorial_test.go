@@ -24,7 +24,7 @@ func newTestEditorialAPI(t *testing.T) *EditorialAPI {
 	t.Cleanup(func() { _ = db.Close() })
 
 	permsPath := filepath.Join(dir, "permissions.json")
-	require.NoError(t, os.WriteFile(permsPath, []byte(`{"editor@bcc.media":{"bmm":{},"editorial":{"admin":true}}}`), 0644))
+	require.NoError(t, os.WriteFile(permsPath, []byte(`{"editor@bcc.media":{"bmm":{},"editorial":{"admin":true,"members":true}}}`), 0644))
 	oldPerms := PermissionsFile
 	PermissionsFile = permsPath
 	t.Cleanup(func() { PermissionsFile = oldPerms })

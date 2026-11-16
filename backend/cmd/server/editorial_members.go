@@ -5,6 +5,7 @@ import (
 	"bcc-media-tools/members"
 	"cmp"
 	"context"
+	"fmt"
 	"os"
 	"strings"
 	"unicode/utf8"
@@ -39,8 +40,12 @@ const (
 // frequent speakers. When Members fails only they are found, so a name can
 // still be typed in by hand.
 func (e EditorialAPI) SearchMembers(ctx context.Context, req *connect.Request[apiv1.SearchMembersRequest]) (*connect.Response[apiv1.SearchMembersResponse], error) {
-	if _, err := requireEditorial(req, apiv1.EditorialEditor); err != nil {
+	email, err := requireEditorial(req, apiv1.EditorialEditor)
+	if err != nil {
 		return nil, err
+	}
+	if !PermissionsForEmail(email).CanLookUpMembers() {
+		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("not authorized: needs the members permission"))
 	}
 	query := strings.TrimSpace(req.Msg.GetQuery())
 	limit := int(req.Msg.GetLimit())

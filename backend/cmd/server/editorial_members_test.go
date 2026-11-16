@@ -75,15 +75,23 @@ func TestSearchMembers(t *testing.T) {
 	assert.Empty(t, got)
 }
 
-func TestSearchMembersNeedsEditor(t *testing.T) {
+// Members is personal data: searching needs the editor role and the explicit
+// members permission, which no role implies.
+func TestSearchMembersNeedsEditorAndMembers(t *testing.T) {
 	api := newTestEditorialAPI(t)
 	api.members = &fakeMembers{}
 
-	actAs(t, `{"enabled":true}`)
-	_, err := searchMembers(t, api, "ola", 0)
-	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err), "a reviewer can't search")
+	for perms, why := range map[string]string{
+		`{"enabled":true,"members":true}`: "a reviewer can't search",
+		`{"editor":true}`:                 "an editor needs the members permission",
+		`{"admin":true}`:                  "so does an admin",
+	} {
+		actAs(t, perms)
+		_, err := searchMembers(t, api, "ola", 0)
+		assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err), why)
+	}
 
-	actAs(t, `{"editor":true}`)
+	actAs(t, `{"editor":true,"members":true}`)
 	got, err := searchMembers(t, api, "ola", 0)
 	require.NoError(t, err)
 	require.Len(t, got, 1)

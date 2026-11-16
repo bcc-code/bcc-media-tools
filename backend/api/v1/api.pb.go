@@ -614,7 +614,9 @@ type EditorialPermission struct {
 	Live bool `protobuf:"varint,3,opt,name=live,proto3" json:"live,omitempty"`
 	// Editor: also change contributors, type and Bible verses of existing
 	// markers
-	Editor        bool `protobuf:"varint,4,opt,name=editor,proto3" json:"editor,omitempty"`
+	Editor bool `protobuf:"varint,4,opt,name=editor,proto3" json:"editor,omitempty"`
+	// Members: look up contributors in BCC Members; explicit
+	Members       bool `protobuf:"varint,5,opt,name=members,proto3" json:"members,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -673,6 +675,13 @@ func (x *EditorialPermission) GetLive() bool {
 func (x *EditorialPermission) GetEditor() bool {
 	if x != nil {
 		return x.Editor
+	}
+	return false
+}
+
+func (x *EditorialPermission) GetMembers() bool {
+	if x != nil {
+		return x.Members
 	}
 	return false
 }
@@ -6489,10 +6498,10 @@ func (x *SetEditorialDetailsRequest) GetContributorList() []*EditorialContributo
 }
 
 // Find people in BCC Members by name, for contributor suggestions. Requires
-// the editor role.
+// the editor role and the members permission.
 type SearchMembersRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// empty lists the people who speak most often
+	// empty lists the frequent contributors
 	Query string `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
 	// defaults to 10
 	Limit         int32 `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
@@ -6598,8 +6607,8 @@ func (x *Member) GetDisplayName() string {
 	return ""
 }
 
-// Frequent speakers first, then Members' best matches. Empty when neither can
-// be reached, so a name can still be typed in by hand.
+// People already linked on markers first, then Members' best matches. Empty
+// when neither can be reached, so a name can still be typed in by hand.
 type SearchMembersResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Members       []*Member              `protobuf:"bytes,1,rep,name=members,proto3" json:"members,omitempty"`
@@ -6681,12 +6690,13 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\x10ShortsPermission\x12\x18\n" +
 	"\aenabled\x18\x01 \x01(\bR\aenabled\"0\n" +
 	"\x14LiveIngestPermission\x12\x18\n" +
-	"\aenabled\x18\x01 \x01(\bR\aenabled\"q\n" +
+	"\aenabled\x18\x01 \x01(\bR\aenabled\"\x8b\x01\n" +
 	"\x13EditorialPermission\x12\x18\n" +
 	"\aenabled\x18\x01 \x01(\bR\aenabled\x12\x14\n" +
 	"\x05admin\x18\x02 \x01(\bR\x05admin\x12\x12\n" +
 	"\x04live\x18\x03 \x01(\bR\x04live\x12\x16\n" +
-	"\x06editor\x18\x04 \x01(\bR\x06editor\"\xa4\x04\n" +
+	"\x06editor\x18\x04 \x01(\bR\x06editor\x12\x18\n" +
+	"\amembers\x18\x05 \x01(\bR\amembers\"\xa4\x04\n" +
 	"\vPermissions\x12\x14\n" +
 	"\x05admin\x18\x01 \x01(\bR\x05admin\x12'\n" +
 	"\x03bmm\x18\x02 \x01(\v2\x15.api.v1.BMMPermissionR\x03bmm\x12\x14\n" +

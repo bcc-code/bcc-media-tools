@@ -87,6 +87,8 @@ message EditorialPermission {
   // Editor: also change contributors, type and Bible verses of existing
   // markers
   bool editor = 4;
+  // Members: look up contributors in BCC Members; explicit
+  bool members = 5;
 }
 
 message Permissions {
@@ -804,9 +806,9 @@ message SetEditorialDetailsRequest {
 }
 
 // Find people in BCC Members by name, for contributor suggestions. Requires
-// the editor role.
+// the editor role and the members permission.
 message SearchMembersRequest {
-  // empty lists the people who speak most often
+  // empty lists the frequent contributors
   string query = 1;
   // defaults to 10
   int32 limit = 2;
@@ -819,8 +821,8 @@ message Member {
   string display_name = 2;
 }
 
-// Frequent speakers first, then Members' best matches. Empty when neither can
-// be reached, so a name can still be typed in by hand.
+// People already linked on markers first, then Members' best matches. Empty
+// when neither can be reached, so a name can still be typed in by hand.
 message SearchMembersResponse {
   repeated Member members = 1;
 }
