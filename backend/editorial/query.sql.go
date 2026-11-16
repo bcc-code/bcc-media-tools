@@ -251,40 +251,6 @@ func (q *Queries) InsertMarkerContributor(ctx context.Context, arg InsertMarkerC
 	return err
 }
 
-const listContributorsForMarker = `-- name: ListContributorsForMarker :many
-SELECT marker_id, position, name, person_id FROM marker_contributors
-WHERE marker_id = ?
-ORDER BY position
-`
-
-func (q *Queries) ListContributorsForMarker(ctx context.Context, markerID string) ([]MarkerContributor, error) {
-	rows, err := q.db.QueryContext(ctx, listContributorsForMarker, markerID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []MarkerContributor
-	for rows.Next() {
-		var i MarkerContributor
-		if err := rows.Scan(
-			&i.MarkerID,
-			&i.Position,
-			&i.Name,
-			&i.PersonID,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listContributorsForSession = `-- name: ListContributorsForSession :many
 SELECT c.marker_id, c.position, c.name, c.person_id FROM marker_contributors c
 JOIN markers m ON m.id = c.marker_id

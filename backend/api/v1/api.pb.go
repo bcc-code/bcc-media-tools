@@ -4109,7 +4109,7 @@ type EditorialMarker struct {
 	EndMs   int64  `protobuf:"varint,6,opt,name=end_ms,json=endMs,proto3" json:"end_ms,omitempty"`
 	// "import" (from Mediabanken chapters) or "manual"
 	Source string `protobuf:"bytes,8,opt,name=source,proto3" json:"source,omitempty"`
-	// "Medvirkende" — contributor_list names joined with ", "
+	// "Medvirkende" — contributor_list names joined with ", "; ignored on save
 	Contributors string `protobuf:"bytes,9,opt,name=contributors,proto3" json:"contributors,omitempty"`
 	// optional free-text editorial comment
 	Comment string `protobuf:"bytes,10,opt,name=comment,proto3" json:"comment,omitempty"`
@@ -4123,8 +4123,7 @@ type EditorialMarker struct {
 	PlayoutKey string `protobuf:"bytes,14,opt,name=playout_key,json=playoutKey,proto3" json:"playout_key,omitempty"`
 	// true while Playout still refreshes the row; cleared when an editor changes
 	// a field Playout fills. Server-managed, ignored on save.
-	PlayoutSynced bool `protobuf:"varint,15,opt,name=playout_synced,json=playoutSynced,proto3" json:"playout_synced,omitempty"`
-	// used on save unless contributors was edited to other names
+	PlayoutSynced   bool                    `protobuf:"varint,15,opt,name=playout_synced,json=playoutSynced,proto3" json:"playout_synced,omitempty"`
 	ContributorList []*EditorialContributor `protobuf:"bytes,16,rep,name=contributor_list,json=contributorList,proto3" json:"contributor_list,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
@@ -6405,15 +6404,13 @@ func (x *SetEditorialNameRequest) GetName() string {
 // Update a single marker's title, contributors, type and Bible verses without
 // touching anything else. Requires the editor role.
 type SetEditorialDetailsRequest struct {
-	state        protoimpl.MessageState `protogen:"open.v1"`
-	SessionId    string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	MarkerId     string                 `protobuf:"bytes,2,opt,name=marker_id,json=markerId,proto3" json:"marker_id,omitempty"`
-	Name         string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	Contributors string                 `protobuf:"bytes,4,opt,name=contributors,proto3" json:"contributors,omitempty"`
-	Type         string                 `protobuf:"bytes,5,opt,name=type,proto3" json:"type,omitempty"`
-	BibleVerses  string                 `protobuf:"bytes,6,opt,name=bible_verses,json=bibleVerses,proto3" json:"bible_verses,omitempty"`
-	// as on EditorialMarker
-	ContributorList []*EditorialContributor `protobuf:"bytes,7,rep,name=contributor_list,json=contributorList,proto3" json:"contributor_list,omitempty"`
+	state           protoimpl.MessageState  `protogen:"open.v1"`
+	SessionId       string                  `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	MarkerId        string                  `protobuf:"bytes,2,opt,name=marker_id,json=markerId,proto3" json:"marker_id,omitempty"`
+	Name            string                  `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	ContributorList []*EditorialContributor `protobuf:"bytes,4,rep,name=contributor_list,json=contributorList,proto3" json:"contributor_list,omitempty"`
+	Type            string                  `protobuf:"bytes,5,opt,name=type,proto3" json:"type,omitempty"`
+	BibleVerses     string                  `protobuf:"bytes,6,opt,name=bible_verses,json=bibleVerses,proto3" json:"bible_verses,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -6469,11 +6466,11 @@ func (x *SetEditorialDetailsRequest) GetName() string {
 	return ""
 }
 
-func (x *SetEditorialDetailsRequest) GetContributors() string {
+func (x *SetEditorialDetailsRequest) GetContributorList() []*EditorialContributor {
 	if x != nil {
-		return x.Contributors
+		return x.ContributorList
 	}
-	return ""
+	return nil
 }
 
 func (x *SetEditorialDetailsRequest) GetType() string {
@@ -6488,13 +6485,6 @@ func (x *SetEditorialDetailsRequest) GetBibleVerses() string {
 		return x.BibleVerses
 	}
 	return ""
-}
-
-func (x *SetEditorialDetailsRequest) GetContributorList() []*EditorialContributor {
-	if x != nil {
-		return x.ContributorList
-	}
-	return nil
 }
 
 // Find people in BCC Members by name, for contributor suggestions. Requires
@@ -7122,16 +7112,15 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x1b\n" +
 	"\tmarker_id\x18\x02 \x01(\tR\bmarkerId\x12\x12\n" +
-	"\x04name\x18\x03 \x01(\tR\x04name\"\x90\x02\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\"\xec\x01\n" +
 	"\x1aSetEditorialDetailsRequest\x12\x1d\n" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x1b\n" +
 	"\tmarker_id\x18\x02 \x01(\tR\bmarkerId\x12\x12\n" +
-	"\x04name\x18\x03 \x01(\tR\x04name\x12\"\n" +
-	"\fcontributors\x18\x04 \x01(\tR\fcontributors\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x12G\n" +
+	"\x10contributor_list\x18\x04 \x03(\v2\x1c.api.v1.EditorialContributorR\x0fcontributorList\x12\x12\n" +
 	"\x04type\x18\x05 \x01(\tR\x04type\x12!\n" +
-	"\fbible_verses\x18\x06 \x01(\tR\vbibleVerses\x12G\n" +
-	"\x10contributor_list\x18\a \x03(\v2\x1c.api.v1.EditorialContributorR\x0fcontributorList\"B\n" +
+	"\fbible_verses\x18\x06 \x01(\tR\vbibleVerses\"B\n" +
 	"\x14SearchMembersRequest\x12\x14\n" +
 	"\x05query\x18\x01 \x01(\tR\x05query\x12\x14\n" +
 	"\x05limit\x18\x02 \x01(\x05R\x05limit\"H\n" +

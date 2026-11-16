@@ -212,7 +212,7 @@ func TestEditorialLiveSessionFlow(t *testing.T) {
 
 	// Edit the filled mark and remove the song row, then sync again: the edit
 	// stays and the song doesn't come back.
-	markers[0].Contributors = "Kåre Smith"
+	markers[0].ContributorList = typedIn("Kåre Smith")
 	saveTestSession(t, api, sess.Id, "Søndag", markers[:1])
 	again, err := api.SyncEditorialSessionFromPlayout(ctx, connect.NewRequest(&apiv1.SyncEditorialSessionFromPlayoutRequest{Id: sess.Id}))
 	require.NoError(t, err)

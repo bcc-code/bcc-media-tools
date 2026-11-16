@@ -100,7 +100,7 @@ func TestEditorialSaveSessionReplacesMarkers(t *testing.T) {
 
 	// First save: two new markers (empty IDs → generated).
 	saved := saveTestSession(t, api, sess.Id, "renamed", []*apiv1.EditorialMarker{
-		{Name: "Speaker A", Contributors: "Alice, Bob", Comment: "double-check timing", BibleVerses: "John 3:16; Rom 8:1-4", Type: "tale", StartMs: 1000, EndMs: 5000, PublishBmm: true, Source: editorial.SourceImport},
+		{Name: "Speaker A", ContributorList: typedIn("Alice", "Bob"), Comment: "double-check timing", BibleVerses: "John 3:16; Rom 8:1-4", Type: "tale", StartMs: 1000, EndMs: 5000, PublishBmm: true, Source: editorial.SourceImport},
 		{Name: "Song", Type: "sang", StartMs: 6000, EndMs: 9000},
 	})
 	assert.Equal(t, "renamed", saved.Title)
@@ -270,12 +270,12 @@ func TestEditorialSetDetails(t *testing.T) {
 	ctx := context.Background()
 	sess := createTestSession(t, api, "VX-9", "stream")
 	saved := saveTestSession(t, api, sess.Id, "t", []*apiv1.EditorialMarker{
-		{Name: "old", Contributors: "A", Type: "tale", Comment: "c", PublishBmm: true, StartMs: 0, EndMs: 1},
+		{Name: "old", ContributorList: typedIn("A"), Type: "tale", Comment: "c", PublishBmm: true, StartMs: 0, EndMs: 1},
 		{Name: "other", StartMs: 2, EndMs: 3},
 	})
 
 	_, err := api.SetEditorialDetails(ctx, connect.NewRequest(&apiv1.SetEditorialDetailsRequest{
-		SessionId: sess.Id, MarkerId: saved.Markers[0].Id, Name: "new", Contributors: "B", Type: "sang",
+		SessionId: sess.Id, MarkerId: saved.Markers[0].Id, Name: "new", ContributorList: typedIn("B"), Type: "sang",
 	}))
 	require.NoError(t, err)
 
@@ -295,7 +295,7 @@ func TestEditorialSetDetails(t *testing.T) {
 
 	other := createTestSession(t, api, "VX-8", "other")
 	_, err = api.SetEditorialDetails(ctx, connect.NewRequest(&apiv1.SetEditorialDetailsRequest{
-		SessionId: other.Id, MarkerId: saved.Markers[0].Id, Contributors: "C",
+		SessionId: other.Id, MarkerId: saved.Markers[0].Id, ContributorList: typedIn("C"),
 	}))
 	requireNotFound(t, err)
 	got, err = api.loadSession(ctx, sess.Id)

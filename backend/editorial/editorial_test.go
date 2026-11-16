@@ -48,8 +48,8 @@ func TestOpenAdoptsPreGooseDatabase(t *testing.T) {
 	assert.True(t, markers[0].PublishBmm)
 
 	// The contributors string became rows, in order and without IDs.
-	assert.Equal(t, []string{"A", "B", "C"}, contributorNames(t, q, "m1"))
-	assert.Empty(t, contributorNames(t, q, "m0"))
+	assert.Equal(t, []string{"A", "B", "C"}, contributorNames(t, db, "m1"))
+	assert.Empty(t, contributorNames(t, db, "m0"))
 	var left int
 	require.NoError(t, db.QueryRow(`SELECT count(*) FROM pragma_table_info('markers') WHERE name = 'contributors'`).Scan(&left))
 	assert.Zero(t, left, "the contributors column is dropped")
@@ -66,7 +66,7 @@ func TestOpenAdoptsPreGooseDatabase(t *testing.T) {
 	assert.True(t, markers[2].PublishBcc)
 
 	require.NoError(t, q.DeleteMarkersForSession(ctx, "s1"))
-	assert.Empty(t, contributorNames(t, q, "m1"), "contributors go with their marker")
+	assert.Empty(t, contributorNames(t, db, "m1"), "contributors go with their marker")
 }
 
 // Rolling back the contributors table puts the names back into the
@@ -108,21 +108,24 @@ func TestContributorsMigrationRollsBack(t *testing.T) {
 
 	_, err = provider.Up(ctx)
 	require.NoError(t, err)
-	list, err := q.ListContributorsForMarker(ctx, "m1")
-	require.NoError(t, err)
-	require.Len(t, list, 2)
-	assert.Equal(t, "B", list[0].Name)
-	assert.False(t, list[0].PersonID.Valid)
+	assert.Equal(t, []string{"B", "A"}, contributorNames(t, db, "m1"))
+	var linked int
+	require.NoError(t, db.QueryRow(`SELECT count(*) FROM marker_contributors WHERE person_id IS NOT NULL`).Scan(&linked))
+	assert.Zero(t, linked)
 }
 
-func contributorNames(t *testing.T, q *Queries, markerID string) []string {
+func contributorNames(t *testing.T, db *sql.DB, markerID string) []string {
 	t.Helper()
-	list, err := q.ListContributorsForMarker(context.Background(), markerID)
+	rows, err := db.Query(`SELECT name FROM marker_contributors WHERE marker_id = ? ORDER BY position`, markerID)
 	require.NoError(t, err)
+	defer rows.Close()
 	var names []string
-	for _, c := range list {
-		names = append(names, c.Name)
+	for rows.Next() {
+		var name string
+		require.NoError(t, rows.Scan(&name))
+		names = append(names, name)
 	}
+	require.NoError(t, rows.Err())
 	return names
 }
 

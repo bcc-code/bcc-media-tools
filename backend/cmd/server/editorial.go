@@ -267,14 +267,6 @@ func (e EditorialAPI) SetEditorialDetails(ctx context.Context, req *connect.Requ
 	}
 	sessionID, markerID := req.Msg.GetSessionId(), req.Msg.GetMarkerId()
 	err := e.updateMarker(ctx, sessionID, func(qtx *editorial.Queries, now int64) (int64, error) {
-		rows, err := qtx.ListContributorsForMarker(ctx, markerID)
-		if err != nil {
-			return 0, err
-		}
-		stored := make([]contributor, len(rows))
-		for i, c := range rows {
-			stored[i] = contributorFromRow(c)
-		}
 		n, err := qtx.SetMarkerDetails(ctx, editorial.SetMarkerDetailsParams{
 			Name:        req.Msg.GetName(),
 			Type:        req.Msg.GetType(),
@@ -290,8 +282,7 @@ func (e EditorialAPI) SetEditorialDetails(ctx context.Context, req *connect.Requ
 		if err := qtx.DeleteContributorsForMarker(ctx, markerID); err != nil {
 			return 0, err
 		}
-		list := contributorsFromRequest(req.Msg.GetContributorList(), req.Msg.GetContributors(), stored)
-		return n, writeContributors(ctx, qtx, markerID, list)
+		return n, writeContributors(ctx, qtx, markerID, contributorsFromRequest(req.Msg.GetContributorList()))
 	})
 	if err != nil {
 		return nil, editorialErr(fmt.Errorf("editorial: set details: %w", err))
@@ -460,7 +451,7 @@ func (e EditorialAPI) saveSession(ctx context.Context, id, title string, markers
 			Source:      m.GetSource(),
 			PlayoutKey:  m.GetPlayoutKey(),
 		}}
-		row.Contributors = contributorsFromRequest(m.GetContributorList(), m.GetContributors(), storedByID[row.ID].Contributors)
+		row.Contributors = contributorsFromRequest(m.GetContributorList())
 		if row.ID == "" {
 			row.ID = uuid.NewString()
 		}

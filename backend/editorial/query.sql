@@ -50,11 +50,6 @@ JOIN markers m ON m.id = c.marker_id
 WHERE m.session_id = ?
 ORDER BY m.sort_order, c.position;
 
--- name: ListContributorsForMarker :many
-SELECT * FROM marker_contributors
-WHERE marker_id = ?
-ORDER BY position;
-
 -- name: InsertMarkerContributor :exec
 INSERT INTO marker_contributors (marker_id, position, name, person_id)
 VALUES (?, ?, ?, ?);

@@ -113,7 +113,7 @@ func TestChaptersAgainstVidispine(t *testing.T) {
 		{Name: "HV 16 – Se ditt hjem", Type: "allsang", StartMs: 70_000, EndMs: 130_000},
 		{Name: "Kunngjøringer", Type: "annet", StartMs: 130_000, EndMs: 140_000},
 	})
-	first[0].Contributors = splitContributors("Kåre J. Smith, Harald Hansen")
+	first[0].Contributors = []contributor{{Name: "Kåre J. Smith"}, {Name: "Harald Hansen"}}
 	res, err := api.exportChapters(ctx, sess, first, start)
 	require.NoError(t, err)
 	assert.EqualValues(t, 3, res.Written)

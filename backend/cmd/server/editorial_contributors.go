@@ -45,7 +45,7 @@ func listMarkers(ctx context.Context, q *editorial.Queries, sessionID string) ([
 	}
 	byMarker := map[string][]contributor{}
 	for _, c := range contributors {
-		byMarker[c.MarkerID] = append(byMarker[c.MarkerID], contributorFromRow(c))
+		byMarker[c.MarkerID] = append(byMarker[c.MarkerID], contributor{Name: c.Name, PersonID: c.PersonID.String})
 	}
 	rows := make([]markerRow, len(markers))
 	for i, m := range markers {
@@ -69,35 +69,15 @@ func writeContributors(ctx context.Context, q *editorial.Queries, markerID strin
 	return nil
 }
 
-func contributorFromRow(c editorial.MarkerContributor) contributor {
-	return contributor{Name: c.Name, PersonID: c.PersonID.String}
-}
-
-// contributorsFromRequest uses the list unless the string names others; then
-// the string wins and keeps IDs already linked in the list or stored row.
-func contributorsFromRequest(list []*apiv1.EditorialContributor, legacy string, stored []contributor) []contributor {
-	listed := make([]contributor, 0, len(list))
+// contributorsFromRequest trims the names and drops blank ones.
+func contributorsFromRequest(list []*apiv1.EditorialContributor) []contributor {
+	var out []contributor
 	for _, c := range list {
-		name := strings.TrimSpace(c.GetName())
-		if name == "" {
-			continue
-		}
-		listed = append(listed, contributor{Name: name, PersonID: strings.TrimSpace(c.GetPersonId())})
-	}
-	typed := splitContributors(legacy)
-	if len(listed) > 0 && (len(typed) == 0 || slices.Equal(contributorNames(listed), contributorNames(typed))) {
-		return listed
-	}
-	ids := map[string]string{}
-	for _, c := range slices.Concat(stored, listed) {
-		if c.PersonID != "" {
-			ids[c.Name] = c.PersonID
+		if name := strings.TrimSpace(c.GetName()); name != "" {
+			out = append(out, contributor{Name: name, PersonID: strings.TrimSpace(c.GetPersonId())})
 		}
 	}
-	for i := range typed {
-		typed[i].PersonID = ids[typed[i].Name]
-	}
-	return typed
+	return out
 }
 
 func contributorNames(list []contributor) []string {
@@ -106,16 +86,6 @@ func contributorNames(list []contributor) []string {
 		names[i] = c.Name
 	}
 	return names
-}
-
-func splitContributors(s string) []contributor {
-	var out []contributor
-	for _, name := range strings.Split(s, ",") {
-		if name = strings.TrimSpace(name); name != "" {
-			out = append(out, contributor{Name: name})
-		}
-	}
-	return out
 }
 
 func contributorsToProto(list []contributor) []*apiv1.EditorialContributor {

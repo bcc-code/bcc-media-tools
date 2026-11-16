@@ -492,7 +492,7 @@ message EditorialMarker {
   reserved "publish";
   // "import" (from Mediabanken chapters) or "manual"
   string source = 8;
-  // "Medvirkende" — contributor_list names joined with ", "
+  // "Medvirkende" — contributor_list names joined with ", "; ignored on save
   string contributors = 9;
   // optional free-text editorial comment
   string comment = 10;
@@ -507,7 +507,6 @@ message EditorialMarker {
   // true while Playout still refreshes the row; cleared when an editor changes
   // a field Playout fills. Server-managed, ignored on save.
   bool playout_synced = 15;
-  // used on save unless contributors was edited to other names
   repeated EditorialContributor contributor_list = 16;
 }
 
@@ -798,11 +797,9 @@ message SetEditorialDetailsRequest {
   string session_id = 1;
   string marker_id = 2;
   string name = 3;
-  string contributors = 4;
+  repeated EditorialContributor contributor_list = 4;
   string type = 5;
   string bible_verses = 6;
-  // as on EditorialMarker
-  repeated EditorialContributor contributor_list = 7;
 }
 
 // Find people in BCC Members by name, for contributor suggestions. Requires

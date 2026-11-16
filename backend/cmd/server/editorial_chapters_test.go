@@ -109,7 +109,7 @@ func TestChaptersFromMarkers(t *testing.T) {
 		{Name: "Running", StartMs: 140_000, EndMs: 0},
 		{Name: "Sub-frame", StartMs: 150_000, EndMs: 150_010},
 	})
-	markers[0].Contributors = splitContributors("Kåre J. Smith, Harald Hansen")
+	markers[0].Contributors = []contributor{{Name: "Kåre J. Smith"}, {Name: "Harald Hansen"}}
 	got, skipped := chaptersFromMarkers(markers, start)
 
 	assert.Equal(t, 2, skipped, "no length and sub-frame length")
