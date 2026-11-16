@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -23,7 +24,7 @@ type Config struct {
 	ClientSecret string
 }
 
-// Client searches the Core API's persons with an Auth0 client-credentials
+// Client finds the Core API's persons with an Auth0 client-credentials
 // token. The token is fetched on first use and reused until shortly before it
 // expires.
 type Client struct {
@@ -51,6 +52,39 @@ type personsResponse struct {
 // Search uses the Core API's fuzzy name search, which ignores accents and
 // ranks by similarity.
 func (c *Client) Search(ctx context.Context, query string, limit int) ([]Person, error) {
+	people, err := c.persons(ctx, map[string]string{"search": query, "limit": strconv.Itoa(limit)})
+	if err != nil {
+		return nil, fmt.Errorf("search members: %w", err)
+	}
+	return people, nil
+}
+
+// GetMany looks people up by personID, 800 per request as Wayfarer does. IDs
+// Members doesn't know, or that aren't numbers, are left out.
+func (c *Client) GetMany(ctx context.Context, ids []string) ([]Person, error) {
+	var nums []int
+	for _, id := range ids {
+		if n, err := strconv.Atoi(id); err == nil {
+			nums = append(nums, n)
+		}
+	}
+	var out []Person
+	for chunk := range slices.Chunk(nums, 800) {
+		filter, err := json.Marshal(map[string]any{"personID": map[string]any{"_in": chunk}})
+		if err != nil {
+			return nil, err
+		}
+		people, err := c.persons(ctx, map[string]string{"filter": string(filter), "limit": "999"})
+		if err != nil {
+			return nil, fmt.Errorf("get members: %w", err)
+		}
+		out = append(out, people...)
+	}
+	return out, nil
+}
+
+// persons lists /v2/persons with the given query parameters.
+func (c *Client) persons(ctx context.Context, params map[string]string) ([]Person, error) {
 	token, err := c.accessToken(ctx)
 	if err != nil {
 		return nil, err
@@ -59,14 +93,11 @@ func (c *Client) Search(ctx context.Context, query string, limit int) ([]Person,
 		SetContext(ctx).
 		SetAuthToken(token).
 		SetHeader("Accept", "application/json").
-		SetQueryParams(map[string]string{
-			"search": query,
-			"fields": "personID,displayName",
-			"limit":  strconv.Itoa(limit),
-		}).
+		SetQueryParam("fields", "personID,displayName").
+		SetQueryParams(params).
 		Get(c.cfg.APIURL + "/v2/persons")
 	if err != nil {
-		return nil, fmt.Errorf("search members: %w", err)
+		return nil, err
 	}
 	if resp.StatusCode() == http.StatusUnauthorized {
 		// revoked or rotated: fetch a new one next time
@@ -75,11 +106,11 @@ func (c *Client) Search(ctx context.Context, query string, limit int) ([]Person,
 		c.mu.Unlock()
 	}
 	if !resp.IsSuccess() {
-		return nil, fmt.Errorf("search members: unexpected status %s", resp.Status())
+		return nil, fmt.Errorf("unexpected status %s", resp.Status())
 	}
 	var body personsResponse
 	if err := json.Unmarshal(resp.Body(), &body); err != nil {
-		return nil, fmt.Errorf("decode members: %w", err)
+		return nil, fmt.Errorf("decode: %w", err)
 	}
 	out := make([]Person, 0, len(body.Data))
 	for _, p := range body.Data {

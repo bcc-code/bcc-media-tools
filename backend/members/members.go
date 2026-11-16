@@ -10,7 +10,8 @@ type Person struct {
 	DisplayName string
 }
 
-// Searcher finds people by name, best matches first.
+// Searcher finds people by name, best matches first, or by personID.
 type Searcher interface {
 	Search(ctx context.Context, query string, limit int) ([]Person, error)
+	GetMany(ctx context.Context, ids []string) ([]Person, error)
 }

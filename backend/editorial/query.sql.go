@@ -354,6 +354,42 @@ func (q *Queries) ListExportedChapters(ctx context.Context, arg ListExportedChap
 	return items, nil
 }
 
+const listLinkedContributors = `-- name: ListLinkedContributors :many
+SELECT person_id, name FROM marker_contributors
+WHERE person_id IS NOT NULL
+GROUP BY person_id, name
+ORDER BY count(*) DESC, name
+`
+
+type ListLinkedContributorsRow struct {
+	PersonID sql.NullString
+	Name     string
+}
+
+// Each linked person under each name they were saved with, most used first.
+func (q *Queries) ListLinkedContributors(ctx context.Context) ([]ListLinkedContributorsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listLinkedContributors)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListLinkedContributorsRow
+	for rows.Next() {
+		var i ListLinkedContributorsRow
+		if err := rows.Scan(&i.PersonID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listMarkersForSession = `-- name: ListMarkersForSession :many
 SELECT id, session_id, sort_order, name, comment, bible_verses, type, start_ms, end_ms, publish_bmm, publish_bcc, source, created_at, updated_at, playout_key, playout_synced FROM markers
 WHERE session_id = ?

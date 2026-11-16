@@ -42,8 +42,8 @@ type EditorialAPI struct {
 	vsMetadata vidispineMetadata
 	// Suggests contributors; nil finds no one.
 	members members.Searcher
-	// Puts the usual Playout speakers first in those suggestions; nil skips it.
-	speakers *frequentSpeakers
+	// Names the frequent contributors.
+	frequent *frequentContributors
 }
 
 type playoutClient interface {
@@ -52,7 +52,7 @@ type playoutClient interface {
 }
 
 func NewEditorialAPI(db *sql.DB, vs vidispine.Client, cantemoClient *cantemo.Client, playoutClient playoutClient) *EditorialAPI {
-	return &EditorialAPI{db: db, queries: editorial.New(db), vidispine: vs, cantemo: cantemoClient, playout: playoutClient, hub: newEditorialHub()}
+	return &EditorialAPI{db: db, queries: editorial.New(db), vidispine: vs, cantemo: cantemoClient, playout: playoutClient, hub: newEditorialHub(), frequent: &frequentContributors{}}
 }
 
 // requireEditorial authenticates the caller and checks they have at least the

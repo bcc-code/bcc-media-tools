@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"reflect"
+	"strconv"
 	"sync/atomic"
 	"testing"
 )
@@ -92,6 +93,47 @@ func TestClientSearchTokenDenied(t *testing.T) {
 	c := NewClient(Config{APIURL: server.URL, AuthURL: server.URL})
 	if _, err := c.Search(context.Background(), "ola", 5); err == nil {
 		t.Error("want an error when Auth0 denies the token")
+	}
+}
+
+func TestClientGetMany(t *testing.T) {
+	var filters []string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/oauth/token" {
+			io.WriteString(w, `{"access_token":"tok","expires_in":86400}`)
+			return
+		}
+		q := r.URL.Query()
+		if q.Get("fields") != "personID,displayName" || q.Get("limit") != "999" {
+			t.Errorf("query = %v", q)
+		}
+		filters = append(filters, q.Get("filter"))
+		io.WriteString(w, `{"data":[{"displayName":"Ola Nordmann","personID":90001}]}`)
+	}))
+	defer server.Close()
+	c := NewClient(Config{APIURL: server.URL, AuthURL: server.URL})
+
+	got, err := c.GetMany(context.Background(), []string{"90001", "x", "90002"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := []Person{{"90001", "Ola Nordmann"}}; !reflect.DeepEqual(got, want) {
+		t.Errorf("GetMany = %v, want %v", got, want)
+	}
+	if want := []string{`{"personID":{"_in":[90001,90002]}}`}; !reflect.DeepEqual(filters, want) {
+		t.Errorf("filters = %v, want %v (not a number left out)", filters, want)
+	}
+
+	filters = nil
+	ids := make([]string, 801)
+	for i := range ids {
+		ids[i] = strconv.Itoa(i + 1)
+	}
+	if _, err := c.GetMany(context.Background(), ids); err != nil {
+		t.Fatal(err)
+	}
+	if len(filters) != 2 {
+		t.Errorf("%d requests for 801 IDs, want 2", len(filters))
 	}
 }
 
