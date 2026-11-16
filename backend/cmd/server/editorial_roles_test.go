@@ -83,13 +83,12 @@ func TestEditorialRoleAccess(t *testing.T) {
 			_, err := api.SetEditorialPublish(ctx, connect.NewRequest(&apiv1.SetEditorialPublishRequest{SessionId: rec.Id, MarkerId: markerID, PublishBmm: true}))
 			return err
 		}},
-		"approve": {apiv1.EditorialReviewer, func() error {
-			_, err := api.SetEditorialApproval(ctx, connect.NewRequest(&apiv1.SetEditorialApprovalRequest{SessionId: rec.Id, Approval: apiv1.EditorialApprovalKind_EDITORIAL_APPROVAL_KIND_TECHNICAL, Approved: true}))
+		"redactional approval": {apiv1.EditorialReviewer, func() error {
+			_, err := api.SetEditorialRedactionalApproval(ctx, connect.NewRequest(&apiv1.SetEditorialApprovalRequest{SessionId: rec.Id, Approved: true}))
 			return err
 		}},
-		"undo approval": {apiv1.EditorialReviewer, func() error {
-			// No such token: past the permission check it fails differently.
-			_, err := api.UndoEditorialApproval(ctx, connect.NewRequest(&apiv1.UndoEditorialApprovalRequest{SessionId: rec.Id, UndoToken: "none"}))
+		"technical approval": {apiv1.EditorialReviewer, func() error {
+			_, err := api.SetEditorialTechnicalApproval(ctx, connect.NewRequest(&apiv1.SetEditorialApprovalRequest{SessionId: rec.Id, Approved: true}))
 			return err
 		}},
 		"title": {apiv1.EditorialReviewer, func() error {

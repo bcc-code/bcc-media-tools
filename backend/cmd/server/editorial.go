@@ -37,8 +37,6 @@ type EditorialAPI struct {
 	hub *editorialHub
 	// Writes chapters (subclips); nil when Vidispine isn't configured.
 	vsMetadata vidispineMetadata
-	// What recent approval changes replaced, for Undo.
-	approvalUndos *approvalUndoStore
 }
 
 type playoutClient interface {
@@ -47,7 +45,7 @@ type playoutClient interface {
 }
 
 func NewEditorialAPI(db *sql.DB, vs vidispine.Client, cantemoClient *cantemo.Client, playoutClient playoutClient) *EditorialAPI {
-	return &EditorialAPI{db: db, queries: editorial.New(db), vidispine: vs, cantemo: cantemoClient, playout: playoutClient, hub: newEditorialHub(), approvalUndos: newApprovalUndoStore()}
+	return &EditorialAPI{db: db, queries: editorial.New(db), vidispine: vs, cantemo: cantemoClient, playout: playoutClient, hub: newEditorialHub()}
 }
 
 // requireEditorial authenticates the caller and checks they have at least the
@@ -207,80 +205,51 @@ func (e EditorialAPI) SetEditorialPublish(ctx context.Context, req *connect.Requ
 	return connect.NewResponse(&apiv1.Void{}), nil
 }
 
-// SetEditorialApproval sets or clears one approval and returns an undo token.
-// Re-approving keeps the first approver.
-func (e EditorialAPI) SetEditorialApproval(ctx context.Context, req *connect.Request[apiv1.SetEditorialApprovalRequest]) (*connect.Response[apiv1.SetEditorialApprovalResponse], error) {
-	email, err := requireEditorial(req, apiv1.EditorialReviewer)
-	if err != nil {
-		return nil, err
-	}
-	sessionID, kind := req.Msg.GetSessionId(), req.Msg.GetApproval()
-	if sessionID == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("missing session_id"))
-	}
-	if !validApprovalKind(kind) {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("unknown approval %q", kind))
-	}
-	// Retry if someone else changed it between the read and the write.
-	for range 3 {
-		sess, err := e.queries.GetSession(ctx, sessionID)
-		if err != nil {
-			return nil, editorialErr(err)
-		}
-		before := sessionApproval(sess, kind)
-		if before.approved == req.Msg.GetApproved() {
-			return connect.NewResponse(&apiv1.SetEditorialApprovalResponse{}), nil
-		}
-		now := time.Now().UnixMilli()
-		after := approvalState{}
-		if req.Msg.GetApproved() {
-			after = approvalState{approved: true, by: email, at: now}
-		}
-		n, err := e.swapApproval(ctx, sessionID, kind, before, after, now)
-		if err != nil {
-			return nil, editorialErr(fmt.Errorf("editorial: set approval: %w", err))
-		}
-		if n == 0 {
-			continue
-		}
-		e.hub.changed(sessionID)
-		token := e.approvalUndos.put(approvalUndo{
-			sessionID: sessionID,
-			kind:      kind,
-			email:     email,
-			before:    before,
-			after:     after,
+func (e EditorialAPI) SetEditorialRedactionalApproval(ctx context.Context, req *connect.Request[apiv1.SetEditorialApprovalRequest]) (*connect.Response[apiv1.EditorialApproval], error) {
+	return e.setApproval(ctx, req, func(approved bool, by string, now int64) (int64, error) {
+		return e.queries.SetRedactionalApproval(ctx, editorial.SetRedactionalApprovalParams{
+			Approved:   approved,
+			ApprovedBy: by,
+			ApprovedAt: now,
+			UpdatedAt:  now,
+			ID:         req.Msg.GetSessionId(),
 		})
-		return connect.NewResponse(&apiv1.SetEditorialApprovalResponse{UndoToken: token}), nil
-	}
-	return nil, connect.NewError(connect.CodeAborted, fmt.Errorf("editorial: approval kept changing; try again"))
+	})
 }
 
-// UndoEditorialApproval restores the approval with its original approver and
-// time. Only the caller's own, unchanged-since changes can be undone.
-func (e EditorialAPI) UndoEditorialApproval(ctx context.Context, req *connect.Request[apiv1.UndoEditorialApprovalRequest]) (*connect.Response[apiv1.Void], error) {
+func (e EditorialAPI) SetEditorialTechnicalApproval(ctx context.Context, req *connect.Request[apiv1.SetEditorialApprovalRequest]) (*connect.Response[apiv1.EditorialApproval], error) {
+	return e.setApproval(ctx, req, func(approved bool, by string, now int64) (int64, error) {
+		return e.queries.SetTechnicalApproval(ctx, editorial.SetTechnicalApprovalParams{
+			Approved:   approved,
+			ApprovedBy: by,
+			ApprovedAt: now,
+			UpdatedAt:  now,
+			ID:         req.Msg.GetSessionId(),
+		})
+	})
+}
+
+// setApproval sets or clears one approval through set, recording the caller
+// and the time either way, and returns the approval as it now is.
+func (e EditorialAPI) setApproval(ctx context.Context, req *connect.Request[apiv1.SetEditorialApprovalRequest], set func(approved bool, by string, now int64) (int64, error)) (*connect.Response[apiv1.EditorialApproval], error) {
 	email, err := requireEditorial(req, apiv1.EditorialReviewer)
 	if err != nil {
 		return nil, err
 	}
 	sessionID := req.Msg.GetSessionId()
-	u, err := e.approvalUndos.take(req.Msg.GetUndoToken(), email, sessionID)
-	if err != nil {
-		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("editorial: %w", err))
+	if sessionID == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("missing session_id"))
 	}
-	n, err := e.swapApproval(ctx, sessionID, u.kind, u.after, u.before, time.Now().UnixMilli())
+	approved, now := req.Msg.GetApproved(), time.Now().UnixMilli()
+	n, err := set(approved, email, now)
 	if err != nil {
-		return nil, editorialErr(fmt.Errorf("editorial: undo approval: %w", err))
+		return nil, editorialErr(fmt.Errorf("editorial: set approval: %w", err))
 	}
 	if n == 0 {
-		// Nothing matched: the session is gone, or the approval has changed.
-		if _, err := e.queries.GetSession(ctx, sessionID); err != nil {
-			return nil, editorialErr(err)
-		}
-		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("editorial: the approval has changed since"))
+		return nil, editorialErr(errEditorialNotFound)
 	}
 	e.hub.changed(sessionID)
-	return connect.NewResponse(&apiv1.Void{}), nil
+	return connect.NewResponse(editorialApprovalToProto(approved, email, now)), nil
 }
 
 func (e EditorialAPI) SetEditorialComment(ctx context.Context, req *connect.Request[apiv1.SetEditorialCommentRequest]) (*connect.Response[apiv1.Void], error) {
@@ -996,10 +965,11 @@ func editorialSessionToProto(s editorial.Session, markers []editorial.Marker) *a
 	return out
 }
 
-// editorialApprovalToProto sets who and when only while approved.
+// editorialApprovalToProto sets who and when once someone has approved or
+// cleared it.
 func editorialApprovalToProto(approved bool, by string, atMs int64) *apiv1.EditorialApproval {
 	out := &apiv1.EditorialApproval{Approved: approved}
-	if approved {
+	if by != "" {
 		out.By = by
 		out.At = timestamppb.New(time.UnixMilli(atMs))
 	}

@@ -1,6 +1,6 @@
 -- +goose Up
--- Sign-offs on the whole session: redactional (content) and technical. Who
--- approved and when are kept only while approved; clearing forgets them.
+-- Sign-offs on the whole session: redactional (content) and technical. _by and
+-- _at are who last approved or cleared it and when.
 ALTER TABLE sessions ADD COLUMN redactional_approved INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE sessions ADD COLUMN redactional_approved_by TEXT NOT NULL DEFAULT '';
 ALTER TABLE sessions ADD COLUMN redactional_approved_at INTEGER NOT NULL DEFAULT 0;

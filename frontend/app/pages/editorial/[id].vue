@@ -9,12 +9,8 @@ import type {
 } from "~~/src/gen/api/v1/api_pb";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
 import { Code, ConnectError } from "@connectrpc/connect";
-import { clone, create, equals } from "@bufbuild/protobuf";
-import {
-    EditorialApprovalKind,
-    EditorialApprovalSchema,
-    EditorialSessionSchema,
-} from "~~/src/gen/api/v1/api_pb";
+import { clone, equals } from "@bufbuild/protobuf";
+import { EditorialSessionSchema } from "~~/src/gen/api/v1/api_pb";
 import type {
     MobileMarker,
     MarkerDetails,
@@ -462,10 +458,10 @@ async function onPublishToggle(
 // ── Session approvals (any reviewer, saved at once) ──
 const APPROVAL_KEYS = ["redactional", "technical"] as const;
 type ApprovalKey = (typeof APPROVAL_KEYS)[number];
-const APPROVAL_KINDS: Record<ApprovalKey, EditorialApprovalKind> = {
-    redactional: EditorialApprovalKind.REDACTIONAL,
-    technical: EditorialApprovalKind.TECHNICAL,
-};
+const SET_APPROVAL = {
+    redactional: api.setEditorialRedactionalApproval,
+    technical: api.setEditorialTechnicalApproval,
+} satisfies Record<ApprovalKey, unknown>;
 // The latest from the server, taken from every session that arrives, even one
 // the edit view holds back while it has unsaved changes.
 const approvals = ref<Partial<Record<ApprovalKey, EditorialApproval>>>({});
@@ -478,7 +474,6 @@ function takeApprovals(s: EditorialSession) {
 // The switch's value while its write is in flight, so a session that arrives
 // meanwhile doesn't flip it back.
 const approvalPending = ref<Partial<Record<ApprovalKey, boolean>>>({});
-const approvalAgain = new Set<ApprovalKey>();
 
 function isApproved(key: ApprovalKey): boolean {
     return approvalPending.value[key] ?? !!approvals.value[key]?.approved;
@@ -496,7 +491,7 @@ const approvalLines = computed(() => {
     for (const key of APPROVAL_KEYS) {
         const a = approvals.value[key];
         const line = { status: "", email: "", date: "" };
-        if (approvalPending.value[key] !== undefined || (a?.approved && !a.by))
+        if (approvalPending.value[key] !== undefined)
             line.status = t("editorial.saving");
         else if (!a?.approved) line.status = t("editorial.notApproved");
         else {
@@ -534,84 +529,26 @@ function formatApprovalDate(ts?: Timestamp): string {
         : approvalDateWithYear.format(d);
 }
 
+// Saves the approval at once; the server records who and when. Clicks while
+// the write is in flight are ignored.
 async function onApprovalToggle(key: ApprovalKey, value: boolean) {
-    const writing = approvalPending.value[key] !== undefined;
+    if (approvalPending.value[key] !== undefined) return;
     approvalPending.value[key] = value;
-    if (writing) {
-        approvalAgain.add(key);
-        return;
-    }
-    const before = !!approvals.value[key]?.approved;
-    const sid = sessionId.value;
     try {
-        let sent: boolean;
-        // The last write that changed anything; one that found the approval
-        // already as asked returns no token and leaves the earlier one valid.
-        let undoToken = "";
-        do {
-            approvalAgain.delete(key);
-            sent = approvalPending.value[key]!;
-            const res = await tracked(() =>
-                api.setEditorialApproval({
-                    sessionId: sid,
-                    approval: APPROVAL_KINDS[key],
-                    approved: sent,
-                }),
-            );
-            undoToken = res.undoToken || undoToken;
-        } while (approvalAgain.has(key));
-        // Saved: show it until the watch stream brings who and when.
-        if (approvals.value[key]?.approved !== sent)
-            approvals.value[key] = create(EditorialApprovalSchema, {
-                approved: sent,
-            });
-        // Ticked and unticked again before the first save landed: no change.
-        if (sent !== before)
-            toaster.create({
-                title: t(
-                    `editorial.${key}Approval${sent ? "Recorded" : "Removed"}`,
-                ),
-                type: "success",
-                // Longer than the usual 5s: it carries a button to reach.
-                duration: 8000,
-                action: undoToken
-                    ? {
-                          label: t("editorial.undo"),
-                          onClick: () => undoApproval(key, sid, undoToken),
-                      }
-                    : undefined,
-            });
+        approvals.value[key] = await tracked(() =>
+            SET_APPROVAL[key]({ sessionId: sessionId.value, approved: value }),
+        );
+        toaster.create({
+            title: t(
+                `editorial.${key}Approval${value ? "Recorded" : "Removed"}`,
+            ),
+            type: "success",
+        });
     } catch {
         toaster.create({ title: t("editorial.saveFailed"), type: "error" });
     } finally {
         // The server's value takes over again.
-        approvalAgain.delete(key);
         delete approvalPending.value[key];
-    }
-}
-
-// Puts the approval back as it was, with its original approver and time; the
-// watch stream brings the restored state.
-async function undoApproval(key: ApprovalKey, sid: string, undoToken: string) {
-    try {
-        await tracked(() =>
-            api.undoEditorialApproval({ sessionId: sid, undoToken }),
-        );
-        toaster.create({
-            title: t(`editorial.${key}ApprovalRestored`),
-            type: "success",
-        });
-    } catch (e) {
-        const changed =
-            e instanceof ConnectError && e.code === Code.FailedPrecondition;
-        toaster.create({
-            title: t(
-                changed
-                    ? "editorial.undoFailedChanged"
-                    : "editorial.saveFailed",
-            ),
-            type: "error",
-        });
     }
 }
 

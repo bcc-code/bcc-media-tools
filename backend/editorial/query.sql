@@ -48,17 +48,13 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 UPDATE markers SET publish_bmm = ?, publish_bcc = ?, updated_at = ?
 WHERE id = ? AND session_id = ?;
 
--- name: SwapRedactionalApproval :execrows
--- Changes the approval only while it is still as the caller last saw it, so a
--- change made in between is never overwritten.
+-- name: SetRedactionalApproval :execrows
 UPDATE sessions SET redactional_approved = sqlc.arg(approved), redactional_approved_by = sqlc.arg(approved_by), redactional_approved_at = sqlc.arg(approved_at), updated_at = sqlc.arg(updated_at)
-WHERE id = sqlc.arg(id) AND redactional_approved = sqlc.arg(was_approved) AND redactional_approved_by = sqlc.arg(was_approved_by) AND redactional_approved_at = sqlc.arg(was_approved_at);
+WHERE id = sqlc.arg(id);
 
--- name: SwapTechnicalApproval :execrows
--- Changes the approval only while it is still as the caller last saw it, so a
--- change made in between is never overwritten.
+-- name: SetTechnicalApproval :execrows
 UPDATE sessions SET technical_approved = sqlc.arg(approved), technical_approved_by = sqlc.arg(approved_by), technical_approved_at = sqlc.arg(approved_at), updated_at = sqlc.arg(updated_at)
-WHERE id = sqlc.arg(id) AND technical_approved = sqlc.arg(was_approved) AND technical_approved_by = sqlc.arg(was_approved_by) AND technical_approved_at = sqlc.arg(was_approved_at);
+WHERE id = sqlc.arg(id);
 
 -- name: SetMarkerComment :execrows
 UPDATE markers SET comment = ?, updated_at = ?
