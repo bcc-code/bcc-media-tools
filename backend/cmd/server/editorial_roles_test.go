@@ -83,6 +83,14 @@ func TestEditorialRoleAccess(t *testing.T) {
 			_, err := api.SetEditorialPublish(ctx, connect.NewRequest(&apiv1.SetEditorialPublishRequest{SessionId: rec.Id, MarkerId: markerID, PublishBmm: true}))
 			return err
 		}},
+		"redactional approval": {apiv1.EditorialReviewer, func() error {
+			_, err := api.SetEditorialRedactionalApproval(ctx, connect.NewRequest(&apiv1.SetEditorialApprovalRequest{SessionId: rec.Id, Approved: true}))
+			return err
+		}},
+		"technical approval": {apiv1.EditorialReviewer, func() error {
+			_, err := api.SetEditorialTechnicalApproval(ctx, connect.NewRequest(&apiv1.SetEditorialApprovalRequest{SessionId: rec.Id, Approved: true}))
+			return err
+		}},
 		"title": {apiv1.EditorialReviewer, func() error {
 			_, err := api.SetEditorialName(ctx, connect.NewRequest(&apiv1.SetEditorialNameRequest{SessionId: rec.Id, MarkerId: markerID, Name: "t"}))
 			return err
