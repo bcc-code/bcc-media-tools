@@ -27,10 +27,11 @@ func openWorkbook(t *testing.T, data []byte) (*excelize.File, string) {
 func TestEditorialWorkbookLive(t *testing.T) {
 	// 09:00:00 UTC is 11:00:00 in Oslo in summer.
 	sess := editorial.Session{Title: "Søndag: formiddag", Kind: editorial.KindLive, ClockStartMs: ts(t, "2026-07-26T09:00:00Z").UnixMilli()}
-	markers := []editorial.Marker{
-		{StartMs: 5_000, Contributors: "Kåre J. Smith", BibleVerses: "John 3:16", Type: "tale", Source: editorial.SourceManual, PlayoutKey: "SPEAKER|x", PublishBmm: true},
+	markers := markerRows([]editorial.Marker{
+		{StartMs: 5_000, BibleVerses: "John 3:16", Type: "tale", Source: editorial.SourceManual, PlayoutKey: "SPEAKER|x", PublishBmm: true},
 		{StartMs: 760_000, Name: "HV 16", Type: "sang", Source: editorial.SourceImport},
-	}
+	})
+	markers[0].Contributors = []contributor{{Name: "Kåre J. Smith"}}
 	data, err := editorialWorkbook(sess, markers, exportLabelsByLanguage["nb"])
 	require.NoError(t, err)
 	f, sheet := openWorkbook(t, data)
@@ -55,7 +56,7 @@ func TestEditorialWorkbookLive(t *testing.T) {
 
 func TestEditorialWorkbookRecording(t *testing.T) {
 	sess := editorial.Session{Vxid: "VX-1", Kind: editorial.KindRecording}
-	markers := []editorial.Marker{{StartMs: 391_000, EndMs: 1_860_000, Name: "Tale", Type: "custom"}}
+	markers := markerRows([]editorial.Marker{{StartMs: 391_000, EndMs: 1_860_000, Name: "Tale", Type: "custom"}})
 	data, err := editorialWorkbook(sess, markers, exportLabelsByLanguage["en"])
 	require.NoError(t, err)
 	f, sheet := openWorkbook(t, data)

@@ -4,6 +4,10 @@
 
 package editorial
 
+import (
+	"database/sql"
+)
+
 type ExportedChapter struct {
 	SessionID  string
 	Vxid       string
@@ -18,7 +22,6 @@ type Marker struct {
 	SessionID     string
 	SortOrder     int64
 	Name          string
-	Contributors  string
 	Comment       string
 	BibleVerses   string
 	Type          string
@@ -31,6 +34,13 @@ type Marker struct {
 	UpdatedAt     int64
 	PlayoutKey    string
 	PlayoutSynced bool
+}
+
+type MarkerContributor struct {
+	MarkerID string
+	Position int64
+	Name     string
+	PersonID sql.NullString
 }
 
 type PlayoutDismissed struct {

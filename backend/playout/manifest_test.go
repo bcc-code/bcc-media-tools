@@ -37,9 +37,19 @@ func TestGetManifest(t *testing.T) {
 					"eventStartSource": "scheduled",
 					"manifest": [{
 						"type": "SPEAKER",
-						"label": "Kåre J. Smith",
+						"label": "Ola Nordmann",
 						"timestamp": "2026-07-26T12:06:31.123Z",
-						"data": {"name":"Kåre J. Smith","id":42}
+						"data": {"personId":"90001","uid":"90001","name":"Ola Nordmann"}
+					}, {
+						"type": "SPEAKER",
+						"label": "Per Hansen",
+						"timestamp": "2026-07-26T12:07:00Z",
+						"data": {"personId":1337,"uid":"1337","name":"Per Hansen"}
+					}, {
+						"type": "SONG",
+						"label": "HV 1 - Test song",
+						"timestamp": "2026-07-26T12:10:00Z",
+						"data": {"uid":"song-1","key":"HV 1","metadata":{"author":"Test Author","composer":null,"arranger":null,"soloist":null}}
 					}],
 					"unknownField": "ignored"
 				}`)
@@ -58,9 +68,19 @@ func TestGetManifest(t *testing.T) {
 				EventStartSource: &source,
 				Entries: []ManifestEntry{{
 					Type:      ContentTypeSpeaker,
-					Label:     "Kåre J. Smith",
+					Label:     "Ola Nordmann",
 					Timestamp: time.Date(2026, time.July, 26, 12, 6, 31, 123000000, time.UTC),
-					Data:      json.RawMessage(`{"name":"Kåre J. Smith","id":42}`),
+					Data:      json.RawMessage(`{"personId":"90001","uid":"90001","name":"Ola Nordmann"}`),
+				}, {
+					Type:      ContentTypeSpeaker,
+					Label:     "Per Hansen",
+					Timestamp: time.Date(2026, time.July, 26, 12, 7, 0, 0, time.UTC),
+					Data:      json.RawMessage(`{"personId":1337,"uid":"1337","name":"Per Hansen"}`),
+				}, {
+					Type:      ContentTypeSong,
+					Label:     "HV 1 - Test song",
+					Timestamp: time.Date(2026, time.July, 26, 12, 10, 0, 0, time.UTC),
+					Data:      json.RawMessage(`{"uid":"song-1","key":"HV 1","metadata":{"author":"Test Author","composer":null,"arranger":null,"soloist":null}}`),
 				}},
 			}
 			if !reflect.DeepEqual(manifest, want) {

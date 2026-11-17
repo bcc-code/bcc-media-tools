@@ -53,9 +53,9 @@ func (e EditorialAPI) ExportEditorialSession(ctx context.Context, req *connect.R
 	if err != nil {
 		return nil, editorialErr(err)
 	}
-	markers, err := e.queries.ListMarkersForSession(ctx, sess.ID)
+	markers, err := listMarkers(ctx, e.queries, sess.ID)
 	if err != nil {
-		return nil, editorialErr(fmt.Errorf("editorial: list markers: %w", err))
+		return nil, editorialErr(err)
 	}
 	labels, ok := exportLabelsByLanguage[req.Msg.GetLanguage()]
 	if !ok {
@@ -75,7 +75,7 @@ func (e EditorialAPI) ExportEditorialSession(ctx context.Context, req *connect.R
 // editorialWorkbook lays the markers out like the tool's table. Times are real
 // Excel times so the sheet can be sorted and summed: a live session's clock
 // time of day (Oslo), or a recording's offsets.
-func editorialWorkbook(sess editorial.Session, markers []editorial.Marker, l exportLabels) ([]byte, error) {
+func editorialWorkbook(sess editorial.Session, markers []markerRow, l exportLabels) ([]byte, error) {
 	live := sess.Kind == editorial.KindLive
 	loc, err := time.LoadLocation(recordingTZ)
 	if err != nil {
@@ -127,10 +127,10 @@ func editorialWorkbook(sess editorial.Session, markers []editorial.Marker, l exp
 		if durationMs > 0 {
 			duration = excelDuration(durationMs)
 		}
-		row = append(row, duration, m.Name, m.Contributors, m.BibleVerses, typeLabel(m.Type, l), m.Comment,
+		row = append(row, duration, m.Name, m.contributorString(), m.BibleVerses, typeLabel(m.Type, l), m.Comment,
 			yesNo(m.PublishBmm), yesNo(m.PublishBcc))
 		if live {
-			row = append(row, sourceLabel(m, l))
+			row = append(row, sourceLabel(m.Marker, l))
 		}
 		cell, _ := excelize.CoordinatesToCellName(1, i+2)
 		if err := f.SetSheetRow(sheet, cell, &row); err != nil {

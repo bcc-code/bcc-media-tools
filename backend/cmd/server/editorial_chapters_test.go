@@ -101,14 +101,16 @@ func TestTimecodePlus(t *testing.T) {
 
 func TestChaptersFromMarkers(t *testing.T) {
 	start, _ := parseTimecode("1000@PAL")
-	got, skipped := chaptersFromMarkers([]editorial.Marker{
-		{Name: "", Contributors: "Kåre J. Smith, Harald Hansen", Type: "tale", BibleVerses: "John 3:16", StartMs: 0, EndMs: 60_000, PublishBmm: true},
+	markers := markerRows([]editorial.Marker{
+		{Name: "", Type: "tale", BibleVerses: "John 3:16", StartMs: 0, EndMs: 60_000, PublishBmm: true},
 		{Name: "HV 16", Type: "allsang", StartMs: 60_000, EndMs: 120_000},
 		{Name: "Bønn", Type: "bønn", StartMs: 120_000, EndMs: 130_000, PublishBcc: true},
 		{Name: "Andre ting", Type: "annet", StartMs: 130_000, EndMs: 140_000},
 		{Name: "Running", StartMs: 140_000, EndMs: 0},
 		{Name: "Sub-frame", StartMs: 150_000, EndMs: 150_010},
-	}, start)
+	})
+	markers[0].Contributors = []contributor{{Name: "Kåre J. Smith"}, {Name: "Harald Hansen"}}
+	got, skipped := chaptersFromMarkers(markers, start)
 
 	assert.Equal(t, 2, skipped, "no length and sub-frame length")
 	require.Len(t, got, 4)
@@ -181,17 +183,17 @@ func TestExportChaptersReplacesOnlyOurs(t *testing.T) {
 	start, _ := parseTimecode("1000@PAL")
 	vs.subclips["by-hand"] = fakeSubclip{start: "5000@PAL", end: "6000@PAL"}
 
-	first := []editorial.Marker{
+	first := markerRows([]editorial.Marker{
 		{Name: "A", StartMs: 0, EndMs: 10_000},
 		{Name: "B", StartMs: 10_000, EndMs: 20_000},
-	}
+	})
 	res, err := api.exportChapters(ctx, sess, first, start)
 	require.NoError(t, err)
 	assert.EqualValues(t, 2, res.Written)
 	assert.EqualValues(t, 0, res.Removed)
 	assert.Len(t, vs.subclips, 3)
 
-	second := []editorial.Marker{{Name: "A renamed", StartMs: 0, EndMs: 20_000}}
+	second := markerRows([]editorial.Marker{{Name: "A renamed", StartMs: 0, EndMs: 20_000}})
 	res, err = api.exportChapters(ctx, sess, second, start)
 	require.NoError(t, err)
 	assert.EqualValues(t, 1, res.Written)
@@ -221,7 +223,7 @@ func TestExportChaptersRetriesFailedRemoval(t *testing.T) {
 	api, vs, sess := newChapterTestAPI(t)
 	ctx := context.Background()
 	start, _ := parseTimecode("0@PAL")
-	markers := []editorial.Marker{{Name: "A", StartMs: 0, EndMs: 10_000}}
+	markers := markerRows([]editorial.Marker{{Name: "A", StartMs: 0, EndMs: 10_000}})
 
 	_, err := api.exportChapters(ctx, sess, markers, start)
 	require.NoError(t, err)
@@ -243,7 +245,7 @@ func TestExportChaptersSkipsAlreadyDeleted(t *testing.T) {
 	api, vs, sess := newChapterTestAPI(t)
 	ctx := context.Background()
 	start, _ := parseTimecode("0@PAL")
-	markers := []editorial.Marker{{Name: "A", StartMs: 0, EndMs: 10_000}}
+	markers := markerRows([]editorial.Marker{{Name: "A", StartMs: 0, EndMs: 10_000}})
 
 	_, err := api.exportChapters(ctx, sess, markers, start)
 	require.NoError(t, err)

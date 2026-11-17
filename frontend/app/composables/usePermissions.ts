@@ -68,6 +68,12 @@ export function usePermissions() {
     const canRunLiveEditorial = cap((m) => editorialRole(m) >= 3);
     // everything, including deleting sessions
     const isEditorialAdmin = cap((m) => editorialRole(m) >= 4);
+    // suggest contributors from BCC Members: personal data, so it needs its
+    // own flag, which no role (not even admin) implies
+    const canLookUpMembers = computed(() => {
+        const m = me.value;
+        return !!m?.editorial?.members && (m.admin || editorialRole(m) >= 2);
+    });
 
     const canUseLiveIngest = cap((m) => !!m.liveIngest?.enabled);
 
@@ -95,6 +101,7 @@ export function usePermissions() {
         canEditEditorialDetails,
         canRunLiveEditorial,
         isEditorialAdmin,
+        canLookUpMembers,
         canUseLiveIngest,
         canCantemoPreview,
         canCantemoTranscribe,

@@ -307,6 +307,12 @@ const isOpen = ref(false);
                             label="Admin"
                             description="Everything, including deleting sessions"
                         />
+                        <!-- Personal data: no role includes it. -->
+                        <DesignSwitch
+                            v-model="perms.editorial.members"
+                            label="Members lookup"
+                            description="Editor or above, plus can look up people in BCC Members (personal data) as contributors"
+                        />
                     </AdminPermissionViewSection>
                 </motion.div>
             </AnimatePresence>

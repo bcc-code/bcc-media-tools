@@ -3,6 +3,7 @@ package main
 import (
 	apiv1 "bcc-media-tools/api/v1"
 	"bcc-media-tools/editorial"
+	"bcc-media-tools/members"
 	"bcc-media-tools/playout"
 	"context"
 	"database/sql"
@@ -10,6 +11,8 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"slices"
+	"strings"
 	"time"
 
 	"connectrpc.com/connect"
@@ -37,6 +40,10 @@ type EditorialAPI struct {
 	hub *editorialHub
 	// Writes chapters (subclips); nil when Vidispine isn't configured.
 	vsMetadata vidispineMetadata
+	// Suggests contributors; nil finds no one.
+	members members.Searcher
+	// Names the frequent contributors.
+	frequent *frequentContributors
 }
 
 type playoutClient interface {
@@ -45,7 +52,7 @@ type playoutClient interface {
 }
 
 func NewEditorialAPI(db *sql.DB, vs vidispine.Client, cantemoClient *cantemo.Client, playoutClient playoutClient) *EditorialAPI {
-	return &EditorialAPI{db: db, queries: editorial.New(db), vidispine: vs, cantemo: cantemoClient, playout: playoutClient, hub: newEditorialHub()}
+	return &EditorialAPI{db: db, queries: editorial.New(db), vidispine: vs, cantemo: cantemoClient, playout: playoutClient, hub: newEditorialHub(), frequent: &frequentContributors{}}
 }
 
 // requireEditorial authenticates the caller and checks they have at least the
@@ -260,15 +267,22 @@ func (e EditorialAPI) SetEditorialDetails(ctx context.Context, req *connect.Requ
 	}
 	sessionID, markerID := req.Msg.GetSessionId(), req.Msg.GetMarkerId()
 	err := e.updateMarker(ctx, sessionID, func(qtx *editorial.Queries, now int64) (int64, error) {
-		return qtx.SetMarkerDetails(ctx, editorial.SetMarkerDetailsParams{
-			Name:         req.Msg.GetName(),
-			Contributors: req.Msg.GetContributors(),
-			Type:         req.Msg.GetType(),
-			BibleVerses:  req.Msg.GetBibleVerses(),
-			UpdatedAt:    now,
-			ID:           markerID,
-			SessionID:    sessionID,
+		n, err := qtx.SetMarkerDetails(ctx, editorial.SetMarkerDetailsParams{
+			Name:        req.Msg.GetName(),
+			Type:        req.Msg.GetType(),
+			BibleVerses: req.Msg.GetBibleVerses(),
+			UpdatedAt:   now,
+			ID:          markerID,
+			SessionID:   sessionID,
 		})
+		// No row: the marker isn't in this session, so its contributors stay.
+		if err != nil || n == 0 {
+			return n, err
+		}
+		if err := qtx.DeleteContributorsForMarker(ctx, markerID); err != nil {
+			return 0, err
+		}
+		return n, writeContributors(ctx, qtx, markerID, contributorsFromRequest(req.Msg.GetContributorList()))
 	})
 	if err != nil {
 		return nil, editorialErr(fmt.Errorf("editorial: set details: %w", err))
@@ -374,9 +388,9 @@ func (e EditorialAPI) loadSession(ctx context.Context, id string) (*apiv1.Editor
 	if err != nil {
 		return nil, fmt.Errorf("editorial: get session: %w", err)
 	}
-	markers, err := e.queries.ListMarkersForSession(ctx, id)
+	markers, err := listMarkers(ctx, e.queries, id)
 	if err != nil {
-		return nil, fmt.Errorf("editorial: list markers: %w", err)
+		return nil, err
 	}
 	return editorialSessionToProto(sess, markers), nil
 }
@@ -411,33 +425,33 @@ func (e EditorialAPI) saveSession(ctx context.Context, id, title string, markers
 	if err != nil {
 		return fmt.Errorf("editorial: get session: %w", err)
 	}
-	stored, err := qtx.ListMarkersForSession(ctx, id)
+	stored, err := listMarkers(ctx, qtx, id)
 	if err != nil {
-		return fmt.Errorf("editorial: list markers: %w", err)
+		return err
 	}
-	storedByID := make(map[string]editorial.Marker, len(stored))
+	storedByID := make(map[string]markerRow, len(stored))
 	for _, m := range stored {
 		storedByID[m.ID] = m
 	}
 
-	rows := make([]editorial.Marker, 0, len(markers))
+	rows := make([]markerRow, 0, len(markers))
 	kept := map[string]bool{}
 	for _, m := range markers {
-		row := editorial.Marker{
-			ID:           m.GetId(),
-			SessionID:    id,
-			Name:         m.GetName(),
-			Contributors: m.GetContributors(),
-			Comment:      m.GetComment(),
-			BibleVerses:  m.GetBibleVerses(),
-			Type:         m.GetType(),
-			StartMs:      m.GetStartMs(),
-			EndMs:        m.GetEndMs(),
-			PublishBmm:   m.GetPublishBmm(),
-			PublishBcc:   m.GetPublishBcc(),
-			Source:       m.GetSource(),
-			PlayoutKey:   m.GetPlayoutKey(),
-		}
+		row := markerRow{Marker: editorial.Marker{
+			ID:          m.GetId(),
+			SessionID:   id,
+			Name:        m.GetName(),
+			Comment:     m.GetComment(),
+			BibleVerses: m.GetBibleVerses(),
+			Type:        m.GetType(),
+			StartMs:     m.GetStartMs(),
+			EndMs:       m.GetEndMs(),
+			PublishBmm:  m.GetPublishBmm(),
+			PublishBcc:  m.GetPublishBcc(),
+			Source:      m.GetSource(),
+			PlayoutKey:  m.GetPlayoutKey(),
+		}}
+		row.Contributors = contributorsFromRequest(m.GetContributorList())
 		if row.ID == "" {
 			row.ID = uuid.NewString()
 		}
@@ -473,7 +487,7 @@ func (e EditorialAPI) saveSession(ctx context.Context, id, title string, markers
 }
 
 // replaceMarkers swaps the session's markers for rows, in slice order.
-func replaceMarkers(ctx context.Context, qtx *editorial.Queries, sessionID string, rows []editorial.Marker, now int64) error {
+func replaceMarkers(ctx context.Context, qtx *editorial.Queries, sessionID string, rows []markerRow, now int64) error {
 	if err := qtx.DeleteMarkersForSession(ctx, sessionID); err != nil {
 		return fmt.Errorf("editorial: clear markers: %w", err)
 	}
@@ -483,7 +497,6 @@ func replaceMarkers(ctx context.Context, qtx *editorial.Queries, sessionID strin
 			SessionID:     sessionID,
 			SortOrder:     int64(i),
 			Name:          m.Name,
-			Contributors:  m.Contributors,
 			Comment:       m.Comment,
 			BibleVerses:   m.BibleVerses,
 			Type:          m.Type,
@@ -499,13 +512,16 @@ func replaceMarkers(ctx context.Context, qtx *editorial.Queries, sessionID strin
 		}); err != nil {
 			return fmt.Errorf("editorial: insert marker: %w", err)
 		}
+		if err := writeContributors(ctx, qtx, m.ID, m.Contributors); err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
 // playoutFieldsChanged reports whether an editor touched a field Playout fills.
-func playoutFieldsChanged(a, b editorial.Marker) bool {
-	return a.Name != b.Name || a.Contributors != b.Contributors || a.BibleVerses != b.BibleVerses || a.Type != b.Type
+func playoutFieldsChanged(a, b markerRow) bool {
+	return a.Name != b.Name || !slices.Equal(a.Contributors, b.Contributors) || a.BibleVerses != b.BibleVerses || a.Type != b.Type
 }
 
 // updateMarker runs a single-marker update (which returns the affected row
@@ -782,12 +798,12 @@ func (e EditorialAPI) importFromPlayout(ctx context.Context, eventID string, win
 	out := make([]*apiv1.EditorialMarker, 0, len(candidates))
 	for i, c := range candidates {
 		marker := &apiv1.EditorialMarker{
-			Name:         c.Name,
-			Contributors: c.Contributors,
-			BibleVerses:  c.BibleVerses,
-			Type:         editorialTypeFromPlayout(c.PlayoutType),
-			StartMs:      c.At.Sub(window.Start).Milliseconds(),
-			Source:       editorial.SourceImport,
+			Name:            c.Name,
+			ContributorList: contributorsToProto(c.Contributors),
+			BibleVerses:     c.BibleVerses,
+			Type:            editorialTypeFromPlayout(c.PlayoutType),
+			StartMs:         c.At.Sub(window.Start).Milliseconds(),
+			Source:          editorial.SourceImport,
 		}
 		// The next content action marks the end of the previous segment.
 		// Nothing follows the final segment to bound it, but the recording
@@ -810,8 +826,47 @@ type playoutCandidate struct {
 	PlayoutType  string
 	At           time.Time
 	Name         string
-	Contributors string
+	Contributors []contributor
 	BibleVerses  string
+}
+
+// playoutPlaceholderPersonID is not a person: Playout sends it with speakers
+// of many different names.
+const playoutPlaceholderPersonID = "1337"
+
+// playoutSpeaker reads who a SPEAKER entry shows. The name falls back to the
+// entry's label; the personID is empty for the placeholder or none.
+func playoutSpeaker(entry playout.ManifestEntry) contributor {
+	var data struct {
+		Name     string          `json:"name"`
+		PersonID playoutPersonID `json:"personId"`
+	}
+	_ = json.Unmarshal(entry.Data, &data)
+	speaker := contributor{Name: strings.TrimSpace(data.Name), PersonID: string(data.PersonID)}
+	if speaker.Name == "" {
+		speaker.Name = strings.TrimSpace(entry.Label)
+	}
+	if speaker.PersonID == playoutPlaceholderPersonID {
+		speaker.PersonID = ""
+	}
+	return speaker
+}
+
+// playoutPersonID is a SPEAKER's personId (the BCC Members personID), which
+// Playout sends as a string or a number. Any other value reads as none.
+type playoutPersonID string
+
+func (p *playoutPersonID) UnmarshalJSON(b []byte) error {
+	var s string
+	if json.Unmarshal(b, &s) == nil {
+		*p = playoutPersonID(strings.TrimSpace(s))
+		return nil
+	}
+	var n json.Number
+	if json.Unmarshal(b, &n) == nil {
+		*p = playoutPersonID(n.String())
+	}
+	return nil
 }
 
 // playoutKey identifies a manifest entry: Playout gives entries no id, but a
@@ -854,13 +909,8 @@ func playoutCandidates(entries []playout.ManifestEntry, window recordingWindow) 
 		c := playoutCandidate{Key: playoutKey(entry), PlayoutType: entry.Type, At: entry.Timestamp}
 		switch entry.Type {
 		case playout.ContentTypeSpeaker:
-			var data struct {
-				Name string `json:"name"`
-			}
-			if json.Unmarshal(entry.Data, &data) == nil && data.Name != "" {
-				c.Contributors = data.Name
-			} else {
-				c.Contributors = entry.Label
+			if speaker := playoutSpeaker(entry); speaker.Name != "" {
+				c.Contributors = []contributor{speaker}
 			}
 			currentSpeaker = len(out)
 			currentSpeakerVerses = map[string]struct{}{}
@@ -893,7 +943,7 @@ func editorialTypeFromPlayout(playoutType string) string {
 	}
 }
 
-func editorialSessionToProto(s editorial.Session, markers []editorial.Marker) *apiv1.EditorialSession {
+func editorialSessionToProto(s editorial.Session, markers []markerRow) *apiv1.EditorialSession {
 	out := &apiv1.EditorialSession{
 		Id:             s.ID,
 		VXID:           s.Vxid,
@@ -914,21 +964,21 @@ func editorialSessionToProto(s editorial.Session, markers []editorial.Marker) *a
 	return out
 }
 
-func editorialMarkerToProto(m editorial.Marker) *apiv1.EditorialMarker {
+func editorialMarkerToProto(m markerRow) *apiv1.EditorialMarker {
 	return &apiv1.EditorialMarker{
-		Id:            m.ID,
-		SortOrder:     int32(m.SortOrder),
-		Name:          m.Name,
-		Contributors:  m.Contributors,
-		Comment:       m.Comment,
-		BibleVerses:   m.BibleVerses,
-		Type:          m.Type,
-		StartMs:       m.StartMs,
-		EndMs:         m.EndMs,
-		PublishBmm:    m.PublishBmm,
-		PublishBcc:    m.PublishBcc,
-		Source:        m.Source,
-		PlayoutKey:    m.PlayoutKey,
-		PlayoutSynced: m.PlayoutSynced,
+		Id:              m.ID,
+		SortOrder:       int32(m.SortOrder),
+		Name:            m.Name,
+		ContributorList: contributorsToProto(m.Contributors),
+		Comment:         m.Comment,
+		BibleVerses:     m.BibleVerses,
+		Type:            m.Type,
+		StartMs:         m.StartMs,
+		EndMs:           m.EndMs,
+		PublishBmm:      m.PublishBmm,
+		PublishBcc:      m.PublishBcc,
+		Source:          m.Source,
+		PlayoutKey:      m.PlayoutKey,
+		PlayoutSynced:   m.PlayoutSynced,
 	}
 }

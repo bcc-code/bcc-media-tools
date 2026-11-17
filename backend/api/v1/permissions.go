@@ -129,3 +129,9 @@ func (p *Permissions) EditorialRole() EditorialRole {
 func (p *Permissions) CanLiveIngest() bool {
 	return p.Admin || (p.LiveIngest != nil && p.LiveIngest.Enabled)
 }
+
+// CanLookUpMembers reports whether the user may search BCC Members for
+// contributors. Explicit: no role implies it, admin included.
+func (p *Permissions) CanLookUpMembers() bool {
+	return p.Editorial != nil && p.Editorial.Members
+}
