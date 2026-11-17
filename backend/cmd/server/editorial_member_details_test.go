@@ -5,6 +5,7 @@ import (
 	"bcc-media-tools/editorial"
 	"bcc-media-tools/members"
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -75,10 +76,18 @@ func TestMemberDetailsLooksEachUpOnce(t *testing.T) {
 		assert.Equal(t, 1, fake.getCount(id), "%s looked up once, unknown ones too", id)
 	}
 
-	// A search's people need no lookup.
-	people.remember([]members.Person{{PersonID: "90004", Church: "Church Four"}})
-	assert.Equal(t, "Church Four", people.get(context.Background(), []string{"90004"})["90004"].Church)
-	assert.Zero(t, fake.getCount("90004"))
+	// After a day everyone is dropped, those not asked for too; a failed
+	// lookup then finds no one rather than the old details.
+	for id, p := range people.byID {
+		p.expires = time.Now().Add(-time.Minute)
+		people.byID[id] = p
+	}
+	fake.err = errors.New("members down")
+	assert.Empty(t, people.get(context.Background(), []string{"90001"}))
+	assert.Empty(t, people.byID)
+	fake.err = nil
+	assert.Equal(t, "Church One", people.get(context.Background(), []string{"90001"})["90001"].Church)
+	assert.Equal(t, 3, fake.getCount("90001"))
 
 	assert.Nil(t, newMemberDetails(nil).get(context.Background(), ids), "no Members, no one known")
 }
@@ -168,6 +177,7 @@ func TestSearchMembersAddsDetails(t *testing.T) {
 	assert.Equal(t, []string{"90001 20 Church One", "90005 19 Church Five", "90006 0 "}, details)
 	assert.Equal(t, 1, fake.getCount("90001"), "a linked contributor is looked up")
 	assert.Zero(t, fake.getCount("90005"), "a search result brings its details")
+	assert.NotContains(t, api.people.byID, "90005", "and isn't kept")
 }
 
 // Yes when a linked contributor is U26, No when none is, empty when no one is

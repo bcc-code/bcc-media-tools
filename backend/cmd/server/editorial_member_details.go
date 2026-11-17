@@ -23,7 +23,6 @@ var (
 // church.
 type memberDetails struct {
 	members members.Searcher
-	loc     *time.Location
 
 	mu   sync.Mutex
 	byID map[string]cachedPerson
@@ -40,24 +39,7 @@ func newMemberDetails(m members.Searcher) *memberDetails {
 	if m == nil {
 		return nil
 	}
-	loc, err := time.LoadLocation(recordingTZ)
-	if err != nil {
-		loc = time.UTC
-	}
-	return &memberDetails{members: m, loc: loc, byID: map[string]cachedPerson{}}
-}
-
-// remember keeps the people a search brought along.
-func (d *memberDetails) remember(people []members.Person) {
-	if d == nil {
-		return
-	}
-	expires := time.Now().Add(memberDetailsKeep)
-	d.mu.Lock()
-	defer d.mu.Unlock()
-	for _, p := range people {
-		d.byID[p.PersonID] = cachedPerson{Person: p, expires: expires}
-	}
+	return &memberDetails{members: m, byID: map[string]cachedPerson{}}
 }
 
 // get returns the people of ids, by personID. Those not kept are looked up
@@ -79,13 +61,19 @@ func (d *memberDetails) get(ctx context.Context, ids []string) map[string]member
 	return out
 }
 
-// lookUp asks Members for the ids not kept, or kept too long.
+// lookUp asks Members for the ids not kept. Anyone kept longer than
+// memberDetailsKeep is dropped first, whether asked for or not.
 func (d *memberDetails) lookUp(ctx context.Context, ids []string) {
 	now := time.Now()
 	d.mu.Lock()
+	for id, p := range d.byID {
+		if now.After(p.expires) {
+			delete(d.byID, id)
+		}
+	}
 	var missing []string
 	for _, id := range ids {
-		if p, ok := d.byID[id]; (!ok || now.After(p.expires)) && !slices.Contains(missing, id) {
+		if _, ok := d.byID[id]; !ok && !slices.Contains(missing, id) {
 			missing = append(missing, id)
 		}
 	}
@@ -111,9 +99,17 @@ func (d *memberDetails) lookUp(ctx context.Context, ids []string) {
 	}
 }
 
-// today is the date in the meetings' time zone.
-func (d *memberDetails) today() time.Time {
-	return time.Now().In(d.loc)
+// meetingsTZ is the meetings' time zone, where birthdays start.
+var meetingsTZ = sync.OnceValue(func() *time.Location {
+	loc, err := time.LoadLocation(recordingTZ)
+	if err != nil {
+		return time.UTC
+	}
+	return loc
+})
+
+func today() time.Time {
+	return time.Now().In(meetingsTZ())
 }
 
 // age is the years since birth by the date today; 0 when birth is unknown.
@@ -152,7 +148,7 @@ func (e EditorialAPI) u26Contributors(ctx context.Context, markers []markerRow) 
 	}
 	out := map[string]bool{}
 	for id, p := range e.people.get(ctx, ids) {
-		out[id] = isU26(p.BirthDate, e.people.today())
+		out[id] = isU26(p.BirthDate, today())
 	}
 	return out
 }
@@ -175,9 +171,9 @@ func (e EditorialAPI) addMemberDetails(ctx context.Context, markers []*apiv1.Edi
 			if !ok {
 				continue
 			}
-			c.U26 = isU26(p.BirthDate, e.people.today())
+			c.U26 = isU26(p.BirthDate, today())
 			if ageAndChurch {
-				c.Age = int32(age(p.BirthDate, e.people.today()))
+				c.Age = int32(age(p.BirthDate, today()))
 				c.Church = p.Church
 			}
 		}
