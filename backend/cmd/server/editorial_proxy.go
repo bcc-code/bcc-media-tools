@@ -38,7 +38,7 @@ func (h editorialPreviewHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 
 	// A live session has no asset to preview yet, so it has no VXID either.
-	sess, err := h.editorial.loadSession(r.Context(), id)
+	sess, err := h.editorial.loadSession(r.Context(), id, "")
 	if err != nil || sess.GetVXID() == "" {
 		log.L.Debug().Err(err).Str("session", id).Msg("editorial: preview session not available")
 		http.Error(w, "no preview", http.StatusNotFound)

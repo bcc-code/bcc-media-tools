@@ -235,7 +235,7 @@ func (e EditorialAPI) watchUntilDone(ctx context.Context, sessionID, clientID, e
 	// sendSession sends the session as it is now; done reports the session
 	// was deleted and the stream should end.
 	sendSession := func() (done bool, err error) {
-		sess, err := e.loadSession(ctx, sessionID)
+		sess, err := e.loadSession(ctx, sessionID, email)
 		if errors.Is(err, errEditorialNotFound) {
 			return true, send(&apiv1.EditorialSessionEvent{Deleted: true})
 		}

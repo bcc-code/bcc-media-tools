@@ -224,7 +224,8 @@ func (e EditorialAPI) SetEditorialTitle(ctx context.Context, req *connect.Reques
 // its clock start until now and merges it into the saved markers (mergeLive).
 // Safe to repeat: entries already merged are recognised by their key.
 func (e EditorialAPI) SyncEditorialSessionFromPlayout(ctx context.Context, req *connect.Request[apiv1.SyncEditorialSessionFromPlayoutRequest]) (*connect.Response[apiv1.EditorialSession], error) {
-	if _, err := requireEditorial(req, apiv1.EditorialLive); err != nil {
+	email, err := requireEditorial(req, apiv1.EditorialLive)
+	if err != nil {
 		return nil, err
 	}
 	if e.playout == nil {
@@ -283,7 +284,7 @@ func (e EditorialAPI) SyncEditorialSessionFromPlayout(ctx context.Context, req *
 		e.hub.changed(sess.ID)
 	}
 
-	out, err := e.loadSession(ctx, sess.ID)
+	out, err := e.loadSession(ctx, sess.ID, email)
 	if err != nil {
 		return nil, editorialErr(err)
 	}
@@ -295,7 +296,8 @@ func (e EditorialAPI) SyncEditorialSessionFromPlayout(ctx context.Context, req *
 // onto the recording's own timeline. Writing chapters to Mediabanken (via
 // Cantemo) is a separate step.
 func (e EditorialAPI) AttachEditorialRecording(ctx context.Context, req *connect.Request[apiv1.AttachEditorialRecordingRequest]) (*connect.Response[apiv1.EditorialSession], error) {
-	if _, err := requireEditorial(req, apiv1.EditorialLive); err != nil {
+	email, err := requireEditorial(req, apiv1.EditorialLive)
+	if err != nil {
 		return nil, err
 	}
 	vxID := req.Msg.GetVXID()
@@ -364,7 +366,7 @@ func (e EditorialAPI) AttachEditorialRecording(ctx context.Context, req *connect
 	}
 
 	e.hub.changed(sess.ID)
-	out, err := e.loadSession(ctx, sess.ID)
+	out, err := e.loadSession(ctx, sess.ID, email)
 	if err != nil {
 		return nil, editorialErr(err)
 	}

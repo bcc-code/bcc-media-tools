@@ -46,7 +46,7 @@ func TestEditorialContributorListRoundTrip(t *testing.T) {
 		{StartMs: 2, EndMs: 3},
 	})
 
-	got, err := api.loadSession(ctx, sess.Id)
+	got, err := api.loadSession(ctx, sess.Id, "")
 	require.NoError(t, err)
 	for _, s := range []*apiv1.EditorialSession{saved, got} {
 		assert.Equal(t, []contributor{{"Ola Nordmann", "90001"}, {"Ola", ""}}, fromProto(s.Markers[0].ContributorList))
@@ -58,7 +58,7 @@ func TestEditorialContributorListRoundTrip(t *testing.T) {
 		ContributorList: []*apiv1.EditorialContributor{{Name: "Kari Nordmann", PersonId: "90002"}},
 	}))
 	require.NoError(t, err)
-	got, err = api.loadSession(ctx, sess.Id)
+	got, err = api.loadSession(ctx, sess.Id, "")
 	require.NoError(t, err)
 	assert.Equal(t, []contributor{{"Kari Nordmann", "90002"}}, fromProto(got.Markers[1].ContributorList))
 }

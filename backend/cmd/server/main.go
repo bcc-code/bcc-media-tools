@@ -155,6 +155,7 @@ func main() {
 	defer editorialDB.Close()
 	editorialAPI := NewEditorialAPI(editorialDB, vidispineClient, cantemoClient, playoutClient)
 	editorialAPI.members = newMembersSearcher()
+	editorialAPI.people = newMemberDetails(editorialAPI.members)
 	editorialAPI.vsMetadata = newVidispineMetadata(
 		os.Getenv("VIDISPINE_BASE_URL"),
 		os.Getenv("VIDISPINE_USERNAME"),

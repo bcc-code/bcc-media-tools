@@ -85,7 +85,7 @@ func (f *frequentContributors) get(ctx context.Context, m members.Searcher) []me
 	return f.people
 }
 
-// SearchMembers suggests contributors: linked ones first, then Members.
+// SearchMembers suggests contributors
 func (e EditorialAPI) SearchMembers(ctx context.Context, req *connect.Request[apiv1.SearchMembersRequest]) (*connect.Response[apiv1.SearchMembersResponse], error) {
 	email, err := requireEditorial(req, apiv1.EditorialEditor)
 	if err != nil {
@@ -102,6 +102,8 @@ func (e EditorialAPI) SearchMembers(ctx context.Context, req *connect.Request[ap
 	limit = min(limit, maxMemberResults)
 
 	res := &apiv1.SearchMembersResponse{}
+	// people as Members just sent them; the linked ones are looked up
+	known := map[string]members.Person{}
 	seen := map[string]bool{}
 	add := func(personID, name string) {
 		if len(res.Members) < limit && !seen[personID] {
@@ -113,10 +115,11 @@ func (e EditorialAPI) SearchMembers(ctx context.Context, req *connect.Request[ap
 	if query == "" {
 		if e.members != nil {
 			for _, p := range e.frequent.get(ctx, e.members) {
+				known[p.PersonID] = p
 				add(p.PersonID, p.DisplayName)
 			}
 		}
-		return connect.NewResponse(res), nil
+		return e.withDetails(ctx, res, known), nil
 	}
 
 	linked, err := e.queries.ListLinkedContributors(ctx)
@@ -129,17 +132,41 @@ func (e EditorialAPI) SearchMembers(ctx context.Context, req *connect.Request[ap
 		}
 	}
 	if e.members == nil || utf8.RuneCountInString(query) < 2 || len(res.Members) == limit {
-		return connect.NewResponse(res), nil
+		return e.withDetails(ctx, res, known), nil
 	}
 	people, err := e.members.Search(ctx, query, limit)
 	if err != nil {
 		log.L.Warn().Err(err).Msg("member search failed")
-		return connect.NewResponse(res), nil
+		return e.withDetails(ctx, res, known), nil
 	}
 	for _, p := range people {
+		if !seen[p.PersonID] {
+			known[p.PersonID] = p
+		}
 		add(p.PersonID, p.DisplayName)
 	}
-	return connect.NewResponse(res), nil
+	return e.withDetails(ctx, res, known), nil
+}
+
+// withDetails sets age and church: from known, or else from the linked
+// contributors kept in e.people. Search results aren't kept.
+func (e EditorialAPI) withDetails(ctx context.Context, res *apiv1.SearchMembersResponse, known map[string]members.Person) *connect.Response[apiv1.SearchMembersResponse] {
+	var ids []string
+	for _, m := range res.Members {
+		if _, ok := known[m.PersonId]; !ok {
+			ids = append(ids, m.PersonId)
+		}
+	}
+	for id, p := range e.people.get(ctx, ids) {
+		known[id] = p
+	}
+	for _, m := range res.Members {
+		if p, ok := known[m.PersonId]; ok {
+			m.Age = int32(age(p.BirthDate, today()))
+			m.Church = p.Church
+		}
+	}
+	return connect.NewResponse(res)
 }
 
 // matchesWords reports whether each word of query starts a word of name,

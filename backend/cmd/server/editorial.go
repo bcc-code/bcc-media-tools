@@ -44,6 +44,8 @@ type EditorialAPI struct {
 	members members.Searcher
 	// Names the frequent contributors.
 	frequent *frequentContributors
+	// Ages and churches of linked contributors; nil knows none.
+	people *memberDetails
 }
 
 type playoutClient interface {
@@ -155,10 +157,11 @@ func (e EditorialAPI) CreateEditorialSession(ctx context.Context, req *connect.R
 }
 
 func (e EditorialAPI) GetEditorialSession(ctx context.Context, req *connect.Request[apiv1.GetEditorialSessionRequest]) (*connect.Response[apiv1.EditorialSession], error) {
-	if _, err := requireEditorial(req, apiv1.EditorialReviewer); err != nil {
+	email, err := requireEditorial(req, apiv1.EditorialReviewer)
+	if err != nil {
 		return nil, err
 	}
-	out, err := e.loadSession(ctx, req.Msg.GetId())
+	out, err := e.loadSession(ctx, req.Msg.GetId(), email)
 	if err != nil {
 		return nil, editorialErr(err)
 	}
@@ -174,14 +177,15 @@ func (e EditorialAPI) GetEditorialSession(ctx context.Context, req *connect.Requ
 }
 
 func (e EditorialAPI) SaveEditorialSession(ctx context.Context, req *connect.Request[apiv1.SaveEditorialSessionRequest]) (*connect.Response[apiv1.EditorialSession], error) {
-	if _, err := requireEditorial(req, apiv1.EditorialLive); err != nil {
+	email, err := requireEditorial(req, apiv1.EditorialLive)
+	if err != nil {
 		return nil, err
 	}
 	if err := e.saveSession(ctx, req.Msg.GetId(), req.Msg.GetTitle(), req.Msg.GetMarkers()); err != nil {
 		return nil, editorialErr(err)
 	}
 	e.hub.changed(req.Msg.GetId())
-	out, err := e.loadSession(ctx, req.Msg.GetId())
+	out, err := e.loadSession(ctx, req.Msg.GetId(), email)
 	if err != nil {
 		return nil, editorialErr(err)
 	}
@@ -294,7 +298,8 @@ func (e EditorialAPI) SetEditorialDetails(ctx context.Context, req *connect.Requ
 // UpdateEditorialSessionInfo changes a session's own details. The kind is not
 // among them: a live session becomes a recording by attaching one.
 func (e EditorialAPI) UpdateEditorialSessionInfo(ctx context.Context, req *connect.Request[apiv1.UpdateEditorialSessionInfoRequest]) (*connect.Response[apiv1.EditorialSession], error) {
-	if _, err := requireEditorial(req, apiv1.EditorialAdmin); err != nil {
+	email, err := requireEditorial(req, apiv1.EditorialAdmin)
+	if err != nil {
 		return nil, err
 	}
 	id := req.Msg.GetId()
@@ -353,7 +358,7 @@ func (e EditorialAPI) UpdateEditorialSessionInfo(ctx context.Context, req *conne
 	}
 
 	e.hub.changed(id)
-	out, err := e.loadSession(ctx, id)
+	out, err := e.loadSession(ctx, id, email)
 	if err != nil {
 		return nil, editorialErr(err)
 	}
@@ -379,8 +384,8 @@ func (e EditorialAPI) DeleteEditorialSession(ctx context.Context, req *connect.R
 	return connect.NewResponse(&apiv1.Void{}), nil
 }
 
-// loadSession returns a session with its markers ordered by sort_order.
-func (e EditorialAPI) loadSession(ctx context.Context, id string) (*apiv1.EditorialSession, error) {
+// loadSession returns a session with its markers ordered by sort_order
+func (e EditorialAPI) loadSession(ctx context.Context, id, email string) (*apiv1.EditorialSession, error) {
 	sess, err := e.queries.GetSession(ctx, id)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, errEditorialNotFound
@@ -392,7 +397,11 @@ func (e EditorialAPI) loadSession(ctx context.Context, id string) (*apiv1.Editor
 	if err != nil {
 		return nil, err
 	}
-	return editorialSessionToProto(sess, markers), nil
+	out := editorialSessionToProto(sess, markers)
+	if email != "" {
+		e.addMemberDetails(ctx, out.Markers, canSeeMembers(email))
+	}
+	return out, nil
 }
 
 // saveSession updates the session title and fully replaces its markers in a
