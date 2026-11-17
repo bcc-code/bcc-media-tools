@@ -202,9 +202,12 @@ function onBlur() {
                         "
                     />
                 </DesignTooltip>
-                <!-- the name and U26 share a baseline; the icons stay centred -->
-                <span class="self-baseline truncate">{{ c.name }}</span>
-                <EditorialU26Badge v-if="c.u26" class="ml-0.5 self-baseline" />
+                <!-- the name and U26 share a baseline; together they're
+                     centred like the icons -->
+                <span class="flex min-w-0 items-baseline gap-1">
+                    <span class="truncate">{{ c.name }}</span>
+                    <EditorialU26Badge v-if="c.u26" class="ml-0.5" />
+                </span>
                 <button
                     type="button"
                     class="text-text-hint hover:text-text-default ds-focus-ring rounded p-0.5"
