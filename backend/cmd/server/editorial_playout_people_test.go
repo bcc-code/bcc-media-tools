@@ -46,7 +46,6 @@ func TestImportFromPlayoutCarriesPersonIDs(t *testing.T) {
 	markers, err := api.importFromPlayout(context.Background(), "1154", recordingWindow{Start: ts(t, "2026-10-17T11:00:00Z"), End: ts(t, "2026-10-17T12:00:00Z")})
 	require.NoError(t, err)
 	require.Len(t, markers, 1)
-	assert.Equal(t, "Kari Nordmann", markers[0].Contributors)
 	assert.Equal(t, []contributor{{"Kari Nordmann", "90002"}}, fromProto(markers[0].ContributorList))
 }
 

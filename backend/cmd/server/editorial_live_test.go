@@ -207,7 +207,7 @@ func TestEditorialLiveSessionFlow(t *testing.T) {
 	markers := synced.Msg.Markers
 	require.Len(t, markers, 2)
 	assert.Equal(t, mark.Msg.Id, markers[0].Id)
-	assert.Equal(t, "Kåre J. Smith", markers[0].Contributors)
+	assert.Equal(t, "Kåre J. Smith", joined(markers[0]))
 	assert.Equal(t, "HV 16", markers[1].Name)
 
 	// Edit the filled mark and remove the song row, then sync again: the edit
@@ -217,7 +217,7 @@ func TestEditorialLiveSessionFlow(t *testing.T) {
 	again, err := api.SyncEditorialSessionFromPlayout(ctx, connect.NewRequest(&apiv1.SyncEditorialSessionFromPlayoutRequest{Id: sess.Id}))
 	require.NoError(t, err)
 	require.Len(t, again.Msg.Markers, 1)
-	assert.Equal(t, "Kåre Smith", again.Msg.Markers[0].Contributors)
+	assert.Equal(t, "Kåre Smith", joined(again.Msg.Markers[0]))
 	assert.False(t, again.Msg.Markers[0].PlayoutSynced)
 
 	// A recording session can't be marked live.

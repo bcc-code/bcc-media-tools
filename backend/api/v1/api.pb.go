@@ -4109,8 +4109,6 @@ type EditorialMarker struct {
 	EndMs   int64  `protobuf:"varint,6,opt,name=end_ms,json=endMs,proto3" json:"end_ms,omitempty"`
 	// "import" (from Mediabanken chapters) or "manual"
 	Source string `protobuf:"bytes,8,opt,name=source,proto3" json:"source,omitempty"`
-	// "Medvirkende" — contributor_list names joined with ", "; ignored on save
-	Contributors string `protobuf:"bytes,9,opt,name=contributors,proto3" json:"contributors,omitempty"`
 	// optional free-text editorial comment
 	Comment string `protobuf:"bytes,10,opt,name=comment,proto3" json:"comment,omitempty"`
 	// optional free-text bible verse references (e.g. "John 3:16; Rom 8:1-4")
@@ -4204,13 +4202,6 @@ func (x *EditorialMarker) GetEndMs() int64 {
 func (x *EditorialMarker) GetSource() string {
 	if x != nil {
 		return x.Source
-	}
-	return ""
-}
-
-func (x *EditorialMarker) GetContributors() string {
-	if x != nil {
-		return x.Contributors
 	}
 	return ""
 }
@@ -6934,7 +6925,7 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\x13GetVaultItemRequest\x12\x12\n" +
 	"\x04VXID\x18\x01 \x01(\tR\x04VXID\"=\n" +
 	"\x14GetVaultItemResponse\x12%\n" +
-	"\x04item\x18\x01 \x01(\v2\x11.api.v1.VaultItemR\x04item\"\xf5\x03\n" +
+	"\x04item\x18\x01 \x01(\v2\x11.api.v1.VaultItemR\x04item\"\xd1\x03\n" +
 	"\x0fEditorialMarker\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
 	"\n" +
@@ -6943,8 +6934,7 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\x04type\x18\x04 \x01(\tR\x04type\x12\x19\n" +
 	"\bstart_ms\x18\x05 \x01(\x03R\astartMs\x12\x15\n" +
 	"\x06end_ms\x18\x06 \x01(\x03R\x05endMs\x12\x16\n" +
-	"\x06source\x18\b \x01(\tR\x06source\x12\"\n" +
-	"\fcontributors\x18\t \x01(\tR\fcontributors\x12\x18\n" +
+	"\x06source\x18\b \x01(\tR\x06source\x12\x18\n" +
 	"\acomment\x18\n" +
 	" \x01(\tR\acomment\x12!\n" +
 	"\fbible_verses\x18\v \x01(\tR\vbibleVerses\x12\x1f\n" +

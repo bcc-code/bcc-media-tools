@@ -492,8 +492,6 @@ message EditorialMarker {
   reserved "publish";
   // "import" (from Mediabanken chapters) or "manual"
   string source = 8;
-  // "Medvirkende" — contributor_list names joined with ", "; ignored on save
-  string contributors = 9;
   // optional free-text editorial comment
   string comment = 10;
   // optional free-text bible verse references (e.g. "John 3:16; Rom 8:1-4")

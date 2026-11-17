@@ -234,7 +234,7 @@ function toRow(m: EditorialMarker): Row {
         key: nextRowKey(),
         id: m.id,
         name: m.name,
-        contributors: m.contributors,
+        contributors: m.contributorList.map((c) => c.name).join(", "),
         contributorList: m.contributorList.map((c) => ({
             name: c.name,
             personId: c.personId,
@@ -682,7 +682,7 @@ function persistLiveDetails(row: Row) {
     if (!m) return;
     void persistDetails(row, {
         name: m.name,
-        contributors: m.contributors,
+        contributors: m.contributorList.map((c) => c.name).join(", "),
         contributorList: m.contributorList.map((c) => ({
             name: c.name,
             personId: c.personId,

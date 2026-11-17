@@ -85,7 +85,7 @@ func TestImportFromPlayoutWindowsToTheRecording(t *testing.T) {
 	if got := markers[0].GetBibleVerses(); got != "John 3:16" {
 		t.Errorf("scripture should attach to the speaker in the window, got %q", got)
 	}
-	if got := markers[0].GetContributors(); got != "Kåre J. Smith" {
+	if got := joined(markers[0]); got != "Kåre J. Smith" {
 		t.Errorf("contributors: got %q", got)
 	}
 }

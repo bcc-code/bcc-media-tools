@@ -108,7 +108,7 @@ func TestEditorialSaveSessionReplacesMarkers(t *testing.T) {
 	assert.NotEmpty(t, saved.Markers[0].Id)
 	assert.Equal(t, int32(0), saved.Markers[0].SortOrder)
 	assert.Equal(t, int32(1), saved.Markers[1].SortOrder)
-	assert.Equal(t, "Alice, Bob", saved.Markers[0].Contributors)
+	assert.Equal(t, "Alice, Bob", joined(saved.Markers[0]))
 	assert.Equal(t, "double-check timing", saved.Markers[0].Comment)
 	assert.Equal(t, "John 3:16; Rom 8:1-4", saved.Markers[0].BibleVerses)
 	assert.True(t, saved.Markers[0].PublishBmm)
@@ -282,7 +282,7 @@ func TestEditorialSetDetails(t *testing.T) {
 	got, err := api.loadSession(ctx, sess.Id)
 	require.NoError(t, err)
 	assert.Equal(t, "new", got.Markers[0].Name)
-	assert.Equal(t, "B", got.Markers[0].Contributors)
+	assert.Equal(t, "B", joined(got.Markers[0]))
 	assert.Equal(t, "sang", got.Markers[0].Type)
 	assert.Equal(t, "c", got.Markers[0].Comment, "other fields are untouched")
 	assert.True(t, got.Markers[0].PublishBmm)
@@ -300,7 +300,7 @@ func TestEditorialSetDetails(t *testing.T) {
 	requireNotFound(t, err)
 	got, err = api.loadSession(ctx, sess.Id)
 	require.NoError(t, err)
-	assert.Equal(t, "B", got.Markers[0].Contributors, "another session's marker keeps its contributors")
+	assert.Equal(t, "B", joined(got.Markers[0]), "another session's marker keeps its contributors")
 }
 
 // An admin corrects a recording session's details; a new asset forgets the

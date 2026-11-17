@@ -4,6 +4,7 @@ import (
 	apiv1 "bcc-media-tools/api/v1"
 	"bcc-media-tools/editorial"
 	"context"
+	"strings"
 	"testing"
 
 	"connectrpc.com/connect"
@@ -42,16 +43,13 @@ func TestEditorialContributorListRoundTrip(t *testing.T) {
 	sess := createTestSession(t, api, "VX-1", "stream")
 	saved := saveTestSession(t, api, sess.Id, "t", []*apiv1.EditorialMarker{
 		{ContributorList: []*apiv1.EditorialContributor{{Name: "Ola Nordmann", PersonId: "90001"}, {Name: "Ola"}}, StartMs: 0, EndMs: 1},
-		{Contributors: "A, B", StartMs: 2, EndMs: 3},
+		{StartMs: 2, EndMs: 3},
 	})
-	// The string is only the list's names joined; a save ignores it.
 
 	got, err := api.loadSession(ctx, sess.Id)
 	require.NoError(t, err)
 	for _, s := range []*apiv1.EditorialSession{saved, got} {
-		assert.Equal(t, "Ola Nordmann, Ola", s.Markers[0].Contributors)
 		assert.Equal(t, []contributor{{"Ola Nordmann", "90001"}, {"Ola", ""}}, fromProto(s.Markers[0].ContributorList))
-		assert.Empty(t, s.Markers[1].Contributors)
 		assert.Empty(t, s.Markers[1].ContributorList)
 	}
 
@@ -62,8 +60,12 @@ func TestEditorialContributorListRoundTrip(t *testing.T) {
 	require.NoError(t, err)
 	got, err = api.loadSession(ctx, sess.Id)
 	require.NoError(t, err)
-	assert.Equal(t, "Kari Nordmann", got.Markers[1].Contributors)
 	assert.Equal(t, []contributor{{"Kari Nordmann", "90002"}}, fromProto(got.Markers[1].ContributorList))
+}
+
+// joined is a marker's contributor names as the page shows them.
+func joined(m *apiv1.EditorialMarker) string {
+	return strings.Join(contributorNames(fromProto(m.GetContributorList())), ", ")
 }
 
 func fromProto(list []*apiv1.EditorialContributor) []contributor {

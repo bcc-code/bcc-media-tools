@@ -799,7 +799,6 @@ func (e EditorialAPI) importFromPlayout(ctx context.Context, eventID string, win
 	for i, c := range candidates {
 		marker := &apiv1.EditorialMarker{
 			Name:            c.Name,
-			Contributors:    strings.Join(contributorNames(c.Contributors), ", "),
 			ContributorList: contributorsToProto(c.Contributors),
 			BibleVerses:     c.BibleVerses,
 			Type:            editorialTypeFromPlayout(c.PlayoutType),
@@ -970,7 +969,6 @@ func editorialMarkerToProto(m markerRow) *apiv1.EditorialMarker {
 		Id:              m.ID,
 		SortOrder:       int32(m.SortOrder),
 		Name:            m.Name,
-		Contributors:    m.contributorString(),
 		ContributorList: contributorsToProto(m.Contributors),
 		Comment:         m.Comment,
 		BibleVerses:     m.BibleVerses,
