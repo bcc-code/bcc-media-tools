@@ -34,6 +34,10 @@ type Client struct {
 	mu      sync.Mutex
 	token   string
 	expires time.Time
+
+	churchMu    sync.Mutex
+	churchNames map[string]string
+	churchesAt  time.Time
 }
 
 func NewClient(cfg Config) *Client {
@@ -42,20 +46,35 @@ func NewClient(cfg Config) *Client {
 	return &Client{cfg: cfg, rest: resty.New().SetTimeout(5 * time.Second).SetDisableWarn(true)}
 }
 
-const personFields = "personID,displayName,birthDate"
+const personFields = "personID,displayName,birthDate,affiliations.orgUid,affiliations.isActive,affiliations.validFrom,affiliations.validTo"
 
 type corePerson struct {
 	PersonID    int    `json:"personID"`
 	DisplayName string `json:"displayName"`
 	// "2006-01-02"
-	BirthDate string `json:"birthDate"`
+	BirthDate    string `json:"birthDate"`
+	Affiliations []struct {
+		OrgUID    string     `json:"orgUid"`
+		IsActive  bool       `json:"isActive"`
+		ValidFrom *time.Time `json:"validFrom"`
+		ValidTo   *time.Time `json:"validTo"`
+	} `json:"affiliations"`
 }
 
-func (p corePerson) person() Person {
+// person: churches maps church orgs' uids to their names.
+func (p corePerson) person(churches map[string]string) Person {
 	out := Person{PersonID: strconv.Itoa(p.PersonID), DisplayName: p.DisplayName}
 	if len(p.BirthDate) >= len(time.DateOnly) {
 		// zero, unknown, when it doesn't parse
 		out.BirthDate, _ = time.Parse(time.DateOnly, p.BirthDate[:len(time.DateOnly)])
+	}
+	now := time.Now()
+	for _, a := range p.Affiliations {
+		active := a.IsActive && (a.ValidFrom == nil || !now.Before(*a.ValidFrom)) && (a.ValidTo == nil || now.Before(*a.ValidTo))
+		if name := churches[a.OrgUID]; active && name != "" {
+			out.Church = name
+			break
+		}
 	}
 	return out
 }
@@ -96,19 +115,65 @@ func (c *Client) GetMany(ctx context.Context, ids []string) ([]Person, error) {
 
 // persons lists /v2/persons with the given query parameters.
 func (c *Client) persons(ctx context.Context, params map[string]string) ([]Person, error) {
+	params["fields"] = personFields
+	var body struct {
+		Data []corePerson `json:"data"`
+	}
+	if err := c.get(ctx, "/v2/persons", params, &body); err != nil {
+		return nil, err
+	}
+	churches := c.churches(ctx)
+	out := make([]Person, 0, len(body.Data))
+	for _, p := range body.Data {
+		out = append(out, p.person(churches))
+	}
+	return out, nil
+}
+
+// churches maps church orgs' uids to their names, read once a day. When that
+// fails the last ones are used, so people still come back, if without one.
+func (c *Client) churches(ctx context.Context) map[string]string {
+	c.churchMu.Lock()
+	defer c.churchMu.Unlock()
+	if time.Since(c.churchesAt) < 24*time.Hour {
+		return c.churchNames
+	}
+	var body struct {
+		Data []struct {
+			UID  string `json:"uid"`
+			Name string `json:"districtName"`
+		} `json:"data"`
+	}
+	err := c.get(ctx, "/v2/orgs", map[string]string{
+		"filter": `{"type":{"_eq":"Church"}}`,
+		"fields": "uid,districtName",
+		"limit":  "999",
+	}, &body)
+	if err != nil {
+		return c.churchNames
+	}
+	c.churchNames = map[string]string{}
+	for _, o := range body.Data {
+		c.churchNames[o.UID] = o.Name
+	}
+	c.churchesAt = time.Now()
+	return c.churchNames
+}
+
+// get reads path into out.
+func (c *Client) get(ctx context.Context, path string, params map[string]string, out any) error {
 	token, err := c.accessToken(ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	resp, err := c.rest.R().
 		SetContext(ctx).
 		SetAuthToken(token).
 		SetHeader("Accept", "application/json").
-		SetQueryParam("fields", personFields).
 		SetQueryParams(params).
-		Get(c.cfg.APIURL + "/v2/persons")
+		Get(c.cfg.APIURL + path)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if resp.StatusCode() == http.StatusUnauthorized {
 		// revoked or rotated: fetch a new one next time
@@ -117,19 +182,12 @@ func (c *Client) persons(ctx context.Context, params map[string]string) ([]Perso
 		c.mu.Unlock()
 	}
 	if !resp.IsSuccess() {
-		return nil, fmt.Errorf("unexpected status %s", resp.Status())
+		return fmt.Errorf("unexpected status %s", resp.Status())
 	}
-	var body struct {
-		Data []corePerson `json:"data"`
+	if err := json.Unmarshal(resp.Body(), out); err != nil {
+		return fmt.Errorf("decode: %w", err)
 	}
-	if err := json.Unmarshal(resp.Body(), &body); err != nil {
-		return nil, fmt.Errorf("decode: %w", err)
-	}
-	out := make([]Person, 0, len(body.Data))
-	for _, p := range body.Data {
-		out = append(out, p.person())
-	}
-	return out, nil
+	return nil
 }
 
 type tokenResponse struct {

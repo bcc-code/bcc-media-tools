@@ -11,8 +11,11 @@ export interface Contributor {
     name: string;
     // BCC Members personID; empty when typed in by hand
     personId: string;
-    // under 26 today, as the server tells
+    // as the server tells, for linked people; age and church only with the
+    // members permission, age 0 when unknown
     u26?: boolean;
+    age?: number;
+    church?: string;
 }
 
 const props = defineProps<{
@@ -107,7 +110,13 @@ function onSelect(details: { items: Member[] }) {
     results.value = [];
     update([
         ...model.value,
-        { name: m.displayName, personId: m.personId, u26: m.u26 },
+        {
+            name: m.displayName,
+            personId: m.personId,
+            u26: isU26(m.age),
+            age: m.age,
+            church: m.church,
+        },
     ]);
     // Leave the field; a click opens the list again. A frame later, as the
     // combobox first puts focus back in the input.
@@ -173,7 +182,14 @@ function onBlur() {
                 <DesignTooltip
                     v-if="c.personId"
                     :content="
-                        t('editorial.contributor.linked', { id: c.personId })
+                        [
+                            t('editorial.contributor.linked', {
+                                id: c.personId,
+                            }),
+                            memberDetails(c),
+                        ]
+                            .filter(Boolean)
+                            .join(' · ')
                     "
                 >
                     <Icon
@@ -213,7 +229,8 @@ function onBlur() {
             />
         </Combobox.Control>
 
-        <Teleport to="#teleports">
+        <!-- without the members permission it's a plain text field -->
+        <Teleport v-if="canLookUpMembers" to="#teleports">
             <Combobox.Positioner class="z-60">
                 <Combobox.Content
                     class="gradient-border bg-surface-raise shadow-floating w-max max-w-[min(24rem,calc(100vw-2rem))] min-w-(--reference-width) rounded-xl p-1"
@@ -229,12 +246,17 @@ function onBlur() {
                                 name="tabler:user"
                                 class="text-text-muted size-4 shrink-0"
                             />
-                            <Combobox.ItemText class="self-baseline">{{
+                            <Combobox.ItemText class="self-baseline truncate">{{
                                 m.displayName
                             }}</Combobox.ItemText>
+                            <!-- church and age tell people of one name apart -->
+                            <span
+                                class="text-caption-1 text-text-muted ml-auto self-baseline pl-2 whitespace-nowrap"
+                                >{{ memberDetails(m) }}</span
+                            >
                             <EditorialU26Badge
-                                v-if="m.u26"
-                                class="ml-auto self-baseline pl-2"
+                                v-if="isU26(m.age)"
+                                class="self-baseline"
                             />
                         </Combobox.Item>
                     </div>

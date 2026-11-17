@@ -11,8 +11,10 @@ type Person struct {
 	// the numeric Core API personID, as Playout's SPEAKER data sends it
 	PersonID    string
 	DisplayName string
-	// zero when unknown; only for telling who is U26, never stored or shown
+	// zero when unknown; for working out the age, never stored or shown
 	BirthDate time.Time
+	// local church; empty when unknown
+	Church string
 }
 
 // Searcher finds people by name, best matches first, or by personID.

@@ -61,7 +61,7 @@ func TestEditorialCreateAndGetSession(t *testing.T) {
 	assert.Equal(t, editorial.StatusDraft, created.Status)
 	assert.False(t, created.CreatedAt.AsTime().IsZero())
 
-	got, err := api.loadSession(context.Background(), created.Id)
+	got, err := api.loadSession(context.Background(), created.Id, "")
 	require.NoError(t, err)
 	assert.Equal(t, "VX-123", got.VXID)
 	assert.Equal(t, "Sunday stream", got.Title)
@@ -71,7 +71,7 @@ func TestEditorialCreateAndGetSession(t *testing.T) {
 
 func TestEditorialGetSessionNotFound(t *testing.T) {
 	api := newTestEditorialAPI(t)
-	_, err := api.loadSession(context.Background(), "does-not-exist")
+	_, err := api.loadSession(context.Background(), "does-not-exist", "")
 	assert.ErrorIs(t, err, errEditorialNotFound)
 }
 
@@ -160,7 +160,7 @@ func TestEditorialSetPublish(t *testing.T) {
 	}))
 	require.NoError(t, err)
 
-	got, err := api.loadSession(ctx, sess.Id)
+	got, err := api.loadSession(ctx, sess.Id, "")
 	require.NoError(t, err)
 	assert.True(t, got.Markers[0].PublishBmm)
 	assert.False(t, got.Markers[0].PublishBcc)
@@ -193,7 +193,7 @@ func TestEditorialSetComment(t *testing.T) {
 	}))
 	require.NoError(t, err)
 
-	got, err := api.loadSession(ctx, sess.Id)
+	got, err := api.loadSession(ctx, sess.Id, "")
 	require.NoError(t, err)
 	assert.Equal(t, "check audio", got.Markers[0].Comment)
 	// Other fields and markers are untouched.
@@ -225,7 +225,7 @@ func TestEditorialSetName(t *testing.T) {
 	}))
 	require.NoError(t, err)
 
-	got, err := api.loadSession(ctx, sess.Id)
+	got, err := api.loadSession(ctx, sess.Id, "")
 	require.NoError(t, err)
 	assert.Equal(t, "new", got.Markers[0].Name)
 	assert.Equal(t, "c", got.Markers[0].Comment)
@@ -250,7 +250,7 @@ func TestEditorialDeleteSessionCascadesMarkers(t *testing.T) {
 	_, err := api.DeleteEditorialSession(ctx, connect.NewRequest(&apiv1.DeleteEditorialSessionRequest{Id: sess.Id}))
 	require.NoError(t, err)
 
-	_, err = api.loadSession(ctx, sess.Id)
+	_, err = api.loadSession(ctx, sess.Id, "")
 	assert.ErrorIs(t, err, errEditorialNotFound)
 
 	// Marker rows are gone too (ON DELETE CASCADE).
@@ -279,7 +279,7 @@ func TestEditorialSetDetails(t *testing.T) {
 	}))
 	require.NoError(t, err)
 
-	got, err := api.loadSession(ctx, sess.Id)
+	got, err := api.loadSession(ctx, sess.Id, "")
 	require.NoError(t, err)
 	assert.Equal(t, "new", got.Markers[0].Name)
 	assert.Equal(t, "B", joined(got.Markers[0]))
@@ -298,7 +298,7 @@ func TestEditorialSetDetails(t *testing.T) {
 		SessionId: other.Id, MarkerId: saved.Markers[0].Id, ContributorList: typedIn("C"),
 	}))
 	requireNotFound(t, err)
-	got, err = api.loadSession(ctx, sess.Id)
+	got, err = api.loadSession(ctx, sess.Id, "")
 	require.NoError(t, err)
 	assert.Equal(t, "B", joined(got.Markers[0]), "another session's marker keeps its contributors")
 }

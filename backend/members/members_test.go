@@ -16,8 +16,9 @@ import (
 	"time"
 )
 
-// fakeCoreAPI serves Auth0's token endpoint and the Core API's persons search.
-func fakeCoreAPI(t *testing.T, tokens *atomic.Int32, personsStatus int) *httptest.Server {
+// fakeCoreAPI serves Auth0's token endpoint, the Core API's persons search and
+// its churches, counting the requests for those.
+func fakeCoreAPI(t *testing.T, tokens, orgs *atomic.Int32, personsStatus int) *httptest.Server {
 	t.Helper()
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
@@ -35,12 +36,26 @@ func fakeCoreAPI(t *testing.T, tokens *atomic.Int32, personsStatus int) *httptes
 			if got := r.Header.Get("Authorization"); got != "Bearer tok" {
 				t.Errorf("Authorization = %q", got)
 			}
-			want := url.Values{"search": {"ola nordmann"}, "fields": {"personID,displayName,birthDate"}, "limit": {"5"}}
+			want := url.Values{"search": {"ola nordmann"}, "fields": {personFields}, "limit": {"5"}}
 			if got := r.URL.Query(); !reflect.DeepEqual(got, want) {
 				t.Errorf("query = %v, want %v", got, want)
 			}
 			w.WriteHeader(personsStatus)
-			io.WriteString(w, `{"data":[{"displayName":"Ola Nordmann","personID":90001,"birthDate":"2004-03-01"},{"displayName":"Ola Nordvik","personID":90003,"birthDate":null}],"meta":{}}`)
+			// Ola Nordmann's church is c3: c1 isn't active, c2 has ended and
+			// org isn't a church.
+			io.WriteString(w, `{"data":[{"displayName":"Ola Nordmann","personID":90001,"birthDate":"2004-03-01","affiliations":[
+				{"orgUid":"c1","isActive":false},
+				{"orgUid":"c2","isActive":true,"validTo":"2020-01-01T00:00:00Z"},
+				{"orgUid":"org","isActive":true},
+				{"orgUid":"c3","isActive":true,"validFrom":"2010-01-01T00:00:00Z","validTo":null}
+			]},{"displayName":"Ola Nordvik","personID":90003,"birthDate":null}],"meta":{}}`)
+		case "/v2/orgs":
+			orgs.Add(1)
+			want := url.Values{"filter": {`{"type":{"_eq":"Church"}}`}, "fields": {"uid,districtName"}, "limit": {"999"}}
+			if got := r.URL.Query(); !reflect.DeepEqual(got, want) {
+				t.Errorf("orgs query = %v, want %v", got, want)
+			}
+			io.WriteString(w, `{"data":[{"uid":"c1","districtName":"Church One"},{"uid":"c2","districtName":"Church Two"},{"uid":"c3","districtName":"Church Three"}]}`)
 		default:
 			t.Errorf("unexpected request %s", r.URL.Path)
 			http.NotFound(w, r)
@@ -49,8 +64,8 @@ func fakeCoreAPI(t *testing.T, tokens *atomic.Int32, personsStatus int) *httptes
 }
 
 func TestClientSearch(t *testing.T) {
-	var tokens atomic.Int32
-	server := fakeCoreAPI(t, &tokens, http.StatusOK)
+	var tokens, orgs atomic.Int32
+	server := fakeCoreAPI(t, &tokens, &orgs, http.StatusOK)
 	defer server.Close()
 	c := NewClient(Config{APIURL: server.URL + "/", AuthURL: server.URL, Audience: "api.bcc.no", ClientID: "id", ClientSecret: "secret"})
 
@@ -60,7 +75,7 @@ func TestClientSearch(t *testing.T) {
 			t.Fatal(err)
 		}
 		want := []Person{
-			{PersonID: "90001", DisplayName: "Ola Nordmann", BirthDate: time.Date(2004, 3, 1, 0, 0, 0, 0, time.UTC)},
+			{PersonID: "90001", DisplayName: "Ola Nordmann", BirthDate: time.Date(2004, 3, 1, 0, 0, 0, 0, time.UTC), Church: "Church Three"},
 			{PersonID: "90003", DisplayName: "Ola Nordvik"},
 		}
 		if !reflect.DeepEqual(got, want) {
@@ -69,6 +84,9 @@ func TestClientSearch(t *testing.T) {
 	}
 	if n := tokens.Load(); n != 1 {
 		t.Errorf("fetched the token %d times, want once", n)
+	}
+	if n := orgs.Load(); n != 1 {
+		t.Errorf("read the churches %d times, want once", n)
 	}
 }
 
@@ -79,15 +97,15 @@ func TestBirthDateParsing(t *testing.T) {
 		"":                     {},
 		"01.03.2004":           {},
 	} {
-		if got := (corePerson{BirthDate: in}).person().BirthDate; !got.Equal(want) {
+		if got := (corePerson{BirthDate: in}).person(nil).BirthDate; !got.Equal(want) {
 			t.Errorf("birthDate %q = %v, want %v", in, got, want)
 		}
 	}
 }
 
 func TestClientSearchUnauthorizedRefetchesToken(t *testing.T) {
-	var tokens atomic.Int32
-	server := fakeCoreAPI(t, &tokens, http.StatusUnauthorized)
+	var tokens, orgs atomic.Int32
+	server := fakeCoreAPI(t, &tokens, &orgs, http.StatusUnauthorized)
 	defer server.Close()
 	c := NewClient(Config{APIURL: server.URL, AuthURL: server.URL, Audience: "api.bcc.no", ClientID: "id", ClientSecret: "secret"})
 
@@ -116,12 +134,16 @@ func TestClientSearchTokenDenied(t *testing.T) {
 func TestClientGetMany(t *testing.T) {
 	var filters []string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/oauth/token" {
+		switch r.URL.Path {
+		case "/oauth/token":
 			io.WriteString(w, `{"access_token":"tok","expires_in":86400}`)
+			return
+		case "/v2/orgs":
+			io.WriteString(w, `{"data":[]}`)
 			return
 		}
 		q := r.URL.Query()
-		if q.Get("fields") != "personID,displayName,birthDate" || q.Get("limit") != "999" {
+		if q.Get("fields") != personFields || q.Get("limit") != "999" {
 			t.Errorf("query = %v", q)
 		}
 		filters = append(filters, q.Get("filter"))
@@ -174,8 +196,8 @@ func TestClientSearchLive(t *testing.T) {
 	if len(got) == 0 {
 		t.Fatal("found no one")
 	}
-	// Only IDs in messages: no names or birth dates in the output.
-	dated := 0
+	// Only IDs in messages: no names, birth dates or churches in the output.
+	dated, churched := 0, 0
 	for _, p := range got {
 		if p.PersonID == "" || p.PersonID == "0" || p.DisplayName == "" {
 			t.Errorf("incomplete person %q", p.PersonID)
@@ -183,15 +205,21 @@ func TestClientSearchLive(t *testing.T) {
 		if !p.BirthDate.IsZero() {
 			dated++
 		}
+		if p.Church != "" {
+			churched++
+		}
 	}
 	if dated == 0 {
 		t.Error("no birth date parsed")
+	}
+	if churched == 0 {
+		t.Error("no church found")
 	}
 	many, err := c.GetMany(context.Background(), []string{got[0].PersonID})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(many) != 1 || many[0].PersonID != got[0].PersonID || !many[0].BirthDate.Equal(got[0].BirthDate) {
+	if len(many) != 1 || many[0].PersonID != got[0].PersonID || !many[0].BirthDate.Equal(got[0].BirthDate) || many[0].Church != got[0].Church {
 		t.Errorf("GetMany(%s) doesn't match the search result", got[0].PersonID)
 	}
 }

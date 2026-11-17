@@ -85,8 +85,7 @@ func (f *frequentContributors) get(ctx context.Context, m members.Searcher) []me
 	return f.people
 }
 
-// SearchMembers suggests contributors: linked ones first, then Members; each
-// marked U26 or not.
+// SearchMembers suggests contributors
 func (e EditorialAPI) SearchMembers(ctx context.Context, req *connect.Request[apiv1.SearchMembersRequest]) (*connect.Response[apiv1.SearchMembersResponse], error) {
 	email, err := requireEditorial(req, apiv1.EditorialEditor)
 	if err != nil {
@@ -117,7 +116,7 @@ func (e EditorialAPI) SearchMembers(ctx context.Context, req *connect.Request[ap
 				add(p.PersonID, p.DisplayName)
 			}
 		}
-		return e.withU26(ctx, res), nil
+		return e.withDetails(ctx, res), nil
 	}
 
 	linked, err := e.queries.ListLinkedContributors(ctx)
@@ -130,29 +129,32 @@ func (e EditorialAPI) SearchMembers(ctx context.Context, req *connect.Request[ap
 		}
 	}
 	if e.members == nil || utf8.RuneCountInString(query) < 2 || len(res.Members) == limit {
-		return e.withU26(ctx, res), nil
+		return e.withDetails(ctx, res), nil
 	}
 	people, err := e.members.Search(ctx, query, limit)
 	if err != nil {
 		log.L.Warn().Err(err).Msg("member search failed")
-		return e.withU26(ctx, res), nil
+		return e.withDetails(ctx, res), nil
 	}
-	// their birth dates came along: no lookups for U26
-	e.ages.remember(people)
+	// their details came along: no lookups
+	e.people.remember(people)
 	for _, p := range people {
 		add(p.PersonID, p.DisplayName)
 	}
-	return e.withU26(ctx, res), nil
+	return e.withDetails(ctx, res), nil
 }
 
-func (e EditorialAPI) withU26(ctx context.Context, res *apiv1.SearchMembersResponse) *connect.Response[apiv1.SearchMembersResponse] {
+func (e EditorialAPI) withDetails(ctx context.Context, res *apiv1.SearchMembersResponse) *connect.Response[apiv1.SearchMembersResponse] {
 	ids := make([]string, len(res.Members))
 	for i, m := range res.Members {
 		ids[i] = m.PersonId
 	}
-	u26 := e.ages.u26(ctx, ids)
+	people := e.people.get(ctx, ids)
 	for _, m := range res.Members {
-		m.U26 = u26[m.PersonId]
+		if p, ok := people[m.PersonId]; ok {
+			m.Age = int32(age(p.BirthDate, e.people.today()))
+			m.Church = p.Church
+		}
 	}
 	return connect.NewResponse(res)
 }
