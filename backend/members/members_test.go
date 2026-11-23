@@ -10,9 +10,10 @@ import (
 	"net/url"
 	"os"
 	"reflect"
-	"strconv"
 	"sync/atomic"
 	"testing"
+
+	"github.com/google/uuid"
 )
 
 // fakeCoreAPI serves Auth0's token endpoint and the Core API's persons search.
@@ -34,12 +35,12 @@ func fakeCoreAPI(t *testing.T, tokens *atomic.Int32, personsStatus int) *httptes
 			if got := r.Header.Get("Authorization"); got != "Bearer tok" {
 				t.Errorf("Authorization = %q", got)
 			}
-			want := url.Values{"search": {"ola nordmann"}, "fields": {"personID,displayName"}, "limit": {"5"}}
+			want := url.Values{"search": {"ola nordmann"}, "fields": {"uid,displayName"}, "limit": {"5"}}
 			if got := r.URL.Query(); !reflect.DeepEqual(got, want) {
 				t.Errorf("query = %v, want %v", got, want)
 			}
 			w.WriteHeader(personsStatus)
-			io.WriteString(w, `{"data":[{"displayName":"Ola Nordmann","personID":90001},{"displayName":"Ola Nordvik","personID":90003}],"meta":{}}`)
+			io.WriteString(w, `{"data":[{"displayName":"Ola Nordmann","uid":"00000000-0000-4000-8000-000000090001"},{"displayName":"Ola Nordvik","uid":"00000000-0000-4000-8000-000000090003"}],"meta":{}}`)
 		default:
 			t.Errorf("unexpected request %s", r.URL.Path)
 			http.NotFound(w, r)
@@ -58,7 +59,7 @@ func TestClientSearch(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		want := []Person{{"90001", "Ola Nordmann"}, {"90003", "Ola Nordvik"}}
+		want := []Person{{"00000000-0000-4000-8000-000000090001", "Ola Nordmann"}, {"00000000-0000-4000-8000-000000090003", "Ola Nordvik"}}
 		if !reflect.DeepEqual(got, want) {
 			t.Errorf("Search = %v, want %v", got, want)
 		}
@@ -104,30 +105,30 @@ func TestClientGetMany(t *testing.T) {
 			return
 		}
 		q := r.URL.Query()
-		if q.Get("fields") != "personID,displayName" || q.Get("limit") != "999" {
+		if q.Get("fields") != "uid,displayName" || q.Get("limit") != "999" {
 			t.Errorf("query = %v", q)
 		}
 		filters = append(filters, q.Get("filter"))
-		io.WriteString(w, `{"data":[{"displayName":"Ola Nordmann","personID":90001}]}`)
+		io.WriteString(w, `{"data":[{"displayName":"Ola Nordmann","uid":"00000000-0000-4000-8000-000000090001"}]}`)
 	}))
 	defer server.Close()
 	c := NewClient(Config{APIURL: server.URL, AuthURL: server.URL})
 
-	got, err := c.GetMany(context.Background(), []string{"90001", "x", "90002"})
+	got, err := c.GetMany(context.Background(), []string{"00000000-0000-4000-8000-000000090001", "90001", "00000000-0000-4000-8000-000000090002"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if want := []Person{{"90001", "Ola Nordmann"}}; !reflect.DeepEqual(got, want) {
+	if want := []Person{{"00000000-0000-4000-8000-000000090001", "Ola Nordmann"}}; !reflect.DeepEqual(got, want) {
 		t.Errorf("GetMany = %v, want %v", got, want)
 	}
-	if want := []string{`{"personID":{"_in":[90001,90002]}}`}; !reflect.DeepEqual(filters, want) {
-		t.Errorf("filters = %v, want %v (not a number left out)", filters, want)
+	if want := []string{`{"uid":{"_in":["00000000-0000-4000-8000-000000090001","00000000-0000-4000-8000-000000090002"]}}`}; !reflect.DeepEqual(filters, want) {
+		t.Errorf("filters = %v, want %v (not a UUID left out, case normalized)", filters, want)
 	}
 
 	filters = nil
 	ids := make([]string, 801)
 	for i := range ids {
-		ids[i] = strconv.Itoa(i + 1)
+		ids[i] = uuid.NewString()
 	}
 	if _, err := c.GetMany(context.Background(), ids); err != nil {
 		t.Fatal(err)
@@ -158,7 +159,7 @@ func TestClientSearchLive(t *testing.T) {
 		t.Fatal("found no one")
 	}
 	for _, p := range got {
-		if p.PersonID == "" || p.PersonID == "0" || p.DisplayName == "" {
+		if uuid.Validate(p.UID) != nil || p.DisplayName == "" {
 			t.Errorf("incomplete person %+v", p)
 		}
 	}

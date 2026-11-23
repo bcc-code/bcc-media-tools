@@ -510,8 +510,8 @@ message EditorialMarker {
 
 message EditorialContributor {
   string name = 1;
-  // BCC Members personID; empty when typed in by hand
-  string person_id = 2;
+  // BCC Members uid (a UUID); empty when typed in by hand
+  string member_uid = 2;
 }
 
 // A review session tied to a single Mediabanken asset.
@@ -812,7 +812,8 @@ message SearchMembersRequest {
 // A person in BCC Members: only what a contributor needs, as this is
 // personal data.
 message Member {
-  string person_id = 1;
+  // BCC Members uid (a UUID)
+  string member_uid = 1;
   string display_name = 2;
 }
 

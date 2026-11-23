@@ -4258,8 +4258,8 @@ func (x *EditorialMarker) GetContributorList() []*EditorialContributor {
 type EditorialContributor struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Name  string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	// BCC Members personID; empty when typed in by hand
-	PersonId      string `protobuf:"bytes,2,opt,name=person_id,json=personId,proto3" json:"person_id,omitempty"`
+	// BCC Members uid (a UUID); empty when typed in by hand
+	MemberUid     string `protobuf:"bytes,2,opt,name=member_uid,json=memberUid,proto3" json:"member_uid,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4301,9 +4301,9 @@ func (x *EditorialContributor) GetName() string {
 	return ""
 }
 
-func (x *EditorialContributor) GetPersonId() string {
+func (x *EditorialContributor) GetMemberUid() string {
 	if x != nil {
-		return x.PersonId
+		return x.MemberUid
 	}
 	return ""
 }
@@ -6537,9 +6537,10 @@ func (x *SearchMembersRequest) GetLimit() int32 {
 // A person in BCC Members: only what a contributor needs, as this is
 // personal data.
 type Member struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	PersonId      string                 `protobuf:"bytes,1,opt,name=person_id,json=personId,proto3" json:"person_id,omitempty"`
-	DisplayName   string                 `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// BCC Members uid (a UUID)
+	MemberUid     string `protobuf:"bytes,1,opt,name=member_uid,json=memberUid,proto3" json:"member_uid,omitempty"`
+	DisplayName   string `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6574,9 +6575,9 @@ func (*Member) Descriptor() ([]byte, []int) {
 	return file_api_v1_api_proto_rawDescGZIP(), []int{106}
 }
 
-func (x *Member) GetPersonId() string {
+func (x *Member) GetMemberUid() string {
 	if x != nil {
-		return x.PersonId
+		return x.MemberUid
 	}
 	return ""
 }
@@ -6945,10 +6946,11 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\vplayout_key\x18\x0e \x01(\tR\n" +
 	"playoutKey\x12%\n" +
 	"\x0eplayout_synced\x18\x0f \x01(\bR\rplayoutSynced\x12G\n" +
-	"\x10contributor_list\x18\x10 \x03(\v2\x1c.api.v1.EditorialContributorR\x0fcontributorListJ\x04\b\a\x10\bR\apublish\"G\n" +
+	"\x10contributor_list\x18\x10 \x03(\v2\x1c.api.v1.EditorialContributorR\x0fcontributorListJ\x04\b\a\x10\bR\apublish\"I\n" +
 	"\x14EditorialContributor\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1b\n" +
-	"\tperson_id\x18\x02 \x01(\tR\bpersonId\"\xc8\x03\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1d\n" +
+	"\n" +
+	"member_uid\x18\x02 \x01(\tR\tmemberUid\"\xc8\x03\n" +
 	"\x10EditorialSession\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04VXID\x18\x02 \x01(\tR\x04VXID\x12\x14\n" +
@@ -7113,9 +7115,10 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\fbible_verses\x18\x06 \x01(\tR\vbibleVerses\"B\n" +
 	"\x14SearchMembersRequest\x12\x14\n" +
 	"\x05query\x18\x01 \x01(\tR\x05query\x12\x14\n" +
-	"\x05limit\x18\x02 \x01(\x05R\x05limit\"H\n" +
-	"\x06Member\x12\x1b\n" +
-	"\tperson_id\x18\x01 \x01(\tR\bpersonId\x12!\n" +
+	"\x05limit\x18\x02 \x01(\x05R\x05limit\"J\n" +
+	"\x06Member\x12\x1d\n" +
+	"\n" +
+	"member_uid\x18\x01 \x01(\tR\tmemberUid\x12!\n" +
 	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\"A\n" +
 	"\x15SearchMembersResponse\x12(\n" +
 	"\amembers\x18\x01 \x03(\v2\x0e.api.v1.MemberR\amembers*1\n" +

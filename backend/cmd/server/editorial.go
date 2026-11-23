@@ -830,43 +830,26 @@ type playoutCandidate struct {
 	BibleVerses  string
 }
 
-// playoutPlaceholderPersonID is not a person: Playout sends it with speakers
-// of many different names.
-const playoutPlaceholderPersonID = "1337"
-
 // playoutSpeaker reads who a SPEAKER entry shows. The name falls back to the
-// entry's label; the personID is empty for the placeholder or none.
+// entry's label. The member is the entry's uid, the Core API's, when that is
+// a UUID: Playout sends null for a person it doesn't know, and older events
+// may still carry the numeric personId there, the placeholder 1337 included.
 func playoutSpeaker(entry playout.ManifestEntry) editorial.Contributor {
 	var data struct {
-		Name     string          `json:"name"`
-		PersonID playoutPersonID `json:"personId"`
+		Name string `json:"name"`
+		UID  any    `json:"uid"`
 	}
 	_ = json.Unmarshal(entry.Data, &data)
-	speaker := editorial.Contributor{Name: strings.TrimSpace(data.Name), PersonID: string(data.PersonID)}
+	speaker := editorial.Contributor{Name: strings.TrimSpace(data.Name)}
 	if speaker.Name == "" {
 		speaker.Name = strings.TrimSpace(entry.Label)
 	}
-	if speaker.PersonID == playoutPlaceholderPersonID {
-		speaker.PersonID = ""
+	if s, ok := data.UID.(string); ok {
+		if uid, err := uuid.Parse(strings.TrimSpace(s)); err == nil {
+			speaker.MemberUID = uid.String()
+		}
 	}
 	return speaker
-}
-
-// playoutPersonID is a SPEAKER's personId (the BCC Members personID), which
-// Playout sends as a string or a number. Any other value reads as none.
-type playoutPersonID string
-
-func (p *playoutPersonID) UnmarshalJSON(b []byte) error {
-	var s string
-	if json.Unmarshal(b, &s) == nil {
-		*p = playoutPersonID(strings.TrimSpace(s))
-		return nil
-	}
-	var n json.Number
-	if json.Unmarshal(b, &n) == nil {
-		*p = playoutPersonID(n.String())
-	}
-	return nil
 }
 
 // playoutKey identifies a manifest entry: Playout gives entries no id, but a
@@ -968,7 +951,7 @@ func editorialSessionToProto(s editorial.Session, markers []editorial.MarkerRow)
 func contributorsFromProto(list []*apiv1.EditorialContributor) []editorial.Contributor {
 	out := make([]editorial.Contributor, len(list))
 	for i, c := range list {
-		out[i] = editorial.Contributor{Name: c.GetName(), PersonID: c.GetPersonId()}
+		out[i] = editorial.Contributor{Name: c.GetName(), MemberUID: c.GetMemberUid()}
 	}
 	return editorial.CleanContributors(out)
 }
@@ -976,7 +959,7 @@ func contributorsFromProto(list []*apiv1.EditorialContributor) []editorial.Contr
 func contributorsToProto(list []editorial.Contributor) []*apiv1.EditorialContributor {
 	out := make([]*apiv1.EditorialContributor, len(list))
 	for i, c := range list {
-		out[i] = &apiv1.EditorialContributor{Name: c.Name, PersonId: c.PersonID}
+		out[i] = &apiv1.EditorialContributor{Name: c.Name, MemberUid: c.MemberUID}
 	}
 	return out
 }

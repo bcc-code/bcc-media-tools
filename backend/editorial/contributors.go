@@ -9,10 +9,11 @@ import (
 	"unicode"
 )
 
-// Contributor is one of a marker's contributors; PersonID is empty when typed in.
+// Contributor is one of a marker's contributors. MemberUID is the BCC Members
+// uid (a UUID); empty when typed in.
 type Contributor struct {
-	Name     string
-	PersonID string
+	Name      string
+	MemberUID string
 }
 
 // MarkerRow is a marker with its contributors. Reassign Contributors, never
@@ -44,7 +45,7 @@ func (q *Queries) ListMarkerRows(ctx context.Context, sessionID string) ([]Marke
 	}
 	byMarker := map[string][]Contributor{}
 	for _, c := range contributors {
-		byMarker[c.MarkerID] = append(byMarker[c.MarkerID], Contributor{Name: c.Name, PersonID: c.PersonID.String})
+		byMarker[c.MarkerID] = append(byMarker[c.MarkerID], Contributor{Name: c.Name, MemberUID: c.MemberUID.String})
 	}
 	rows := make([]MarkerRow, len(markers))
 	for i, m := range markers {
@@ -57,10 +58,10 @@ func (q *Queries) ListMarkerRows(ctx context.Context, sessionID string) ([]Marke
 func (q *Queries) InsertContributors(ctx context.Context, markerID string, list []Contributor) error {
 	for i, c := range list {
 		if err := q.InsertMarkerContributor(ctx, InsertMarkerContributorParams{
-			MarkerID: markerID,
-			Position: int64(i),
-			Name:     c.Name,
-			PersonID: sql.NullString{String: c.PersonID, Valid: c.PersonID != ""},
+			MarkerID:  markerID,
+			Position:  int64(i),
+			Name:      c.Name,
+			MemberUID: sql.NullString{String: c.MemberUID, Valid: c.MemberUID != ""},
 		}); err != nil {
 			return fmt.Errorf("editorial: insert contributor: %w", err)
 		}
@@ -68,12 +69,12 @@ func (q *Queries) InsertContributors(ctx context.Context, markerID string, list 
 	return nil
 }
 
-// CleanContributors trims the names and person IDs and drops blank names.
+// CleanContributors trims the names and member IDs and drops blank names.
 func CleanContributors(list []Contributor) []Contributor {
 	var out []Contributor
 	for _, c := range list {
 		if name := strings.TrimSpace(c.Name); name != "" {
-			out = append(out, Contributor{Name: name, PersonID: strings.TrimSpace(c.PersonID)})
+			out = append(out, Contributor{Name: name, MemberUID: strings.TrimSpace(c.MemberUID)})
 		}
 	}
 	return out
@@ -90,7 +91,7 @@ func (q *Queries) SearchLinkedContributors(ctx context.Context, query string) ([
 	var out []Contributor
 	for _, c := range linked {
 		if matchesWords(c.Name, query) {
-			out = append(out, Contributor{Name: c.Name, PersonID: c.PersonID.String})
+			out = append(out, Contributor{Name: c.Name, MemberUID: c.MemberUID.String})
 		}
 	}
 	return out, nil

@@ -8,11 +8,11 @@ import (
 
 func TestCleanContributors(t *testing.T) {
 	got := CleanContributors([]Contributor{
-		{Name: " Ola Nordmann ", PersonID: " 90001 "},
-		{Name: " ", PersonID: "90002"},
+		{Name: " Ola Nordmann ", MemberUID: " 00000000-0000-4000-8000-000000090001 "},
+		{Name: " ", MemberUID: "00000000-0000-4000-8000-000000090002"},
 		{Name: "Ola"},
 	})
-	assert.Equal(t, []Contributor{{"Ola Nordmann", "90001"}, {"Ola", ""}}, got)
+	assert.Equal(t, []Contributor{{"Ola Nordmann", "00000000-0000-4000-8000-000000090001"}, {"Ola", ""}}, got)
 	assert.Empty(t, CleanContributors(nil))
 }
 

@@ -124,7 +124,7 @@ function closeDrawer() {
         editContributors.value.some(
             (c, i) =>
                 c.name !== m.contributorList[i]!.name ||
-                c.personId !== m.contributorList[i]!.personId,
+                c.memberUid !== m.contributorList[i]!.memberUid,
         );
     if (
         editName.value !== m.name ||

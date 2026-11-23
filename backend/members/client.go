@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/google/uuid"
 )
 
 type Config struct {
@@ -44,7 +45,7 @@ func NewClient(cfg Config) *Client {
 
 type personsResponse struct {
 	Data []struct {
-		PersonID    int    `json:"personID"`
+		UID         string `json:"uid"`
 		DisplayName string `json:"displayName"`
 	} `json:"data"`
 }
@@ -59,18 +60,18 @@ func (c *Client) Search(ctx context.Context, query string, limit int) ([]Person,
 	return people, nil
 }
 
-// GetMany looks people up by personID, 800 per request as Wayfarer does. IDs
-// Members doesn't know, or that aren't numbers, are left out.
+// GetMany looks people up by uid, 800 per request as Wayfarer does. IDs
+// Members doesn't know, or that aren't UUIDs, are left out.
 func (c *Client) GetMany(ctx context.Context, ids []string) ([]Person, error) {
-	var nums []int
+	var uids []string
 	for _, id := range ids {
-		if n, err := strconv.Atoi(id); err == nil {
-			nums = append(nums, n)
+		if u, err := uuid.Parse(id); err == nil {
+			uids = append(uids, u.String())
 		}
 	}
 	var out []Person
-	for chunk := range slices.Chunk(nums, 800) {
-		filter, err := json.Marshal(map[string]any{"personID": map[string]any{"_in": chunk}})
+	for chunk := range slices.Chunk(uids, 800) {
+		filter, err := json.Marshal(map[string]any{"uid": map[string]any{"_in": chunk}})
 		if err != nil {
 			return nil, err
 		}
@@ -93,7 +94,7 @@ func (c *Client) persons(ctx context.Context, params map[string]string) ([]Perso
 		SetContext(ctx).
 		SetAuthToken(token).
 		SetHeader("Accept", "application/json").
-		SetQueryParam("fields", "personID,displayName").
+		SetQueryParam("fields", "uid,displayName").
 		SetQueryParams(params).
 		Get(c.cfg.APIURL + "/v2/persons")
 	if err != nil {
@@ -114,7 +115,7 @@ func (c *Client) persons(ctx context.Context, params map[string]string) ([]Perso
 	}
 	out := make([]Person, 0, len(body.Data))
 	for _, p := range body.Data {
-		out = append(out, Person{PersonID: strconv.Itoa(p.PersonID), DisplayName: p.DisplayName})
+		out = append(out, Person{UID: p.UID, DisplayName: p.DisplayName})
 	}
 	return out, nil
 }

@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -21,7 +22,7 @@ type fakeMembers struct {
 	people []members.Person
 	limit  int
 	err    error
-	// GetMany's calls; it knows the IDs below 90100, as "Person <id>"
+	// GetMany's calls; it knows everyone but uid(99999), as "Person <n>"
 	lookups [][]string
 }
 
@@ -33,7 +34,7 @@ func (f *fakeMembers) Search(_ context.Context, _ string, limit int) ([]members.
 	if f.people != nil {
 		return f.people, nil
 	}
-	return []members.Person{{PersonID: "90001", DisplayName: "Ola Nordmann"}}, nil
+	return []members.Person{{UID: uid(90001), DisplayName: "Ola Nordmann"}}, nil
 }
 
 func (f *fakeMembers) GetMany(_ context.Context, ids []string) ([]members.Person, error) {
@@ -43,8 +44,8 @@ func (f *fakeMembers) GetMany(_ context.Context, ids []string) ([]members.Person
 	}
 	var out []members.Person
 	for _, id := range slices.Backward(ids) {
-		if id < "90100" {
-			out = append(out, members.Person{PersonID: id, DisplayName: "Person " + id})
+		if id != uid(99999) {
+			out = append(out, members.Person{UID: id, DisplayName: "Person " + strings.TrimLeft(id[24:], "0")})
 		}
 	}
 	return out, nil
@@ -67,7 +68,7 @@ func TestSearchMembers(t *testing.T) {
 	got, err := searchMembers(t, api, " ola ", 0)
 	require.NoError(t, err)
 	require.Len(t, got, 1)
-	assert.Equal(t, "90001", got[0].PersonId)
+	assert.Equal(t, uid(90001), got[0].MemberUid)
 	assert.Equal(t, "Ola Nordmann", got[0].DisplayName)
 	assert.Equal(t, 10, fake.limit, "default limit")
 
@@ -123,7 +124,7 @@ func TestSearchMembersFrequent(t *testing.T) {
 	fake := &fakeMembers{}
 	api.members = fake
 	old := frequentContributorIDs
-	frequentContributorIDs = []string{"90003", "90001", "99999", "90002"}
+	frequentContributorIDs = []string{uid(90003), uid(90001), uid(99999), uid(90002)}
 	t.Cleanup(func() { frequentContributorIDs = old })
 
 	got, err := searchMembers(t, api, "", 0)
@@ -153,15 +154,15 @@ func TestSearchMembersFrequent(t *testing.T) {
 func TestSearchMembersLinkedFirst(t *testing.T) {
 	api := newTestEditorialAPI(t)
 	fake := &fakeMembers{people: []members.Person{
-		{PersonID: "90002", DisplayName: "Kari Nordmann"},
-		{PersonID: "90004", DisplayName: "Kari Nordvik"},
+		{UID: uid(90002), DisplayName: "Kari Nordmann"},
+		{UID: uid(90004), DisplayName: "Kari Nordvik"},
 	}}
 	api.members = fake
 	sess := createTestSession(t, api, "VX-1", "stream")
 	saveTestSession(t, api, sess.Id, "t", []*apiv1.EditorialMarker{
-		{ContributorList: []*apiv1.EditorialContributor{{Name: "Kari Nordmann", PersonId: "90002"}, {Name: "Kari Typed"}}},
-		{ContributorList: []*apiv1.EditorialContributor{{Name: "Kari Nordmann", PersonId: "90002"}, {Name: "Øystein Kari-Berg", PersonId: "90003"}}},
-		{ContributorList: []*apiv1.EditorialContributor{{Name: "K. Nordmann", PersonId: "90002"}, {Name: "Ola Nordmann", PersonId: "90001"}}},
+		{ContributorList: []*apiv1.EditorialContributor{{Name: "Kari Nordmann", MemberUid: uid(90002)}, {Name: "Kari Typed"}}},
+		{ContributorList: []*apiv1.EditorialContributor{{Name: "Kari Nordmann", MemberUid: uid(90002)}, {Name: "Øystein Kari-Berg", MemberUid: uid(90003)}}},
+		{ContributorList: []*apiv1.EditorialContributor{{Name: "K. Nordmann", MemberUid: uid(90002)}, {Name: "Ola Nordmann", MemberUid: uid(90001)}}},
 	})
 
 	got, err := searchMembers(t, api, "kari", 0)

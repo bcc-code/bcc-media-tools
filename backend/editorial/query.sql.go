@@ -230,15 +230,15 @@ func (q *Queries) InsertMarker(ctx context.Context, arg InsertMarkerParams) erro
 }
 
 const insertMarkerContributor = `-- name: InsertMarkerContributor :exec
-INSERT INTO marker_contributors (marker_id, position, name, person_id)
+INSERT INTO marker_contributors (marker_id, position, name, member_uid)
 VALUES (?, ?, ?, ?)
 `
 
 type InsertMarkerContributorParams struct {
-	MarkerID string
-	Position int64
-	Name     string
-	PersonID sql.NullString
+	MarkerID  string
+	Position  int64
+	Name      string
+	MemberUID sql.NullString
 }
 
 func (q *Queries) InsertMarkerContributor(ctx context.Context, arg InsertMarkerContributorParams) error {
@@ -246,13 +246,13 @@ func (q *Queries) InsertMarkerContributor(ctx context.Context, arg InsertMarkerC
 		arg.MarkerID,
 		arg.Position,
 		arg.Name,
-		arg.PersonID,
+		arg.MemberUID,
 	)
 	return err
 }
 
 const listContributorsForSession = `-- name: ListContributorsForSession :many
-SELECT c.marker_id, c.position, c.name, c.person_id FROM marker_contributors c
+SELECT c.marker_id, c.position, c.name, c.member_uid FROM marker_contributors c
 JOIN markers m ON m.id = c.marker_id
 WHERE m.session_id = ?
 ORDER BY m.sort_order, c.position
@@ -271,7 +271,7 @@ func (q *Queries) ListContributorsForSession(ctx context.Context, sessionID stri
 			&i.MarkerID,
 			&i.Position,
 			&i.Name,
-			&i.PersonID,
+			&i.MemberUID,
 		); err != nil {
 			return nil, err
 		}
@@ -355,15 +355,15 @@ func (q *Queries) ListExportedChapters(ctx context.Context, arg ListExportedChap
 }
 
 const listLinkedContributors = `-- name: ListLinkedContributors :many
-SELECT person_id, name FROM marker_contributors
-WHERE person_id IS NOT NULL
-GROUP BY person_id, name
+SELECT member_uid, name FROM marker_contributors
+WHERE member_uid IS NOT NULL
+GROUP BY member_uid, name
 ORDER BY count(*) DESC, name
 `
 
 type ListLinkedContributorsRow struct {
-	PersonID sql.NullString
-	Name     string
+	MemberUID sql.NullString
+	Name      string
 }
 
 // Each linked person under each name they were saved with, most used first.
@@ -376,7 +376,7 @@ func (q *Queries) ListLinkedContributors(ctx context.Context) ([]ListLinkedContr
 	var items []ListLinkedContributorsRow
 	for rows.Next() {
 		var i ListLinkedContributorsRow
-		if err := rows.Scan(&i.PersonID, &i.Name); err != nil {
+		if err := rows.Scan(&i.MemberUID, &i.Name); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

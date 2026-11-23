@@ -37,10 +37,10 @@ type Marker struct {
 }
 
 type MarkerContributor struct {
-	MarkerID string
-	Position int64
-	Name     string
-	PersonID sql.NullString
+	MarkerID  string
+	Position  int64
+	Name      string
+	MemberUID sql.NullString
 }
 
 type PlayoutDismissed struct {
