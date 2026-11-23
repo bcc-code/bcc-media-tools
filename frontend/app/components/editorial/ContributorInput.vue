@@ -167,18 +167,12 @@ function onBlur() {
             >
                 <DesignTooltip
                     v-if="c.personId"
-                    :content="
-                        t('editorial.contributor.linked', { id: c.personId })
-                    "
+                    :content="t('editorial.contributor.linked')"
                 >
                     <Icon
                         name="tabler:user-check"
                         class="text-text-muted size-3.5 shrink-0"
-                        :aria-label="
-                            t('editorial.contributor.linked', {
-                                id: c.personId,
-                            })
-                        "
+                        :aria-label="t('editorial.contributor.linked')"
                     />
                 </DesignTooltip>
                 <span class="truncate">{{ c.name }}</span>

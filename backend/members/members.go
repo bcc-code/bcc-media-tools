@@ -1,4 +1,3 @@
-// Package members finds people in BCC Members, through the BCC Core API.
 package members
 
 import "context"
