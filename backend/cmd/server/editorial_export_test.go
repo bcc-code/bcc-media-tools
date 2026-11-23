@@ -31,7 +31,7 @@ func TestEditorialWorkbookLive(t *testing.T) {
 		{StartMs: 5_000, BibleVerses: "John 3:16", Type: "tale", Source: editorial.SourceManual, PlayoutKey: "SPEAKER|x", PublishBmm: true},
 		{StartMs: 760_000, Name: "HV 16", Type: "sang", Source: editorial.SourceImport},
 	})
-	markers[0].Contributors = []contributor{{Name: "Kåre J. Smith"}}
+	markers[0].Contributors = []editorial.Contributor{{Name: "Kåre J. Smith"}}
 	data, err := editorialWorkbook(sess, markers, exportLabelsByLanguage["nb"])
 	require.NoError(t, err)
 	f, sheet := openWorkbook(t, data)

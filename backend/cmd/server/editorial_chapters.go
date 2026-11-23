@@ -111,7 +111,7 @@ func (e EditorialAPI) ExportEditorialChapters(ctx context.Context, req *connect.
 	if sess.Vxid == "" {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("attach the recording before saving chapters"))
 	}
-	markers, err := listMarkers(ctx, e.queries, sess.ID)
+	markers, err := e.queries.ListMarkerRows(ctx, sess.ID)
 	if err != nil {
 		return nil, editorialErr(err)
 	}
@@ -134,7 +134,7 @@ func (e EditorialAPI) ExportEditorialChapters(ctx context.Context, req *connect.
 
 // exportChapters writes markers as subclips on the session's asset and
 // removes the ones the previous export wrote. Errors are connect errors.
-func (e EditorialAPI) exportChapters(ctx context.Context, sess editorial.Session, markers []markerRow, startTC timecode) (*apiv1.ExportEditorialChaptersResponse, error) {
+func (e EditorialAPI) exportChapters(ctx context.Context, sess editorial.Session, markers []editorial.MarkerRow, startTC timecode) (*apiv1.ExportEditorialChaptersResponse, error) {
 	chapters, skipped := chaptersFromMarkers(markers, startTC)
 	res := &apiv1.ExportEditorialChaptersResponse{Skipped: int32(skipped)}
 
@@ -256,7 +256,7 @@ type chapter struct {
 
 // chaptersFromMarkers maps markers to subclips. Markers without a length are
 // skipped: Cantemo can't hold a zero-length subclip.
-func chaptersFromMarkers(markers []markerRow, start timecode) ([]chapter, int) {
+func chaptersFromMarkers(markers []editorial.MarkerRow, start timecode) ([]chapter, int) {
 	var out []chapter
 	skipped := 0
 	for _, m := range markers {

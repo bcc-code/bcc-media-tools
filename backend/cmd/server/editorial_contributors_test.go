@@ -12,27 +12,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestContributorsFromRequest(t *testing.T) {
-	got := contributorsFromRequest([]*apiv1.EditorialContributor{
-		{Name: " Ola Nordmann ", PersonId: " 90001 "},
-		{Name: " ", PersonId: "90002"},
-		{Name: "Ola"},
-	})
-	assert.Equal(t, []contributor{{"Ola Nordmann", "90001"}, {"Ola", ""}}, got)
-	assert.Empty(t, contributorsFromRequest(nil))
-}
-
 func TestPlayoutFieldsChangedComparesContributorIDs(t *testing.T) {
-	picked := markerRow{Contributors: []contributor{{"Ola Nordmann", "90001"}}}
-	typed := markerRow{Contributors: []contributor{{"Ola Nordmann", ""}}}
+	picked := editorial.MarkerRow{Contributors: []editorial.Contributor{{Name: "Ola Nordmann", PersonID: "90001"}}}
+	typed := editorial.MarkerRow{Contributors: []editorial.Contributor{{Name: "Ola Nordmann", PersonID: ""}}}
 	assert.True(t, playoutFieldsChanged(typed, picked), "picking a member for the same name is an edit")
 }
 
 // markerRows wraps markers that have no contributors.
-func markerRows(markers []editorial.Marker) []markerRow {
-	rows := make([]markerRow, len(markers))
+func markerRows(markers []editorial.Marker) []editorial.MarkerRow {
+	rows := make([]editorial.MarkerRow, len(markers))
 	for i, m := range markers {
-		rows[i] = markerRow{Marker: m}
+		rows[i] = editorial.MarkerRow{Marker: m}
 	}
 	return rows
 }
@@ -49,7 +39,7 @@ func TestEditorialContributorListRoundTrip(t *testing.T) {
 	got, err := api.loadSession(ctx, sess.Id)
 	require.NoError(t, err)
 	for _, s := range []*apiv1.EditorialSession{saved, got} {
-		assert.Equal(t, []contributor{{"Ola Nordmann", "90001"}, {"Ola", ""}}, fromProto(s.Markers[0].ContributorList))
+		assert.Equal(t, []editorial.Contributor{{Name: "Ola Nordmann", PersonID: "90001"}, {Name: "Ola", PersonID: ""}}, fromProto(s.Markers[0].ContributorList))
 		assert.Empty(t, s.Markers[1].ContributorList)
 	}
 
@@ -60,18 +50,18 @@ func TestEditorialContributorListRoundTrip(t *testing.T) {
 	require.NoError(t, err)
 	got, err = api.loadSession(ctx, sess.Id)
 	require.NoError(t, err)
-	assert.Equal(t, []contributor{{"Kari Nordmann", "90002"}}, fromProto(got.Markers[1].ContributorList))
+	assert.Equal(t, []editorial.Contributor{{Name: "Kari Nordmann", PersonID: "90002"}}, fromProto(got.Markers[1].ContributorList))
 }
 
 // joined is a marker's contributor names as the page shows them.
 func joined(m *apiv1.EditorialMarker) string {
-	return strings.Join(contributorNames(fromProto(m.GetContributorList())), ", ")
+	return strings.Join(editorial.ContributorNames(fromProto(m.GetContributorList())), ", ")
 }
 
-func fromProto(list []*apiv1.EditorialContributor) []contributor {
-	var out []contributor
+func fromProto(list []*apiv1.EditorialContributor) []editorial.Contributor {
+	var out []editorial.Contributor
 	for _, c := range list {
-		out = append(out, contributor{c.GetName(), c.GetPersonId()})
+		out = append(out, editorial.Contributor{Name: c.GetName(), PersonID: c.GetPersonId()})
 	}
 	return out
 }

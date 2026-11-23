@@ -35,15 +35,15 @@ func scriptureEntry(t *testing.T, label, at string) playout.ManifestEntry {
 	return playout.ManifestEntry{Type: playout.ContentTypeScripture, Label: label, Timestamp: ts(t, at)}
 }
 
-func manualMarker(id string, startMs int64, name, typ string) markerRow {
-	return markerRow{Marker: editorial.Marker{ID: id, SessionID: "s1", StartMs: startMs, Name: name, Type: typ, Source: editorial.SourceManual}}
+func manualMarker(id string, startMs int64, name, typ string) editorial.MarkerRow {
+	return editorial.MarkerRow{Marker: editorial.Marker{ID: id, SessionID: "s1", StartMs: startMs, Name: name, Type: typ, Source: editorial.SourceManual}}
 }
 
 // The meeting from the design: two blank marks, one named mark, and a Playout
 // manifest with a speaker, scripture, two songs and a second speaker.
 func TestMergeLiveWorkedExample(t *testing.T) {
 	clockStart := ts(t, "2026-07-26T11:00:00Z")
-	rows := []markerRow{
+	rows := []editorial.MarkerRow{
 		manualMarker("m1", 5_000, "", ""),                       // 11:00:05
 		manualMarker("m2", 760_000, "", "sang"),                 // 11:12:40
 		manualMarker("m3", 1_860_000, "Kunngjøringer", "annet"), // 11:31:00
@@ -63,7 +63,7 @@ func TestMergeLiveWorkedExample(t *testing.T) {
 	// Blank mark filled by the speaker: keeps its own time, gets the verse.
 	assert.Equal(t, "m1", got[0].ID)
 	assert.Equal(t, int64(5_000), got[0].StartMs)
-	assert.Equal(t, "Kåre J. Smith", got[0].contributorString())
+	assert.Equal(t, "Kåre J. Smith", got[0].ContributorString())
 	assert.Equal(t, "John 3:16", got[0].BibleVerses)
 	assert.Equal(t, "tale", got[0].Type)
 	assert.True(t, got[0].PlayoutSynced)
@@ -84,7 +84,7 @@ func TestMergeLiveWorkedExample(t *testing.T) {
 	assert.Equal(t, "m3", got[3].ID)
 	assert.Equal(t, "Kunngjøringer", got[3].Name)
 	assert.Empty(t, got[3].PlayoutKey)
-	assert.Equal(t, "Harald Hansen", got[4].contributorString())
+	assert.Equal(t, "Harald Hansen", got[4].ContributorString())
 	assert.Equal(t, int64(1_890_000), got[4].StartMs)
 
 	// Each row ends where the next starts; the last stays open.
@@ -103,7 +103,7 @@ func TestMergeLiveWorkedExample(t *testing.T) {
 // own row.
 func TestMergeLiveTypedMarkWaitsForMatch(t *testing.T) {
 	clockStart := ts(t, "2026-07-26T11:00:00Z")
-	rows := []markerRow{manualMarker("m1", 0, "", "sang")}
+	rows := []editorial.MarkerRow{manualMarker("m1", 0, "", "sang")}
 	candidates, candidatesVerses := fromManifest([]playout.ManifestEntry{
 		speakerEntry(t, "Programleder", "2026-07-26T11:00:10Z"),
 		songEntry(t, "HV 16", "2026-07-26T11:00:40Z"),
@@ -114,7 +114,7 @@ func TestMergeLiveTypedMarkWaitsForMatch(t *testing.T) {
 	assert.Equal(t, "m1", got[0].ID)
 	assert.Equal(t, "HV 16", got[0].Name)
 	assert.Empty(t, got[0].Contributors)
-	assert.Equal(t, "Programleder", got[1].contributorString())
+	assert.Equal(t, "Programleder", got[1].ContributorString())
 	assert.Equal(t, editorial.SourceImport, got[1].Source)
 }
 
@@ -126,7 +126,7 @@ func TestMergeLiveRefreshesOnlySyncedRows(t *testing.T) {
 		speakerEntry(t, "Kare Smith", "2026-07-26T11:00:10Z"),
 		songEntry(t, "HV 16", "2026-07-26T11:10:00Z"),
 	}, window)
-	rows, _ := mergeLive([]markerRow{manualMarker("m1", 0, "", "")}, first, firstVerses, nil, clockStart, seqIDs())
+	rows, _ := mergeLive([]editorial.MarkerRow{manualMarker("m1", 0, "", "")}, first, firstVerses, nil, clockStart, seqIDs())
 	require.Len(t, rows, 2)
 
 	// The editor fixes the song row by hand.
@@ -139,7 +139,7 @@ func TestMergeLiveRefreshesOnlySyncedRows(t *testing.T) {
 	}, window)
 	got, changed := mergeLive(rows, corrected, correctedVerses, nil, clockStart, seqIDs())
 	assert.True(t, changed)
-	assert.Equal(t, "Kåre J. Smith", got[0].contributorString(), "synced row follows Playout")
+	assert.Equal(t, "Kåre J. Smith", got[0].ContributorString(), "synced row follows Playout")
 	assert.Equal(t, "HV 16 - Se ditt hjem", got[1].Name, "edited row is left alone")
 }
 
@@ -155,7 +155,7 @@ func TestMergeLiveSkipsDismissed(t *testing.T) {
 
 func TestShiftToRecording(t *testing.T) {
 	clockStart := ts(t, "2026-07-26T11:00:00Z")
-	rows := []markerRow{
+	rows := []editorial.MarkerRow{
 		{Marker: editorial.Marker{StartMs: 5_000, EndMs: 60_000}},
 		{Marker: editorial.Marker{StartMs: 60_000, EndMs: 0}},
 	}
@@ -292,11 +292,11 @@ func TestMergeLiveEditedRowStillCollectsVerses(t *testing.T) {
 		speakerEntry(t, "Kare Smith", "2026-07-26T11:00:10Z"),
 		scriptureEntry(t, "John 3:16", "2026-07-26T11:01:00Z"),
 	}, window)
-	rows, _ := mergeLive([]markerRow{manualMarker("m1", 0, "", "")}, first, firstVerses, nil, clockStart, seqIDs())
+	rows, _ := mergeLive([]editorial.MarkerRow{manualMarker("m1", 0, "", "")}, first, firstVerses, nil, clockStart, seqIDs())
 	require.Len(t, rows, 1)
 
 	// The editor fixes the name and adds a verse of their own.
-	rows[0].Contributors = []contributor{{Name: "Kåre J. Smith"}}
+	rows[0].Contributors = []editorial.Contributor{{Name: "Kåre J. Smith"}}
 	rows[0].BibleVerses = "John 3:16, Ps 23"
 	rows[0].PlayoutSynced = false
 
@@ -307,7 +307,7 @@ func TestMergeLiveEditedRowStillCollectsVerses(t *testing.T) {
 	}, window)
 	got, changed := mergeLive(rows, later, laterVerses, nil, clockStart, seqIDs())
 	assert.True(t, changed)
-	assert.Equal(t, "Kåre J. Smith", got[0].contributorString(), "the edit stays")
+	assert.Equal(t, "Kåre J. Smith", got[0].ContributorString(), "the edit stays")
 	assert.Equal(t, "John 3:16, Ps 23, Rom 8:28", got[0].BibleVerses)
 	assert.False(t, got[0].PlayoutSynced)
 
@@ -334,10 +334,10 @@ func TestMergeLiveVersesReachHandMadeSpeech(t *testing.T) {
 	clockStart := ts(t, "2026-07-26T11:00:00Z")
 	window := recordingWindow{Start: clockStart, End: ts(t, "2026-07-26T12:00:00Z")}
 	speech := manualMarker("m1", 60_000, "", "tale")
-	speech.Contributors = []contributor{{Name: "Kåre J. Smith"}} // named by hand: not blank, never filled
+	speech.Contributors = []editorial.Contributor{{Name: "Kåre J. Smith"}} // named by hand: not blank, never filled
 	testimony := manualMarker("m2", 600_000, "", "vitnesbyrd")
 	song := manualMarker("m3", 900_000, "HV 16", "sang")
-	rows := []markerRow{speech, testimony, song}
+	rows := []editorial.MarkerRow{speech, testimony, song}
 
 	cands, verses := fromManifest([]playout.ManifestEntry{
 		scriptureEntry(t, "Ps 1:1", "2026-07-26T11:00:30Z"), // before any marker
@@ -350,7 +350,7 @@ func TestMergeLiveVersesReachHandMadeSpeech(t *testing.T) {
 	assert.True(t, changed)
 	require.Len(t, got, 3)
 	assert.Equal(t, "John 3:16, Rom 8:28", got[0].BibleVerses)
-	assert.Equal(t, "Kåre J. Smith", got[0].contributorString())
+	assert.Equal(t, "Kåre J. Smith", got[0].ContributorString())
 	assert.Empty(t, got[0].PlayoutKey, "still a hand-made marker")
 	assert.Equal(t, "Fil 4:6", got[1].BibleVerses)
 	assert.Empty(t, got[2].BibleVerses, "not a speech")

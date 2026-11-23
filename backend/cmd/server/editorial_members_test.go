@@ -186,25 +186,6 @@ func TestSearchMembersLinkedFirst(t *testing.T) {
 	assert.Zero(t, fake.limit)
 }
 
-func TestMatchesWords(t *testing.T) {
-	for _, tc := range []struct {
-		name, query string
-		want        bool
-	}{
-		{"Ola Nordmann", "ola", true},
-		{"Ola Nordmann", "nor ola", true},
-		{"Ola Nordmann", "la", false},
-		{"Ola Nordmann", "ola x", false},
-		{"Kari Nordmann-Berg", "berg", true},
-		{"K. Nordmann", "k", true},
-		{"Åse Ødegård", "åse øde", true},
-		{"Åse Ødegård", "ase", false},
-		{"Øystein", "o", false},
-	} {
-		assert.Equal(t, tc.want, matchesWords(tc.name, tc.query), "%q in %q", tc.query, tc.name)
-	}
-}
-
 func names(list []*apiv1.Member) []string {
 	out := make([]string, len(list))
 	for i, m := range list {

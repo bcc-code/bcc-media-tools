@@ -2,6 +2,7 @@ package main
 
 import (
 	apiv1 "bcc-media-tools/api/v1"
+	"bcc-media-tools/editorial"
 	"bcc-media-tools/playout"
 	"context"
 	"encoding/json"
@@ -30,11 +31,11 @@ func TestPlayoutCandidatesReadPersonIDs(t *testing.T) {
 	}, window)
 
 	require.Len(t, got, 6)
-	assert.Equal(t, []contributor{{"Kari Nordmann", "90002"}}, got[0].Contributors)
-	assert.Equal(t, []contributor{{"Per Hansen", ""}}, got[1].Contributors, "1337 is a placeholder")
-	assert.Equal(t, []contributor{{"Ola Nordmann", "90001"}}, got[2].Contributors, "a numeric personId")
-	assert.Equal(t, []contributor{{"Odd", ""}}, got[3].Contributors, "an odd personId keeps the name")
-	assert.Equal(t, []contributor{{"Label Only", ""}}, got[4].Contributors, "no data falls back to the label")
+	assert.Equal(t, []editorial.Contributor{{Name: "Kari Nordmann", PersonID: "90002"}}, got[0].Contributors)
+	assert.Equal(t, []editorial.Contributor{{Name: "Per Hansen", PersonID: ""}}, got[1].Contributors, "1337 is a placeholder")
+	assert.Equal(t, []editorial.Contributor{{Name: "Ola Nordmann", PersonID: "90001"}}, got[2].Contributors, "a numeric personId")
+	assert.Equal(t, []editorial.Contributor{{Name: "Odd", PersonID: ""}}, got[3].Contributors, "an odd personId keeps the name")
+	assert.Equal(t, []editorial.Contributor{{Name: "Label Only", PersonID: ""}}, got[4].Contributors, "no data falls back to the label")
 	assert.Empty(t, got[5].Contributors)
 	assert.Equal(t, "HV 1 - Test song", got[5].Name)
 }
@@ -46,7 +47,7 @@ func TestImportFromPlayoutCarriesPersonIDs(t *testing.T) {
 	markers, err := api.importFromPlayout(context.Background(), "1154", recordingWindow{Start: ts(t, "2026-10-17T11:00:00Z"), End: ts(t, "2026-10-17T12:00:00Z")})
 	require.NoError(t, err)
 	require.Len(t, markers, 1)
-	assert.Equal(t, []contributor{{"Kari Nordmann", "90002"}}, fromProto(markers[0].ContributorList))
+	assert.Equal(t, []editorial.Contributor{{Name: "Kari Nordmann", PersonID: "90002"}}, fromProto(markers[0].ContributorList))
 }
 
 // A synced row follows Playout's corrections, IDs included, until an editor
@@ -74,11 +75,11 @@ func TestEditorialLiveSyncPersonIDs(t *testing.T) {
 	}
 
 	row := sync(`{"personId":1337,"name":"Ola Nordmann"}`)
-	assert.Equal(t, []contributor{{"Ola Nordmann", ""}}, fromProto(row.ContributorList))
+	assert.Equal(t, []editorial.Contributor{{Name: "Ola Nordmann", PersonID: ""}}, fromProto(row.ContributorList))
 	assert.True(t, row.PlayoutSynced)
 
 	row = sync(`{"personId":"90001","name":"Ola Nordmann"}`)
-	assert.Equal(t, []contributor{{"Ola Nordmann", "90001"}}, fromProto(row.ContributorList), "a synced row takes Playout's correction")
+	assert.Equal(t, []editorial.Contributor{{Name: "Ola Nordmann", PersonID: "90001"}}, fromProto(row.ContributorList), "a synced row takes Playout's correction")
 	assert.True(t, row.PlayoutSynced)
 
 	row.ContributorList = []*apiv1.EditorialContributor{{Name: "Ola Nordmann", PersonId: "90003"}}
@@ -86,5 +87,5 @@ func TestEditorialLiveSyncPersonIDs(t *testing.T) {
 	assert.False(t, saved.Markers[0].PlayoutSynced, "a member picked by hand stops the sync")
 
 	row = sync(`{"personId":"90002","name":"Kari Nordmann"}`)
-	assert.Equal(t, []contributor{{"Ola Nordmann", "90003"}}, fromProto(row.ContributorList), "the pick stays")
+	assert.Equal(t, []editorial.Contributor{{Name: "Ola Nordmann", PersonID: "90003"}}, fromProto(row.ContributorList), "the pick stays")
 }

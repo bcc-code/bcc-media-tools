@@ -7,11 +7,9 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"slices"
 	"strings"
 	"sync"
 	"time"
-	"unicode"
 	"unicode/utf8"
 
 	"connectrpc.com/connect"
@@ -119,14 +117,12 @@ func (e EditorialAPI) SearchMembers(ctx context.Context, req *connect.Request[ap
 		return connect.NewResponse(res), nil
 	}
 
-	linked, err := e.queries.ListLinkedContributors(ctx)
+	linked, err := e.queries.SearchLinkedContributors(ctx, query)
 	if err != nil {
 		return nil, editorialErr(err)
 	}
 	for _, c := range linked {
-		if matchesWords(c.Name, query) {
-			add(c.PersonID.String, c.Name)
-		}
+		add(c.PersonID, c.Name)
 	}
 	if e.members == nil || utf8.RuneCountInString(query) < 2 || len(res.Members) == limit {
 		return connect.NewResponse(res), nil
@@ -140,20 +136,4 @@ func (e EditorialAPI) SearchMembers(ctx context.Context, req *connect.Request[ap
 		add(p.PersonID, p.DisplayName)
 	}
 	return connect.NewResponse(res), nil
-}
-
-// matchesWords reports whether each word of query starts a word of name,
-// ignoring case: "ola nor" finds "Ola Nordmann-Berg".
-func matchesWords(name, query string) bool {
-	words := nameWords(strings.ToLower(name))
-	return !slices.ContainsFunc(nameWords(strings.ToLower(query)), func(typed string) bool {
-		return !slices.ContainsFunc(words, func(w string) bool { return strings.HasPrefix(w, typed) })
-	})
-}
-
-// nameWords splits at spaces, hyphens and dots ("kari nordmann-berg").
-func nameWords(s string) []string {
-	return strings.FieldsFunc(s, func(r rune) bool {
-		return unicode.IsSpace(r) || r == '-' || r == '.'
-	})
 }
