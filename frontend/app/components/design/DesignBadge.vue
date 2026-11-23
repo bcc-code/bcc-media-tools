@@ -4,7 +4,6 @@ import { cva } from "cva";
 interface Props {
     label?: string;
     variant?: "success" | "warning" | "info" | "error" | "neutral";
-    // Extension beyond admin-web: a larger badge for status at a glance.
     size?: "default" | "large";
 }
 
