@@ -384,7 +384,9 @@ func (e EditorialAPI) DeleteEditorialSession(ctx context.Context, req *connect.R
 	return connect.NewResponse(&apiv1.Void{}), nil
 }
 
-// loadSession returns a session with its markers ordered by sort_order
+// loadSession returns a session with its markers ordered by sort_order, and
+// what email may see of Members: U26, and age and church with the members
+// permission. An empty email adds none, as for the preview proxy
 func (e EditorialAPI) loadSession(ctx context.Context, id, email string) (*apiv1.EditorialSession, error) {
 	sess, err := e.queries.GetSession(ctx, id)
 	if errors.Is(err, sql.ErrNoRows) {
