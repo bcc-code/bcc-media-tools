@@ -67,12 +67,12 @@ func (e EditorialAPI) AddEditorialMarker(ctx context.Context, req *connect.Reque
 	if err != nil {
 		return nil, liveErr(err)
 	}
-	rows, err := listMarkers(ctx, qtx, sess.ID)
+	rows, err := qtx.ListMarkerRows(ctx, sess.ID)
 	if err != nil {
 		return nil, editorialErr(err)
 	}
 	// The editor's clock, not the server's: that is the moment they saw.
-	marker := markerRow{Marker: editorial.Marker{
+	marker := editorial.MarkerRow{Marker: editorial.Marker{
 		ID:        uuid.NewString(),
 		SessionID: sess.ID,
 		Type:      req.Msg.GetType(),
@@ -102,7 +102,7 @@ func (e EditorialAPI) AddEditorialMarker(ctx context.Context, req *connect.Reque
 // editMarkers changes a session's markers in one transaction and tells the
 // watchers. edit gets the session and its markers in order and returns them
 // as they should be saved; a live session's are put back in time order.
-func (e EditorialAPI) editMarkers(ctx context.Context, sessionID string, edit func(sess editorial.Session, qtx *editorial.Queries, rows []markerRow) ([]markerRow, error)) error {
+func (e EditorialAPI) editMarkers(ctx context.Context, sessionID string, edit func(sess editorial.Session, qtx *editorial.Queries, rows []editorial.MarkerRow) ([]editorial.MarkerRow, error)) error {
 	now := time.Now().UnixMilli()
 	tx, err := e.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -118,7 +118,7 @@ func (e EditorialAPI) editMarkers(ctx context.Context, sessionID string, edit fu
 	if err != nil {
 		return fmt.Errorf("editorial: get session: %w", err)
 	}
-	rows, err := listMarkers(ctx, qtx, sess.ID)
+	rows, err := qtx.ListMarkerRows(ctx, sess.ID)
 	if err != nil {
 		return err
 	}
@@ -151,7 +151,7 @@ func (e EditorialAPI) SetEditorialMarkerStart(ctx context.Context, req *connect.
 	if req.Msg.GetSessionId() == "" || req.Msg.GetMarkerId() == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("missing session_id or marker_id"))
 	}
-	err := e.editMarkers(ctx, req.Msg.GetSessionId(), func(sess editorial.Session, _ *editorial.Queries, rows []markerRow) ([]markerRow, error) {
+	err := e.editMarkers(ctx, req.Msg.GetSessionId(), func(sess editorial.Session, _ *editorial.Queries, rows []editorial.MarkerRow) ([]editorial.MarkerRow, error) {
 		if sess.Kind != editorial.KindLive {
 			return nil, errNotLive
 		}
@@ -183,7 +183,7 @@ func (e EditorialAPI) DeleteEditorialMarkers(ctx context.Context, req *connect.R
 	for _, id := range req.Msg.GetMarkerIds() {
 		remove[id] = true
 	}
-	err := e.editMarkers(ctx, req.Msg.GetSessionId(), func(sess editorial.Session, qtx *editorial.Queries, rows []markerRow) ([]markerRow, error) {
+	err := e.editMarkers(ctx, req.Msg.GetSessionId(), func(sess editorial.Session, qtx *editorial.Queries, rows []editorial.MarkerRow) ([]editorial.MarkerRow, error) {
 		kept := rows[:0]
 		for _, m := range rows {
 			if !remove[m.ID] {
@@ -257,7 +257,7 @@ func (e EditorialAPI) SyncEditorialSessionFromPlayout(ctx context.Context, req *
 	defer func() { _ = tx.Rollback() }()
 	qtx := e.queries.WithTx(tx)
 
-	rows, err := listMarkers(ctx, qtx, sess.ID)
+	rows, err := qtx.ListMarkerRows(ctx, sess.ID)
 	if err != nil {
 		return nil, editorialErr(err)
 	}
@@ -329,7 +329,7 @@ func (e EditorialAPI) AttachEditorialRecording(ctx context.Context, req *connect
 	defer func() { _ = tx.Rollback() }()
 	qtx := e.queries.WithTx(tx)
 
-	rows, err := listMarkers(ctx, qtx, sess.ID)
+	rows, err := qtx.ListMarkerRows(ctx, sess.ID)
 	if err != nil {
 		return nil, editorialErr(err)
 	}
@@ -379,7 +379,7 @@ func (e EditorialAPI) AttachEditorialRecording(ctx context.Context, req *connect
 // shiftToRecording re-bases offsets from the live clock start onto the
 // recording, whose start may be before or after it. The still-open last row
 // ends with the recording.
-func shiftToRecording(rows []markerRow, clockStartMs int64, window recordingWindow) {
+func shiftToRecording(rows []editorial.MarkerRow, clockStartMs int64, window recordingWindow) {
 	shift := clockStartMs - window.Start.UnixMilli()
 	for i := range rows {
 		rows[i].StartMs += shift
@@ -394,8 +394,8 @@ func shiftToRecording(rows []markerRow, clockStartMs int64, window recordingWind
 
 // normalizeLiveMarkers keeps a live session in time order: each row ends where
 // the next starts, and the last stays open (0) while the meeting runs.
-func normalizeLiveMarkers(rows []markerRow) {
-	slices.SortStableFunc(rows, func(a, b markerRow) int {
+func normalizeLiveMarkers(rows []editorial.MarkerRow) {
+	slices.SortStableFunc(rows, func(a, b editorial.MarkerRow) int {
 		switch {
 		case a.StartMs < b.StartMs:
 			return -1
@@ -416,7 +416,7 @@ func normalizeLiveMarkers(rows []markerRow) {
 
 // isBlank reports whether an editor marked a moment without saying what it
 // was: no title, no contributors, and not yet filled from Playout.
-func isBlank(m markerRow) bool {
+func isBlank(m editorial.MarkerRow) bool {
 	return m.Source == editorial.SourceManual && m.PlayoutKey == "" && m.Name == "" && len(m.Contributors) == 0
 }
 
@@ -438,7 +438,7 @@ func fillableBy(markerType, playoutType string) bool {
 //
 // Bible verses aren't copied: in a live session they go to whichever speech
 // marker they fall in (attachScriptures).
-func applyCandidate(m *markerRow, c playoutCandidate, keepType bool) {
+func applyCandidate(m *editorial.MarkerRow, c playoutCandidate, keepType bool) {
 	switch c.PlayoutType {
 	case playout.ContentTypeSpeaker:
 		m.Contributors = c.Contributors
@@ -484,7 +484,7 @@ func mergeVerses(current, incoming string) string {
 //   - dismissed candidates (rows an editor removed) are skipped
 //
 // It returns the rows in time order and whether anything changed.
-func mergeLive(rows []markerRow, candidates []playoutCandidate, scriptures []scripture, dismissed map[string]bool, clockStart time.Time, newID func() string) ([]markerRow, bool) {
+func mergeLive(rows []editorial.MarkerRow, candidates []playoutCandidate, scriptures []scripture, dismissed map[string]bool, clockStart time.Time, newID func() string) ([]editorial.MarkerRow, bool) {
 	rows = slices.Clone(rows)
 	normalizeLiveMarkers(rows)
 	before := slices.Clone(rows)
@@ -496,7 +496,7 @@ func mergeLive(rows []markerRow, candidates []playoutCandidate, scriptures []scr
 		}
 	}
 
-	var added []markerRow
+	var added []editorial.MarkerRow
 	for _, c := range candidates {
 		if i, ok := byKey[c.Key]; ok {
 			// i < 0: added earlier in this pass (a duplicate manifest entry).
@@ -533,7 +533,7 @@ func mergeLive(rows []markerRow, candidates []playoutCandidate, scriptures []scr
 			continue
 		}
 
-		m := markerRow{Marker: editorial.Marker{
+		m := editorial.MarkerRow{Marker: editorial.Marker{
 			ID:            newID(),
 			SessionID:     sessionIDOf(rows),
 			StartMs:       offset,
@@ -551,7 +551,7 @@ func mergeLive(rows []markerRow, candidates []playoutCandidate, scriptures []scr
 	rows = append(rows, added...)
 	normalizeLiveMarkers(rows)
 	attachScriptures(rows, scriptures, clockStart)
-	return rows, len(added) > 0 || !slices.EqualFunc(rows, before, markerRow.equal)
+	return rows, len(added) > 0 || !slices.EqualFunc(rows, before, editorial.MarkerRow.Equal)
 }
 
 // scripture is a Bible verse shown on screen.
@@ -580,10 +580,10 @@ func isSpeech(markerType string) bool {
 // order) when that marker is a speech, whoever created it: a marker typed in
 // by hand collects verses as well as one Playout filled. Verses already
 // listed aren't added again, and none are removed.
-func attachScriptures(rows []markerRow, scriptures []scripture, clockStart time.Time) {
+func attachScriptures(rows []editorial.MarkerRow, scriptures []scripture, clockStart time.Time) {
 	for _, sc := range scriptures {
 		offset := sc.At.Sub(clockStart).Milliseconds()
-		i, _ := slices.BinarySearchFunc(rows, offset, func(m markerRow, t int64) int {
+		i, _ := slices.BinarySearchFunc(rows, offset, func(m editorial.MarkerRow, t int64) int {
 			if m.StartMs <= t {
 				return -1
 			}
@@ -598,7 +598,7 @@ func attachScriptures(rows []markerRow, scriptures []scripture, clockStart time.
 	}
 }
 
-func sessionIDOf(rows []markerRow) string {
+func sessionIDOf(rows []editorial.MarkerRow) string {
 	if len(rows) > 0 {
 		return rows[0].SessionID
 	}

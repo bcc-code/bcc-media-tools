@@ -53,7 +53,7 @@ func (e EditorialAPI) ExportEditorialSession(ctx context.Context, req *connect.R
 	if err != nil {
 		return nil, editorialErr(err)
 	}
-	markers, err := listMarkers(ctx, e.queries, sess.ID)
+	markers, err := e.queries.ListMarkerRows(ctx, sess.ID)
 	if err != nil {
 		return nil, editorialErr(err)
 	}
@@ -76,8 +76,8 @@ func (e EditorialAPI) ExportEditorialSession(ctx context.Context, req *connect.R
 // Excel times so the sheet can be sorted and summed: a live session's clock
 // time of day (Oslo), or a recording's offsets.
 //
-// u26 tells which linked contributors are under 26, by personID.
-func editorialWorkbook(sess editorial.Session, markers []markerRow, u26 map[string]bool, l exportLabels) ([]byte, error) {
+// u26 tells which linked contributors are under 26, by member uid.
+func editorialWorkbook(sess editorial.Session, markers []editorial.MarkerRow, u26 map[string]bool, l exportLabels) ([]byte, error) {
 	live := sess.Kind == editorial.KindLive
 	loc, err := time.LoadLocation(recordingTZ)
 	if err != nil {
@@ -133,14 +133,14 @@ func editorialWorkbook(sess editorial.Session, markers []markerRow, u26 map[stri
 		// the age of a name typed by hand isn't known.
 		var linked, young bool
 		for _, c := range m.Contributors {
-			linked = linked || c.PersonID != ""
-			young = young || u26[c.PersonID]
+			linked = linked || c.MemberUID != ""
+			young = young || u26[c.MemberUID]
 		}
 		var u26Cell string
 		if linked {
 			u26Cell = yesNo(young)
 		}
-		row = append(row, duration, m.Name, m.contributorString(), u26Cell, m.BibleVerses, typeLabel(m.Type, l), m.Comment,
+		row = append(row, duration, m.Name, m.ContributorString(), u26Cell, m.BibleVerses, typeLabel(m.Type, l), m.Comment,
 			yesNo(m.PublishBmm), yesNo(m.PublishBcc))
 		if live {
 			row = append(row, sourceLabel(m.Marker, l))

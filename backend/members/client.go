@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/google/uuid"
 )
 
 type Config struct {
@@ -46,10 +47,10 @@ func NewClient(cfg Config) *Client {
 	return &Client{cfg: cfg, rest: resty.New().SetTimeout(5 * time.Second).SetDisableWarn(true)}
 }
 
-const personFields = "personID,displayName,birthDate,affiliations.orgUid,affiliations.isActive,affiliations.validFrom,affiliations.validTo"
+const personFields = "uid,displayName,birthDate,affiliations.orgUid,affiliations.isActive,affiliations.validFrom,affiliations.validTo"
 
 type corePerson struct {
-	PersonID    int    `json:"personID"`
+	UID         string `json:"uid"`
 	DisplayName string `json:"displayName"`
 	// "2006-01-02"
 	BirthDate    string `json:"birthDate"`
@@ -63,7 +64,7 @@ type corePerson struct {
 
 // person: churches maps church orgs' uids to their names.
 func (p corePerson) person(churches map[string]string) Person {
-	out := Person{PersonID: strconv.Itoa(p.PersonID), DisplayName: p.DisplayName}
+	out := Person{UID: p.UID, DisplayName: p.DisplayName}
 	if len(p.BirthDate) >= len(time.DateOnly) {
 		// zero, unknown, when it doesn't parse
 		out.BirthDate, _ = time.Parse(time.DateOnly, p.BirthDate[:len(time.DateOnly)])
@@ -89,18 +90,18 @@ func (c *Client) Search(ctx context.Context, query string, limit int) ([]Person,
 	return people, nil
 }
 
-// GetMany looks people up by personID, 800 per request as Wayfarer does. IDs
-// Members doesn't know, or that aren't numbers, are left out.
+// GetMany looks people up by uid, 800 per request as Wayfarer does. IDs
+// Members doesn't know, or that aren't UUIDs, are left out.
 func (c *Client) GetMany(ctx context.Context, ids []string) ([]Person, error) {
-	var nums []int
+	var uids []string
 	for _, id := range ids {
-		if n, err := strconv.Atoi(id); err == nil {
-			nums = append(nums, n)
+		if u, err := uuid.Parse(id); err == nil {
+			uids = append(uids, u.String())
 		}
 	}
 	var out []Person
-	for chunk := range slices.Chunk(nums, 800) {
-		filter, err := json.Marshal(map[string]any{"personID": map[string]any{"_in": chunk}})
+	for chunk := range slices.Chunk(uids, 800) {
+		filter, err := json.Marshal(map[string]any{"uid": map[string]any{"_in": chunk}})
 		if err != nil {
 			return nil, err
 		}

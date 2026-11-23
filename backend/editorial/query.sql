@@ -52,13 +52,13 @@ ORDER BY m.sort_order, c.position;
 
 -- name: ListLinkedContributors :many
 -- Each linked person under each name they were saved with, most used first.
-SELECT person_id, name FROM marker_contributors
-WHERE person_id IS NOT NULL
-GROUP BY person_id, name
+SELECT member_uid, name FROM marker_contributors
+WHERE member_uid IS NOT NULL
+GROUP BY member_uid, name
 ORDER BY count(*) DESC, name;
 
 -- name: InsertMarkerContributor :exec
-INSERT INTO marker_contributors (marker_id, position, name, person_id)
+INSERT INTO marker_contributors (marker_id, position, name, member_uid)
 VALUES (?, ?, ?, ?);
 
 -- name: DeleteContributorsForMarker :exec

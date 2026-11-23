@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"slices"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -24,7 +25,7 @@ type fakeMembers struct {
 	err    error
 	// GetMany's calls
 	lookups [][]string
-	// GetMany finds these; when nil, the IDs below 90100, as "Person <id>"
+	// GetMany finds these; when nil, everyone but uid(99999), as "Person <n>"
 	byID map[string]members.Person
 	// each GetMany takes this long
 	delay time.Duration
@@ -46,7 +47,7 @@ func (f *fakeMembers) Search(_ context.Context, _ string, limit int) ([]members.
 	if f.people != nil {
 		return f.people, nil
 	}
-	return []members.Person{{PersonID: "90001", DisplayName: "Ola Nordmann"}}, nil
+	return []members.Person{{UID: uid(90001), DisplayName: "Ola Nordmann"}}, nil
 }
 
 func (f *fakeMembers) GetMany(ctx context.Context, ids []string) ([]members.Person, error) {
@@ -71,8 +72,8 @@ func (f *fakeMembers) GetMany(ctx context.Context, ids []string) ([]members.Pers
 	for _, id := range slices.Backward(ids) {
 		if p, ok := f.byID[id]; ok {
 			out = append(out, p)
-		} else if f.byID == nil && id < "90100" {
-			out = append(out, members.Person{PersonID: id, DisplayName: "Person " + id})
+		} else if f.byID == nil && id != uid(99999) {
+			out = append(out, members.Person{UID: id, DisplayName: "Person " + strings.TrimLeft(id[24:], "0")})
 		}
 	}
 	return out, nil
@@ -95,7 +96,7 @@ func TestSearchMembers(t *testing.T) {
 	got, err := searchMembers(t, api, " ola ", 0)
 	require.NoError(t, err)
 	require.Len(t, got, 1)
-	assert.Equal(t, "90001", got[0].PersonId)
+	assert.Equal(t, uid(90001), got[0].MemberUid)
 	assert.Equal(t, "Ola Nordmann", got[0].DisplayName)
 	assert.Equal(t, 10, fake.limit, "default limit")
 
@@ -144,15 +145,21 @@ func TestSearchMembersNeedsEditorAndMembers(t *testing.T) {
 	assert.Equal(t, "Ola Nordmann", got[0].DisplayName)
 }
 
-// Frequent contributors are in the code as IDs only; Members names them, once
+func TestNewFrequentContributors(t *testing.T) {
+	t.Setenv("MEMBERS_FREQUENT_UIDS", " "+uid(90003)+", ,"+uid(90001)+",")
+	assert.Equal(t, []string{uid(90003), uid(90001)}, newFrequentContributors().uids)
+
+	t.Setenv("MEMBERS_FREQUENT_UIDS", "")
+	assert.Empty(t, newFrequentContributors().uids)
+}
+
+// Frequent contributors are configured as uids only; Members names them, once
 // a day.
 func TestSearchMembersFrequent(t *testing.T) {
 	api := newTestEditorialAPI(t)
 	fake := &fakeMembers{}
 	api.members = fake
-	old := frequentContributorIDs
-	frequentContributorIDs = []string{"90003", "90001", "99999", "90002"}
-	t.Cleanup(func() { frequentContributorIDs = old })
+	api.frequent = &frequentContributors{uids: []string{uid(90003), uid(90001), uid(99999), uid(90002)}}
 
 	got, err := searchMembers(t, api, "", 0)
 	require.NoError(t, err)
@@ -175,21 +182,28 @@ func TestSearchMembersFrequent(t *testing.T) {
 	got, err = searchMembers(t, api, "", 0)
 	require.NoError(t, err)
 	assert.Empty(t, got)
+
+	api.members = fake
+	api.frequent = &frequentContributors{}
+	got, err = searchMembers(t, api, "", 0)
+	require.NoError(t, err)
+	assert.Empty(t, got, "none configured")
+	assert.Len(t, fake.lookups, 2, "and Members isn't asked")
 }
 
 // People already linked on markers come first, then Members' matches.
 func TestSearchMembersLinkedFirst(t *testing.T) {
 	api := newTestEditorialAPI(t)
 	fake := &fakeMembers{people: []members.Person{
-		{PersonID: "90002", DisplayName: "Kari Nordmann"},
-		{PersonID: "90004", DisplayName: "Kari Nordvik"},
+		{UID: uid(90002), DisplayName: "Kari Nordmann"},
+		{UID: uid(90004), DisplayName: "Kari Nordvik"},
 	}}
 	api.members = fake
 	sess := createTestSession(t, api, "VX-1", "stream")
 	saveTestSession(t, api, sess.Id, "t", []*apiv1.EditorialMarker{
-		{ContributorList: []*apiv1.EditorialContributor{{Name: "Kari Nordmann", PersonId: "90002"}, {Name: "Kari Typed"}}},
-		{ContributorList: []*apiv1.EditorialContributor{{Name: "Kari Nordmann", PersonId: "90002"}, {Name: "Øystein Kari-Berg", PersonId: "90003"}}},
-		{ContributorList: []*apiv1.EditorialContributor{{Name: "K. Nordmann", PersonId: "90002"}, {Name: "Ola Nordmann", PersonId: "90001"}}},
+		{ContributorList: []*apiv1.EditorialContributor{{Name: "Kari Nordmann", MemberUid: uid(90002)}, {Name: "Kari Typed"}}},
+		{ContributorList: []*apiv1.EditorialContributor{{Name: "Kari Nordmann", MemberUid: uid(90002)}, {Name: "Øystein Kari-Berg", MemberUid: uid(90003)}}},
+		{ContributorList: []*apiv1.EditorialContributor{{Name: "K. Nordmann", MemberUid: uid(90002)}, {Name: "Ola Nordmann", MemberUid: uid(90001)}}},
 	})
 
 	got, err := searchMembers(t, api, "kari", 0)
@@ -212,25 +226,6 @@ func TestSearchMembersLinkedFirst(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, []string{"Kari Nordmann", "Øystein Kari-Berg"}, names(got), "one letter finds linked people only")
 	assert.Zero(t, fake.limit)
-}
-
-func TestMatchesWords(t *testing.T) {
-	for _, tc := range []struct {
-		name, query string
-		want        bool
-	}{
-		{"Ola Nordmann", "ola", true},
-		{"Ola Nordmann", "nor ola", true},
-		{"Ola Nordmann", "la", false},
-		{"Ola Nordmann", "ola x", false},
-		{"Kari Nordmann-Berg", "berg", true},
-		{"K. Nordmann", "k", true},
-		{"Åse Ødegård", "åse øde", true},
-		{"Åse Ødegård", "ase", false},
-		{"Øystein", "o", false},
-	} {
-		assert.Equal(t, tc.want, matchesWords(tc.name, tc.query), "%q in %q", tc.query, tc.name)
-	}
 }
 
 func names(list []*apiv1.Member) []string {

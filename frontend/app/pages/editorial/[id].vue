@@ -237,7 +237,7 @@ function toRow(m: EditorialMarker): Row {
         contributors: m.contributorList.map((c) => c.name).join(", "),
         contributorList: m.contributorList.map((c) => ({
             name: c.name,
-            personId: c.personId,
+            memberUid: c.memberUid,
             u26: c.u26,
             age: c.age,
             church: c.church,
@@ -568,7 +568,7 @@ function sameContributors(a: Contributor[], b: Contributor[]): boolean {
     return (
         a.length === b.length &&
         a.every(
-            (c, i) => c.name === b[i]!.name && c.personId === b[i]!.personId,
+            (c, i) => c.name === b[i]!.name && c.memberUid === b[i]!.memberUid,
         )
     );
 }
@@ -692,7 +692,7 @@ function persistLiveDetails(row: Row) {
         contributors: m.contributorList.map((c) => c.name).join(", "),
         contributorList: m.contributorList.map((c) => ({
             name: c.name,
-            personId: c.personId,
+            memberUid: c.memberUid,
             u26: c.u26,
             age: c.age,
             church: c.church,

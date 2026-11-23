@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Contributors as chips: typing suggests people from BCC Members, those
-// already linked first, and a pick keeps their personID. An empty field offers
+// already linked first, and a pick keeps their member uid. An empty field offers
 // the frequent contributors. Without the members permission there are no
 // suggestions. Enter or a comma (or leaving the field) adds what was typed as
 // a name of its own, linked to no one.
@@ -9,8 +9,8 @@ import type { Member } from "~~/src/gen/api/v1/api_pb";
 
 export interface Contributor {
     name: string;
-    // BCC Members personID; empty when typed in by hand
-    personId: string;
+    // BCC Members uid (a UUID); empty when typed in by hand
+    memberUid: string;
     // as the server tells, for linked people; age and church only with the
     // members permission, age 0 when unknown
     u26?: boolean;
@@ -41,7 +41,7 @@ const collection = computed(() =>
     createListCollection({
         items: results.value,
         itemToString: (m) => m.displayName,
-        itemToValue: (m) => m.personId,
+        itemToValue: (m) => m.memberUid,
     }),
 );
 
@@ -57,8 +57,8 @@ async function search(q: string) {
             limit: q.trim() ? 8 : 20,
         });
         if (seq !== searchSeq) return;
-        const linked = new Set(model.value.map((c) => c.personId));
-        results.value = res.members.filter((m) => !linked.has(m.personId));
+        const linked = new Set(model.value.map((c) => c.memberUid));
+        results.value = res.members.filter((m) => !linked.has(m.memberUid));
     } catch {
         if (seq === searchSeq) results.value = [];
     }
@@ -112,7 +112,7 @@ function onSelect(details: { items: Member[] }) {
         ...model.value,
         {
             name: m.displayName,
-            personId: m.personId,
+            memberUid: m.memberUid,
             u26: isU26(m.age),
             age: m.age,
             church: m.church,
@@ -135,7 +135,7 @@ function addTyped() {
     if (names.length)
         update([
             ...model.value,
-            ...names.map((name) => ({ name, personId: "" })),
+            ...names.map((name) => ({ name, memberUid: "" })),
         ]);
 }
 
@@ -180,14 +180,9 @@ function onBlur() {
                 :class="large ? 'text-body-2' : 'text-body-3'"
             >
                 <DesignTooltip
-                    v-if="c.personId"
+                    v-if="c.memberUid"
                     :content="
-                        [
-                            t('editorial.contributor.linked', {
-                                id: c.personId,
-                            }),
-                            memberDetails(c),
-                        ]
+                        [t('editorial.contributor.linked'), memberDetails(c)]
                             .filter(Boolean)
                             .join(' · ')
                     "
@@ -195,11 +190,7 @@ function onBlur() {
                     <Icon
                         name="tabler:user-check"
                         class="text-text-muted size-3.5 shrink-0"
-                        :aria-label="
-                            t('editorial.contributor.linked', {
-                                id: c.personId,
-                            })
-                        "
+                        :aria-label="t('editorial.contributor.linked')"
                     />
                 </DesignTooltip>
                 <!-- the name and U26 share a baseline; together they're
@@ -241,7 +232,7 @@ function onBlur() {
                     <div class="max-h-80 overflow-y-auto">
                         <Combobox.Item
                             v-for="m in results"
-                            :key="m.personId"
+                            :key="m.memberUid"
                             :item="m"
                             class="text-body-3 text-text-default data-highlighted:bg-surface-indent flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2"
                         >

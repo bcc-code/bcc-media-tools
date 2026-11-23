@@ -1,11 +1,11 @@
 -- +goose Up
--- A marker's contributors in order. person_id is the BCC Members personID of
--- a picked or Playout-linked person; NULL when the name was typed in.
+-- A marker's contributors in order. member_uid is the BCC Members uid (a UUID)
+-- of a picked or Playout-linked person; NULL when the name was typed in.
 CREATE TABLE marker_contributors (
     marker_id TEXT NOT NULL REFERENCES markers(id) ON DELETE CASCADE,
     position  INTEGER NOT NULL,
     name      TEXT NOT NULL,
-    person_id TEXT,
+    member_uid TEXT,
     PRIMARY KEY (marker_id, position)
 );
 

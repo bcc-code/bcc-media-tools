@@ -429,7 +429,7 @@
             "hint": "Under 26 år"
         },
         "contributor": {
-            "linked": "Koblet til BCC Members (personID {id})",
+            "linked": "Koblet til BCC Members",
             "remove": "Fjern {name}",
             "enterToAdd": "Ikke i lista? Trykk Enter for å legge til navnet som skrevet.",
             "frequent": "Faste medvirkende. Skriv for å søke i BCC Members."

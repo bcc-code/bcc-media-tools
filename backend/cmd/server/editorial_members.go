@@ -7,11 +7,9 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"slices"
 	"strings"
 	"sync"
 	"time"
-	"unicode"
 	"unicode/utf8"
 
 	"connectrpc.com/connect"
@@ -39,25 +37,35 @@ const (
 	maxMemberResults     = 25
 )
 
-// frequentContributorIDs are the personIDs suggested for an empty field, in
-// order: the people who spoke on the most days in Playout's events of the
-// 12 months up to November 2026. Refresh by hand when it gets stale.
-var frequentContributorIDs = []string{
-	"10425", "10205", "11629", "11461", "10579", "10360", "10680", "12696", "11165", "17465",
-	"11201", "14259", "12687", "15996", "17339", "10129", "11446", "19579", "20996", "10648",
-}
-
-// frequentContributors names frequentContributorIDs through Members, once a
-// day.
+// frequentContributors are the people suggested for an empty field, named
+// through Members once a day.
 type frequentContributors struct {
+	// Members uids, in the order they are suggested
+	uids []string
+
 	mu      sync.Mutex
 	people  []members.Person
 	fetched time.Time
 }
 
-// get returns the named people in frequentContributorIDs' order; the last
-// ones when Members fails.
+// newFrequentContributors reads MEMBERS_FREQUENT_UIDS: Members uids separated
+// by commas. They're kept out of the code as they identify people.
+func newFrequentContributors() *frequentContributors {
+	var uids []string
+	for _, id := range strings.Split(os.Getenv("MEMBERS_FREQUENT_UIDS"), ",") {
+		if id = strings.TrimSpace(id); id != "" {
+			uids = append(uids, id)
+		}
+	}
+	return &frequentContributors{uids: uids}
+}
+
+// get returns the named people in uids' order; the last ones when Members
+// fails.
 func (f *frequentContributors) get(ctx context.Context, m members.Searcher) []members.Person {
+	if len(f.uids) == 0 {
+		return nil
+	}
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if time.Since(f.fetched) < 24*time.Hour {
@@ -65,7 +73,7 @@ func (f *frequentContributors) get(ctx context.Context, m members.Searcher) []me
 	}
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
-	people, err := m.GetMany(ctx, frequentContributorIDs)
+	people, err := m.GetMany(ctx, f.uids)
 	if err != nil {
 		log.L.Warn().Err(err).Msg("member lookup failed")
 		return f.people
@@ -73,10 +81,10 @@ func (f *frequentContributors) get(ctx context.Context, m members.Searcher) []me
 	// Members' order isn't ours
 	byID := map[string]members.Person{}
 	for _, p := range people {
-		byID[p.PersonID] = p
+		byID[p.UID] = p
 	}
 	f.people = nil
-	for _, id := range frequentContributorIDs {
+	for _, id := range f.uids {
 		if p, ok := byID[id]; ok {
 			f.people = append(f.people, p)
 		}
@@ -105,31 +113,29 @@ func (e EditorialAPI) SearchMembers(ctx context.Context, req *connect.Request[ap
 	// people as Members just sent them; the linked ones are looked up
 	known := map[string]members.Person{}
 	seen := map[string]bool{}
-	add := func(personID, name string) {
-		if len(res.Members) < limit && !seen[personID] {
-			seen[personID] = true
-			res.Members = append(res.Members, &apiv1.Member{PersonId: personID, DisplayName: name})
+	add := func(id, name string) {
+		if len(res.Members) < limit && !seen[id] {
+			seen[id] = true
+			res.Members = append(res.Members, &apiv1.Member{MemberUid: id, DisplayName: name})
 		}
 	}
 
 	if query == "" {
 		if e.members != nil {
 			for _, p := range e.frequent.get(ctx, e.members) {
-				known[p.PersonID] = p
-				add(p.PersonID, p.DisplayName)
+				known[p.UID] = p
+				add(p.UID, p.DisplayName)
 			}
 		}
 		return e.withDetails(ctx, res, known), nil
 	}
 
-	linked, err := e.queries.ListLinkedContributors(ctx)
+	linked, err := e.queries.SearchLinkedContributors(ctx, query)
 	if err != nil {
 		return nil, editorialErr(err)
 	}
 	for _, c := range linked {
-		if matchesWords(c.Name, query) {
-			add(c.PersonID.String, c.Name)
-		}
+		add(c.MemberUID, c.Name)
 	}
 	if e.members == nil || utf8.RuneCountInString(query) < 2 || len(res.Members) == limit {
 		return e.withDetails(ctx, res, known), nil
@@ -140,10 +146,10 @@ func (e EditorialAPI) SearchMembers(ctx context.Context, req *connect.Request[ap
 		return e.withDetails(ctx, res, known), nil
 	}
 	for _, p := range people {
-		if !seen[p.PersonID] {
-			known[p.PersonID] = p
+		if !seen[p.UID] {
+			known[p.UID] = p
 		}
-		add(p.PersonID, p.DisplayName)
+		add(p.UID, p.DisplayName)
 	}
 	return e.withDetails(ctx, res, known), nil
 }
@@ -153,34 +159,18 @@ func (e EditorialAPI) SearchMembers(ctx context.Context, req *connect.Request[ap
 func (e EditorialAPI) withDetails(ctx context.Context, res *apiv1.SearchMembersResponse, known map[string]members.Person) *connect.Response[apiv1.SearchMembersResponse] {
 	var ids []string
 	for _, m := range res.Members {
-		if _, ok := known[m.PersonId]; !ok {
-			ids = append(ids, m.PersonId)
+		if _, ok := known[m.MemberUid]; !ok {
+			ids = append(ids, m.MemberUid)
 		}
 	}
 	for id, p := range e.people.get(ctx, ids) {
 		known[id] = p
 	}
 	for _, m := range res.Members {
-		if p, ok := known[m.PersonId]; ok {
+		if p, ok := known[m.MemberUid]; ok {
 			m.Age = int32(age(p.BirthDate, today()))
 			m.Church = p.Church
 		}
 	}
 	return connect.NewResponse(res)
-}
-
-// matchesWords reports whether each word of query starts a word of name,
-// ignoring case: "ola nor" finds "Ola Nordmann-Berg".
-func matchesWords(name, query string) bool {
-	words := nameWords(strings.ToLower(name))
-	return !slices.ContainsFunc(nameWords(strings.ToLower(query)), func(typed string) bool {
-		return !slices.ContainsFunc(words, func(w string) bool { return strings.HasPrefix(w, typed) })
-	})
-}
-
-// nameWords splits at spaces, hyphens and dots ("kari nordmann-berg").
-func nameWords(s string) []string {
-	return strings.FieldsFunc(s, func(r rune) bool {
-		return unicode.IsSpace(r) || r == '-' || r == '.'
-	})
 }

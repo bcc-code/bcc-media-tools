@@ -10,10 +10,11 @@ import (
 	"net/url"
 	"os"
 	"reflect"
-	"strconv"
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // fakeCoreAPI serves Auth0's token endpoint, the Core API's persons search and
@@ -43,12 +44,12 @@ func fakeCoreAPI(t *testing.T, tokens, orgs *atomic.Int32, personsStatus int) *h
 			w.WriteHeader(personsStatus)
 			// Ola Nordmann's church is c3: c1 isn't active, c2 has ended and
 			// org isn't a church.
-			io.WriteString(w, `{"data":[{"displayName":"Ola Nordmann","personID":90001,"birthDate":"2004-03-01","affiliations":[
+			io.WriteString(w, `{"data":[{"displayName":"Ola Nordmann","uid":"00000000-0000-4000-8000-000000090001","birthDate":"2004-03-01","affiliations":[
 				{"orgUid":"c1","isActive":false},
 				{"orgUid":"c2","isActive":true,"validTo":"2020-01-01T00:00:00Z"},
 				{"orgUid":"org","isActive":true},
 				{"orgUid":"c3","isActive":true,"validFrom":"2010-01-01T00:00:00Z","validTo":null}
-			]},{"displayName":"Ola Nordvik","personID":90003,"birthDate":null}],"meta":{}}`)
+			]},{"displayName":"Ola Nordvik","uid":"00000000-0000-4000-8000-000000090003","birthDate":null}],"meta":{}}`)
 		case "/v2/orgs":
 			orgs.Add(1)
 			want := url.Values{"filter": {`{"type":{"_eq":"Church"}}`}, "fields": {"uid,districtName"}, "limit": {"999"}}
@@ -75,8 +76,8 @@ func TestClientSearch(t *testing.T) {
 			t.Fatal(err)
 		}
 		want := []Person{
-			{PersonID: "90001", DisplayName: "Ola Nordmann", BirthDate: time.Date(2004, 3, 1, 0, 0, 0, 0, time.UTC), Church: "Church Three"},
-			{PersonID: "90003", DisplayName: "Ola Nordvik"},
+			{UID: "00000000-0000-4000-8000-000000090001", DisplayName: "Ola Nordmann", BirthDate: time.Date(2004, 3, 1, 0, 0, 0, 0, time.UTC), Church: "Church Three"},
+			{UID: "00000000-0000-4000-8000-000000090003", DisplayName: "Ola Nordvik"},
 		}
 		if !reflect.DeepEqual(got, want) {
 			t.Errorf("Search = %v, want %v", got, want)
@@ -147,26 +148,26 @@ func TestClientGetMany(t *testing.T) {
 			t.Errorf("query = %v", q)
 		}
 		filters = append(filters, q.Get("filter"))
-		io.WriteString(w, `{"data":[{"displayName":"Ola Nordmann","personID":90001}]}`)
+		io.WriteString(w, `{"data":[{"displayName":"Ola Nordmann","uid":"00000000-0000-4000-8000-000000090001"}]}`)
 	}))
 	defer server.Close()
 	c := NewClient(Config{APIURL: server.URL, AuthURL: server.URL})
 
-	got, err := c.GetMany(context.Background(), []string{"90001", "x", "90002"})
+	got, err := c.GetMany(context.Background(), []string{"00000000-0000-4000-8000-000000090001", "90001", "00000000-0000-4000-8000-000000090002"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if want := []Person{{PersonID: "90001", DisplayName: "Ola Nordmann"}}; !reflect.DeepEqual(got, want) {
+	if want := []Person{{UID: "00000000-0000-4000-8000-000000090001", DisplayName: "Ola Nordmann"}}; !reflect.DeepEqual(got, want) {
 		t.Errorf("GetMany = %v, want %v", got, want)
 	}
-	if want := []string{`{"personID":{"_in":[90001,90002]}}`}; !reflect.DeepEqual(filters, want) {
-		t.Errorf("filters = %v, want %v (not a number left out)", filters, want)
+	if want := []string{`{"uid":{"_in":["00000000-0000-4000-8000-000000090001","00000000-0000-4000-8000-000000090002"]}}`}; !reflect.DeepEqual(filters, want) {
+		t.Errorf("filters = %v, want %v (not a UUID left out, case normalized)", filters, want)
 	}
 
 	filters = nil
 	ids := make([]string, 801)
 	for i := range ids {
-		ids[i] = strconv.Itoa(i + 1)
+		ids[i] = uuid.NewString()
 	}
 	if _, err := c.GetMany(context.Background(), ids); err != nil {
 		t.Fatal(err)
@@ -199,8 +200,8 @@ func TestClientSearchLive(t *testing.T) {
 	// Only IDs in messages: no names, birth dates or churches in the output.
 	dated, churched := 0, 0
 	for _, p := range got {
-		if p.PersonID == "" || p.PersonID == "0" || p.DisplayName == "" {
-			t.Errorf("incomplete person %q", p.PersonID)
+		if uuid.Validate(p.UID) != nil || p.DisplayName == "" {
+			t.Errorf("incomplete person %q", p.UID)
 		}
 		if !p.BirthDate.IsZero() {
 			dated++
@@ -215,11 +216,11 @@ func TestClientSearchLive(t *testing.T) {
 	if churched == 0 {
 		t.Error("no church found")
 	}
-	many, err := c.GetMany(context.Background(), []string{got[0].PersonID})
+	many, err := c.GetMany(context.Background(), []string{got[0].UID})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(many) != 1 || many[0].PersonID != got[0].PersonID || !many[0].BirthDate.Equal(got[0].BirthDate) || many[0].Church != got[0].Church {
-		t.Errorf("GetMany(%s) doesn't match the search result", got[0].PersonID)
+	if len(many) != 1 || many[0].UID != got[0].UID || !many[0].BirthDate.Equal(got[0].BirthDate) || many[0].Church != got[0].Church {
+		t.Errorf("GetMany(%s) doesn't match the search result", got[0].UID)
 	}
 }

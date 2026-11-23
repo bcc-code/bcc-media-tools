@@ -2,6 +2,7 @@ package main
 
 import (
 	apiv1 "bcc-media-tools/api/v1"
+	"bcc-media-tools/editorial"
 	"bcc-media-tools/members"
 	"context"
 	"slices"
@@ -42,7 +43,7 @@ func newMemberDetails(m members.Searcher) *memberDetails {
 	return &memberDetails{members: m, byID: map[string]cachedPerson{}}
 }
 
-// get returns the people of ids, by personID. Those not kept are looked up
+// get returns the people of ids, by member uid. Those not kept are looked up
 // together; when that fails or takes longer than memberDetailsWait, they're
 // left out, and asked for again next time.
 func (d *memberDetails) get(ctx context.Context, ids []string) map[string]members.Person {
@@ -54,7 +55,7 @@ func (d *memberDetails) get(ctx context.Context, ids []string) map[string]member
 	defer d.mu.Unlock()
 	out := map[string]members.Person{}
 	for _, id := range ids {
-		if p, ok := d.byID[id]; ok && p.PersonID != "" {
+		if p, ok := d.byID[id]; ok && p.UID != "" {
 			out[id] = p.Person
 		}
 	}
@@ -95,7 +96,7 @@ func (d *memberDetails) lookUp(ctx context.Context, ids []string) {
 		d.byID[id] = cachedPerson{expires: expires}
 	}
 	for _, p := range people {
-		d.byID[p.PersonID] = cachedPerson{Person: p, expires: expires}
+		d.byID[p.UID] = cachedPerson{Person: p, expires: expires}
 	}
 }
 
@@ -137,12 +138,12 @@ func canSeeMembers(email string) bool {
 }
 
 // u26Contributors tells which of the markers' linked contributors are U26.
-func (e EditorialAPI) u26Contributors(ctx context.Context, markers []markerRow) map[string]bool {
+func (e EditorialAPI) u26Contributors(ctx context.Context, markers []editorial.MarkerRow) map[string]bool {
 	var ids []string
 	for _, m := range markers {
 		for _, c := range m.Contributors {
-			if c.PersonID != "" {
-				ids = append(ids, c.PersonID)
+			if c.MemberUID != "" {
+				ids = append(ids, c.MemberUID)
 			}
 		}
 	}
@@ -159,15 +160,15 @@ func (e EditorialAPI) addMemberDetails(ctx context.Context, markers []*apiv1.Edi
 	var ids []string
 	for _, m := range markers {
 		for _, c := range m.GetContributorList() {
-			if c.GetPersonId() != "" {
-				ids = append(ids, c.GetPersonId())
+			if c.GetMemberUid() != "" {
+				ids = append(ids, c.GetMemberUid())
 			}
 		}
 	}
 	people := e.people.get(ctx, ids)
 	for _, m := range markers {
 		for _, c := range m.GetContributorList() {
-			p, ok := people[c.GetPersonId()]
+			p, ok := people[c.GetMemberUid()]
 			if !ok {
 				continue
 			}

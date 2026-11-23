@@ -85,7 +85,7 @@ func TestContributorsMigrationRollsBack(t *testing.T) {
 	}
 	for i, name := range []string{"B", "A"} {
 		require.NoError(t, q.InsertMarkerContributor(ctx, InsertMarkerContributorParams{
-			MarkerID: "m1", Position: int64(i), Name: name, PersonID: sql.NullString{String: "9000" + name, Valid: true},
+			MarkerID: "m1", Position: int64(i), Name: name, MemberUID: sql.NullString{String: "uid-" + name, Valid: true},
 		}))
 	}
 
@@ -110,7 +110,7 @@ func TestContributorsMigrationRollsBack(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, []string{"B", "A"}, contributorNames(t, db, "m1"))
 	var linked int
-	require.NoError(t, db.QueryRow(`SELECT count(*) FROM marker_contributors WHERE person_id IS NOT NULL`).Scan(&linked))
+	require.NoError(t, db.QueryRow(`SELECT count(*) FROM marker_contributors WHERE member_uid IS NOT NULL`).Scan(&linked))
 	assert.Zero(t, linked)
 }
 
