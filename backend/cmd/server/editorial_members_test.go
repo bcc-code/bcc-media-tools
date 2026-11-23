@@ -117,15 +117,21 @@ func TestSearchMembersNeedsEditorAndMembers(t *testing.T) {
 	assert.Equal(t, "Ola Nordmann", got[0].DisplayName)
 }
 
-// Frequent contributors are in the code as IDs only; Members names them, once
+func TestNewFrequentContributors(t *testing.T) {
+	t.Setenv("MEMBERS_FREQUENT_UIDS", " "+uid(90003)+", ,"+uid(90001)+",")
+	assert.Equal(t, []string{uid(90003), uid(90001)}, newFrequentContributors().uids)
+
+	t.Setenv("MEMBERS_FREQUENT_UIDS", "")
+	assert.Empty(t, newFrequentContributors().uids)
+}
+
+// Frequent contributors are configured as uids only; Members names them, once
 // a day.
 func TestSearchMembersFrequent(t *testing.T) {
 	api := newTestEditorialAPI(t)
 	fake := &fakeMembers{}
 	api.members = fake
-	old := frequentContributorIDs
-	frequentContributorIDs = []string{uid(90003), uid(90001), uid(99999), uid(90002)}
-	t.Cleanup(func() { frequentContributorIDs = old })
+	api.frequent = &frequentContributors{uids: []string{uid(90003), uid(90001), uid(99999), uid(90002)}}
 
 	got, err := searchMembers(t, api, "", 0)
 	require.NoError(t, err)
@@ -148,6 +154,13 @@ func TestSearchMembersFrequent(t *testing.T) {
 	got, err = searchMembers(t, api, "", 0)
 	require.NoError(t, err)
 	assert.Empty(t, got)
+
+	api.members = fake
+	api.frequent = &frequentContributors{}
+	got, err = searchMembers(t, api, "", 0)
+	require.NoError(t, err)
+	assert.Empty(t, got, "none configured")
+	assert.Len(t, fake.lookups, 2, "and Members isn't asked")
 }
 
 // People already linked on markers come first, then Members' matches.
