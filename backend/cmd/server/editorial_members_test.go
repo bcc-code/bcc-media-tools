@@ -27,10 +27,8 @@ type fakeMembers struct {
 	lookups [][]string
 	// GetMany finds these; when nil, everyone but uid(99999), as "Person <n>"
 	byID map[string]members.Person
-	// each GetMany takes this long
-	delay time.Duration
-	mu    sync.Mutex
-	gets  map[string]int
+	mu   sync.Mutex
+	gets map[string]int
 }
 
 func (f *fakeMembers) getCount(id string) int {
@@ -50,7 +48,7 @@ func (f *fakeMembers) Search(_ context.Context, _ string, limit int) ([]members.
 	return []members.Person{{UID: uid(90001), DisplayName: "Ola Nordmann"}}, nil
 }
 
-func (f *fakeMembers) GetMany(ctx context.Context, ids []string) ([]members.Person, error) {
+func (f *fakeMembers) GetMany(_ context.Context, ids []string) ([]members.Person, error) {
 	f.mu.Lock()
 	f.lookups = append(f.lookups, ids)
 	if f.gets == nil {
@@ -60,11 +58,6 @@ func (f *fakeMembers) GetMany(ctx context.Context, ids []string) ([]members.Pers
 		f.gets[id]++
 	}
 	f.mu.Unlock()
-	select {
-	case <-time.After(f.delay):
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	}
 	if f.err != nil {
 		return nil, f.err
 	}

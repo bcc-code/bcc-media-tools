@@ -45,7 +45,7 @@ type EditorialAPI struct {
 	// Names the frequent contributors.
 	frequent *frequentContributors
 	// Ages and churches of linked contributors; nil knows none.
-	people *memberDetails
+	people *members.Cache
 }
 
 type playoutClient interface {

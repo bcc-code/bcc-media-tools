@@ -163,12 +163,12 @@ func (e EditorialAPI) withDetails(ctx context.Context, res *apiv1.SearchMembersR
 			ids = append(ids, m.MemberUid)
 		}
 	}
-	for id, p := range e.people.get(ctx, ids) {
+	for id, p := range e.lookUpMembers(ctx, ids) {
 		known[id] = p
 	}
 	for _, m := range res.Members {
 		if p, ok := known[m.MemberUid]; ok {
-			m.Age = int32(age(p.BirthDate, today()))
+			m.Age = int32(p.Age(today()))
 			m.Church = p.Church
 		}
 	}
