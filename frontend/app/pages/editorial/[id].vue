@@ -14,6 +14,7 @@ import type {
     MobileMarker,
     MarkerDetails,
 } from "~/components/editorial/MobileMarkerList.vue";
+import type { Contributor } from "~/components/editorial/ContributorInput.vue";
 import { timestampDate, timestampFromDate } from "@bufbuild/protobuf/wkt";
 
 const route = useRoute("editorial-id");
@@ -79,7 +80,9 @@ interface Row {
     key: string;
     id: string;
     name: string;
+    // the names of contributorList joined, as the table shows them
     contributors: string;
+    contributorList: Contributor[];
     bibleVerses: string;
     comment: string;
     type: string;
@@ -231,7 +234,14 @@ function toRow(m: EditorialMarker): Row {
         key: nextRowKey(),
         id: m.id,
         name: m.name,
-        contributors: m.contributors,
+        contributors: m.contributorList.map((c) => c.name).join(", "),
+        contributorList: m.contributorList.map((c) => ({
+            name: c.name,
+            memberUid: c.memberUid,
+            u26: c.u26,
+            age: c.age,
+            church: c.church,
+        })),
         bibleVerses: m.bibleVerses,
         comment: m.comment,
         type: m.type,
@@ -497,6 +507,7 @@ const mobileMarkers = computed<MobileMarker[]>(() => {
         typeLabel: r.type ? typeLabel(r.type) : "",
         name: r.name,
         contributors: r.contributors,
+        contributorList: r.contributorList,
         bibleVerses: r.bibleVerses,
         comment: r.comment,
         publishBmm: r.publishBmm,
@@ -534,11 +545,42 @@ async function onMobileComment(key: string, comment: string) {
 // Simple and phone views save each change on its own; edit mode saves on Save.
 type Details = Pick<
     Row,
-    "name" | "contributors" | "type" | "bibleVerses" | "playoutSynced"
+    | "name"
+    | "contributors"
+    | "contributorList"
+    | "type"
+    | "bibleVerses"
+    | "playoutSynced"
 >;
 function snapshot(row: Row): Details {
-    const { name, contributors, type, bibleVerses, playoutSynced } = row;
-    return { name, contributors, type, bibleVerses, playoutSynced };
+    const { name, contributors, contributorList, type, bibleVerses } = row;
+    return {
+        name,
+        contributors,
+        contributorList: [...contributorList],
+        type,
+        bibleVerses,
+        playoutSynced: row.playoutSynced,
+    };
+}
+
+function sameContributors(a: Contributor[], b: Contributor[]): boolean {
+    return (
+        a.length === b.length &&
+        a.every(
+            (c, i) => c.name === b[i]!.name && c.memberUid === b[i]!.memberUid,
+        )
+    );
+}
+
+// The chips changed: the joined names follow.
+function setContributors(row: Row, list: Contributor[]) {
+    row.contributorList = list;
+    row.contributors = list.map((c) => c.name).join(", ");
+}
+
+function hasU26(row: Row): boolean {
+    return row.contributorList.some((c) => c.u26);
 }
 
 // The phone drawer and the live edit view edit details; the table shows them
@@ -547,7 +589,7 @@ async function persistDetails(row: Row, before: Details) {
     if (batchEdit.value || !row.id) return;
     const changed =
         row.name !== before.name ||
-        row.contributors !== before.contributors ||
+        !sameContributors(row.contributorList, before.contributorList) ||
         row.type !== before.type ||
         row.bibleVerses !== before.bibleVerses;
     if (!changed) return;
@@ -559,7 +601,7 @@ async function persistDetails(row: Row, before: Details) {
                 sessionId: sessionId.value,
                 markerId: row.id,
                 name: row.name,
-                contributors: row.contributors,
+                contributorList: row.contributorList,
                 type: row.type,
                 bibleVerses: row.bibleVerses,
             }),
@@ -647,7 +689,14 @@ function persistLiveDetails(row: Row) {
     if (!m) return;
     void persistDetails(row, {
         name: m.name,
-        contributors: m.contributors,
+        contributors: m.contributorList.map((c) => c.name).join(", "),
+        contributorList: m.contributorList.map((c) => ({
+            name: c.name,
+            memberUid: c.memberUid,
+            u26: c.u26,
+            age: c.age,
+            church: c.church,
+        })),
         type: m.type,
         bibleVerses: m.bibleVerses,
         playoutSynced: m.playoutSynced,
@@ -719,6 +768,7 @@ function addRow() {
         id: "",
         name: "",
         contributors: "",
+        contributorList: [],
         bibleVerses: "",
         comment: "",
         type: "",
@@ -974,7 +1024,12 @@ async function mergeServerSession(s: EditorialSession) {
             row.key === focusedKey &&
             focusedField &&
             TYPED_FIELDS.includes(focusedField)
-                ? { [focusedField]: row[focusedField] }
+                ? focusedField === "contributors"
+                    ? {
+                          contributors: row.contributors,
+                          contributorList: row.contributorList,
+                      }
+                    : { [focusedField]: row[focusedField] }
                 : {};
         // A publish write still pending: the server's flags are what it
         // last had, to fall back to; the switches stay as toggled.
@@ -1848,7 +1903,7 @@ async function save() {
                 id: r.id,
                 sortOrder: i,
                 name: r.name,
-                contributors: r.contributors,
+                contributorList: r.contributorList,
                 bibleVerses: r.bibleVerses,
                 comment: r.comment,
                 type: r.type,
@@ -2267,6 +2322,7 @@ onBeforeRouteLeave(() => {
                             }}
                         </p>
                         <EditorialMobileMarkerList
+                            :session-id="sessionId"
                             :markers="mobileMarkers"
                             :can-edit="canEditDetails"
                             :type-items="typeItems"
@@ -2495,13 +2551,19 @@ onBeforeRouteLeave(() => {
                                                 "
                                                 @change="persistName(row)"
                                             />
-                                            <DesignInput
-                                                v-model="row.contributors"
+                                            <EditorialContributorInput
+                                                :model-value="
+                                                    row.contributorList
+                                                "
+                                                :session-id="sessionId"
                                                 data-field="contributors"
                                                 :placeholder="
                                                     t(
                                                         'editorial.col.contributors',
                                                     )
+                                                "
+                                                @update:model-value="
+                                                    setContributors(row, $event)
                                                 "
                                                 @change="
                                                     persistLiveDetails(row)
@@ -2531,7 +2593,15 @@ onBeforeRouteLeave(() => {
                                             class="title-field"
                                             @focusin="nameBeforeEdit = row.name"
                                             @change="persistName(row)"
-                                        />
+                                        >
+                                            <!-- with a title, the names and U26 go on the line below -->
+                                            <template
+                                                v-if="!row.name && hasU26(row)"
+                                                #end
+                                            >
+                                                <EditorialU26Badge />
+                                            </template>
+                                        </EditorialGrowingTextarea>
                                         <!--
                                             Medvirkende and Bibelvers ride under
                                             the title rather than taking columns
@@ -2567,9 +2637,12 @@ onBeforeRouteLeave(() => {
                                                 row.name &&
                                                 row.contributors
                                             "
-                                            class="text-body-3 text-text-default mt-1 px-3 font-medium"
+                                            class="text-body-3 text-text-default mt-1 flex items-baseline gap-1.5 px-3 font-medium"
                                         >
                                             {{ row.contributors }}
+                                            <EditorialU26Badge
+                                                v-if="hasU26(row)"
+                                            />
                                         </p>
                                         <p
                                             v-if="

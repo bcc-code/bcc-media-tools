@@ -108,11 +108,12 @@ func TestChaptersAgainstVidispine(t *testing.T) {
 	require.NoError(t, err)
 
 	// 1. Write three chapters.
-	first := []editorial.Marker{
-		{Name: "", Contributors: "Kåre J. Smith, Harald Hansen", Type: "tale", BibleVerses: "John 3:16", StartMs: 10_000, EndMs: 70_000, PublishBmm: true},
+	first := markerRows([]editorial.Marker{
+		{Name: "", Type: "tale", BibleVerses: "John 3:16", StartMs: 10_000, EndMs: 70_000, PublishBmm: true},
 		{Name: "HV 16 – Se ditt hjem", Type: "allsang", StartMs: 70_000, EndMs: 130_000},
 		{Name: "Kunngjøringer", Type: "annet", StartMs: 130_000, EndMs: 140_000},
-	}
+	})
+	first[0].Contributors = []editorial.Contributor{{Name: "Kåre J. Smith"}, {Name: "Harald Hansen"}}
 	res, err := api.exportChapters(ctx, sess, first, start)
 	require.NoError(t, err)
 	assert.EqualValues(t, 3, res.Written)
@@ -154,10 +155,10 @@ func TestChaptersAgainstVidispine(t *testing.T) {
 	}
 
 	// 2. Export again with two markers: the three are replaced.
-	second := []editorial.Marker{
+	second := markerRows([]editorial.Marker{
 		{Name: "Tale", Type: "tale", StartMs: 10_000, EndMs: 100_000},
 		{Name: "Sang", Type: "sang", StartMs: 100_000, EndMs: 160_000},
-	}
+	})
 	res, err = api.exportChapters(ctx, sess, second, start)
 	require.NoError(t, err)
 	assert.EqualValues(t, 2, res.Written)
