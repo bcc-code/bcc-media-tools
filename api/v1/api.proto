@@ -75,8 +75,8 @@ message LiveIngestPermission {
 // Four roles, each including the ones before it:
 // reviewer (enabled) < editor < live < admin.
 message EditorialPermission {
-  // Reviewer: see all sessions, export them, comment, set publish flags and
-  // change marker titles
+  // Reviewer: see all sessions, export them, comment, set publish flags,
+  // approve sessions and change marker titles
   bool enabled = 1;
   // Admin: everything, including changing a session's details and deleting
   // sessions
@@ -87,6 +87,8 @@ message EditorialPermission {
   // Editor: also change contributors, type and Bible verses of existing
   // markers
   bool editor = 4;
+  // Members: look up contributors in BCC Members; explicit
+  bool members = 5;
 }
 
 message Permissions {
@@ -490,8 +492,6 @@ message EditorialMarker {
   reserved "publish";
   // "import" (from Mediabanken chapters) or "manual"
   string source = 8;
-  // "Medvirkende" — who takes part in the marker
-  string contributors = 9;
   // optional free-text editorial comment
   string comment = 10;
   // optional free-text bible verse references (e.g. "John 3:16; Rom 8:1-4")
@@ -505,6 +505,16 @@ message EditorialMarker {
   // true while Playout still refreshes the row; cleared when an editor changes
   // a field Playout fills. Server-managed, ignored on save.
   bool playout_synced = 15;
+  repeated EditorialContributor contributor_list = 16;
+}
+
+message EditorialContributor {
+  string name = 1;
+  // BCC Members uid (a UUID); empty when typed in by hand
+  string member_uid = 2;
+  int32 age = 3;
+  string church = 4;
+  bool u26 = 5;
 }
 
 // A review session tied to a single Mediabanken asset.
@@ -527,6 +537,18 @@ message EditorialSession {
   string playout_event_id = 12;
   // only set on live sessions
   google.protobuf.Timestamp clock_start = 13;
+  // sign-offs on the whole session; set on every response
+  EditorialApproval redactional_approval = 14;
+  EditorialApproval technical_approval = 15;
+}
+
+// One sign-off on a review session. by and at are who last approved or
+// cleared it and when; empty until someone does.
+message EditorialApproval {
+  bool approved = 1;
+  // email
+  string by = 2;
+  google.protobuf.Timestamp at = 3;
 }
 
 message ListEditorialSessionsResponse {
@@ -765,6 +787,14 @@ message SetEditorialPublishRequest {
   bool publish_bcc = 4;
 }
 
+// Set or clear one approval, for SetEditorialRedactionalApproval and
+// SetEditorialTechnicalApproval. Records the caller and the time; returns the
+// approval as it now is.
+message SetEditorialApprovalRequest {
+  string session_id = 1;
+  bool approved = 2;
+}
+
 // Update a single marker's free-text comment. Like SetEditorialPublish this is
 // a write path available in the simple view (no edit rights required).
 message SetEditorialCommentRequest {
@@ -788,9 +818,37 @@ message SetEditorialDetailsRequest {
   string session_id = 1;
   string marker_id = 2;
   string name = 3;
-  string contributors = 4;
+  repeated EditorialContributor contributor_list = 4;
   string type = 5;
   string bible_verses = 6;
+}
+
+// Find people in BCC Members by name, for contributor suggestions. Requires
+// the editor role and the members permission.
+message SearchMembersRequest {
+  // empty lists the frequent contributors
+  string query = 1;
+  // defaults to 10
+  int32 limit = 2;
+  // ages as of this session's recording; empty is today
+  string session_id = 3;
+}
+
+// A person in BCC Members: only what a contributor needs, as this is
+// personal data.
+message Member {
+  // BCC Members uid (a UUID)
+  string member_uid = 1;
+  string display_name = 2;
+  // age today, 0 when unknown; never the birth date itself
+  int32 age = 3;
+  string church = 4;
+}
+
+// People already linked on markers first, then Members' best matches. Empty
+// when neither can be reached, so a name can still be typed in by hand.
+message SearchMembersResponse {
+  repeated Member members = 1;
 }
 
 service APIService {
@@ -856,6 +914,8 @@ service APIService {
   rpc GetEditorialSession(GetEditorialSessionRequest) returns (EditorialSession) {}
   rpc SaveEditorialSession(SaveEditorialSessionRequest) returns (EditorialSession) {}
   rpc SetEditorialPublish(SetEditorialPublishRequest) returns (Void) {}
+  rpc SetEditorialRedactionalApproval(SetEditorialApprovalRequest) returns (EditorialApproval) {}
+  rpc SetEditorialTechnicalApproval(SetEditorialApprovalRequest) returns (EditorialApproval) {}
   rpc SetEditorialComment(SetEditorialCommentRequest) returns (Void) {}
   rpc SetEditorialName(SetEditorialNameRequest) returns (Void) {}
   rpc SetEditorialDetails(SetEditorialDetailsRequest) returns (Void) {}
@@ -877,4 +937,5 @@ service APIService {
   rpc TakeEditorialSync(TakeEditorialSyncRequest) returns (Void) {}
   rpc GetServerTime(Void) returns (ServerTime) {}
   rpc ExportEditorialChapters(ExportEditorialChaptersRequest) returns (ExportEditorialChaptersResponse) {}
+  rpc SearchMembers(SearchMembersRequest) returns (SearchMembersResponse) {}
 }

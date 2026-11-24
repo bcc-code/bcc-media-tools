@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type {
+    EditorialApproval,
     EditorialSession,
     EditorialMarker,
     EditorialPresence,
@@ -14,7 +15,12 @@ import type {
     MobileMarker,
     MarkerDetails,
 } from "~/components/editorial/MobileMarkerList.vue";
-import { timestampDate, timestampFromDate } from "@bufbuild/protobuf/wkt";
+import type { Contributor } from "~/components/editorial/ContributorInput.vue";
+import {
+    timestampDate,
+    timestampFromDate,
+    timestampMs,
+} from "@bufbuild/protobuf/wkt";
 
 const route = useRoute("editorial-id");
 const sessionId = computed(() => route.params.id as string);
@@ -79,7 +85,9 @@ interface Row {
     key: string;
     id: string;
     name: string;
+    // the names of contributorList joined, as the table shows them
     contributors: string;
+    contributorList: Contributor[];
     bibleVerses: string;
     comment: string;
     type: string;
@@ -231,7 +239,14 @@ function toRow(m: EditorialMarker): Row {
         key: nextRowKey(),
         id: m.id,
         name: m.name,
-        contributors: m.contributors,
+        contributors: m.contributorList.map((c) => c.name).join(", "),
+        contributorList: m.contributorList.map((c) => ({
+            name: c.name,
+            memberUid: c.memberUid,
+            u26: c.u26,
+            age: c.age,
+            church: c.church,
+        })),
         bibleVerses: m.bibleVerses,
         comment: m.comment,
         type: m.type,
@@ -321,6 +336,8 @@ async function load() {
     try {
         const s = await api.getEditorialSession({ id: sessionId.value });
         session.value = s;
+        approvals.value = {};
+        takeApprovals(s);
         title.value = s.title;
         rows.value = s.markers.map(toRow);
         serverBase = s;
@@ -453,6 +470,114 @@ async function onPublishToggle(
     }
 }
 
+// ── Session approvals (any reviewer, saved at once) ──
+const APPROVAL_KEYS = ["redactional", "technical"] as const;
+type ApprovalKey = (typeof APPROVAL_KEYS)[number];
+const SET_APPROVAL = {
+    redactional: api.setEditorialRedactionalApproval,
+    technical: api.setEditorialTechnicalApproval,
+} satisfies Record<ApprovalKey, unknown>;
+// The latest from the server, taken from every session that arrives, even one
+// the edit view holds back while it has unsaved changes.
+const approvals = ref<Partial<Record<ApprovalKey, EditorialApproval>>>({});
+//
+// Sessions can arrive out of order (a push read before this tab's last write
+// may land after its answer), so an approval only gives way to a later one:
+// the server stamps `at` on every approve and clear.
+function takeApprovals(s: EditorialSession) {
+    const incoming: Record<ApprovalKey, EditorialApproval | undefined> = {
+        redactional: s.redactionalApproval,
+        technical: s.technicalApproval,
+    };
+    for (const key of APPROVAL_KEYS) {
+        const current = approvals.value[key]?.at;
+        const next = incoming[key]?.at;
+        if (current && (!next || timestampMs(next) < timestampMs(current)))
+            continue;
+        approvals.value[key] = incoming[key];
+    }
+}
+// The switch's value while its write is in flight, so a session that arrives
+// meanwhile doesn't flip it back.
+const approvalPending = ref<Partial<Record<ApprovalKey, boolean>>>({});
+
+function isApproved(key: ApprovalKey): boolean {
+    return approvalPending.value[key] ?? !!approvals.value[key]?.approved;
+}
+
+// The line under an approval, always one line so the layout holds still while
+// it changes: a status, or who approved it (their address) and when.
+interface ApprovalLine {
+    status: string;
+    email: string;
+    date: string;
+}
+const approvalLines = computed(() => {
+    const out = {} as Record<ApprovalKey, ApprovalLine>;
+    for (const key of APPROVAL_KEYS) {
+        const a = approvals.value[key];
+        const line = { status: "", email: "", date: "" };
+        if (approvalPending.value[key] !== undefined)
+            line.status = t("editorial.saving");
+        else if (!a?.approved) line.status = t("editorial.notApproved");
+        else {
+            line.email = a.by;
+            line.date = formatApprovalDate(a.at);
+        }
+        out[key] = line;
+    }
+    return out;
+});
+
+// "9 Nov, 15:40", with the year only when it isn't this year.
+const approvalDateOptions: Intl.DateTimeFormatOptions = {
+    timeZone: "Europe/Oslo",
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+};
+const approvalDate = new Intl.DateTimeFormat("en-GB", approvalDateOptions);
+const approvalDateWithYear = new Intl.DateTimeFormat("en-GB", {
+    ...approvalDateOptions,
+    year: "numeric",
+});
+const osloYear = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Oslo",
+    year: "numeric",
+});
+function formatApprovalDate(ts?: Timestamp): string {
+    if (!ts) return "";
+    const d = timestampDate(ts);
+    return osloYear.format(d) === osloYear.format(new Date())
+        ? approvalDate.format(d)
+        : approvalDateWithYear.format(d);
+}
+
+// Saves the approval at once; the server records who and when. Clicks while
+// the write is in flight are ignored.
+async function onApprovalToggle(key: ApprovalKey, value: boolean) {
+    if (approvalPending.value[key] !== undefined) return;
+    approvalPending.value[key] = value;
+    try {
+        approvals.value[key] = await tracked(() =>
+            SET_APPROVAL[key]({ sessionId: sessionId.value, approved: value }),
+        );
+        toaster.create({
+            title: t(
+                `editorial.${key}Approval${value ? "Recorded" : "Removed"}`,
+            ),
+            type: "success",
+        });
+    } catch {
+        toaster.create({ title: t("editorial.saveFailed"), type: "error" });
+    } finally {
+        // The server's value takes over again.
+        delete approvalPending.value[key];
+    }
+}
+
 // What stands in for a missing title, in the order of what best says which row
 // this is: who contributed it, else what kind of item it is. Imported chapters
 // often carry a subclip type but no title, and those rows were reading as
@@ -497,6 +622,7 @@ const mobileMarkers = computed<MobileMarker[]>(() => {
         typeLabel: r.type ? typeLabel(r.type) : "",
         name: r.name,
         contributors: r.contributors,
+        contributorList: r.contributorList,
         bibleVerses: r.bibleVerses,
         comment: r.comment,
         publishBmm: r.publishBmm,
@@ -534,11 +660,42 @@ async function onMobileComment(key: string, comment: string) {
 // Simple and phone views save each change on its own; edit mode saves on Save.
 type Details = Pick<
     Row,
-    "name" | "contributors" | "type" | "bibleVerses" | "playoutSynced"
+    | "name"
+    | "contributors"
+    | "contributorList"
+    | "type"
+    | "bibleVerses"
+    | "playoutSynced"
 >;
 function snapshot(row: Row): Details {
-    const { name, contributors, type, bibleVerses, playoutSynced } = row;
-    return { name, contributors, type, bibleVerses, playoutSynced };
+    const { name, contributors, contributorList, type, bibleVerses } = row;
+    return {
+        name,
+        contributors,
+        contributorList: [...contributorList],
+        type,
+        bibleVerses,
+        playoutSynced: row.playoutSynced,
+    };
+}
+
+function sameContributors(a: Contributor[], b: Contributor[]): boolean {
+    return (
+        a.length === b.length &&
+        a.every(
+            (c, i) => c.name === b[i]!.name && c.memberUid === b[i]!.memberUid,
+        )
+    );
+}
+
+// The chips changed: the joined names follow.
+function setContributors(row: Row, list: Contributor[]) {
+    row.contributorList = list;
+    row.contributors = list.map((c) => c.name).join(", ");
+}
+
+function hasU26(row: Row): boolean {
+    return row.contributorList.some((c) => c.u26);
 }
 
 // The phone drawer and the live edit view edit details; the table shows them
@@ -547,7 +704,7 @@ async function persistDetails(row: Row, before: Details) {
     if (batchEdit.value || !row.id) return;
     const changed =
         row.name !== before.name ||
-        row.contributors !== before.contributors ||
+        !sameContributors(row.contributorList, before.contributorList) ||
         row.type !== before.type ||
         row.bibleVerses !== before.bibleVerses;
     if (!changed) return;
@@ -559,7 +716,7 @@ async function persistDetails(row: Row, before: Details) {
                 sessionId: sessionId.value,
                 markerId: row.id,
                 name: row.name,
-                contributors: row.contributors,
+                contributorList: row.contributorList,
                 type: row.type,
                 bibleVerses: row.bibleVerses,
             }),
@@ -647,7 +804,14 @@ function persistLiveDetails(row: Row) {
     if (!m) return;
     void persistDetails(row, {
         name: m.name,
-        contributors: m.contributors,
+        contributors: m.contributorList.map((c) => c.name).join(", "),
+        contributorList: m.contributorList.map((c) => ({
+            name: c.name,
+            memberUid: c.memberUid,
+            u26: c.u26,
+            age: c.age,
+            church: c.church,
+        })),
         type: m.type,
         bibleVerses: m.bibleVerses,
         playoutSynced: m.playoutSynced,
@@ -719,6 +883,7 @@ function addRow() {
         id: "",
         name: "",
         contributors: "",
+        contributorList: [],
         bibleVerses: "",
         comment: "",
         type: "",
@@ -849,6 +1014,7 @@ const mutationInProgress = computed(
 async function applyServerSession(s: EditorialSession) {
     hydrated = false;
     session.value = s;
+    takeApprovals(s);
     serverBase = s;
     heldSession = undefined;
     remoteChanged.value = false;
@@ -910,7 +1076,8 @@ let serverBase: EditorialSession | undefined;
 // that Save, which the Save's own answer replaces.
 let heldSession: EditorialSession | undefined;
 
-// Whether s is what this tab last took, apart from when it was touched.
+// Whether s is what this tab last took, apart from when it was touched and
+// its approvals, which are saved apart from the edit view.
 function sameAsBase(s: EditorialSession): boolean {
     const base = serverBase;
     if (!base) return false;
@@ -918,6 +1085,8 @@ function sameAsBase(s: EditorialSession): boolean {
         const c = clone(EditorialSessionSchema, x);
         c.updatedAt = undefined;
         c.previewUrl = "";
+        c.redactionalApproval = undefined;
+        c.technicalApproval = undefined;
         return c;
     };
     return equals(EditorialSessionSchema, comparable(s), comparable(base));
@@ -945,6 +1114,7 @@ type TypedField = (typeof TYPED_FIELDS)[number];
 // change, except the one field being typed in, which keeps its text until it
 // is left (and saved).
 async function mergeServerSession(s: EditorialSession) {
+    takeApprovals(s);
     if (batchEdit.value && dirty.value) {
         if (saving.value) heldSession = s;
         else if (!sameAsBase(s)) remoteChanged.value = true;
@@ -974,7 +1144,12 @@ async function mergeServerSession(s: EditorialSession) {
             row.key === focusedKey &&
             focusedField &&
             TYPED_FIELDS.includes(focusedField)
-                ? { [focusedField]: row[focusedField] }
+                ? focusedField === "contributors"
+                    ? {
+                          contributors: row.contributors,
+                          contributorList: row.contributorList,
+                      }
+                    : { [focusedField]: row[focusedField] }
                 : {};
         // A publish write still pending: the server's flags are what it
         // last had, to fall back to; the switches stay as toggled.
@@ -1848,7 +2023,7 @@ async function save() {
                 id: r.id,
                 sortOrder: i,
                 name: r.name,
-                contributors: r.contributors,
+                contributorList: r.contributorList,
                 bibleVerses: r.bibleVerses,
                 comment: r.comment,
                 type: r.type,
@@ -1919,42 +2094,103 @@ onBeforeRouteLeave(() => {
         </p>
 
         <template v-else>
-            <div class="mb-4 max-w-xl">
-                <DesignInput
-                    v-if="effectiveMode === 'edit'"
-                    v-model="title"
-                    data-session-title
-                    :placeholder="session?.VXID"
-                    @focusin="titleBeforeEdit = title"
-                    @change="persistTitle"
-                />
-                <div v-else class="flex min-w-0 items-center gap-3">
-                    <h1 class="text-heading-2 text-text-default truncate">
-                        {{ title || session?.VXID || t("editorial.untitled") }}
-                    </h1>
-                    <DesignBadge v-if="isLive" variant="warning">
-                        {{ t("editorial.live") }}
-                    </DesignBadge>
+            <div
+                class="mb-4 flex flex-col gap-x-8 gap-y-4 md:flex-row md:items-start md:justify-between"
+            >
+                <div class="max-w-xl min-w-0 md:flex-1">
+                    <DesignInput
+                        v-if="effectiveMode === 'edit'"
+                        v-model="title"
+                        data-session-title
+                        :placeholder="session?.VXID"
+                        @focusin="titleBeforeEdit = title"
+                        @change="persistTitle"
+                    />
+                    <div v-else class="flex min-w-0 items-center gap-3">
+                        <h1 class="text-heading-2 text-text-default truncate">
+                            {{
+                                title ||
+                                session?.VXID ||
+                                t("editorial.untitled")
+                            }}
+                        </h1>
+                        <DesignBadge v-if="isLive" variant="warning">
+                            {{ t("editorial.live") }}
+                        </DesignBadge>
+                    </div>
+                    <p v-if="isLive" class="text-caption-1 text-text-hint mt-1">
+                        {{ t("editorial.notInMediabanken") }}
+                    </p>
+                    <p
+                        v-else-if="title && title !== session?.VXID"
+                        class="text-caption-1 text-text-hint mt-1"
+                    >
+                        {{ session?.VXID }}
+                    </p>
+                    <p
+                        v-if="session?.updatedAt"
+                        class="text-caption-1 text-text-hint mt-1"
+                    >
+                        {{
+                            t("editorial.lastUpdated", {
+                                date: formatDateTime(session.updatedAt),
+                            })
+                        }}
+                    </p>
                 </div>
-                <p v-if="isLive" class="text-caption-1 text-text-hint mt-1">
-                    {{ t("editorial.notInMediabanken") }}
-                </p>
-                <p
-                    v-else-if="title && title !== session?.VXID"
-                    class="text-caption-1 text-text-hint mt-1"
+                <!--
+                    A fixed width and one detail line per approval that is
+                    always there, so ticking a box doesn't move anything. The
+                    width is in em of the detail text, so it grows with the
+                    simple view's larger type and the line still fits.
+                -->
+                <div
+                    role="group"
+                    :aria-label="t('editorial.approvals')"
+                    class="text-caption-1 flex shrink-0 flex-col gap-3 md:w-[27em]"
                 >
-                    {{ session?.VXID }}
-                </p>
-                <p
-                    v-if="session?.updatedAt"
-                    class="text-caption-1 text-text-hint mt-1"
-                >
-                    {{
-                        t("editorial.lastUpdated", {
-                            date: formatDateTime(session.updatedAt),
-                        })
-                    }}
-                </p>
+                    <DesignCheckbox
+                        v-for="key in APPROVAL_KEYS"
+                        :key="key"
+                        class="w-full"
+                        :model-value="isApproved(key)"
+                        :label="t(`editorial.${key}Approval`)"
+                        @update:model-value="onApprovalToggle(key, $event)"
+                    >
+                        <template #description>
+                            <span
+                                v-if="approvalLines[key].status"
+                                class="block truncate"
+                            >
+                                {{ approvalLines[key].status }}
+                            </span>
+                            <!--
+                                Only the address gives way, cut off with an
+                                ellipsis (all of it on hover), so the date
+                                stays readable in a narrow column.
+                            -->
+                            <i18n-t
+                                v-else
+                                keypath="editorial.approvedBy"
+                                tag="span"
+                                class="flex min-w-0 whitespace-pre"
+                            >
+                                <template #name>
+                                    <DesignTooltip
+                                        :content="approvalLines[key].email"
+                                    >
+                                        <span class="min-w-0 truncate">
+                                            {{ approvalLines[key].email }}
+                                        </span>
+                                    </DesignTooltip>
+                                </template>
+                                <template #date>
+                                    {{ approvalLines[key].date }}
+                                </template>
+                            </i18n-t>
+                        </template>
+                    </DesignCheckbox>
+                </div>
             </div>
 
             <div
@@ -2267,6 +2503,7 @@ onBeforeRouteLeave(() => {
                             }}
                         </p>
                         <EditorialMobileMarkerList
+                            :session-id="sessionId"
                             :markers="mobileMarkers"
                             :can-edit="canEditDetails"
                             :type-items="typeItems"
@@ -2495,13 +2732,19 @@ onBeforeRouteLeave(() => {
                                                 "
                                                 @change="persistName(row)"
                                             />
-                                            <DesignInput
-                                                v-model="row.contributors"
+                                            <EditorialContributorInput
+                                                :model-value="
+                                                    row.contributorList
+                                                "
+                                                :session-id="sessionId"
                                                 data-field="contributors"
                                                 :placeholder="
                                                     t(
                                                         'editorial.col.contributors',
                                                     )
+                                                "
+                                                @update:model-value="
+                                                    setContributors(row, $event)
                                                 "
                                                 @change="
                                                     persistLiveDetails(row)
@@ -2531,7 +2774,15 @@ onBeforeRouteLeave(() => {
                                             class="title-field"
                                             @focusin="nameBeforeEdit = row.name"
                                             @change="persistName(row)"
-                                        />
+                                        >
+                                            <!-- with a title, the names and U26 go on the line below -->
+                                            <template
+                                                v-if="!row.name && hasU26(row)"
+                                                #end
+                                            >
+                                                <EditorialU26Badge />
+                                            </template>
+                                        </EditorialGrowingTextarea>
                                         <!--
                                             Medvirkende and Bibelvers ride under
                                             the title rather than taking columns
@@ -2567,9 +2818,12 @@ onBeforeRouteLeave(() => {
                                                 row.name &&
                                                 row.contributors
                                             "
-                                            class="text-body-3 text-text-default mt-1 px-3 font-medium"
+                                            class="text-body-3 text-text-default mt-1 flex items-baseline gap-1.5 px-3 font-medium"
                                         >
                                             {{ row.contributors }}
+                                            <EditorialU26Badge
+                                                v-if="hasU26(row)"
+                                            />
                                         </p>
                                         <p
                                             v-if="

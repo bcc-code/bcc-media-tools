@@ -7,6 +7,7 @@ package editorial
 
 import (
 	"context"
+	"database/sql"
 )
 
 const attachRecording = `-- name: AttachRecording :execrows
@@ -68,6 +69,16 @@ func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) er
 	return err
 }
 
+const deleteContributorsForMarker = `-- name: DeleteContributorsForMarker :exec
+DELETE FROM marker_contributors
+WHERE marker_id = ?
+`
+
+func (q *Queries) DeleteContributorsForMarker(ctx context.Context, markerID string) error {
+	_, err := q.db.ExecContext(ctx, deleteContributorsForMarker, markerID)
+	return err
+}
+
 const deleteExportedChapter = `-- name: DeleteExportedChapter :exec
 DELETE FROM exported_chapters
 WHERE session_id = ? AND uuid = ?
@@ -122,7 +133,7 @@ func (q *Queries) DismissPlayoutKey(ctx context.Context, arg DismissPlayoutKeyPa
 }
 
 const getSession = `-- name: GetSession :one
-SELECT id, vxid, title, status, created_by, created_at, updated_at, playout_event_id, recording_start_ms, recording_end_ms, kind, clock_start_ms FROM sessions
+SELECT id, vxid, title, status, created_by, created_at, updated_at, playout_event_id, recording_start_ms, recording_end_ms, kind, clock_start_ms, redactional_approved, redactional_approved_by, redactional_approved_at, technical_approved, technical_approved_by, technical_approved_at FROM sessions
 WHERE id = ?
 `
 
@@ -142,6 +153,12 @@ func (q *Queries) GetSession(ctx context.Context, id string) (Session, error) {
 		&i.RecordingEndMs,
 		&i.Kind,
 		&i.ClockStartMs,
+		&i.RedactionalApproved,
+		&i.RedactionalApprovedBy,
+		&i.RedactionalApprovedAt,
+		&i.TechnicalApproved,
+		&i.TechnicalApprovedBy,
+		&i.TechnicalApprovedAt,
 	)
 	return i, err
 }
@@ -173,8 +190,8 @@ func (q *Queries) InsertExportedChapter(ctx context.Context, arg InsertExportedC
 }
 
 const insertMarker = `-- name: InsertMarker :exec
-INSERT INTO markers (id, session_id, sort_order, name, contributors, comment, bible_verses, type, start_ms, end_ms, publish_bmm, publish_bcc, source, created_at, updated_at, playout_key, playout_synced)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO markers (id, session_id, sort_order, name, comment, bible_verses, type, start_ms, end_ms, publish_bmm, publish_bcc, source, created_at, updated_at, playout_key, playout_synced)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `
 
 type InsertMarkerParams struct {
@@ -182,7 +199,6 @@ type InsertMarkerParams struct {
 	SessionID     string
 	SortOrder     int64
 	Name          string
-	Contributors  string
 	Comment       string
 	BibleVerses   string
 	Type          string
@@ -203,7 +219,6 @@ func (q *Queries) InsertMarker(ctx context.Context, arg InsertMarkerParams) erro
 		arg.SessionID,
 		arg.SortOrder,
 		arg.Name,
-		arg.Contributors,
 		arg.Comment,
 		arg.BibleVerses,
 		arg.Type,
@@ -218,6 +233,63 @@ func (q *Queries) InsertMarker(ctx context.Context, arg InsertMarkerParams) erro
 		arg.PlayoutSynced,
 	)
 	return err
+}
+
+const insertMarkerContributor = `-- name: InsertMarkerContributor :exec
+INSERT INTO marker_contributors (marker_id, position, name, member_uid)
+VALUES (?, ?, ?, ?)
+`
+
+type InsertMarkerContributorParams struct {
+	MarkerID  string
+	Position  int64
+	Name      string
+	MemberUID sql.NullString
+}
+
+func (q *Queries) InsertMarkerContributor(ctx context.Context, arg InsertMarkerContributorParams) error {
+	_, err := q.db.ExecContext(ctx, insertMarkerContributor,
+		arg.MarkerID,
+		arg.Position,
+		arg.Name,
+		arg.MemberUID,
+	)
+	return err
+}
+
+const listContributorsForSession = `-- name: ListContributorsForSession :many
+SELECT c.marker_id, c.position, c.name, c.member_uid FROM marker_contributors c
+JOIN markers m ON m.id = c.marker_id
+WHERE m.session_id = ?
+ORDER BY m.sort_order, c.position
+`
+
+func (q *Queries) ListContributorsForSession(ctx context.Context, sessionID string) ([]MarkerContributor, error) {
+	rows, err := q.db.QueryContext(ctx, listContributorsForSession, sessionID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []MarkerContributor
+	for rows.Next() {
+		var i MarkerContributor
+		if err := rows.Scan(
+			&i.MarkerID,
+			&i.Position,
+			&i.Name,
+			&i.MemberUID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listDismissedPlayoutKeys = `-- name: ListDismissedPlayoutKeys :many
@@ -288,8 +360,44 @@ func (q *Queries) ListExportedChapters(ctx context.Context, arg ListExportedChap
 	return items, nil
 }
 
+const listLinkedContributors = `-- name: ListLinkedContributors :many
+SELECT member_uid, name FROM marker_contributors
+WHERE member_uid IS NOT NULL
+GROUP BY member_uid, name
+ORDER BY count(*) DESC, name
+`
+
+type ListLinkedContributorsRow struct {
+	MemberUID sql.NullString
+	Name      string
+}
+
+// Each linked person under each name they were saved with, most used first.
+func (q *Queries) ListLinkedContributors(ctx context.Context) ([]ListLinkedContributorsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listLinkedContributors)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListLinkedContributorsRow
+	for rows.Next() {
+		var i ListLinkedContributorsRow
+		if err := rows.Scan(&i.MemberUID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listMarkersForSession = `-- name: ListMarkersForSession :many
-SELECT id, session_id, sort_order, name, contributors, comment, bible_verses, type, start_ms, end_ms, publish_bmm, publish_bcc, source, created_at, updated_at, playout_key, playout_synced FROM markers
+SELECT id, session_id, sort_order, name, comment, bible_verses, type, start_ms, end_ms, publish_bmm, publish_bcc, source, created_at, updated_at, playout_key, playout_synced FROM markers
 WHERE session_id = ?
 ORDER BY sort_order ASC
 `
@@ -308,7 +416,6 @@ func (q *Queries) ListMarkersForSession(ctx context.Context, sessionID string) (
 			&i.SessionID,
 			&i.SortOrder,
 			&i.Name,
-			&i.Contributors,
 			&i.Comment,
 			&i.BibleVerses,
 			&i.Type,
@@ -336,7 +443,7 @@ func (q *Queries) ListMarkersForSession(ctx context.Context, sessionID string) (
 }
 
 const listSessions = `-- name: ListSessions :many
-SELECT id, vxid, title, status, created_by, created_at, updated_at, playout_event_id, recording_start_ms, recording_end_ms, kind, clock_start_ms FROM sessions
+SELECT id, vxid, title, status, created_by, created_at, updated_at, playout_event_id, recording_start_ms, recording_end_ms, kind, clock_start_ms, redactional_approved, redactional_approved_by, redactional_approved_at, technical_approved, technical_approved_by, technical_approved_at FROM sessions
 ORDER BY created_at DESC
 `
 
@@ -362,6 +469,12 @@ func (q *Queries) ListSessions(ctx context.Context) ([]Session, error) {
 			&i.RecordingEndMs,
 			&i.Kind,
 			&i.ClockStartMs,
+			&i.RedactionalApproved,
+			&i.RedactionalApprovedBy,
+			&i.RedactionalApprovedAt,
+			&i.TechnicalApproved,
+			&i.TechnicalApprovedBy,
+			&i.TechnicalApprovedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -402,25 +515,23 @@ func (q *Queries) SetMarkerComment(ctx context.Context, arg SetMarkerCommentPara
 }
 
 const setMarkerDetails = `-- name: SetMarkerDetails :execrows
-UPDATE markers SET name = ?, contributors = ?, type = ?, bible_verses = ?, playout_synced = 0, updated_at = ?
+UPDATE markers SET name = ?, type = ?, bible_verses = ?, playout_synced = 0, updated_at = ?
 WHERE id = ? AND session_id = ?
 `
 
 type SetMarkerDetailsParams struct {
-	Name         string
-	Contributors string
-	Type         string
-	BibleVerses  string
-	UpdatedAt    int64
-	ID           string
-	SessionID    string
+	Name        string
+	Type        string
+	BibleVerses string
+	UpdatedAt   int64
+	ID          string
+	SessionID   string
 }
 
 // Hand-edited details stop Playout from refreshing the row.
 func (q *Queries) SetMarkerDetails(ctx context.Context, arg SetMarkerDetailsParams) (int64, error) {
 	result, err := q.db.ExecContext(ctx, setMarkerDetails,
 		arg.Name,
-		arg.Contributors,
 		arg.Type,
 		arg.BibleVerses,
 		arg.UpdatedAt,
@@ -504,6 +615,60 @@ func (q *Queries) SetPlayoutWindow(ctx context.Context, arg SetPlayoutWindowPara
 		arg.PlayoutEventID,
 		arg.RecordingStartMs,
 		arg.RecordingEndMs,
+		arg.UpdatedAt,
+		arg.ID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const setRedactionalApproval = `-- name: SetRedactionalApproval :execrows
+UPDATE sessions SET redactional_approved = ?1, redactional_approved_by = ?2, redactional_approved_at = ?3, updated_at = ?4
+WHERE id = ?5
+`
+
+type SetRedactionalApprovalParams struct {
+	Approved   bool
+	ApprovedBy string
+	ApprovedAt int64
+	UpdatedAt  int64
+	ID         string
+}
+
+func (q *Queries) SetRedactionalApproval(ctx context.Context, arg SetRedactionalApprovalParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, setRedactionalApproval,
+		arg.Approved,
+		arg.ApprovedBy,
+		arg.ApprovedAt,
+		arg.UpdatedAt,
+		arg.ID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+const setTechnicalApproval = `-- name: SetTechnicalApproval :execrows
+UPDATE sessions SET technical_approved = ?1, technical_approved_by = ?2, technical_approved_at = ?3, updated_at = ?4
+WHERE id = ?5
+`
+
+type SetTechnicalApprovalParams struct {
+	Approved   bool
+	ApprovedBy string
+	ApprovedAt int64
+	UpdatedAt  int64
+	ID         string
+}
+
+func (q *Queries) SetTechnicalApproval(ctx context.Context, arg SetTechnicalApprovalParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, setTechnicalApproval,
+		arg.Approved,
+		arg.ApprovedBy,
+		arg.ApprovedAt,
 		arg.UpdatedAt,
 		arg.ID,
 	)

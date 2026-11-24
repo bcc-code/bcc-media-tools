@@ -24,7 +24,7 @@ func newTestEditorialAPI(t *testing.T) *EditorialAPI {
 	t.Cleanup(func() { _ = db.Close() })
 
 	permsPath := filepath.Join(dir, "permissions.json")
-	require.NoError(t, os.WriteFile(permsPath, []byte(`{"editor@bcc.media":{"bmm":{},"editorial":{"admin":true}}}`), 0644))
+	require.NoError(t, os.WriteFile(permsPath, []byte(`{"editor@bcc.media":{"bmm":{},"editorial":{"admin":true,"members":true}}}`), 0644))
 	oldPerms := PermissionsFile
 	PermissionsFile = permsPath
 	t.Cleanup(func() { PermissionsFile = oldPerms })
@@ -61,7 +61,7 @@ func TestEditorialCreateAndGetSession(t *testing.T) {
 	assert.Equal(t, editorial.StatusDraft, created.Status)
 	assert.False(t, created.CreatedAt.AsTime().IsZero())
 
-	got, err := api.loadSession(context.Background(), created.Id)
+	got, err := api.loadSession(context.Background(), created.Id, "")
 	require.NoError(t, err)
 	assert.Equal(t, "VX-123", got.VXID)
 	assert.Equal(t, "Sunday stream", got.Title)
@@ -71,7 +71,7 @@ func TestEditorialCreateAndGetSession(t *testing.T) {
 
 func TestEditorialGetSessionNotFound(t *testing.T) {
 	api := newTestEditorialAPI(t)
-	_, err := api.loadSession(context.Background(), "does-not-exist")
+	_, err := api.loadSession(context.Background(), "does-not-exist", "")
 	assert.ErrorIs(t, err, errEditorialNotFound)
 }
 
@@ -100,7 +100,7 @@ func TestEditorialSaveSessionReplacesMarkers(t *testing.T) {
 
 	// First save: two new markers (empty IDs → generated).
 	saved := saveTestSession(t, api, sess.Id, "renamed", []*apiv1.EditorialMarker{
-		{Name: "Speaker A", Contributors: "Alice, Bob", Comment: "double-check timing", BibleVerses: "John 3:16; Rom 8:1-4", Type: "tale", StartMs: 1000, EndMs: 5000, PublishBmm: true, Source: editorial.SourceImport},
+		{Name: "Speaker A", ContributorList: typedIn("Alice", "Bob"), Comment: "double-check timing", BibleVerses: "John 3:16; Rom 8:1-4", Type: "tale", StartMs: 1000, EndMs: 5000, PublishBmm: true, Source: editorial.SourceImport},
 		{Name: "Song", Type: "sang", StartMs: 6000, EndMs: 9000},
 	})
 	assert.Equal(t, "renamed", saved.Title)
@@ -108,7 +108,7 @@ func TestEditorialSaveSessionReplacesMarkers(t *testing.T) {
 	assert.NotEmpty(t, saved.Markers[0].Id)
 	assert.Equal(t, int32(0), saved.Markers[0].SortOrder)
 	assert.Equal(t, int32(1), saved.Markers[1].SortOrder)
-	assert.Equal(t, "Alice, Bob", saved.Markers[0].Contributors)
+	assert.Equal(t, "Alice, Bob", joined(saved.Markers[0]))
 	assert.Equal(t, "double-check timing", saved.Markers[0].Comment)
 	assert.Equal(t, "John 3:16; Rom 8:1-4", saved.Markers[0].BibleVerses)
 	assert.True(t, saved.Markers[0].PublishBmm)
@@ -160,7 +160,7 @@ func TestEditorialSetPublish(t *testing.T) {
 	}))
 	require.NoError(t, err)
 
-	got, err := api.loadSession(ctx, sess.Id)
+	got, err := api.loadSession(ctx, sess.Id, "")
 	require.NoError(t, err)
 	assert.True(t, got.Markers[0].PublishBmm)
 	assert.False(t, got.Markers[0].PublishBcc)
@@ -179,6 +179,65 @@ func TestEditorialSetPublishNotFound(t *testing.T) {
 	requireNotFound(t, err)
 }
 
+func TestEditorialSetApproval(t *testing.T) {
+	api := newTestEditorialAPI(t)
+	ctx := context.Background()
+	sess := createTestSession(t, api, "VX-9", "stream")
+	req := func(approved bool) *connect.Request[apiv1.SetEditorialApprovalRequest] {
+		return connect.NewRequest(&apiv1.SetEditorialApprovalRequest{SessionId: sess.Id, Approved: approved})
+	}
+
+	// A new session carries both approvals, unapproved and untouched.
+	assert.False(t, sess.RedactionalApproval.GetApproved())
+	assert.Empty(t, sess.RedactionalApproval.GetBy())
+	assert.False(t, sess.TechnicalApproval.GetApproved())
+
+	res, err := api.SetEditorialRedactionalApproval(ctx, req(true))
+	require.NoError(t, err)
+	assert.True(t, res.Msg.Approved, "returns the approval as it now is")
+	assert.Equal(t, "editor@bcc.media", res.Msg.By)
+	got, err := api.loadSession(ctx, sess.Id, "")
+	require.NoError(t, err)
+	assert.True(t, got.RedactionalApproval.Approved)
+	assert.Equal(t, "editor@bcc.media", got.RedactionalApproval.By)
+	assert.NotNil(t, got.RedactionalApproval.At)
+	assert.False(t, got.TechnicalApproval.Approved, "the other approval is untouched")
+	assert.Empty(t, got.TechnicalApproval.By)
+
+	_, err = api.SetEditorialTechnicalApproval(ctx, req(true))
+	require.NoError(t, err)
+	_, err = api.SetEditorialRedactionalApproval(ctx, req(false))
+	require.NoError(t, err)
+	got, err = api.loadSession(ctx, sess.Id, "")
+	require.NoError(t, err)
+	assert.False(t, got.RedactionalApproval.Approved)
+	assert.Equal(t, "editor@bcc.media", got.RedactionalApproval.By, "clearing records who")
+	assert.NotNil(t, got.RedactionalApproval.At, "clearing records when")
+	assert.True(t, got.TechnicalApproval.Approved)
+	assert.Equal(t, "editor@bcc.media", got.TechnicalApproval.By)
+
+	// Editing the session leaves approvals as they are.
+	saveTestSession(t, api, sess.Id, "renamed", []*apiv1.EditorialMarker{{Name: "m", StartMs: 0, EndMs: 1}})
+	list, err := api.ListEditorialSessions(ctx, connect.NewRequest(&apiv1.Void{}))
+	require.NoError(t, err)
+	require.Len(t, list.Msg.Sessions, 1)
+	assert.True(t, list.Msg.Sessions[0].TechnicalApproval.GetApproved())
+	assert.False(t, list.Msg.Sessions[0].RedactionalApproval.GetApproved())
+}
+
+func TestEditorialSetApprovalInvalid(t *testing.T) {
+	api := newTestEditorialAPI(t)
+	ctx := context.Background()
+
+	_, err := api.SetEditorialTechnicalApproval(ctx, connect.NewRequest(&apiv1.SetEditorialApprovalRequest{Approved: true}))
+	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err), "missing session_id")
+
+	_, err = api.SetEditorialTechnicalApproval(ctx, connect.NewRequest(&apiv1.SetEditorialApprovalRequest{
+		SessionId: "missing", Approved: true,
+	}))
+	requireNotFound(t, err)
+}
+
 func TestEditorialSetComment(t *testing.T) {
 	api := newTestEditorialAPI(t)
 	ctx := context.Background()
@@ -193,7 +252,7 @@ func TestEditorialSetComment(t *testing.T) {
 	}))
 	require.NoError(t, err)
 
-	got, err := api.loadSession(ctx, sess.Id)
+	got, err := api.loadSession(ctx, sess.Id, "")
 	require.NoError(t, err)
 	assert.Equal(t, "check audio", got.Markers[0].Comment)
 	// Other fields and markers are untouched.
@@ -225,7 +284,7 @@ func TestEditorialSetName(t *testing.T) {
 	}))
 	require.NoError(t, err)
 
-	got, err := api.loadSession(ctx, sess.Id)
+	got, err := api.loadSession(ctx, sess.Id, "")
 	require.NoError(t, err)
 	assert.Equal(t, "new", got.Markers[0].Name)
 	assert.Equal(t, "c", got.Markers[0].Comment)
@@ -250,7 +309,7 @@ func TestEditorialDeleteSessionCascadesMarkers(t *testing.T) {
 	_, err := api.DeleteEditorialSession(ctx, connect.NewRequest(&apiv1.DeleteEditorialSessionRequest{Id: sess.Id}))
 	require.NoError(t, err)
 
-	_, err = api.loadSession(ctx, sess.Id)
+	_, err = api.loadSession(ctx, sess.Id, "")
 	assert.ErrorIs(t, err, errEditorialNotFound)
 
 	// Marker rows are gone too (ON DELETE CASCADE).
@@ -270,19 +329,19 @@ func TestEditorialSetDetails(t *testing.T) {
 	ctx := context.Background()
 	sess := createTestSession(t, api, "VX-9", "stream")
 	saved := saveTestSession(t, api, sess.Id, "t", []*apiv1.EditorialMarker{
-		{Name: "old", Contributors: "A", Type: "tale", Comment: "c", PublishBmm: true, StartMs: 0, EndMs: 1},
+		{Name: "old", ContributorList: typedIn("A"), Type: "tale", Comment: "c", PublishBmm: true, StartMs: 0, EndMs: 1},
 		{Name: "other", StartMs: 2, EndMs: 3},
 	})
 
 	_, err := api.SetEditorialDetails(ctx, connect.NewRequest(&apiv1.SetEditorialDetailsRequest{
-		SessionId: sess.Id, MarkerId: saved.Markers[0].Id, Name: "new", Contributors: "B", Type: "sang",
+		SessionId: sess.Id, MarkerId: saved.Markers[0].Id, Name: "new", ContributorList: typedIn("B"), Type: "sang",
 	}))
 	require.NoError(t, err)
 
-	got, err := api.loadSession(ctx, sess.Id)
+	got, err := api.loadSession(ctx, sess.Id, "")
 	require.NoError(t, err)
 	assert.Equal(t, "new", got.Markers[0].Name)
-	assert.Equal(t, "B", got.Markers[0].Contributors)
+	assert.Equal(t, "B", joined(got.Markers[0]))
 	assert.Equal(t, "sang", got.Markers[0].Type)
 	assert.Equal(t, "c", got.Markers[0].Comment, "other fields are untouched")
 	assert.True(t, got.Markers[0].PublishBmm)
@@ -292,6 +351,15 @@ func TestEditorialSetDetails(t *testing.T) {
 		SessionId: sess.Id, MarkerId: "missing",
 	}))
 	requireNotFound(t, err)
+
+	other := createTestSession(t, api, "VX-8", "other")
+	_, err = api.SetEditorialDetails(ctx, connect.NewRequest(&apiv1.SetEditorialDetailsRequest{
+		SessionId: other.Id, MarkerId: saved.Markers[0].Id, ContributorList: typedIn("C"),
+	}))
+	requireNotFound(t, err)
+	got, err = api.loadSession(ctx, sess.Id, "")
+	require.NoError(t, err)
+	assert.Equal(t, "B", joined(got.Markers[0]), "another session's marker keeps its contributors")
 }
 
 // An admin corrects a recording session's details; a new asset forgets the

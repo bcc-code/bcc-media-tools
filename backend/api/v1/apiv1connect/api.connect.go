@@ -121,6 +121,12 @@ const (
 	// APIServiceSetEditorialPublishProcedure is the fully-qualified name of the APIService's
 	// SetEditorialPublish RPC.
 	APIServiceSetEditorialPublishProcedure = "/api.v1.APIService/SetEditorialPublish"
+	// APIServiceSetEditorialRedactionalApprovalProcedure is the fully-qualified name of the
+	// APIService's SetEditorialRedactionalApproval RPC.
+	APIServiceSetEditorialRedactionalApprovalProcedure = "/api.v1.APIService/SetEditorialRedactionalApproval"
+	// APIServiceSetEditorialTechnicalApprovalProcedure is the fully-qualified name of the APIService's
+	// SetEditorialTechnicalApproval RPC.
+	APIServiceSetEditorialTechnicalApprovalProcedure = "/api.v1.APIService/SetEditorialTechnicalApproval"
 	// APIServiceSetEditorialCommentProcedure is the fully-qualified name of the APIService's
 	// SetEditorialComment RPC.
 	APIServiceSetEditorialCommentProcedure = "/api.v1.APIService/SetEditorialComment"
@@ -184,6 +190,9 @@ const (
 	// APIServiceExportEditorialChaptersProcedure is the fully-qualified name of the APIService's
 	// ExportEditorialChapters RPC.
 	APIServiceExportEditorialChaptersProcedure = "/api.v1.APIService/ExportEditorialChapters"
+	// APIServiceSearchMembersProcedure is the fully-qualified name of the APIService's SearchMembers
+	// RPC.
+	APIServiceSearchMembersProcedure = "/api.v1.APIService/SearchMembers"
 )
 
 // APIServiceClient is a client for the api.v1.APIService service.
@@ -240,6 +249,8 @@ type APIServiceClient interface {
 	GetEditorialSession(context.Context, *connect.Request[v1.GetEditorialSessionRequest]) (*connect.Response[v1.EditorialSession], error)
 	SaveEditorialSession(context.Context, *connect.Request[v1.SaveEditorialSessionRequest]) (*connect.Response[v1.EditorialSession], error)
 	SetEditorialPublish(context.Context, *connect.Request[v1.SetEditorialPublishRequest]) (*connect.Response[v1.Void], error)
+	SetEditorialRedactionalApproval(context.Context, *connect.Request[v1.SetEditorialApprovalRequest]) (*connect.Response[v1.EditorialApproval], error)
+	SetEditorialTechnicalApproval(context.Context, *connect.Request[v1.SetEditorialApprovalRequest]) (*connect.Response[v1.EditorialApproval], error)
 	SetEditorialComment(context.Context, *connect.Request[v1.SetEditorialCommentRequest]) (*connect.Response[v1.Void], error)
 	SetEditorialName(context.Context, *connect.Request[v1.SetEditorialNameRequest]) (*connect.Response[v1.Void], error)
 	SetEditorialDetails(context.Context, *connect.Request[v1.SetEditorialDetailsRequest]) (*connect.Response[v1.Void], error)
@@ -261,6 +272,7 @@ type APIServiceClient interface {
 	TakeEditorialSync(context.Context, *connect.Request[v1.TakeEditorialSyncRequest]) (*connect.Response[v1.Void], error)
 	GetServerTime(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.ServerTime], error)
 	ExportEditorialChapters(context.Context, *connect.Request[v1.ExportEditorialChaptersRequest]) (*connect.Response[v1.ExportEditorialChaptersResponse], error)
+	SearchMembers(context.Context, *connect.Request[v1.SearchMembersRequest]) (*connect.Response[v1.SearchMembersResponse], error)
 }
 
 // NewAPIServiceClient constructs a client for the api.v1.APIService service. By default, it uses
@@ -466,6 +478,18 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(aPIServiceMethods.ByName("SetEditorialPublish")),
 			connect.WithClientOptions(opts...),
 		),
+		setEditorialRedactionalApproval: connect.NewClient[v1.SetEditorialApprovalRequest, v1.EditorialApproval](
+			httpClient,
+			baseURL+APIServiceSetEditorialRedactionalApprovalProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("SetEditorialRedactionalApproval")),
+			connect.WithClientOptions(opts...),
+		),
+		setEditorialTechnicalApproval: connect.NewClient[v1.SetEditorialApprovalRequest, v1.EditorialApproval](
+			httpClient,
+			baseURL+APIServiceSetEditorialTechnicalApprovalProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("SetEditorialTechnicalApproval")),
+			connect.WithClientOptions(opts...),
+		),
 		setEditorialComment: connect.NewClient[v1.SetEditorialCommentRequest, v1.Void](
 			httpClient,
 			baseURL+APIServiceSetEditorialCommentProcedure,
@@ -592,6 +616,12 @@ func NewAPIServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(aPIServiceMethods.ByName("ExportEditorialChapters")),
 			connect.WithClientOptions(opts...),
 		),
+		searchMembers: connect.NewClient[v1.SearchMembersRequest, v1.SearchMembersResponse](
+			httpClient,
+			baseURL+APIServiceSearchMembersProcedure,
+			connect.WithSchema(aPIServiceMethods.ByName("SearchMembers")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -629,6 +659,8 @@ type aPIServiceClient struct {
 	getEditorialSession               *connect.Client[v1.GetEditorialSessionRequest, v1.EditorialSession]
 	saveEditorialSession              *connect.Client[v1.SaveEditorialSessionRequest, v1.EditorialSession]
 	setEditorialPublish               *connect.Client[v1.SetEditorialPublishRequest, v1.Void]
+	setEditorialRedactionalApproval   *connect.Client[v1.SetEditorialApprovalRequest, v1.EditorialApproval]
+	setEditorialTechnicalApproval     *connect.Client[v1.SetEditorialApprovalRequest, v1.EditorialApproval]
 	setEditorialComment               *connect.Client[v1.SetEditorialCommentRequest, v1.Void]
 	setEditorialName                  *connect.Client[v1.SetEditorialNameRequest, v1.Void]
 	setEditorialDetails               *connect.Client[v1.SetEditorialDetailsRequest, v1.Void]
@@ -650,6 +682,7 @@ type aPIServiceClient struct {
 	takeEditorialSync                 *connect.Client[v1.TakeEditorialSyncRequest, v1.Void]
 	getServerTime                     *connect.Client[v1.Void, v1.ServerTime]
 	exportEditorialChapters           *connect.Client[v1.ExportEditorialChaptersRequest, v1.ExportEditorialChaptersResponse]
+	searchMembers                     *connect.Client[v1.SearchMembersRequest, v1.SearchMembersResponse]
 }
 
 // GetPermissions calls api.v1.APIService.GetPermissions.
@@ -812,6 +845,16 @@ func (c *aPIServiceClient) SetEditorialPublish(ctx context.Context, req *connect
 	return c.setEditorialPublish.CallUnary(ctx, req)
 }
 
+// SetEditorialRedactionalApproval calls api.v1.APIService.SetEditorialRedactionalApproval.
+func (c *aPIServiceClient) SetEditorialRedactionalApproval(ctx context.Context, req *connect.Request[v1.SetEditorialApprovalRequest]) (*connect.Response[v1.EditorialApproval], error) {
+	return c.setEditorialRedactionalApproval.CallUnary(ctx, req)
+}
+
+// SetEditorialTechnicalApproval calls api.v1.APIService.SetEditorialTechnicalApproval.
+func (c *aPIServiceClient) SetEditorialTechnicalApproval(ctx context.Context, req *connect.Request[v1.SetEditorialApprovalRequest]) (*connect.Response[v1.EditorialApproval], error) {
+	return c.setEditorialTechnicalApproval.CallUnary(ctx, req)
+}
+
 // SetEditorialComment calls api.v1.APIService.SetEditorialComment.
 func (c *aPIServiceClient) SetEditorialComment(ctx context.Context, req *connect.Request[v1.SetEditorialCommentRequest]) (*connect.Response[v1.Void], error) {
 	return c.setEditorialComment.CallUnary(ctx, req)
@@ -917,6 +960,11 @@ func (c *aPIServiceClient) ExportEditorialChapters(ctx context.Context, req *con
 	return c.exportEditorialChapters.CallUnary(ctx, req)
 }
 
+// SearchMembers calls api.v1.APIService.SearchMembers.
+func (c *aPIServiceClient) SearchMembers(ctx context.Context, req *connect.Request[v1.SearchMembersRequest]) (*connect.Response[v1.SearchMembersResponse], error) {
+	return c.searchMembers.CallUnary(ctx, req)
+}
+
 // APIServiceHandler is an implementation of the api.v1.APIService service.
 type APIServiceHandler interface {
 	// Permissions
@@ -971,6 +1019,8 @@ type APIServiceHandler interface {
 	GetEditorialSession(context.Context, *connect.Request[v1.GetEditorialSessionRequest]) (*connect.Response[v1.EditorialSession], error)
 	SaveEditorialSession(context.Context, *connect.Request[v1.SaveEditorialSessionRequest]) (*connect.Response[v1.EditorialSession], error)
 	SetEditorialPublish(context.Context, *connect.Request[v1.SetEditorialPublishRequest]) (*connect.Response[v1.Void], error)
+	SetEditorialRedactionalApproval(context.Context, *connect.Request[v1.SetEditorialApprovalRequest]) (*connect.Response[v1.EditorialApproval], error)
+	SetEditorialTechnicalApproval(context.Context, *connect.Request[v1.SetEditorialApprovalRequest]) (*connect.Response[v1.EditorialApproval], error)
 	SetEditorialComment(context.Context, *connect.Request[v1.SetEditorialCommentRequest]) (*connect.Response[v1.Void], error)
 	SetEditorialName(context.Context, *connect.Request[v1.SetEditorialNameRequest]) (*connect.Response[v1.Void], error)
 	SetEditorialDetails(context.Context, *connect.Request[v1.SetEditorialDetailsRequest]) (*connect.Response[v1.Void], error)
@@ -992,6 +1042,7 @@ type APIServiceHandler interface {
 	TakeEditorialSync(context.Context, *connect.Request[v1.TakeEditorialSyncRequest]) (*connect.Response[v1.Void], error)
 	GetServerTime(context.Context, *connect.Request[v1.Void]) (*connect.Response[v1.ServerTime], error)
 	ExportEditorialChapters(context.Context, *connect.Request[v1.ExportEditorialChaptersRequest]) (*connect.Response[v1.ExportEditorialChaptersResponse], error)
+	SearchMembers(context.Context, *connect.Request[v1.SearchMembersRequest]) (*connect.Response[v1.SearchMembersResponse], error)
 }
 
 // NewAPIServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -1193,6 +1244,18 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(aPIServiceMethods.ByName("SetEditorialPublish")),
 		connect.WithHandlerOptions(opts...),
 	)
+	aPIServiceSetEditorialRedactionalApprovalHandler := connect.NewUnaryHandler(
+		APIServiceSetEditorialRedactionalApprovalProcedure,
+		svc.SetEditorialRedactionalApproval,
+		connect.WithSchema(aPIServiceMethods.ByName("SetEditorialRedactionalApproval")),
+		connect.WithHandlerOptions(opts...),
+	)
+	aPIServiceSetEditorialTechnicalApprovalHandler := connect.NewUnaryHandler(
+		APIServiceSetEditorialTechnicalApprovalProcedure,
+		svc.SetEditorialTechnicalApproval,
+		connect.WithSchema(aPIServiceMethods.ByName("SetEditorialTechnicalApproval")),
+		connect.WithHandlerOptions(opts...),
+	)
 	aPIServiceSetEditorialCommentHandler := connect.NewUnaryHandler(
 		APIServiceSetEditorialCommentProcedure,
 		svc.SetEditorialComment,
@@ -1319,6 +1382,12 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(aPIServiceMethods.ByName("ExportEditorialChapters")),
 		connect.WithHandlerOptions(opts...),
 	)
+	aPIServiceSearchMembersHandler := connect.NewUnaryHandler(
+		APIServiceSearchMembersProcedure,
+		svc.SearchMembers,
+		connect.WithSchema(aPIServiceMethods.ByName("SearchMembers")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/api.v1.APIService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case APIServiceGetPermissionsProcedure:
@@ -1385,6 +1454,10 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceSaveEditorialSessionHandler.ServeHTTP(w, r)
 		case APIServiceSetEditorialPublishProcedure:
 			aPIServiceSetEditorialPublishHandler.ServeHTTP(w, r)
+		case APIServiceSetEditorialRedactionalApprovalProcedure:
+			aPIServiceSetEditorialRedactionalApprovalHandler.ServeHTTP(w, r)
+		case APIServiceSetEditorialTechnicalApprovalProcedure:
+			aPIServiceSetEditorialTechnicalApprovalHandler.ServeHTTP(w, r)
 		case APIServiceSetEditorialCommentProcedure:
 			aPIServiceSetEditorialCommentHandler.ServeHTTP(w, r)
 		case APIServiceSetEditorialNameProcedure:
@@ -1427,6 +1500,8 @@ func NewAPIServiceHandler(svc APIServiceHandler, opts ...connect.HandlerOption) 
 			aPIServiceGetServerTimeHandler.ServeHTTP(w, r)
 		case APIServiceExportEditorialChaptersProcedure:
 			aPIServiceExportEditorialChaptersHandler.ServeHTTP(w, r)
+		case APIServiceSearchMembersProcedure:
+			aPIServiceSearchMembersHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -1564,6 +1639,14 @@ func (UnimplementedAPIServiceHandler) SetEditorialPublish(context.Context, *conn
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.SetEditorialPublish is not implemented"))
 }
 
+func (UnimplementedAPIServiceHandler) SetEditorialRedactionalApproval(context.Context, *connect.Request[v1.SetEditorialApprovalRequest]) (*connect.Response[v1.EditorialApproval], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.SetEditorialRedactionalApproval is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) SetEditorialTechnicalApproval(context.Context, *connect.Request[v1.SetEditorialApprovalRequest]) (*connect.Response[v1.EditorialApproval], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.SetEditorialTechnicalApproval is not implemented"))
+}
+
 func (UnimplementedAPIServiceHandler) SetEditorialComment(context.Context, *connect.Request[v1.SetEditorialCommentRequest]) (*connect.Response[v1.Void], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.SetEditorialComment is not implemented"))
 }
@@ -1646,4 +1729,8 @@ func (UnimplementedAPIServiceHandler) GetServerTime(context.Context, *connect.Re
 
 func (UnimplementedAPIServiceHandler) ExportEditorialChapters(context.Context, *connect.Request[v1.ExportEditorialChaptersRequest]) (*connect.Response[v1.ExportEditorialChaptersResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.ExportEditorialChapters is not implemented"))
+}
+
+func (UnimplementedAPIServiceHandler) SearchMembers(context.Context, *connect.Request[v1.SearchMembersRequest]) (*connect.Response[v1.SearchMembersResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("api.v1.APIService.SearchMembers is not implemented"))
 }

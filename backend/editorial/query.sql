@@ -41,12 +41,41 @@ DELETE FROM markers
 WHERE session_id = ?;
 
 -- name: InsertMarker :exec
-INSERT INTO markers (id, session_id, sort_order, name, contributors, comment, bible_verses, type, start_ms, end_ms, publish_bmm, publish_bcc, source, created_at, updated_at, playout_key, playout_synced)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO markers (id, session_id, sort_order, name, comment, bible_verses, type, start_ms, end_ms, publish_bmm, publish_bcc, source, created_at, updated_at, playout_key, playout_synced)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+-- name: ListContributorsForSession :many
+SELECT c.* FROM marker_contributors c
+JOIN markers m ON m.id = c.marker_id
+WHERE m.session_id = ?
+ORDER BY m.sort_order, c.position;
+
+-- name: ListLinkedContributors :many
+-- Each linked person under each name they were saved with, most used first.
+SELECT member_uid, name FROM marker_contributors
+WHERE member_uid IS NOT NULL
+GROUP BY member_uid, name
+ORDER BY count(*) DESC, name;
+
+-- name: InsertMarkerContributor :exec
+INSERT INTO marker_contributors (marker_id, position, name, member_uid)
+VALUES (?, ?, ?, ?);
+
+-- name: DeleteContributorsForMarker :exec
+DELETE FROM marker_contributors
+WHERE marker_id = ?;
 
 -- name: SetMarkerPublish :execrows
 UPDATE markers SET publish_bmm = ?, publish_bcc = ?, updated_at = ?
 WHERE id = ? AND session_id = ?;
+
+-- name: SetRedactionalApproval :execrows
+UPDATE sessions SET redactional_approved = sqlc.arg(approved), redactional_approved_by = sqlc.arg(approved_by), redactional_approved_at = sqlc.arg(approved_at), updated_at = sqlc.arg(updated_at)
+WHERE id = sqlc.arg(id);
+
+-- name: SetTechnicalApproval :execrows
+UPDATE sessions SET technical_approved = sqlc.arg(approved), technical_approved_by = sqlc.arg(approved_by), technical_approved_at = sqlc.arg(approved_at), updated_at = sqlc.arg(updated_at)
+WHERE id = sqlc.arg(id);
 
 -- name: SetMarkerComment :execrows
 UPDATE markers SET comment = ?, updated_at = ?
@@ -59,7 +88,7 @@ WHERE id = ? AND session_id = ?;
 
 -- name: SetMarkerDetails :execrows
 -- Hand-edited details stop Playout from refreshing the row.
-UPDATE markers SET name = ?, contributors = ?, type = ?, bible_verses = ?, playout_synced = 0, updated_at = ?
+UPDATE markers SET name = ?, type = ?, bible_verses = ?, playout_synced = 0, updated_at = ?
 WHERE id = ? AND session_id = ?;
 
 -- name: SetPlayoutWindow :execrows
