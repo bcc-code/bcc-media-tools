@@ -16,7 +16,11 @@ import type {
     MarkerDetails,
 } from "~/components/editorial/MobileMarkerList.vue";
 import type { Contributor } from "~/components/editorial/ContributorInput.vue";
-import { timestampDate, timestampFromDate } from "@bufbuild/protobuf/wkt";
+import {
+    timestampDate,
+    timestampFromDate,
+    timestampMs,
+} from "@bufbuild/protobuf/wkt";
 
 const route = useRoute("editorial-id");
 const sessionId = computed(() => route.params.id as string);
@@ -332,6 +336,7 @@ async function load() {
     try {
         const s = await api.getEditorialSession({ id: sessionId.value });
         session.value = s;
+        approvals.value = {};
         takeApprovals(s);
         title.value = s.title;
         rows.value = s.markers.map(toRow);
@@ -475,11 +480,22 @@ const SET_APPROVAL = {
 // The latest from the server, taken from every session that arrives, even one
 // the edit view holds back while it has unsaved changes.
 const approvals = ref<Partial<Record<ApprovalKey, EditorialApproval>>>({});
+//
+// Sessions can arrive out of order (a push read before this tab's last write
+// may land after its answer), so an approval only gives way to a later one:
+// the server stamps `at` on every approve and clear.
 function takeApprovals(s: EditorialSession) {
-    approvals.value = {
+    const incoming: Record<ApprovalKey, EditorialApproval | undefined> = {
         redactional: s.redactionalApproval,
         technical: s.technicalApproval,
     };
+    for (const key of APPROVAL_KEYS) {
+        const current = approvals.value[key]?.at;
+        const next = incoming[key]?.at;
+        if (current && (!next || timestampMs(next) < timestampMs(current)))
+            continue;
+        approvals.value[key] = incoming[key];
+    }
 }
 // The switch's value while its write is in flight, so a session that arrives
 // meanwhile doesn't flip it back.
