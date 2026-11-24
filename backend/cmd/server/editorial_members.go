@@ -109,6 +109,14 @@ func (e EditorialAPI) SearchMembers(ctx context.Context, req *connect.Request[ap
 	}
 	limit = min(limit, maxMemberResults)
 
+	// ages as of the session's recording, when there is one
+	date := today()
+	if id := req.Msg.GetSessionId(); id != "" {
+		if sess, err := e.queries.GetSession(ctx, id); err == nil {
+			date = e.recordingDate(sess)
+		}
+	}
+
 	res := &apiv1.SearchMembersResponse{}
 	// people as Members just sent them; the linked ones are looked up
 	known := map[string]members.Person{}
@@ -127,7 +135,7 @@ func (e EditorialAPI) SearchMembers(ctx context.Context, req *connect.Request[ap
 				add(p.UID, p.DisplayName)
 			}
 		}
-		return e.withDetails(ctx, res, known), nil
+		return e.withDetails(ctx, res, known, date), nil
 	}
 
 	linked, err := e.queries.SearchLinkedContributors(ctx, query)
@@ -138,12 +146,12 @@ func (e EditorialAPI) SearchMembers(ctx context.Context, req *connect.Request[ap
 		add(c.MemberUID, c.Name)
 	}
 	if e.members == nil || utf8.RuneCountInString(query) < 2 || len(res.Members) == limit {
-		return e.withDetails(ctx, res, known), nil
+		return e.withDetails(ctx, res, known, date), nil
 	}
 	people, err := e.members.Search(ctx, query, limit)
 	if err != nil {
 		log.L.Warn().Err(err).Msg("member search failed")
-		return e.withDetails(ctx, res, known), nil
+		return e.withDetails(ctx, res, known, date), nil
 	}
 	for _, p := range people {
 		if !seen[p.UID] {
@@ -151,12 +159,12 @@ func (e EditorialAPI) SearchMembers(ctx context.Context, req *connect.Request[ap
 		}
 		add(p.UID, p.DisplayName)
 	}
-	return e.withDetails(ctx, res, known), nil
+	return e.withDetails(ctx, res, known, date), nil
 }
 
-// withDetails sets age and church: from known, or else from the linked
+// withDetails sets age on date and church: from known, or else from the linked
 // contributors kept in e.people. Search results aren't kept.
-func (e EditorialAPI) withDetails(ctx context.Context, res *apiv1.SearchMembersResponse, known map[string]members.Person) *connect.Response[apiv1.SearchMembersResponse] {
+func (e EditorialAPI) withDetails(ctx context.Context, res *apiv1.SearchMembersResponse, known map[string]members.Person, date time.Time) *connect.Response[apiv1.SearchMembersResponse] {
 	var ids []string
 	for _, m := range res.Members {
 		if _, ok := known[m.MemberUid]; !ok {
@@ -168,7 +176,7 @@ func (e EditorialAPI) withDetails(ctx context.Context, res *apiv1.SearchMembersR
 	}
 	for _, m := range res.Members {
 		if p, ok := known[m.MemberUid]; ok {
-			m.Age = int32(p.Age(today()))
+			m.Age = int32(p.Age(date))
 			m.Church = p.Church
 		}
 	}

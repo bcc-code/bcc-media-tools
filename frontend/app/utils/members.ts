@@ -1,4 +1,4 @@
-// Under 26 today, for a suggestion; the server sends age 0 when unknown.
+// Under 26 at the recording, for a suggestion; the server sends age 0 when unknown.
 export function isU26(age: number | undefined): boolean {
     return !!age && age < 26;
 }

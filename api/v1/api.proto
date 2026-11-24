@@ -810,6 +810,8 @@ message SearchMembersRequest {
   string query = 1;
   // defaults to 10
   int32 limit = 2;
+  // ages as of this session's recording; empty is today
+  string session_id = 3;
 }
 
 // A person in BCC Members: only what a contributor needs, as this is

@@ -62,7 +62,7 @@ func (e EditorialAPI) ExportEditorialSession(ctx context.Context, req *connect.R
 		labels = exportLabelsByLanguage["en"]
 	}
 
-	data, err := editorialWorkbook(sess, markers, e.u26Contributors(ctx, markers), labels)
+	data, err := editorialWorkbook(sess, markers, e.u26Contributors(ctx, markers, e.recordingDate(sess)), labels)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
@@ -76,7 +76,8 @@ func (e EditorialAPI) ExportEditorialSession(ctx context.Context, req *connect.R
 // Excel times so the sheet can be sorted and summed: a live session's clock
 // time of day (Oslo), or a recording's offsets.
 //
-// u26 tells which linked contributors are under 26, by member uid.
+// u26 tells which linked contributors were under 26 at the recording, by
+// member uid.
 func editorialWorkbook(sess editorial.Session, markers []editorial.MarkerRow, u26 map[string]bool, l exportLabels) ([]byte, error) {
 	live := sess.Kind == editorial.KindLive
 	loc, err := time.LoadLocation(recordingTZ)

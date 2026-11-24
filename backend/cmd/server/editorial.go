@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"connectrpc.com/connect"
@@ -46,6 +47,8 @@ type EditorialAPI struct {
 	frequent *frequentContributors
 	// Ages and churches of linked contributors; nil knows none.
 	people *members.Cache
+	// Recording dates by VXID, as Vidispine gave them.
+	assetDates *sync.Map
 }
 
 type playoutClient interface {
@@ -54,7 +57,7 @@ type playoutClient interface {
 }
 
 func NewEditorialAPI(db *sql.DB, vs vidispine.Client, cantemoClient *cantemo.Client, playoutClient playoutClient) *EditorialAPI {
-	return &EditorialAPI{db: db, queries: editorial.New(db), vidispine: vs, cantemo: cantemoClient, playout: playoutClient, hub: newEditorialHub(), frequent: &frequentContributors{}}
+	return &EditorialAPI{db: db, queries: editorial.New(db), vidispine: vs, cantemo: cantemoClient, playout: playoutClient, hub: newEditorialHub(), frequent: &frequentContributors{}, assetDates: &sync.Map{}}
 }
 
 // requireEditorial authenticates the caller and checks they have at least the
@@ -386,7 +389,7 @@ func (e EditorialAPI) DeleteEditorialSession(ctx context.Context, req *connect.R
 
 // loadSession returns a session with its markers ordered by sort_order, and
 // what email may see of Members: U26, and age and church with the members
-// permission. An empty email adds none, as for the preview proxy
+// permission, both as of the recording. An empty email adds none, as for the preview proxy
 func (e EditorialAPI) loadSession(ctx context.Context, id, email string) (*apiv1.EditorialSession, error) {
 	sess, err := e.queries.GetSession(ctx, id)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -401,7 +404,7 @@ func (e EditorialAPI) loadSession(ctx context.Context, id, email string) (*apiv1
 	}
 	out := editorialSessionToProto(sess, markers)
 	if email != "" {
-		e.addMemberDetails(ctx, out.Markers, canSeeMembers(email))
+		e.addMemberDetails(ctx, out.Markers, e.recordingDate(sess), canSeeMembers(email))
 	}
 	return out, nil
 }

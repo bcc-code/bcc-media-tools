@@ -126,3 +126,58 @@ func TestEditorialWorkbookU26Column(t *testing.T) {
 	}
 	assert.Equal(t, []string{"U26", "Yes", "No", "", ""}, got)
 }
+
+// Ages and U26 are as of the recording: someone 28 today was 23 at a
+// recording five years ago.
+func TestMemberDetailsAsOfRecording(t *testing.T) {
+	log.ConfigureGlobalLogger(zerolog.Disabled)
+	api := newTestEditorialAPI(t)
+	fake := &fakeMembers{byID: map[string]members.Person{
+		uid(90007): {UID: uid(90007), DisplayName: "Ola Dahl", BirthDate: yearsAgo(28), Church: "Church Seven"},
+	}, people: []members.Person{
+		{UID: uid(90007), DisplayName: "Ola Dahl", BirthDate: yearsAgo(28), Church: "Church Seven"},
+	}}
+	api.members = fake
+	api.people = members.NewCache(fake)
+	sess := createTestSession(t, api, "VX-1", "Søndag")
+	saveTestSession(t, api, sess.Id, "Søndag", []*apiv1.EditorialMarker{{
+		Name: "Tale", StartMs: 0, EndMs: 60_000,
+		ContributorList: []*apiv1.EditorialContributor{{Name: "Ola Dahl", MemberUid: uid(90007)}},
+	}})
+	recorded := time.Now().AddDate(-5, 0, 0).UnixMilli()
+	_, err := api.db.Exec(`UPDATE sessions SET recording_start_ms = ? WHERE id = ?`, recorded, sess.Id)
+	require.NoError(t, err)
+
+	res, err := api.GetEditorialSession(context.Background(), connect.NewRequest(&apiv1.GetEditorialSessionRequest{Id: sess.Id}))
+	require.NoError(t, err)
+	c := res.Msg.Markers[0].ContributorList[0]
+	assert.True(t, c.U26)
+	assert.Equal(t, int32(23), c.Age)
+
+	got, err := api.SearchMembers(context.Background(), connect.NewRequest(&apiv1.SearchMembersRequest{Query: "ola", SessionId: sess.Id}))
+	require.NoError(t, err)
+	require.NotEmpty(t, got.Msg.Members)
+	assert.Equal(t, int32(23), got.Msg.Members[0].Age, "search ages as of the session")
+
+	got, err = api.SearchMembers(context.Background(), connect.NewRequest(&apiv1.SearchMembersRequest{Query: "ola"}))
+	require.NoError(t, err)
+	assert.Equal(t, int32(28), got.Msg.Members[0].Age, "no session is today")
+}
+
+// The live clock start comes first, then a hand-entered window, then the day
+// the session was made.
+func TestRecordingDate(t *testing.T) {
+	api := newTestEditorialAPI(t)
+	day := func(s string) int64 {
+		d, err := time.ParseInLocation("2006-01-02 15:04", s, meetingsTZ())
+		require.NoError(t, err)
+		return d.UnixMilli()
+	}
+	date := func(sess editorial.Session) string { return api.recordingDate(sess).Format("2006-01-02") }
+
+	assert.Equal(t, "2020-03-01", date(editorial.Session{ClockStartMs: day("2020-03-01 10:00"), RecordingStartMs: day("2021-01-01 10:00"), CreatedAt: day("2022-01-01 10:00")}))
+	assert.Equal(t, "2021-01-01", date(editorial.Session{Vxid: "VX-1", RecordingStartMs: day("2021-01-01 10:00"), CreatedAt: day("2022-01-01 10:00")}))
+	assert.Equal(t, "2022-01-01", date(editorial.Session{Vxid: "VX-1", CreatedAt: day("2022-01-01 10:00")}), "no Vidispine")
+	// Just after midnight in Oslo is still the previous day in UTC.
+	assert.Equal(t, "2022-06-02", date(editorial.Session{ClockStartMs: day("2022-06-02 00:30")}))
+}

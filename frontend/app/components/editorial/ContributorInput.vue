@@ -19,6 +19,8 @@ export interface Contributor {
 }
 
 const props = defineProps<{
+    // ages are as of this session's recording
+    sessionId: string;
     placeholder?: string;
     // 16px text, below which iOS zooms the page on focus
     large?: boolean;
@@ -55,6 +57,7 @@ async function search(q: string) {
         const res = await api.searchMembers({
             query: q.trim(),
             limit: q.trim() ? 8 : 20,
+            sessionId: props.sessionId,
         });
         if (seq !== searchSeq) return;
         const linked = new Set(model.value.map((c) => c.memberUid));

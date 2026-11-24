@@ -6509,7 +6509,9 @@ type SearchMembersRequest struct {
 	// empty lists the frequent contributors
 	Query string `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
 	// defaults to 10
-	Limit         int32 `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+	Limit int32 `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+	// ages as of this session's recording; empty is today
+	SessionId     string `protobuf:"bytes,3,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -6556,6 +6558,13 @@ func (x *SearchMembersRequest) GetLimit() int32 {
 		return x.Limit
 	}
 	return 0
+}
+
+func (x *SearchMembersRequest) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
 }
 
 // A person in BCC Members: only what a contributor needs, as this is
@@ -7156,10 +7165,12 @@ const file_api_v1_api_proto_rawDesc = "" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12G\n" +
 	"\x10contributor_list\x18\x04 \x03(\v2\x1c.api.v1.EditorialContributorR\x0fcontributorList\x12\x12\n" +
 	"\x04type\x18\x05 \x01(\tR\x04type\x12!\n" +
-	"\fbible_verses\x18\x06 \x01(\tR\vbibleVerses\"B\n" +
+	"\fbible_verses\x18\x06 \x01(\tR\vbibleVerses\"a\n" +
 	"\x14SearchMembersRequest\x12\x14\n" +
 	"\x05query\x18\x01 \x01(\tR\x05query\x12\x14\n" +
-	"\x05limit\x18\x02 \x01(\x05R\x05limit\"t\n" +
+	"\x05limit\x18\x02 \x01(\x05R\x05limit\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x03 \x01(\tR\tsessionId\"t\n" +
 	"\x06Member\x12\x1d\n" +
 	"\n" +
 	"member_uid\x18\x01 \x01(\tR\tmemberUid\x12!\n" +

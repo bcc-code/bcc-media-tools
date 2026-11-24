@@ -16,14 +16,14 @@ type Person struct {
 	Church string
 }
 
-// Age is the years since birth by today's date, in today's location; 0 when
+// Age is the years since birth on date, in date's location; 0 when
 // the birth date is unknown. Someone born on 29 February has their birthday
 // on 1 March in other years.
-func (p Person) Age(today time.Time) int {
+func (p Person) Age(date time.Time) int {
 	if p.BirthDate.IsZero() {
 		return 0
 	}
-	y, m, day := today.Date()
+	y, m, day := date.Date()
 	years := y - p.BirthDate.Year()
 	if m < p.BirthDate.Month() || m == p.BirthDate.Month() && day < p.BirthDate.Day() {
 		years--
@@ -31,9 +31,9 @@ func (p Person) Age(today time.Time) int {
 	return years
 }
 
-// IsU26 reports whether p is known to be under 26 today.
-func (p Person) IsU26(today time.Time) bool {
-	return !p.BirthDate.IsZero() && p.Age(today) < 26
+// IsU26 reports whether p is known to be under 26 on date.
+func (p Person) IsU26(date time.Time) bool {
+	return !p.BirthDate.IsZero() && p.Age(date) < 26
 }
 
 // Searcher finds people by name, best matches first, or by uid.

@@ -31,6 +31,7 @@ export interface MarkerDetails {
 }
 
 const props = defineProps<{
+    sessionId: string;
     markers: MobileMarker[];
     canEdit: boolean;
     typeItems: { label: string; value: string }[];
@@ -250,6 +251,7 @@ const current = computed(() =>
                         </span>
                         <EditorialContributorInput
                             v-model="editContributors"
+                            :session-id="sessionId"
                             large
                         />
                     </div>

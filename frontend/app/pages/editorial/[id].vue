@@ -2322,6 +2322,7 @@ onBeforeRouteLeave(() => {
                             }}
                         </p>
                         <EditorialMobileMarkerList
+                            :session-id="sessionId"
                             :markers="mobileMarkers"
                             :can-edit="canEditDetails"
                             :type-items="typeItems"
@@ -2554,6 +2555,7 @@ onBeforeRouteLeave(() => {
                                                 :model-value="
                                                     row.contributorList
                                                 "
+                                                :session-id="sessionId"
                                                 data-field="contributors"
                                                 :placeholder="
                                                     t(
