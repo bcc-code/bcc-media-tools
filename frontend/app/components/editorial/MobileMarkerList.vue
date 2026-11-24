@@ -3,6 +3,7 @@
 // right on it, and everything else behind a ··· drawer. No video: on a phone
 // the job is commenting while the meeting runs. Fields use 16px text, below
 // which iOS zooms the page on focus.
+import type { Contributor } from "~/components/editorial/ContributorInput.vue";
 
 export interface MobileMarker {
     key: string;
@@ -12,6 +13,7 @@ export interface MobileMarker {
     typeLabel: string;
     name: string;
     contributors: string;
+    contributorList: Contributor[];
     bibleVerses: string;
     comment: string;
     publishBmm: boolean;
@@ -23,11 +25,13 @@ export interface MobileMarker {
 export interface MarkerDetails {
     name: string;
     contributors: string;
+    contributorList: Contributor[];
     type: string;
     bibleVerses: string;
 }
 
 const props = defineProps<{
+    sessionId: string;
     markers: MobileMarker[];
     canEdit: boolean;
     typeItems: { label: string; value: string }[];
@@ -88,7 +92,7 @@ function subline(m: MobileMarker): string {
 // ── Edit drawer ──────────────────────────────────────────
 const editing = ref<MobileMarker>();
 const editName = ref("");
-const editContributors = ref("");
+const editContributors = ref<Contributor[]>([]);
 const editType = ref("");
 const editVerses = ref("");
 
@@ -102,7 +106,7 @@ const drawerOpen = computed({
 function openDrawer(m: MobileMarker) {
     editing.value = m;
     editName.value = m.name;
-    editContributors.value = m.contributors;
+    editContributors.value = [...m.contributorList];
     editType.value = m.type;
     editVerses.value = m.bibleVerses;
 }
@@ -116,15 +120,23 @@ function closeDrawer() {
         if (editName.value !== m.name) emit("title", m.key, editName.value);
         return;
     }
+    const contributorsChanged =
+        editContributors.value.length !== m.contributorList.length ||
+        editContributors.value.some(
+            (c, i) =>
+                c.name !== m.contributorList[i]!.name ||
+                c.memberUid !== m.contributorList[i]!.memberUid,
+        );
     if (
         editName.value !== m.name ||
-        editContributors.value !== m.contributors ||
+        contributorsChanged ||
         editType.value !== m.type ||
         editVerses.value !== m.bibleVerses
     ) {
         emit("details", m.key, {
             name: editName.value,
-            contributors: editContributors.value,
+            contributors: editContributors.value.map((c) => c.name).join(", "),
+            contributorList: editContributors.value,
             type: editType.value,
             bibleVerses: editVerses.value,
         });
@@ -154,6 +166,9 @@ const current = computed(() =>
                     {{ m.duration }}
                 </span>
                 <span class="grow" />
+                <EditorialU26Badge
+                    v-if="m.contributorList.some((c) => c.u26)"
+                />
                 <DesignBadge v-if="m.typeLabel">{{ m.typeLabel }}</DesignBadge>
                 <button
                     type="button"
@@ -230,16 +245,16 @@ const current = computed(() =>
                     />
                 </label>
                 <template v-if="canEdit">
-                    <label class="flex flex-col gap-1.5">
+                    <div class="flex flex-col gap-1.5">
                         <span class="text-caption-1 text-text-muted">
                             {{ t("editorial.col.contributors") }}
                         </span>
-                        <input
+                        <EditorialContributorInput
                             v-model="editContributors"
-                            type="text"
-                            class="border-border-1 bg-surface-indent text-body-2 text-text-default ds-focus-ring rounded-xl border px-3 py-2.5"
+                            :session-id="sessionId"
+                            large
                         />
-                    </label>
+                    </div>
                     <label class="flex flex-col gap-1.5">
                         <span class="text-caption-1 text-text-muted">
                             {{ t("editorial.col.bibleVerses") }}

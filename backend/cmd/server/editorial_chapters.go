@@ -111,9 +111,9 @@ func (e EditorialAPI) ExportEditorialChapters(ctx context.Context, req *connect.
 	if sess.Vxid == "" {
 		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("attach the recording before saving chapters"))
 	}
-	markers, err := e.queries.ListMarkersForSession(ctx, sess.ID)
+	markers, err := e.queries.ListMarkerRows(ctx, sess.ID)
 	if err != nil {
-		return nil, editorialErr(fmt.Errorf("editorial: list markers: %w", err))
+		return nil, editorialErr(err)
 	}
 
 	meta, err := fetchRecordingMetadata(e.vidispine, sess.Vxid)
@@ -134,7 +134,7 @@ func (e EditorialAPI) ExportEditorialChapters(ctx context.Context, req *connect.
 
 // exportChapters writes markers as subclips on the session's asset and
 // removes the ones the previous export wrote. Errors are connect errors.
-func (e EditorialAPI) exportChapters(ctx context.Context, sess editorial.Session, markers []editorial.Marker, startTC timecode) (*apiv1.ExportEditorialChaptersResponse, error) {
+func (e EditorialAPI) exportChapters(ctx context.Context, sess editorial.Session, markers []editorial.MarkerRow, startTC timecode) (*apiv1.ExportEditorialChaptersResponse, error) {
 	chapters, skipped := chaptersFromMarkers(markers, startTC)
 	res := &apiv1.ExportEditorialChaptersResponse{Skipped: int32(skipped)}
 
@@ -256,7 +256,7 @@ type chapter struct {
 
 // chaptersFromMarkers maps markers to subclips. Markers without a length are
 // skipped: Cantemo can't hold a zero-length subclip.
-func chaptersFromMarkers(markers []editorial.Marker, start timecode) ([]chapter, int) {
+func chaptersFromMarkers(markers []editorial.MarkerRow, start timecode) ([]chapter, int) {
 	var out []chapter
 	skipped := 0
 	for _, m := range markers {
@@ -272,10 +272,8 @@ func chaptersFromMarkers(markers []editorial.Marker, start timecode) ([]chapter,
 			Description: m.BibleVerses,
 			Export:      m.PublishBmm || m.PublishBcc,
 		}
-		for _, p := range strings.Split(m.Contributors, ",") {
-			if p = strings.TrimSpace(p); p != "" {
-				c.Persons = append(c.Persons, p)
-			}
+		for _, p := range m.Contributors {
+			c.Persons = append(c.Persons, p.Name)
 		}
 		// A speaker segment often has only a name: that's what the
 		// chapter is called in Cantemo, too.

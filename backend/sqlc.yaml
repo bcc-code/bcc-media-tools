@@ -8,6 +8,7 @@ sql:
       go:
         package: editorial
         out: editorial
+        initialisms: ["id", "uid"]
         overrides:
           - column: markers.publish_bmm
             go_type: bool
