@@ -25,17 +25,23 @@ const model = defineModel<boolean>({ default: false });
 </script>
 
 <template>
+    <!--
+        The whole row is the click target, so the keyboard focus ring goes
+        around the row rather than just the box. The empty box's edge uses
+        border-control (3:1 against the page); the tick is on-primary, dark on
+        the light teal, like a primary button's text.
+    -->
     <Checkbox.Root
         v-model:checked="model"
         :disabled="disabled"
         :aria-label="ariaLabel"
-        class="inline-grid cursor-pointer grid-cols-[auto_1fr] items-center gap-x-2.5 gap-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+        class="ds-focus-ring inline-grid cursor-pointer grid-cols-[auto_minmax(0,1fr)] items-center gap-x-2.5 gap-y-0.5 rounded-md disabled:cursor-not-allowed disabled:opacity-50"
     >
         <Checkbox.Control
-            class="border-border-1 data-[state=checked]:bg-primary-default data-[state=checked]:border-primary-default ds-focus-ring flex size-5 shrink-0 items-center justify-center rounded-md border"
+            class="border-border-control data-[state=checked]:bg-primary-default data-[state=checked]:border-primary-default data-[state=checked]:text-on-primary flex size-5 shrink-0 items-center justify-center rounded-md border"
         >
             <Checkbox.Indicator class="flex items-center justify-center">
-                <Icon name="tabler:check" class="text-on-primary size-3.5" />
+                <Icon name="tabler:check" class="size-3.5" />
             </Checkbox.Indicator>
         </Checkbox.Control>
         <Checkbox.Label
@@ -46,7 +52,7 @@ const model = defineModel<boolean>({ default: false });
         </Checkbox.Label>
         <p
             v-if="description || $slots.description"
-            class="text-caption-1 text-text-muted col-start-2 select-none"
+            class="text-caption-1 text-text-muted col-start-2 min-w-0 select-none"
         >
             <slot name="description">{{ description }}</slot>
         </p>

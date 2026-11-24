@@ -151,7 +151,7 @@ async function create() {
                     :to="`/editorial/${s.id}`"
                     class="bg-surface-raise gradient-border shadow-resting ds-focus-ring hover:bg-surface-indent flex items-center justify-between gap-4 rounded-2xl px-4 py-3 transition-colors"
                 >
-                    <div class="min-w-0">
+                    <div class="min-w-0 flex-1">
                         <div class="flex min-w-0 items-center gap-2">
                             <p class="text-title-2 text-text-default truncate">
                                 {{
@@ -178,6 +178,19 @@ async function create() {
                                 }}
                             </template>
                         </p>
+                    </div>
+                    <!-- Stacked on a phone, side by side from sm up. -->
+                    <div
+                        class="flex shrink-0 flex-col items-stretch gap-1.5 sm:flex-row sm:items-center"
+                    >
+                        <EditorialApprovalBadge
+                            :approval="s.redactionalApproval"
+                            :label="t('editorial.redactional')"
+                        />
+                        <EditorialApprovalBadge
+                            :approval="s.technicalApproval"
+                            :label="t('editorial.technical')"
+                        />
                     </div>
                 </NuxtLink>
             </li>

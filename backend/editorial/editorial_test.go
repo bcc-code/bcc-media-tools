@@ -93,7 +93,7 @@ func TestContributorsMigrationRollsBack(t *testing.T) {
 	require.NoError(t, err)
 	provider, err := goose.NewProvider(goose.DialectSQLite3, db, fsys)
 	require.NoError(t, err)
-	_, err = provider.Down(ctx)
+	_, err = provider.DownTo(ctx, 5) // back to before 00006_marker_contributors
 	require.NoError(t, err)
 	var got []string
 	rows, err := db.Query(`SELECT contributors FROM markers ORDER BY id`)
