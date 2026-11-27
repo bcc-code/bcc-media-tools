@@ -302,6 +302,8 @@
         "deleteConfirmMessage": "Dette fjerner gjennomgangen og alle markørene permanent.",
         "deleted": "Gjennomgang slettet",
         "addRow": "Legg til rad",
+        "gap": "Hull",
+        "fillGap": "Legg til som rad",
         "removeRow": "Fjern",
         "reorder": "Dra for å endre rekkefølge",
         "lastUpdated": "Sist oppdatert {date}",
@@ -434,7 +436,7 @@
         "chaptersReplaced": "Erstattet {n} fra før.",
         "chaptersSkipped": "{n} markør(er) uten lengde ble utelatt.",
         "chaptersFailed": "Kunne ikke lagre kapitler",
-        "inOutKeys": "Tastene I og O setter inn- og utpunkt for valgt rad til videoens posisjon. Utpunktet følger neste rads innpunkt.",
+        "inOutKeys": "Tastene I og O setter inn- og utpunkt for valgt rad til videoens posisjon. Kortes en rad ned, blir det et hull; forlenges den, flyttes neste rads innpunkt.",
         "inOutKeysLive": "Tasten I setter tiden for valgt rad til nå.",
         "u26": {
             "hint": "Under 26 år"

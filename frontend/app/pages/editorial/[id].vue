@@ -878,7 +878,16 @@ async function deleteLiveRows(removed: Row[]) {
 
 // ── Edit-mode mutations ───────────────────────────────────
 function addRow() {
-    rows.value.push({
+    rows.value.push(blankRow(displayMs(0), displayMs(0), 0, 0));
+}
+
+function blankRow(
+    start: string,
+    end: string,
+    startMs: number,
+    endMs: number,
+): Row {
+    return {
         key: nextRowKey(),
         id: "",
         name: "",
@@ -887,15 +896,15 @@ function addRow() {
         bibleVerses: "",
         comment: "",
         type: "",
-        start: displayMs(0),
-        end: displayMs(0),
-        shown: { start: displayMs(0), end: displayMs(0), startMs: 0, endMs: 0 },
+        start,
+        end,
+        shown: { start, end, startMs, endMs },
         publishBmm: false,
         publishBcc: false,
         source: "manual",
         playoutKey: "",
         playoutSynced: false,
-    });
+    };
 }
 
 function removeRow(i: number) {
@@ -1391,14 +1400,40 @@ function setFromPlayhead(field: "start" | "end"): boolean {
     return true;
 }
 
-// After a row's in or out changes, the neighbour's out or in follows.
+// After a row's in or out changes, a row may leave a gap to its neighbour but
+// not overlap it: the neighbour's out (or in) is moved out of the way.
 function linkNeighbour(i: number, field: "start" | "end") {
     const row = rows.value[i];
     if (!row || isLive.value) return;
-    const neighbour = rows.value[field === "start" ? i - 1 : i + 1];
-    if (!neighbour) return;
-    if (field === "start") neighbour.end = row.start;
-    else neighbour.start = row.end;
+    if (field === "end") {
+        const next = rows.value[i + 1];
+        if (next && endMsOf(row) > startMsOf(next)) next.start = row.end;
+    } else {
+        const prev = rows.value[i - 1];
+        if (prev && startMsOf(row) < endMsOf(prev)) prev.end = row.start;
+    }
+}
+
+// Time between a row's out and the next row's in, shown as a placeholder in
+// the edit view that can be made into a section. Under a frame is rounding.
+const MIN_GAP_MS = 40;
+function gapAfter(i: number): { startMs: number; endMs: number } | undefined {
+    if (effectiveMode.value !== "edit" || isLive.value) return undefined;
+    const row = rows.value[i];
+    const next = rows.value[i + 1];
+    if (!row || !next) return undefined;
+    const startMs = endMsOf(row);
+    const endMs = startMsOf(next);
+    return endMs - startMs >= MIN_GAP_MS ? { startMs, endMs } : undefined;
+}
+
+function fillGap(i: number) {
+    const row = rows.value[i];
+    const next = rows.value[i + 1];
+    if (!row || !next) return;
+    const added = blankRow(row.end, next.start, endMsOf(row), startMsOf(next));
+    rows.value.splice(i + 1, 0, added);
+    currentRowKey.value = added.key;
 }
 
 // Playout is re-read every two minutes while the session is open, whatever
@@ -2634,124 +2669,131 @@ onBeforeRouteLeave(() => {
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr
+                                <template
                                     v-for="(row, i) in rows"
                                     :key="row.key"
-                                    :data-row-key="row.key"
-                                    class="[&>td]:border-border-1/50 transition-colors [&>td]:border-b"
-                                    :class="[
-                                        i === activeIndex
-                                            ? 'bg-primary-default/10'
-                                            : '',
-                                        i === dragIndex ? 'opacity-40' : '',
-                                        // the row I and O set
-                                        effectiveMode === 'edit' &&
-                                        i === currentIndex &&
-                                        i !== activeIndex
-                                            ? 'bg-surface-indent'
-                                            : '',
-                                        dragOverIndex === i && dragIndex !== i
-                                            ? '[&>td]:border-t-primary-default [&>td]:border-t'
-                                            : '',
-                                        // The title cell is the tall one once
-                                        // Medvirkende rides under it, and
-                                        // centring the rest against the whole
-                                        // stack drops them below the title.
-                                        // Topped out they line up with its
-                                        // first line: the cells share py-2, so
-                                        // the switches and the play button land
-                                        // within a pixel or two of it.
-                                        effectiveMode === 'simple'
-                                            ? '[&>td]:align-top'
-                                            : '',
-                                    ]"
-                                    @focusin="currentRowKey = row.key"
-                                    @dragover.prevent="onDragOver(i)"
-                                    @drop.prevent="onDrop(i)"
-                                    @dragend="onDragEnd"
                                 >
-                                    <td
-                                        v-if="effectiveMode === 'edit'"
-                                        class="py-2 pl-2 select-none"
-                                        @mousedown.capture="noteModifier"
+                                    <tr
+                                        :data-row-key="row.key"
+                                        class="[&>td]:border-border-1/50 transition-colors [&>td]:border-b"
+                                        :class="[
+                                            i === activeIndex
+                                                ? 'bg-primary-default/10'
+                                                : '',
+                                            i === dragIndex ? 'opacity-40' : '',
+                                            // the row I and O set
+                                            effectiveMode === 'edit' &&
+                                            i === currentIndex &&
+                                            i !== activeIndex
+                                                ? 'bg-surface-indent'
+                                                : '',
+                                            dragOverIndex === i &&
+                                            dragIndex !== i
+                                                ? '[&>td]:border-t-primary-default [&>td]:border-t'
+                                                : '',
+                                            // The title cell is the tall one once
+                                            // Medvirkende rides under it, and
+                                            // centring the rest against the whole
+                                            // stack drops them below the title.
+                                            // Topped out they line up with its
+                                            // first line: the cells share py-2, so
+                                            // the switches and the play button land
+                                            // within a pixel or two of it.
+                                            effectiveMode === 'simple'
+                                                ? '[&>td]:align-top'
+                                                : '',
+                                        ]"
+                                        @focusin="currentRowKey = row.key"
+                                        @dragover.prevent="onDragOver(i)"
+                                        @drop.prevent="onDrop(i)"
+                                        @dragend="onDragEnd"
                                     >
-                                        <DesignCheckbox
-                                            :model-value="isSelected(row)"
-                                            :title="
-                                                t('editorial.selectRowHint')
-                                            "
-                                            :aria-label="
-                                                t('editorial.selectRow')
-                                            "
-                                            @update:model-value="
-                                                setSelected(row, $event)
-                                            "
-                                        />
-                                    </td>
-                                    <td
-                                        v-if="isLive"
-                                        class="py-2 pl-3 whitespace-nowrap"
-                                    >
-                                        <DesignInput
+                                        <td
                                             v-if="effectiveMode === 'edit'"
-                                            v-model="row.start"
-                                            data-field="start"
-                                            class="w-28"
-                                            @change="persistStart(row)"
-                                        />
-                                        <span
-                                            v-else
-                                            class="text-body-3 text-text-default tabular-nums"
+                                            class="py-2 pl-2 select-none"
+                                            @mousedown.capture="noteModifier"
                                         >
-                                            {{ withoutMs(row.start) }}
-                                        </span>
-                                    </td>
-                                    <td v-else class="py-2 pl-2">
-                                        <DesignButton
-                                            variant="tertiary"
-                                            size="small"
-                                            icon="tabler:player-play"
-                                            :disabled="!previewUrl"
-                                            class="border-border-1 border"
-                                            @click="preview(row)"
-                                        />
-                                    </td>
-                                    <td class="py-2 pr-2 pl-3">
-                                        <div
-                                            v-if="effectiveMode === 'edit'"
-                                            class="flex min-w-56 flex-col gap-1.5"
-                                        >
-                                            <DesignInput
-                                                v-model="row.name"
-                                                data-field="name"
-                                                :placeholder="
-                                                    t('editorial.col.title')
+                                            <DesignCheckbox
+                                                :model-value="isSelected(row)"
+                                                :title="
+                                                    t('editorial.selectRowHint')
                                                 "
-                                                @focusin="
-                                                    nameBeforeEdit = row.name
-                                                "
-                                                @change="persistName(row)"
-                                            />
-                                            <EditorialContributorInput
-                                                :model-value="
-                                                    row.contributorList
-                                                "
-                                                :session-id="sessionId"
-                                                data-field="contributors"
-                                                :placeholder="
-                                                    t(
-                                                        'editorial.col.contributors',
-                                                    )
+                                                :aria-label="
+                                                    t('editorial.selectRow')
                                                 "
                                                 @update:model-value="
-                                                    setContributors(row, $event)
-                                                "
-                                                @change="
-                                                    persistLiveDetails(row)
+                                                    setSelected(row, $event)
                                                 "
                                             />
-                                        </div>
-                                        <!--
+                                        </td>
+                                        <td
+                                            v-if="isLive"
+                                            class="py-2 pl-3 whitespace-nowrap"
+                                        >
+                                            <DesignInput
+                                                v-if="effectiveMode === 'edit'"
+                                                v-model="row.start"
+                                                data-field="start"
+                                                class="w-28"
+                                                @change="persistStart(row)"
+                                            />
+                                            <span
+                                                v-else
+                                                class="text-body-3 text-text-default tabular-nums"
+                                            >
+                                                {{ withoutMs(row.start) }}
+                                            </span>
+                                        </td>
+                                        <td v-else class="py-2 pl-2">
+                                            <DesignButton
+                                                variant="tertiary"
+                                                size="small"
+                                                icon="tabler:player-play"
+                                                :disabled="!previewUrl"
+                                                class="border-border-1 border"
+                                                @click="preview(row)"
+                                            />
+                                        </td>
+                                        <td class="py-2 pr-2 pl-3">
+                                            <div
+                                                v-if="effectiveMode === 'edit'"
+                                                class="flex min-w-56 flex-col gap-1.5"
+                                            >
+                                                <DesignInput
+                                                    v-model="row.name"
+                                                    data-field="name"
+                                                    :placeholder="
+                                                        t('editorial.col.title')
+                                                    "
+                                                    @focusin="
+                                                        nameBeforeEdit =
+                                                            row.name
+                                                    "
+                                                    @change="persistName(row)"
+                                                />
+                                                <EditorialContributorInput
+                                                    :model-value="
+                                                        row.contributorList
+                                                    "
+                                                    :session-id="sessionId"
+                                                    data-field="contributors"
+                                                    :placeholder="
+                                                        t(
+                                                            'editorial.col.contributors',
+                                                        )
+                                                    "
+                                                    @update:model-value="
+                                                        setContributors(
+                                                            row,
+                                                            $event,
+                                                        )
+                                                    "
+                                                    @change="
+                                                        persistLiveDetails(row)
+                                                    "
+                                                />
+                                            </div>
+                                            <!--
                                             Simple view wraps the title instead
                                             of truncating it, and stands the
                                             contributor — or failing that the
@@ -2762,28 +2804,34 @@ onBeforeRouteLeave(() => {
                                             footnote under an empty box. Typing
                                             a title replaces it.
                                         -->
-                                        <EditorialGrowingTextarea
-                                            v-else
-                                            v-model="row.name"
-                                            data-field="name"
-                                            :placeholder="titlePlaceholder(row)"
-                                            placeholder-is-value
-                                            :aria-label="
-                                                t('editorial.col.title')
-                                            "
-                                            class="title-field"
-                                            @focusin="nameBeforeEdit = row.name"
-                                            @change="persistName(row)"
-                                        >
-                                            <!-- with a title, the names and U26 go on the line below -->
-                                            <template
-                                                v-if="!row.name && hasU26(row)"
-                                                #end
+                                            <EditorialGrowingTextarea
+                                                v-else
+                                                v-model="row.name"
+                                                data-field="name"
+                                                :placeholder="
+                                                    titlePlaceholder(row)
+                                                "
+                                                placeholder-is-value
+                                                :aria-label="
+                                                    t('editorial.col.title')
+                                                "
+                                                class="title-field"
+                                                @focusin="
+                                                    nameBeforeEdit = row.name
+                                                "
+                                                @change="persistName(row)"
                                             >
-                                                <EditorialU26Badge />
-                                            </template>
-                                        </EditorialGrowingTextarea>
-                                        <!--
+                                                <!-- with a title, the names and U26 go on the line below -->
+                                                <template
+                                                    v-if="
+                                                        !row.name && hasU26(row)
+                                                    "
+                                                    #end
+                                                >
+                                                    <EditorialU26Badge />
+                                                </template>
+                                            </EditorialGrowingTextarea>
+                                            <!--
                                             Medvirkende and Bibelvers ride under
                                             the title rather than taking columns
                                             of their own: both are empty on most
@@ -2812,116 +2860,126 @@ onBeforeRouteLeave(() => {
                                             field is already standing it in as
                                             its placeholder.
                                         -->
-                                        <p
-                                            v-if="
-                                                effectiveMode === 'simple' &&
-                                                row.name &&
-                                                row.contributors
-                                            "
-                                            class="text-body-3 text-text-default mt-1 flex items-baseline gap-1.5 px-3 font-medium"
-                                        >
-                                            {{ row.contributors }}
-                                            <EditorialU26Badge
-                                                v-if="hasU26(row)"
-                                            />
-                                        </p>
-                                        <p
-                                            v-if="
-                                                effectiveMode === 'simple' &&
-                                                row.bibleVerses
-                                            "
-                                            class="text-body-3 text-text-hint mt-0.5 px-3 tabular-nums"
-                                        >
-                                            {{ row.bibleVerses }}
-                                        </p>
-                                    </td>
-                                    <td
-                                        v-if="effectiveMode === 'edit'"
-                                        class="px-2 py-2"
-                                    >
-                                        <div
-                                            class="flex min-w-44 flex-col gap-1.5"
-                                        >
-                                            <DesignSelect
-                                                :model-value="row.type"
-                                                :items="typeItems"
-                                                @update:model-value="
-                                                    row.type = $event as string;
-                                                    persistLiveDetails(row);
+                                            <p
+                                                v-if="
+                                                    effectiveMode ===
+                                                        'simple' &&
+                                                    row.name &&
+                                                    row.contributors
                                                 "
-                                            />
-                                            <DesignInput
-                                                v-model="row.bibleVerses"
-                                                data-field="bibleVerses"
-                                                :placeholder="
-                                                    t(
-                                                        'editorial.col.bibleVerses',
-                                                    )
-                                                "
-                                                @change="
-                                                    persistLiveDetails(row)
-                                                "
-                                            />
-                                        </div>
-                                    </td>
-                                    <td
-                                        v-if="effectiveMode === 'edit'"
-                                        class="px-2 py-2"
-                                    >
-                                        <div class="flex flex-col gap-1.5">
-                                            <div
-                                                v-if="!isLive"
-                                                class="flex items-center gap-1"
+                                                class="text-body-3 text-text-default mt-1 flex items-baseline gap-1.5 px-3 font-medium"
                                             >
-                                                <DesignInput
-                                                    v-model="row.start"
-                                                    class="w-36 tabular-nums"
-                                                    :placeholder="
-                                                        t('editorial.col.in')
-                                                    "
-                                                    @change="
-                                                        linkNeighbour(
-                                                            i,
-                                                            'start',
-                                                        )
+                                                {{ row.contributors }}
+                                                <EditorialU26Badge
+                                                    v-if="hasU26(row)"
+                                                />
+                                            </p>
+                                            <p
+                                                v-if="
+                                                    effectiveMode ===
+                                                        'simple' &&
+                                                    row.bibleVerses
+                                                "
+                                                class="text-body-3 text-text-hint mt-0.5 px-3 tabular-nums"
+                                            >
+                                                {{ row.bibleVerses }}
+                                            </p>
+                                        </td>
+                                        <td
+                                            v-if="effectiveMode === 'edit'"
+                                            class="px-2 py-2"
+                                        >
+                                            <div
+                                                class="flex min-w-44 flex-col gap-1.5"
+                                            >
+                                                <DesignSelect
+                                                    :model-value="row.type"
+                                                    :items="typeItems"
+                                                    @update:model-value="
+                                                        row.type =
+                                                            $event as string;
+                                                        persistLiveDetails(row);
                                                     "
                                                 />
-                                                <span class="text-text-hint"
-                                                    >–</span
-                                                >
                                                 <DesignInput
-                                                    v-model="row.end"
-                                                    class="w-36 tabular-nums"
+                                                    v-model="row.bibleVerses"
+                                                    data-field="bibleVerses"
                                                     :placeholder="
-                                                        t('editorial.col.out')
+                                                        t(
+                                                            'editorial.col.bibleVerses',
+                                                        )
                                                     "
                                                     @change="
-                                                        linkNeighbour(i, 'end')
+                                                        persistLiveDetails(row)
                                                     "
                                                 />
                                             </div>
-                                            <span
-                                                class="text-body-3 text-text-muted px-1 tabular-nums"
-                                            >
-                                                {{ durationOf(row, i) }}
-                                            </span>
-                                        </div>
-                                    </td>
-                                    <td
-                                        class="px-2 py-2"
-                                        @focusin="
-                                            commentBeforeEdit = row.comment;
-                                            onCommentFocus(row);
-                                        "
-                                        @focusout="onCommentBlur"
-                                        @change="persistComment(row)"
-                                    >
-                                        <DesignInput
+                                        </td>
+                                        <td
                                             v-if="effectiveMode === 'edit'"
-                                            v-model="row.comment"
-                                            data-field="comment"
-                                        />
-                                        <!--
+                                            class="px-2 py-2"
+                                        >
+                                            <div class="flex flex-col gap-1.5">
+                                                <div
+                                                    v-if="!isLive"
+                                                    class="flex items-center gap-1"
+                                                >
+                                                    <DesignInput
+                                                        v-model="row.start"
+                                                        class="w-36 tabular-nums"
+                                                        :placeholder="
+                                                            t(
+                                                                'editorial.col.in',
+                                                            )
+                                                        "
+                                                        @change="
+                                                            linkNeighbour(
+                                                                i,
+                                                                'start',
+                                                            )
+                                                        "
+                                                    />
+                                                    <span class="text-text-hint"
+                                                        >–</span
+                                                    >
+                                                    <DesignInput
+                                                        v-model="row.end"
+                                                        class="w-36 tabular-nums"
+                                                        :placeholder="
+                                                            t(
+                                                                'editorial.col.out',
+                                                            )
+                                                        "
+                                                        @change="
+                                                            linkNeighbour(
+                                                                i,
+                                                                'end',
+                                                            )
+                                                        "
+                                                    />
+                                                </div>
+                                                <span
+                                                    class="text-body-3 text-text-muted px-1 tabular-nums"
+                                                >
+                                                    {{ durationOf(row, i) }}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td
+                                            class="px-2 py-2"
+                                            @focusin="
+                                                commentBeforeEdit = row.comment;
+                                                onCommentFocus(row);
+                                            "
+                                            @focusout="onCommentBlur"
+                                            @change="persistComment(row)"
+                                        >
+                                            <DesignInput
+                                                v-if="effectiveMode === 'edit'"
+                                                v-model="row.comment"
+                                                data-field="comment"
+                                            />
+                                            <!--
                                             The comment is the one thing every
                                             reviewer writes, and the notes run
                                             longer than the column — so in
@@ -2934,98 +2992,164 @@ onBeforeRouteLeave(() => {
                                             cards keep theirs — a card has no
                                             header to label the field.
                                         -->
-                                        <EditorialGrowingTextarea
-                                            v-else
-                                            v-model="row.comment"
-                                            data-field="comment"
-                                            :aria-label="
-                                                t('editorial.col.comment')
-                                            "
-                                        />
-                                        <p
-                                            v-if="
-                                                row.id && commentingOn(row.id)
-                                            "
-                                            class="text-caption-2 text-text-hint mt-1 flex items-center gap-1"
-                                        >
-                                            <Icon
-                                                name="tabler:pencil"
-                                                class="size-3"
-                                            />
-                                            {{
-                                                t("editorial.isCommenting", {
-                                                    name: commentingOn(row.id),
-                                                })
-                                            }}
-                                        </p>
-                                    </td>
-                                    <td class="px-2 py-2">
-                                        <div class="flex justify-center">
-                                            <DesignSwitch
-                                                :model-value="row.publishBmm"
-                                                @update:model-value="
-                                                    onPublishToggle(
-                                                        row,
-                                                        'bmm',
-                                                        $event,
-                                                    )
-                                                "
-                                            />
-                                        </div>
-                                    </td>
-                                    <td class="px-2 py-2">
-                                        <div class="flex justify-center">
-                                            <DesignSwitch
-                                                :model-value="row.publishBcc"
-                                                @update:model-value="
-                                                    onPublishToggle(
-                                                        row,
-                                                        'bcc',
-                                                        $event,
-                                                    )
-                                                "
-                                            />
-                                        </div>
-                                    </td>
-                                    <td
-                                        v-if="isLive"
-                                        class="text-caption-1 text-text-muted px-2 py-2 whitespace-nowrap"
-                                    >
-                                        {{ sourceLabel(row) }}
-                                    </td>
-                                    <td
-                                        v-if="effectiveMode === 'edit'"
-                                        class="py-2 pl-2"
-                                    >
-                                        <div class="flex items-center gap-0.5">
-                                            <button
-                                                v-if="!isLive"
-                                                type="button"
-                                                :title="t('editorial.reorder')"
+                                            <EditorialGrowingTextarea
+                                                v-else
+                                                v-model="row.comment"
+                                                data-field="comment"
                                                 :aria-label="
-                                                    t('editorial.reorder')
+                                                    t('editorial.col.comment')
                                                 "
-                                                draggable="true"
-                                                class="text-text-hint hover:text-text-default hover:bg-surface-indent flex cursor-grab items-center rounded-2xl p-1.5 active:cursor-grabbing"
-                                                @dragstart="
-                                                    onDragStart(i, $event)
+                                            />
+                                            <p
+                                                v-if="
+                                                    row.id &&
+                                                    commentingOn(row.id)
                                                 "
+                                                class="text-caption-2 text-text-hint mt-1 flex items-center gap-1"
                                             >
                                                 <Icon
-                                                    name="tabler:grip-vertical"
+                                                    name="tabler:pencil"
+                                                    class="size-3"
+                                                />
+                                                {{
+                                                    t(
+                                                        "editorial.isCommenting",
+                                                        {
+                                                            name: commentingOn(
+                                                                row.id,
+                                                            ),
+                                                        },
+                                                    )
+                                                }}
+                                            </p>
+                                        </td>
+                                        <td class="px-2 py-2">
+                                            <div class="flex justify-center">
+                                                <DesignSwitch
+                                                    :model-value="
+                                                        row.publishBmm
+                                                    "
+                                                    @update:model-value="
+                                                        onPublishToggle(
+                                                            row,
+                                                            'bmm',
+                                                            $event,
+                                                        )
+                                                    "
+                                                />
+                                            </div>
+                                        </td>
+                                        <td class="px-2 py-2">
+                                            <div class="flex justify-center">
+                                                <DesignSwitch
+                                                    :model-value="
+                                                        row.publishBcc
+                                                    "
+                                                    @update:model-value="
+                                                        onPublishToggle(
+                                                            row,
+                                                            'bcc',
+                                                            $event,
+                                                        )
+                                                    "
+                                                />
+                                            </div>
+                                        </td>
+                                        <td
+                                            v-if="isLive"
+                                            class="text-caption-1 text-text-muted px-2 py-2 whitespace-nowrap"
+                                        >
+                                            {{ sourceLabel(row) }}
+                                        </td>
+                                        <td
+                                            v-if="effectiveMode === 'edit'"
+                                            class="py-2 pl-2"
+                                        >
+                                            <div
+                                                class="flex items-center gap-0.5"
+                                            >
+                                                <button
+                                                    v-if="!isLive"
+                                                    type="button"
+                                                    :title="
+                                                        t('editorial.reorder')
+                                                    "
+                                                    :aria-label="
+                                                        t('editorial.reorder')
+                                                    "
+                                                    draggable="true"
+                                                    class="text-text-hint hover:text-text-default hover:bg-surface-indent flex cursor-grab items-center rounded-2xl p-1.5 active:cursor-grabbing"
+                                                    @dragstart="
+                                                        onDragStart(i, $event)
+                                                    "
+                                                >
+                                                    <Icon
+                                                        name="tabler:grip-vertical"
+                                                        class="size-4"
+                                                    />
+                                                </button>
+                                                <DesignButton
+                                                    variant="tertiary"
+                                                    intent="danger"
+                                                    size="small"
+                                                    icon="tabler:trash"
+                                                    @click="removeRow(i)"
+                                                />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <!--
+                                    Time no section covers: a placeholder, not
+                                    a row, until it is made into one.
+                                -->
+                                    <tr v-if="gapAfter(i)">
+                                        <td
+                                            colspan="99"
+                                            class="border-border-1/50 border-b px-2 py-1.5"
+                                        >
+                                            <div
+                                                class="border-border-1 text-caption-1 text-text-hint flex items-center gap-3 rounded-lg border border-dashed px-3 py-1"
+                                            >
+                                                <Icon
+                                                    name="tabler:arrows-horizontal"
                                                     class="size-4"
                                                 />
-                                            </button>
-                                            <DesignButton
-                                                variant="tertiary"
-                                                intent="danger"
-                                                size="small"
-                                                icon="tabler:trash"
-                                                @click="removeRow(i)"
-                                            />
-                                        </div>
-                                    </td>
-                                </tr>
+                                                <span class="tabular-nums">
+                                                    {{ t("editorial.gap") }} ·
+                                                    {{
+                                                        displayMs(
+                                                            gapAfter(i)!
+                                                                .startMs,
+                                                        )
+                                                    }}
+                                                    –
+                                                    {{
+                                                        displayMs(
+                                                            gapAfter(i)!.endMs,
+                                                        )
+                                                    }}
+                                                    ({{
+                                                        formatMs(
+                                                            gapAfter(i)!.endMs -
+                                                                gapAfter(i)!
+                                                                    .startMs,
+                                                            true,
+                                                        )
+                                                    }})
+                                                </span>
+                                                <DesignButton
+                                                    variant="tertiary"
+                                                    size="small"
+                                                    icon="tabler:plus"
+                                                    class="ml-auto"
+                                                    @click="fillGap(i)"
+                                                >
+                                                    {{ t("editorial.fillGap") }}
+                                                </DesignButton>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </template>
                             </tbody>
                         </table>
                     </div>

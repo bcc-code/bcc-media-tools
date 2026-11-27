@@ -302,6 +302,8 @@
         "deleteConfirmMessage": "This permanently removes the review and all its markers.",
         "deleted": "Review deleted",
         "addRow": "Add row",
+        "gap": "Gap",
+        "fillGap": "Add as row",
         "removeRow": "Remove",
         "reorder": "Drag to reorder",
         "lastUpdated": "Last updated {date}",
@@ -434,7 +436,7 @@
         "chaptersReplaced": "Replaced {n} from before.",
         "chaptersSkipped": "{n} marker(s) without a length were left out.",
         "chaptersFailed": "Could not save chapters",
-        "inOutKeys": "Keys I and O set the selected row's in and out to the video's position. A row's out stays the next row's in.",
+        "inOutKeys": "Keys I and O set the selected row's in and out to the video's position. Shortening a row leaves a gap; lengthening it moves the next row's in.",
         "inOutKeysLive": "Key I sets the selected row's time to now.",
         "u26": {
             "hint": "Under 26"
